@@ -97,28 +97,6 @@ let tb_common_systemmenu = model.common_systemmenu;
     });
 
     menu = await tb_common_systemmenu.create({
-      systemmenu_name: 'baseconfig',
-      node_type: '00',
-      parent_id: fmenuID1
-    });
-    fmenuID2 = menu.systemmenu_id
-    api = await tb_common_api.create({
-      api_name: '关注审核',
-      api_path: '/common/baseconfig/FollowerControl',
-      api_function: 'FOLLOWERCONTROL',
-      auth_flag: '1',
-      show_flag: '1',
-      api_kind: '1'
-    })
-    menu = await tb_common_systemmenu.create({
-      systemmenu_name: api.api_name,
-      api_id: api.api_id,
-      api_function: api.api_function,
-      node_type: '01',
-      parent_id: fmenuID2
-    });
-
-    menu = await tb_common_systemmenu.create({
       systemmenu_name: 'system',
       node_type: '00',
       parent_id: fmenuID1

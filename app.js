@@ -58,7 +58,7 @@ app.get('/', (req, res) => {
 });
 
 if (config.mongoFileFlag) {
-  app.get('/filesys/:filetag', FileSRV.FileResource);
+    app.get('/filesys/:filetag', FileSRV.FileResource);
 }
 
 app.post('/api/auth', AuthSRV.AuthResource);
@@ -70,9 +70,6 @@ app.post('/api/signout', AuthSRV.SignOutResource);
 //commonQuery
 app.post('/api/common/components/userSelectDialogControl', services.UserSelectDialogSRV.UserSelectDialogResource);
 app.post('/api/common/components/DomainSelectDialogControl', services.DomainSelectDialogSRV.DomainSelectDialogResource);
-
-// baseconfig
-app.post('/api/common/baseconfig/FollowerControl', services.FollowerControlSRV.FollowerControlResource);
 
 // system
 app.post('/api/common/system/SystemApiControl', services.SystemApiControlSRV.SystemApiControlResource);
