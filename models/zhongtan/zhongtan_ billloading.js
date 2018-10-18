@@ -10,6 +10,10 @@ module.exports = db.defineModel('tbl_zhongtan_billoading', {
     type: db.STRING(100),
     allowNull: false
   },
+  billloading_type: { // 提单类型 进口出口
+    type: db.STRING(10),
+    allowNull: false
+  },
   billloading_destination_place: { // 目的港
     type: db.STRING(100),
     allowNull: true
