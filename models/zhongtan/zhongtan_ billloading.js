@@ -14,6 +14,10 @@ module.exports = db.defineModel('tbl_zhongtan_billoading', {
     type: db.STRING(10),
     allowNull: false
   },
+  billloading_state: { // 提单状态
+    type: db.STRING(10),
+    allowNull: false
+  },
   billloading_destination_place: { // 目的港
     type: db.STRING(100),
     allowNull: true
@@ -47,7 +51,7 @@ module.exports = db.defineModel('tbl_zhongtan_billoading', {
     allowNull: true
   },
   billloading_gross_weight: { // 毛重
-    type: db.DOUBLE,
+    type: db.INTEGER,
     allowNull: true
   },
   billloading_gross_unit: { // 毛重单位
@@ -55,7 +59,7 @@ module.exports = db.defineModel('tbl_zhongtan_billoading', {
     allowNull: true
   },
   billloading_gross_volume: { // 毛体积
-    type: db.DOUBLE,
+    type: db.INTEGER,
     allowNull: true
   },
   billloading_gross_volume_unit: { // 毛体积单位
@@ -63,7 +67,7 @@ module.exports = db.defineModel('tbl_zhongtan_billoading', {
     allowNull: true
   },
   billloading_net_weight: { // 净重
-    type: db.DOUBLE,
+    type: db.INTEGER,
     allowNull: true
   },
   billloading_net_weight_unit: { // 净重单位
@@ -71,7 +75,7 @@ module.exports = db.defineModel('tbl_zhongtan_billoading', {
     allowNull: true
   },
   billloading_invoice_value: { // 发票金额
-    type: db.DOUBLE,
+    type: db.INTEGER,
     allowNull: true
   },
   billloading_invoice_currency: { // 发票币种
@@ -79,7 +83,7 @@ module.exports = db.defineModel('tbl_zhongtan_billoading', {
     allowNull: true
   },
   billloading_freight_charge: { // 运费金额
-    type: db.DOUBLE,
+    type: db.INTEGER,
     allowNull: true
   },
   billloading_freight_currency: { // 运费币种
