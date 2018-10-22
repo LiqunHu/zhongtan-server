@@ -8,12 +8,10 @@ module.exports = {
     MTYPE_LEAF: '01',
     MTYPEINFO: [{
             'id': '00',
-            'value': '00',
             'text': '目录'
         },
         {
             'id': '01',
-            'value': '01',
             'text': '菜单'
         }
     ],
@@ -34,12 +32,10 @@ module.exports = {
     NOAUTH: '0',
     AUTHINFO: [{
             'id': '1',
-            'value': '1',
             'text': '需要授权'
         },
         {
             'id': '0',
-            'value': '0',
             'text': '无需授权'
         }
     ],
@@ -47,12 +43,10 @@ module.exports = {
     DISABLE: '0',
     STATUSINFO: [{
             'id': '1',
-            'value': '1',
             'text': '有效'
         },
         {
             'id': '0',
-            'value': '0',
             'text': '无效'
         }
     ],
@@ -60,12 +54,10 @@ module.exports = {
     FALSE: '0',
     TFINFO: [{
             'id': '1',
-            'value': '1',
             'text': '是'
         },
         {
             'id': '0',
-            'value': '0',
             'text': '否'
         }
     ]
