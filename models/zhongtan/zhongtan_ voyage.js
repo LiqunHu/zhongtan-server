@@ -1,4 +1,5 @@
 const db = require('../../util/db');
+// 航班表
 
 module.exports = db.defineModel('tbl_zhongtan_vessel', {
   voyage_id: {

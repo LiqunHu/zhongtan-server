@@ -1,4 +1,5 @@
 const db = require('../../util/db');
+// 提单表
 
 module.exports = db.defineModel('tbl_zhongtan_billoading', {
   billoading_id: {

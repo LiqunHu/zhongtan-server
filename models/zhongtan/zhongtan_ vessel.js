@@ -1,4 +1,5 @@
 const db = require('../../util/db');
+// 船表
 
 module.exports = db.defineModel('tbl_zhongtan_vessel', {
   vessel_id: {

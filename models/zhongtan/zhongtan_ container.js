@@ -1,4 +1,5 @@
 const db = require('../../util/db');
+// 集装箱表
 
 module.exports = db.defineModel('tbl_zhongtan_container', {
   container_id: {
