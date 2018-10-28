@@ -1,25 +1,25 @@
-const fs = require('fs');
-const common = require('../../../util/CommonUtil');
-const GLBConfig = require('../../../util/GLBConfig');
-const Sequence = require('../../../util/Sequence');
-const logger = require('../../../util/Logger').createLogger('GroupControlSRV');
-const model = require('../../../model');
+const fs = require('fs')
+const common = require('../../../util/CommonUtil')
+const GLBConfig = require('../../../util/GLBConfig')
+const Sequence = require('../../../util/Sequence')
+const logger = require('../../../util/Logger').createLogger('GroupControlSRV')
+const model = require('../../../model')
 
 // tables
 const sequelize = model.sequelize
 const tb_common_domain = model.common_domain
 const tb_common_domaintemplate = model.common_domaintemplate
-const tb_usergroup = model.common_usergroup;
-const tb_user = model.common_user;
-const tb_common_templatemenu = model.common_templatemenu;
-const tb_common_domainmenu = model.common_domainmenu;
-const tb_common_systemmenu = model.common_systemmenu;
-const tb_usergroupmenu = model.common_usergroupmenu;
+const tb_usergroup = model.common_usergroup
+const tb_user = model.common_user
+const tb_common_templatemenu = model.common_templatemenu
+const tb_common_domainmenu = model.common_domainmenu
+const tb_common_systemmenu = model.common_systemmenu
+const tb_usergroupmenu = model.common_usergroupmenu
 
 exports.DomainControlResource = (req, res) => {
   let method = req.query.method
   if (method === 'init') {
-    initAct(req, res);
+    initAct(req, res)
   } else if (method === 'search') {
     searchAct(req, res)
   } else if (method === 'add') {
@@ -39,9 +39,9 @@ exports.DomainControlResource = (req, res) => {
   } else if (method === 'changeOrder') {
     changeOrderAct(req, res)
   } else {
-    common.sendError(res, 'common_01');
+    common.sendError(res, 'common_01')
   }
-};
+}
 
 async function initAct(req, res) {
   try {
@@ -57,37 +57,39 @@ async function initAct(req, res) {
       returnData.templateInfo.push({
         id: t.domaintemplate_id,
         text: t.domaintemplate_name
-      });
+      })
     }
-    returnData.sysmenus = [{
-      systemmenu_id: 0,
-      name: '根目录',
-      isParent: true,
-      node_type: GLBConfig.MTYPE_ROOT,
-      children: []
-    }];
-    returnData.sysmenus[0].children = JSON.parse(JSON.stringify(await genMenu('0')));
+    returnData.sysmenus = [
+      {
+        systemmenu_id: 0,
+        name: '根目录',
+        isParent: true,
+        node_type: GLBConfig.MTYPE_ROOT,
+        children: []
+      }
+    ]
+    returnData.sysmenus[0].children = JSON.parse(
+      JSON.stringify(await genMenu('0'))
+    )
 
     common.sendData(res, returnData)
   } catch (error) {
-    common.sendFault(res, error);
+    common.sendFault(res, error)
   }
 }
 
 async function genMenu(parentId) {
-  let return_list = [];
+  let return_list = []
   let menus = await tb_common_systemmenu.findAll({
     where: {
       parent_id: parentId
     },
-    order: [
-      ['created_at', 'DESC']
-    ]
-  });
+    order: [['created_at', 'DESC']]
+  })
   for (let m of menus) {
-    let sub_menus = [];
+    let sub_menus = []
     if (m.node_type === GLBConfig.MTYPE_ROOT) {
-      sub_menus = await genMenu(m.systemmenu_id);
+      sub_menus = await genMenu(m.systemmenu_id)
       return_list.push({
         systemmenu_id: m.systemmenu_id,
         systemmenu_name: m.systemmenu_name,
@@ -98,7 +100,7 @@ async function genMenu(parentId) {
         isParent: true,
         parent_id: m.parent_id,
         children: sub_menus
-      });
+      })
     } else {
       return_list.push({
         systemmenu_id: m.systemmenu_id,
@@ -109,11 +111,11 @@ async function genMenu(parentId) {
         systemmenu_type: m.systemmenu_type,
         name: m.systemmenu_name + '->' + m.api_function,
         isParent: false,
-        parent_id: m.parent_id,
-      });
+        parent_id: m.parent_id
+      })
     }
   }
-  return return_list;
+  return return_list
 }
 
 async function searchAct(req, res) {
@@ -126,31 +128,38 @@ async function searchAct(req, res) {
     let replacements = []
 
     if (doc.search_text) {
-      queryStr += ' and (domain like ? or domain_name like ? or domain_address like ?)'
+      queryStr +=
+        ' and (domain like ? or domain_name like ? or domain_address like ?)'
       let search_text = '%' + doc.search_text + '%'
       replacements.push(search_text)
       replacements.push(search_text)
       replacements.push(search_text)
     }
 
-    let result = await common.queryWithCount(sequelize, req, queryStr, replacements)
+    let result = await common.queryWithCount(
+      sequelize,
+      req,
+      queryStr,
+      replacements
+    )
 
     returnData.total = result.count
     returnData.rows = result.data
 
-    common.sendData(res, returnData);
+    common.sendData(res, returnData)
   } catch (error) {
-    common.sendFault(res, error);
+    common.sendFault(res, error)
   }
 }
 
 async function addAct(req, res) {
   try {
-    let doc = common.docTrim(req.body);
+    let doc = common.docTrim(req.body)
     let user = req.user
     let domain = await tb_common_domain.findOne({
       where: {
-        $or: [{
+        $or: [
+          {
             domain: doc.domain
           },
           {
@@ -158,9 +167,9 @@ async function addAct(req, res) {
           }
         ]
       }
-    });
+    })
     if (domain) {
-      common.sendError(res, 'domain_01');
+      common.sendError(res, 'domain_01')
       return
     } else {
       domain = await tb_common_domain.create({
@@ -200,9 +209,9 @@ async function addAct(req, res) {
             domaintemplate_id: domaintemplate_id,
             parent_id: parentId
           }
-        });
+        })
         for (let m of menus) {
-          let sub_menus = [];
+          let sub_menus = []
           if (m.node_type === GLBConfig.MTYPE_ROOT) {
             let dm = await tb_common_domainmenu.create({
               domain_id: domain.domain_id,
@@ -215,7 +224,11 @@ async function addAct(req, res) {
               root_show_flag: m.root_show_flag,
               parent_id: cparentId
             })
-            sub_menus = await genDomainMenu(domaintemplate_id, m.templatemenu_id, dm.domainmenu_id);
+            sub_menus = await genDomainMenu(
+              domaintemplate_id,
+              m.templatemenu_id,
+              dm.domainmenu_id
+            )
           } else {
             let dm = await tb_common_domainmenu.create({
               domain_id: domain.domain_id,
@@ -268,16 +281,20 @@ async function modifyAct(req, res) {
 async function searchDomainMenuAct(req, res) {
   try {
     let doc = common.docTrim(req.body),
-      user = req.user;
+      user = req.user
 
-    let menus = [{
-      domainmenu_id: 0,
-      name: '根目录',
-      isParent: true,
-      node_type: GLBConfig.MTYPE_ROOT,
-      children: []
-    }]
-    menus[0].children = JSON.parse(JSON.stringify(await genDomainMenu(doc.domain_id, '0')))
+    let menus = [
+      {
+        domainmenu_id: 0,
+        name: '根目录',
+        isParent: true,
+        node_type: GLBConfig.MTYPE_ROOT,
+        children: []
+      }
+    ]
+    menus[0].children = JSON.parse(
+      JSON.stringify(await genDomainMenu(doc.domain_id, '0'))
+    )
 
     common.sendData(res, menus)
   } catch (error) {
@@ -286,20 +303,18 @@ async function searchDomainMenuAct(req, res) {
 }
 
 async function genDomainMenu(domain_id, parentId) {
-  let return_list = [];
+  let return_list = []
   let menus = await tb_common_domainmenu.findAll({
     where: {
       domain_id: domain_id,
       parent_id: parentId
     },
-    order: [
-      ['domainmenu_index']
-    ]
+    order: [['domainmenu_index']]
   })
   for (let m of menus) {
-    let sub_menus = [];
+    let sub_menus = []
     if (m.node_type === GLBConfig.MTYPE_ROOT) {
-      sub_menus = await genDomainMenu(domain_id, m.domainmenu_id);
+      sub_menus = await genDomainMenu(domain_id, m.domainmenu_id)
       return_list.push({
         domainmenu_id: m.domainmenu_id,
         domainmenu_name: m.domainmenu_name,
@@ -319,17 +334,17 @@ async function genDomainMenu(domain_id, parentId) {
         node_type: m.node_type,
         name: m.domainmenu_name,
         isParent: false,
-        parent_id: m.parent_id,
+        parent_id: m.parent_id
       })
     }
   }
-  return return_list;
+  return return_list
 }
 
 async function addFolderAct(req, res) {
   try {
-    let doc = common.docTrim(req.body);
-    let user = req.user;
+    let doc = common.docTrim(req.body)
+    let user = req.user
 
     let nextIndex = await tb_common_domainmenu.max('domainmenu_index', {
       where: {
@@ -352,16 +367,16 @@ async function addFolderAct(req, res) {
       domainmenu_index: nextIndex
     })
 
-    common.sendData(res);
+    common.sendData(res)
   } catch (error) {
-    common.sendFault(res, error);
+    common.sendFault(res, error)
   }
 }
 
 async function modifyFolderAct(req, res) {
   try {
-    let doc = common.docTrim(req.body);
-    let user = req.user;
+    let doc = common.docTrim(req.body)
+    let user = req.user
 
     let folder = await tb_common_domainmenu.findOne({
       where: {
@@ -375,19 +390,19 @@ async function modifyFolderAct(req, res) {
       folder.root_show_flag = doc.root_show_flag
       await folder.save()
     } else {
-      return common.sendError(res, 'common_api_02');
+      return common.sendError(res, 'common_api_02')
     }
 
-    common.sendData(res);
+    common.sendData(res)
   } catch (error) {
-    common.sendFault(res, error);
+    common.sendFault(res, error)
   }
 }
 
 async function deleteSelectAct(req, res) {
   try {
-    let doc = common.docTrim(req.body);
-    let user = req.user;
+    let doc = common.docTrim(req.body)
+    let user = req.user
 
     let tm = await tb_common_domainmenu.findOne({
       where: {
@@ -401,9 +416,9 @@ async function deleteSelectAct(req, res) {
       await tm.destroy()
     }
 
-    common.sendData(res);
+    common.sendData(res)
   } catch (error) {
-    common.sendFault(res, error);
+    common.sendFault(res, error)
   }
 }
 
@@ -412,13 +427,11 @@ async function folderDelete(domainmenu_id) {
     where: {
       parent_id: domainmenu_id
     },
-    order: [
-      ['node_type'],
-    ]
+    order: [['node_type']]
   })
 
   for (let sm of subM) {
-    if (sm.node_type = '00') {
+    if ((sm.node_type = '00')) {
       await folderDelete(sm.domainmenu_id)
     }
     await sm.destroy()
@@ -427,8 +440,8 @@ async function folderDelete(domainmenu_id) {
 
 async function addMenusAct(req, res) {
   try {
-    let doc = common.docTrim(req.body);
-    let user = req.user;
+    let doc = common.docTrim(req.body)
+    let user = req.user
 
     let existM = await tb_common_domainmenu.findAll({
       where: {
@@ -474,17 +487,16 @@ async function addMenusAct(req, res) {
       })
     }
 
-    common.sendData(res);
+    common.sendData(res)
   } catch (error) {
-    common.sendFault(res, error);
+    common.sendFault(res, error)
   }
 }
 
-
 async function changeOrderAct(req, res) {
   try {
-    let doc = common.docTrim(req.body);
-    let user = req.user;
+    let doc = common.docTrim(req.body)
+    let user = req.user
 
     for (let i = 0; i < doc.menus.length; i++) {
       let dmenu = await tb_common_domainmenu.findOne({
@@ -496,8 +508,8 @@ async function changeOrderAct(req, res) {
       await dmenu.save()
     }
 
-    common.sendData(res);
+    common.sendData(res)
   } catch (error) {
-    common.sendFault(res, error);
+    common.sendFault(res, error)
   }
 }

@@ -1,33 +1,34 @@
-const uuid = require('uuid');
-const path = require('path');
-const fs = require('fs');
-const ejs = require('ejs');
-const wkhtmltopdf = require('wkhtmltopdf');
-const wkhtmltoimage = require('wkhtmltoimage');
-const ejsExcel = require("ejsexcel");
-const format = require('util').format;
+const uuid = require('uuid')
+const path = require('path')
+const fs = require('fs')
+const ejs = require('ejs')
+const wkhtmltopdf = require('wkhtmltopdf')
+const wkhtmltoimage = require('wkhtmltoimage')
+const ejsExcel = require('ejsexcel')
+const format = require('util').format
 
-const config = require('../config');
-const Error = require('./Error');
-const logger = require('./Logger').createLogger('CommonUtil.js');
-const model = require('../model');
-const sequelize = model.sequelize;
+const config = require('../config')
+const Error = require('./Error')
+const logger = require('./Logger').createLogger('CommonUtil.js')
+const model = require('../model')
+const sequelize = model.sequelize
 const MongoCli = require('./MongoClient')
-const WebSocket = require('ws');
+const WebSocket = require('ws')
 
 // String trim
-String.prototype.trim = function () {
+String.prototype.trim = function() {
   //return this.replace(/[(^\s+)(\s+$)]/g,"");//會把字符串中間的空白符也去掉
   //return this.replace(/^\s+|\s+$/g,""); //
-  return this.replace(/^\s+/g, "").replace(/\s+$/g, "");
+  return this.replace(/^\s+/g, '').replace(/\s+$/g, '')
 }
 
 // common response
 function docTrim(req) {
   let doc = req
-  for (let idx in doc) { //不使用过滤
-    if (typeof (doc[idx]) == "string") {
-      doc[idx] = doc[idx].trim();
+  for (let idx in doc) {
+    //不使用过滤
+    if (typeof doc[idx] == 'string') {
+      doc[idx] = doc[idx].trim()
     }
   }
   return doc
@@ -35,49 +36,49 @@ function docTrim(req) {
 
 // common response
 function sendData(res, data) {
-  let datares = arguments[1] ? arguments[1] : {};
+  let datares = arguments[1] ? arguments[1] : {}
   let sendData = {
     errno: 0,
     msg: 'ok',
     info: datares
-  };
-  res.send(sendData);
+  }
+  res.send(sendData)
 }
 
 function sendError(res, errno, msg = '错误未配置') {
-  let errnores = arguments[1] ? arguments[1] : -1;
-  let msgres = arguments[2] ? arguments[2] : 'error';
-  let sendData;
+  let errnores = arguments[1] ? arguments[1] : -1
+  let msgres = arguments[2] ? arguments[2] : 'error'
+  let sendData
   if (errnores in Error) {
     sendData = {
       errno: errnores,
       msg: Error[errnores]
-    };
+    }
   } else {
     sendData = {
       errno: errnores,
       msg: msg
-    };
+    }
   }
-  res.status(700).send(sendData);
+  res.status(700).send(sendData)
 }
 
 function sendFault(res, msg) {
-  let msgres = arguments[1] ? arguments[1] : 'Internal Error';
-  let sendData = {};
-  logger.error(msg);
+  let msgres = arguments[1] ? arguments[1] : 'Internal Error'
+  let sendData = {}
+  logger.error(msg)
   if (process.env.NODE_ENV === 'test') {
     sendData = {
       errno: -1,
-      msg: msgres.message,
-    };
+      msg: msgres.message
+    }
   } else {
     sendData = {
       errno: -1,
-      msg: 'Internal Error',
-    };
+      msg: 'Internal Error'
+    }
   }
-  res.status(500).send(sendData);
+  res.status(500).send(sendData)
 }
 
 /**
@@ -86,28 +87,32 @@ function sendFault(res, msg) {
  * @param autoCallback
  * @returns {*}
  */
-let transaction = function (callback) {
-  return new Promise(function (resolve, reject) {
-    if (Object.prototype.toString.call(callback) === "[object AsyncFunction]") {
-      sequelize.transaction(function (t) {
-        // chain all your queries here. make sure you return them.
-        return Promise.all([
-          callback(t)
-        ]);
-      }).then(function (result) {
-        resolve()
-      }).catch(function (err) {
-        reject(err)
-      });
+let transaction = function(callback) {
+  return new Promise(function(resolve, reject) {
+    if (Object.prototype.toString.call(callback) === '[object AsyncFunction]') {
+      sequelize
+        .transaction(function(t) {
+          // chain all your queries here. make sure you return them.
+          return Promise.all([callback(t)])
+        })
+        .then(function(result) {
+          resolve()
+        })
+        .catch(function(err) {
+          reject(err)
+        })
     } else {
-      sequelize.transaction(callback).then(function (result) {
-        resolve()
-      }).catch(function (err) {
-        reject(err)
-      });
+      sequelize
+        .transaction(callback)
+        .then(function(result) {
+          resolve()
+        })
+        .catch(function(err) {
+          reject(err)
+        })
     }
   })
-};
+}
 
 // function fileMove(url, mode) {
 //   return new Promise(async function (resolve, reject) {
@@ -245,21 +250,21 @@ let transaction = function (callback) {
 // }
 
 function generateRandomAlphaNum(len) {
-  let charSet = '0123456789';
-  let randomString = '';
+  let charSet = '0123456789'
+  let randomString = ''
   for (let i = 0; i < len; i++) {
-    let randomPoz = Math.floor(Math.random() * charSet.length);
-    randomString += charSet.substring(randomPoz, randomPoz + 1);
+    let randomPoz = Math.floor(Math.random() * charSet.length)
+    randomString += charSet.substring(randomPoz, randomPoz + 1)
   }
-  return randomString;
+  return randomString
 }
 
 //列表分页查询，查询语句queryStr传完整的sql语句
 async function queryWithCount(db, req, queryStr, replacements) {
   let doc = req.body
 
-  let cnt = queryStr.indexOf("from") + 5;
-  let queryStrCnt = queryStr.substr(cnt);
+  let cnt = queryStr.indexOf('from') + 5
+  let queryStrCnt = queryStr.substr(cnt)
 
   let count = await db.query('select count(*) num from ' + queryStrCnt, {
     replacements: replacements,
@@ -282,8 +287,8 @@ async function queryWithCount(db, req, queryStr, replacements) {
 }
 
 async function queryWithDocCount(db, doc, queryStr, replacements) {
-  let cnt = queryStr.indexOf("from") + 5;
-  let queryStrCnt = queryStr.substr(cnt);
+  let cnt = queryStr.indexOf('from') + 5
+  let queryStrCnt = queryStr.substr(cnt)
 
   let count = await db.query('select count(*) num from ' + queryStrCnt, {
     replacements: replacements,
@@ -308,10 +313,13 @@ async function queryWithDocCount(db, doc, queryStr, replacements) {
 async function queryWithGroupByCount(db, req, queryStr, replacements) {
   let doc = req.body
 
-  let count = await db.query('select count(*) num from (' + queryStr + ') as count', {
-    replacements: replacements,
-    type: db.QueryTypes.SELECT
-  })
+  let count = await db.query(
+    'select count(*) num from (' + queryStr + ') as count',
+    {
+      replacements: replacements,
+      type: db.QueryTypes.SELECT
+    }
+  )
 
   let rep = replacements
   rep.push(doc.offset || 0)
@@ -332,67 +340,69 @@ async function simpleSelect(db, queryStr, replacements) {
   return await db.query(queryStr, {
     replacements: replacements,
     type: db.QueryTypes.SELECT
-  });
+  })
 }
 
 function getApiName(path) {
   if (path) {
     let patha = path.split('/')
     let func = patha[patha.length - 1].toUpperCase()
-    return func;
+    return func
   } else {
     return ''
   }
 }
 
 function buildXML(json) {
-  let builder = new xml2js.Builder();
-  return builder.buildObject(json);
-};
+  let builder = new xml2js.Builder()
+  return builder.buildObject(json)
+}
 
 function parseXML(xml) {
-  return new Promise(function (resolve, reject) {
+  return new Promise(function(resolve, reject) {
     let parser = new xml2js.Parser({
       trim: true,
       explicitArray: false,
       explicitRoot: false
-    });
-    parser.parseString(xml, function (err, result) {
+    })
+    parser.parseString(xml, function(err, result) {
       if (err) reject(err)
       resolve(result)
-    });
+    })
   })
-};
+}
 
 function generateNonceString(length) {
-  let chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let maxPos = chars.length;
-  let noceStr = "";
+  let chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+  let maxPos = chars.length
+  let noceStr = ''
   for (let i = 0; i < (length || 32); i++) {
-    noceStr += chars.charAt(Math.floor(Math.random() * maxPos));
+    noceStr += chars.charAt(Math.floor(Math.random() * maxPos))
   }
-  return noceStr;
-};
+  return noceStr
+}
 
 function getUploadTempPath(uploadurl) {
-  let fileName = path.basename(uploadurl);
-  return path.join(__dirname, '../' + config.uploadOptions.uploadDir + '/' + fileName);
+  let fileName = path.basename(uploadurl)
+  return path.join(
+    __dirname,
+    '../' + config.uploadOptions.uploadDir + '/' + fileName
+  )
 }
 
 function getUUIDByTime(offset) {
-  let uuidStand = uuid.v1();
-  let uuidArr = uuidStand.split('-');
-  let uuidResult = '';
+  let uuidStand = uuid.v1()
+  let uuidArr = uuidStand.split('-')
+  let uuidResult = ''
 
   for (let i = 0; i < uuidArr.length; i++) {
     uuidResult += uuidArr[i]
   }
   return uuidResult.substring(0, offset)
-
 }
 
 function ejs2File(templateFile, renderData, options, outputType, res) {
-  return new Promise(function (resolve, reject) {
+  return new Promise(function(resolve, reject) {
     try {
       let data = JSON.parse(JSON.stringify(renderData))
       if (!data) {
@@ -420,12 +430,18 @@ function ejs2File(templateFile, renderData, options, outputType, res) {
       }
 
       data.basedir = path.join(__dirname, '../printTemplate')
-      let ejsFile = fs.readFileSync(path.join(__dirname, '../printTemplate/' + templateFile), 'utf8')
+      let ejsFile = fs.readFileSync(
+        path.join(__dirname, '../printTemplate/' + templateFile),
+        'utf8'
+      )
       let html = ejs.render(ejsFile, data)
 
       if (options.htmlFlag || outputType === 'htmlurl') {
         let htmlData = data
-        fs.writeFileSync(path.join(__dirname, '../', config.tempDir, tempName + '.html'), html)
+        fs.writeFileSync(
+          path.join(__dirname, '../', config.tempDir, tempName + '.html'),
+          html
+        )
       }
 
       if (outputType === 'htmlurl') {
@@ -444,8 +460,12 @@ function ejs2File(templateFile, renderData, options, outputType, res) {
           resolve()
         } else {
           let tempFile = tempName + '.jpg'
-          outSteam.pipe(fs.createWriteStream(path.join(__dirname, '../', config.tempDir, tempFile)))
-          outSteam.on('end', function () {
+          outSteam.pipe(
+            fs.createWriteStream(
+              path.join(__dirname, '../', config.tempDir, tempFile)
+            )
+          )
+          outSteam.on('end', function() {
             resolve(config.tmpUrlBase + tempFile)
           })
         }
@@ -464,13 +484,17 @@ function ejs2File(templateFile, renderData, options, outputType, res) {
           resolve()
         } else {
           let tempFile = tempName + '.pdf'
-          outSteam.pipe(fs.createWriteStream(path.join(__dirname, '../', config.tempDir, tempFile)))
-          outSteam.on('end', function () {
+          outSteam.pipe(
+            fs.createWriteStream(
+              path.join(__dirname, '../', config.tempDir, tempFile)
+            )
+          )
+          outSteam.on('end', function() {
             resolve(config.tmpUrlBase + tempFile)
           })
         }
       } else {
-        reject("outputType error")
+        reject('outputType error')
       }
     } catch (error) {
       reject(error)
@@ -479,25 +503,33 @@ function ejs2File(templateFile, renderData, options, outputType, res) {
 }
 
 function ejs2xlsx(templateFile, renderData, res) {
-  return new Promise(function (resolve, reject) {
+  return new Promise(function(resolve, reject) {
     try {
-      let templateBuf = fs.readFileSync(path.join(__dirname, '../dumpTemplate/' + templateFile))
-      ejsExcel.renderExcel(templateBuf, renderData).then(function (exlBuf) {
-        let tempName = uuid.v4().replace(/-/g, '') + '.xlsx'
-        if (res) {
-          res.type('xlsx')
-          res.set({
-            'Content-Disposition': 'attachment; filename=' + tempName
-          })
-          res.send(exlBuf)
-          resolve()
-        } else {
-          fs.writeFileSync(path.join(__dirname, '../', config.tempDir, tempName), exlBuf);
-          resolve(config.tmpUrlBase + tempName)
-        }
-      }).catch(function (error) {
-        reject(error);
-      });
+      let templateBuf = fs.readFileSync(
+        path.join(__dirname, '../dumpTemplate/' + templateFile)
+      )
+      ejsExcel
+        .renderExcel(templateBuf, renderData)
+        .then(function(exlBuf) {
+          let tempName = uuid.v4().replace(/-/g, '') + '.xlsx'
+          if (res) {
+            res.type('xlsx')
+            res.set({
+              'Content-Disposition': 'attachment; filename=' + tempName
+            })
+            res.send(exlBuf)
+            resolve()
+          } else {
+            fs.writeFileSync(
+              path.join(__dirname, '../', config.tempDir, tempName),
+              exlBuf
+            )
+            resolve(config.tmpUrlBase + tempName)
+          }
+        })
+        .catch(function(error) {
+          reject(error)
+        })
     } catch (error) {
       reject(error)
     }
@@ -508,23 +540,28 @@ function getWSClients(req) {
   let authorization = req.get('authorization')
   let clients = []
   global.wss.clients.forEach(function each(client) {
-    if (client.readyState === WebSocket.OPEN && authorization === client.authorization) {
+    if (
+      client.readyState === WebSocket.OPEN &&
+      authorization === client.authorization
+    ) {
       clients.push(client)
     }
-  });
+  })
   return clients
 }
 
 function getWSClientsByToken(token) {
   let clients = []
   global.wss.clients.forEach(function each(client) {
-    if (client.readyState === WebSocket.OPEN && token === client.authorization) {
+    if (
+      client.readyState === WebSocket.OPEN &&
+      token === client.authorization
+    ) {
       clients.push(client)
     }
-  });
+  })
   return clients
 }
-
 
 function wsClientsSend(clents, msg) {
   for (let c of clents) {
@@ -561,4 +598,4 @@ module.exports = {
   wsClientsSend: wsClientsSend,
   getWSClientsByToken: getWSClientsByToken,
   wsClientsClose: wsClientsClose
-};
+}
