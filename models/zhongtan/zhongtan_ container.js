@@ -10,9 +10,6 @@ module.exports = db.defineModel('tbl_zhongtan_container', {
   billloading_id: { // 提单号
     type: db.STRING(100),
   },
-  container_type: { // 集装箱类型
-    type: db.STRING(20)
-  },
   container_no: { // 箱号
     type: db.STRING(20)
   },
