@@ -81,5 +81,8 @@ app.post('/api/common/system/OperatorControl', services.OperatorControlSRV.Opera
 app.post('/api/common/system/UserSetting', services.UserSettingSRV.UserSettingResource);
 app.post('/api/common/system/ResetPassword', services.UserResetPasswordSRV.UserResetPasswordResource);
 
+// zhongtan
+app.post('/api/zhongtan/export/Booking', services.BookingSRV.BookingResource);
+
 // todo
 module.exports = app;
