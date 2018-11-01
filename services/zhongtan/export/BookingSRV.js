@@ -18,7 +18,14 @@ async function initAct(req, res) {
   try {
     let doc = common.docTrim(req.body)
     let user = req.user
-    let returnData = {}
+    let returnData = {
+      PackageUnitINFO: GLBConfig.PackageUnitINFO,
+      VolumeUnitINFO: GLBConfig.VolumeUnitINFO,
+      WeightUnitINFO: GLBConfig.WeightUnitINFO,
+      ContainerSizeINFO: GLBConfig.ContainerSizeINFO,
+      ContainerTypeINFO: GLBConfig.ContainerTypeINFO,
+      PayTypeINFO: GLBConfig.PayTypeINFO
+    }
     common.sendData(res, returnData)
   } catch (error) {
     common.sendFault(res, error)

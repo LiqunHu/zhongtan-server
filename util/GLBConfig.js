@@ -65,5 +65,43 @@ module.exports = {
       id: '0',
       text: '否'
     }
+  ],
+  PackageUnitINFO: [
+    {
+      id: 'BAG',
+      text: 'BAG'
+    }
+  ],
+  VolumeUnitINFO: [
+    {
+      id: 'M3',
+      text: 'M3'
+    }
+  ],
+  WeightUnitINFO: [
+    {
+      id: 'KG',
+      text: 'KG'
+    }
+  ],
+  ContainerSizeINFO: [
+    { id: '20', text: '20' },
+    { id: '40', text: '40' },
+    { id: '45', text: '45' }
+  ],
+  ContainerTypeINFO: [
+    { id: 'GP', text: 'GP' },
+    { id: 'HC', text: 'HC' },
+    { id: 'HT', text: 'HT' },
+    { id: 'OT', text: 'OT' },
+    { id: 'PF', text: 'PF' },
+    { id: 'RF', text: 'RF' },
+    { id: 'RH', text: 'RH' },
+    { id: 'TK', text: 'TK' },
+    { id: 'FR', text: 'FR' }
+  ],
+  PayTypeINFO: [
+    { id: 'Prepaid', text: 'Prepaid' },
+    { id: 'Collect', text: 'Collect' }
   ]
 }

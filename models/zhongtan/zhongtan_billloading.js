@@ -19,11 +19,59 @@ module.exports = db.defineModel('tbl_zhongtan_billoading', {
     type: db.STRING(10),
     allowNull: false
   },
-  billloading_destination_place: { // 目的港
+  billloading_vessel: {
     type: db.STRING(100),
     allowNull: true
   },
-  billloading_delivery_place: { // 交货地
+  billloading_voyage: {
+    type: db.STRING(50),
+    allowNull: true
+  },
+  billloading_shipper_id: {
+    type: db.ID,
+    allowNull: true
+  },
+  billloading_consignee_name: { // 收货人姓名
+    type: db.STRING(50),
+    allowNull: true
+  },
+  billloading_consignee_tel: { // 收货人电话 
+    type: db.STRING(50),
+    allowNull: true
+  },
+  billloading_consignee_address: { // 收货人地址 
+    type: db.STRING(200),
+    allowNull: true
+  },
+  billloading_consignee_tin: { // 收货人tin
+    type: db.STRING(50),
+    allowNull: true
+  },
+  billloading_notify_name: { // 联系人姓名
+    type: db.STRING(50),
+    allowNull: true
+  },
+  billloading_notify_tel: { // 联系人电话 
+    type: db.STRING(50),
+    allowNull: true
+  },
+  billloading_notify_address: { // 联系人地址 
+    type: db.STRING(200),
+    allowNull: true
+  },
+  billloading_notify_tin: { // 联系人tin
+    type: db.STRING(50),
+    allowNull: true
+  },
+  billloading_original_num: { // 提单原件数量
+    type: db.STRING(10),
+    allowNull: true
+  },
+  billloading_copys_num: { // 提单拷贝数量
+    type: db.STRING(10),
+    allowNull: true
+  },
+  billloading_loading_port: { // 起始港
     type: db.STRING(100),
     allowNull: true
   },
@@ -31,48 +79,16 @@ module.exports = db.defineModel('tbl_zhongtan_billoading', {
     type: db.STRING(100),
     allowNull: true
   },
-  billloading_origin_port: { // 起始港
+  billloading_delivery_place: { // 交货地
     type: db.STRING(100),
     allowNull: true
   },
-  billloading_container_number: { // 集装箱数量
-    type: db.INTEGER,
+  billloading_stuffing_place: {
+    type: db.STRING(100),
     allowNull: true
   },
-  billloading_goods_description: { // 商品描述
-    type: db.STRING(50),
-    allowNull: true
-  },
-  billloading_package_number: { // 商品数量
-    type: db.INTEGER,
-    allowNull: true
-  },
-  billloading_package_unit: { // 商品单位
-    type: db.STRING(50),
-    allowNull: true
-  },
-  billloading_gross_weight: { // 毛重
-    type: db.INTEGER,
-    allowNull: true
-  },
-  billloading_gross_unit: { // 毛重单位
-    type: db.STRING(50),
-    allowNull: true
-  },
-  billloading_gross_volume: { // 毛体积
-    type: db.INTEGER,
-    allowNull: true
-  },
-  billloading_gross_volume_unit: { // 毛体积单位
-    type: db.STRING(50),
-    allowNull: true
-  },
-  billloading_net_weight: { // 净重
-    type: db.INTEGER,
-    allowNull: true
-  },
-  billloading_net_weight_unit: { // 净重单位
-    type: db.STRING(50),
+  billloading_stuffing_date: {
+    type: db.STRING(10),
     allowNull: true
   },
   billloading_invoice_value: { // 发票金额
@@ -132,38 +148,6 @@ module.exports = db.defineModel('tbl_zhongtan_billoading', {
     allowNull: true
   },
   billloading_exporter_tin: { // 
-    type: db.STRING(50),
-    allowNull: true
-  },
-  billloading_consignee_name: { // 收货人姓名
-    type: db.STRING(50),
-    allowNull: true
-  },
-  billloading_consignee_tel: { // 收货人电话 
-    type: db.STRING(50),
-    allowNull: true
-  },
-  billloading_consignee_address: { // 收货人地址 
-    type: db.STRING(200),
-    allowNull: true
-  },
-  billloading_consignee_tin: { // 收货人tin
-    type: db.STRING(50),
-    allowNull: true
-  },
-  billloading_notify_name: { // 联系人姓名
-    type: db.STRING(50),
-    allowNull: true
-  },
-  billloading_notify_tel: { // 联系人电话 
-    type: db.STRING(50),
-    allowNull: true
-  },
-  billloading_notify_address: { // 联系人地址 
-    type: db.STRING(200),
-    allowNull: true
-  },
-  billloading_notify_tin: { // 联系人tin
     type: db.STRING(50),
     allowNull: true
   },
