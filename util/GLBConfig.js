@@ -103,5 +103,13 @@ module.exports = {
   PayTypeINFO: [
     { id: 'Prepaid', text: 'Prepaid' },
     { id: 'Collect', text: 'Collect' }
+  ],
+  PayStatusINFO: [
+    { id: 'CY', text: 'CY' },
+    { id: 'CFS', text: 'CFS' }
+  ],
+  BLSTATUS_PRE_BOOKING: '1',
+  BLSTATUSINFO: [
+    {id:'1', text: 'Pre-Booking', style: 'label-default'}
   ]
 }

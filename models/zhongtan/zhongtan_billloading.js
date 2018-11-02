@@ -2,14 +2,14 @@ const db = require('../../util/db');
 // 提单表
 
 module.exports = db.defineModel('tbl_zhongtan_billoading', {
-  billoading_id: {
+  billloading_id: {
     type: db.IDNO,
     autoIncrement: true,
     primaryKey: true
   },
   billloading_no: { // 提单号
     type: db.STRING(100),
-    allowNull: false
+    allowNull: true
   },
   billloading_type: { // 提单类型 进口出口
     type: db.STRING(10),
@@ -83,20 +83,28 @@ module.exports = db.defineModel('tbl_zhongtan_billoading', {
     type: db.STRING(100),
     allowNull: true
   },
-  billloading_stuffing_place: {
+  billloading_stuffing_place: { // 装货地
     type: db.STRING(100),
     allowNull: true
   },
-  billloading_stuffing_date: {
+  billloading_stuffing_date: { // 装货日期
+    type: db.DATEONLY,
+    allowNull: true
+  },
+  billloading_stuffing_requirement: { //装货特殊要求
+    type: db.STRING(500),
+    allowNull: true
+  },
+  billloading_pay_date: { // 付款日期
+    type: db.DATEONLY,
+    allowNull: true
+  },
+  billloading_invoice_currency: { // 发票币种
     type: db.STRING(10),
     allowNull: true
   },
   billloading_invoice_value: { // 发票金额
     type: db.INTEGER,
-    allowNull: true
-  },
-  billloading_invoice_currency: { // 发票币种
-    type: db.STRING(10),
     allowNull: true
   },
   billloading_freight_charge: { // 运费金额
