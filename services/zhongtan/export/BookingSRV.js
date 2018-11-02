@@ -3,6 +3,7 @@ const GLBConfig = require('../../../util/GLBConfig')
 const logger = require('../../../util/Logger').createLogger('BookingSRV')
 const model = require('../../../model')
 
+const sequelize = model.sequelize
 const tb_billloading = model.zhongtan_billloading
 const tb_billloading_container = model.zhongtan_billloading_container
 
@@ -42,7 +43,22 @@ async function searchAct(req, res) {
   try {
     let doc = common.docTrim(req.body)
     let user = req.user
-    
+    let returnData = {}
+
+    let queryStr = `select * from tbl_zhongtan_billoading where state = '1' and billloading_shipper_id = ?`
+    let replacements = [user.user_id]
+
+    if (doc.search_text) {}
+
+    let result = await common.queryWithCount(
+      sequelize,
+      req,
+      queryStr,
+      replacements
+    )
+
+    returnData.total = result.count
+    returnData.rows = result.data
 
     common.sendData(res, returnData)
   } catch (error) {
@@ -85,22 +101,15 @@ async function bookingAct(req, res) {
         billloading_container_number: c.billloading_container_number,
         billloading_container_size: c.billloading_container_size,
         billloading_container_type: c.billloading_container_type,
-        billloading_container_goods_description:
-          c.billloading_container_goods_description,
-        billloading_container_package_number:
-          c.billloading_container_package_number,
-        billloading_container_package_unit:
-          c.billloading_container_package_unit,
-        billloading_container_gross_weight:
-          c.billloading_container_gross_weight,
+        billloading_container_goods_description: c.billloading_container_goods_description,
+        billloading_container_package_number: c.billloading_container_package_number,
+        billloading_container_package_unit: c.billloading_container_package_unit,
+        billloading_container_gross_weight: c.billloading_container_gross_weight,
         billloading_container_gross_unit: c.billloading_container_gross_unit,
-        billloading_container_gross_volume:
-          c.billloading_container_gross_volume,
-        billloading_container_gross_volume_unit:
-          c.billloading_container_gross_volume_unit,
+        billloading_container_gross_volume: c.billloading_container_gross_volume,
+        billloading_container_gross_volume_unit: c.billloading_container_gross_volume_unit,
         billloading_container_net_weight: c.billloading_container_net_weight,
-        billloading_container_net_weight_unit:
-          c.billloading_container_net_weight_unit
+        billloading_container_net_weight_unit: c.billloading_container_net_weight_unit
       })
     }
 
