@@ -32,7 +32,8 @@ async function initAct(req, res) {
       ContainerSizeINFO: GLBConfig.ContainerSizeINFO,
       ContainerTypeINFO: GLBConfig.ContainerTypeINFO,
       PayTypeINFO: GLBConfig.PayTypeINFO,
-      PayStatusINFO: GLBConfig.PayStatusINFO
+      PayStatusINFO: GLBConfig.PayStatusINFO,
+      BLSTATUSINFO: GLBConfig.BLSTATUSINFO
     }
     common.sendData(res, returnData)
   } catch (error) {
