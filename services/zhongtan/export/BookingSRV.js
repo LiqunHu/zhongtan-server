@@ -68,7 +68,17 @@ async function searchAct(req, res) {
     )
 
     returnData.total = result.count
-    returnData.rows = result.data
+    returnData.rows = []
+
+    for(let bl of result.data) {
+      let d = JSON.parse(JSON.stringify(bl))
+      d.billloading_consignee = {
+        name: d.billloading_consignee_name,
+        address: d.billloading_consignee_address,
+        telephone: d.billloading_consignee_tel
+      }
+      returnData.rows.push(d)
+    }
 
     common.sendData(res, returnData)
   } catch (error) {
