@@ -77,6 +77,12 @@ async function searchAct(req, res) {
         address: d.billloading_consignee_address,
         telephone: d.billloading_consignee_tel
       }
+
+      d.billloading_notify = {
+        name: d.billloading_notify_name,
+        address: d.billloading_notify_address,
+        telephone: d.billloading_notify_tel
+      }
       returnData.rows.push(d)
     }
 
