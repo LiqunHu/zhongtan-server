@@ -16,6 +16,8 @@ exports.BookingResource = (req, res) => {
     searchAct(req, res)
   } else if (method === 'booking') {
     bookingAct(req, res)
+  } else if (method === 'modify') {
+    modifyAct(req, res)
   } else {
     common.sendError(res, 'common_01')
   }
@@ -55,8 +57,8 @@ async function searchAct(req, res) {
       replacements.push(doc.start_date)
       replacements.push(
         moment(doc.end_date, 'YYYY-MM-DD')
-          .add(1, 'days')
-          .format('YYYY-MM-DD')
+        .add(1, 'days')
+        .format('YYYY-MM-DD')
       )
     }
 
@@ -70,7 +72,7 @@ async function searchAct(req, res) {
     returnData.total = result.count
     returnData.rows = []
 
-    for(let bl of result.data) {
+    for (let bl of result.data) {
       let d = JSON.parse(JSON.stringify(bl))
       d.billloading_consignee = {
         name: d.billloading_consignee_name,
@@ -127,22 +129,15 @@ async function bookingAct(req, res) {
         billloading_container_number: c.billloading_container_number,
         billloading_container_size: c.billloading_container_size,
         billloading_container_type: c.billloading_container_type,
-        billloading_container_goods_description:
-          c.billloading_container_goods_description,
-        billloading_container_package_number:
-          c.billloading_container_package_number,
-        billloading_container_package_unit:
-          c.billloading_container_package_unit,
-        billloading_container_gross_weight:
-          c.billloading_container_gross_weight,
+        billloading_container_goods_description: c.billloading_container_goods_description,
+        billloading_container_package_number: c.billloading_container_package_number,
+        billloading_container_package_unit: c.billloading_container_package_unit,
+        billloading_container_gross_weight: c.billloading_container_gross_weight,
         billloading_container_gross_unit: c.billloading_container_gross_unit,
-        billloading_container_gross_volume:
-          c.billloading_container_gross_volume,
-        billloading_container_gross_volume_unit:
-          c.billloading_container_gross_volume_unit,
+        billloading_container_gross_volume: c.billloading_container_gross_volume,
+        billloading_container_gross_volume_unit: c.billloading_container_gross_volume_unit,
         billloading_container_net_weight: c.billloading_container_net_weight,
-        billloading_container_net_weight_unit:
-          c.billloading_container_net_weight_unit
+        billloading_container_net_weight_unit: c.billloading_container_net_weight_unit
       })
     }
 
@@ -150,5 +145,49 @@ async function bookingAct(req, res) {
   } catch (error) {
     common.sendFault(res, error)
     return
+  }
+}
+
+async function modifyAct(req, res) {
+  try {
+    let doc = common.docTrim(req.body)
+    let user = req.user
+
+    let modibillloading = await tb_billloading.findOne({
+      where: {
+        billloading_id: doc.old.billloading_id,
+        state: GLBConfig.ENABLE
+      }
+    })
+    if (modibillloading) {
+      modibillloading.billloading_vessel = doc.new.billloading_vessel
+      modibillloading.billloading_voyage = doc.new.billloading_voyage
+      modibillloading.billloading_consignee_name = doc.new.billloading_consignee.name
+      modibillloading.billloading_consignee_address = doc.new.billloading_consignee.address
+      modibillloading.billloading_consignee_tel = doc.new.billloading_consignee.telephone
+
+      await modibillloading.save()
+
+      let d = JSON.parse(JSON.stringify(modibillloading))
+      d.billloading_consignee = {
+        name: d.billloading_consignee_name,
+        address: d.billloading_consignee_address,
+        telephone: d.billloading_consignee_tel
+      }
+
+      d.billloading_notify = {
+        name: d.billloading_notify_name,
+        address: d.billloading_notify_address,
+        telephone: d.billloading_notify_tel
+      }
+      common.sendData(res, d)
+      return
+    } else {
+      common.sendError(res, 'operator_03')
+      return
+    }
+  } catch (error) {
+    common.sendFault(res, error)
+    return null
   }
 }
