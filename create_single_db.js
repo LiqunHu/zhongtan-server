@@ -1,7 +1,7 @@
 const model = require('./model.js');
 
 // change saleoutitemorder to your table
-const tb_table = model.nca_amortizereceive;
+const tb_table = model.zhongtan_web_article;
 
 if (process.env.NODE_ENV !== 'production') {
     tb_table.sync({

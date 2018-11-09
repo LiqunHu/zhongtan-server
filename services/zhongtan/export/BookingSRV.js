@@ -18,6 +18,8 @@ exports.BookingResource = (req, res) => {
     bookingAct(req, res)
   } else if (method === 'modify') {
     modifyAct(req, res)
+  } else if (method === 'delete') {
+    deleteAct(req, res)
   } else {
     common.sendError(res, 'common_01')
   }

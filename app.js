@@ -83,6 +83,7 @@ app.post('/api/common/system/ResetPassword', services.UserResetPasswordSRV.UserR
 
 // zhongtan
 app.post('/api/zhongtan/export/Booking', services.BookingSRV.BookingResource);
+app.post('/api/zhongtan/web/WebControl', services.WebControlSRV.WebControlResource);
 
 // todo
 module.exports = app;
