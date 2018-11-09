@@ -2,6 +2,7 @@ const moment = require('moment')
 const common = require('../../../util/CommonUtil')
 const GLBConfig = require('../../../util/GLBConfig')
 const logger = require('../../../util/Logger').createLogger('BookingSRV')
+const MarkdownIt = require('../../../util/markdown.js');
 const model = require('../../../model')
 
 const sequelize = model.sequelize
@@ -13,6 +14,8 @@ exports.WebResource = (req, res) => {
     getHomePageBoardAct(req, res)
   } else if (method === 'getMessages') {
     getMessagesAct(req, res)
+  } else if (method === 'getArticle') {
+    getArticleAct(req, res)
   } else {
     common.sendError(res, 'common_01')
   }
@@ -74,5 +77,25 @@ async function getMessagesAct(req, res) {
     common.sendData(res, returnData)
   } catch (error) {
     common.sendFault(res, error)
+  }
+}
+
+async function getArticleAct(req, res) {
+  try {
+    let doc = common.docTrim(req.body)
+
+    let article = await tb_web_article.findOne({
+      where: {
+        web_article_id: doc.web_article_id
+      }
+    })
+
+    let returnData = JSON.parse(JSON.stringify(article))
+
+    returnData.web_article_markdown = MarkdownIt.render(returnData.web_article_body)
+    returnData.created_at = moment(article.created_at).format("YYYY/MM/DD")
+    common.sendData(res, returnData);
+  } catch (error) {
+    common.sendFault(res, error);
   }
 }
