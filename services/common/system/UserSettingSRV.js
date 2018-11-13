@@ -7,7 +7,7 @@ const model = require('../../../model')
 const tb_user = model.common_user
 
 exports.UserSettingResource = (req, res) => {
-  let method = req.query.method
+  let method = common.reqTrans(req, __filename)
   if (method === 'setpwd') {
     setpwdAct(req, res)
   } else if (method === 'modify') {

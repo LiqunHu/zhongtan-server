@@ -9,7 +9,7 @@ const tb_common_systemmenu = model.common_systemmenu
 const tb_common_api = model.common_api
 
 exports.SystemApiControlResource = (req, res) => {
-  let method = req.query.method
+  let method = common.reqTrans(req, __filename)
   if (method === 'init') {
     initAct(req, res)
   } else if (method === 'search') {

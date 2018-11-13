@@ -14,7 +14,7 @@ const tb_common_domainmenu = model.common_domainmenu
 let groups = []
 
 exports.DomainGroupApiControlResource = (req, res) => {
-  let method = req.query.method
+  let method = common.reqTrans(req, __filename)
   if (method === 'init') {
     initAct(req, res)
   } else if (method === 'search') {

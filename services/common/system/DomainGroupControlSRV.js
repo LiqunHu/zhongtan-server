@@ -11,7 +11,7 @@ const tb_common_domainmenu = model.common_domainmenu
 const tb_common_usergroupmenu = model.common_usergroupmenu
 
 exports.DomainGroupControlResource = (req, res) => {
-  let method = req.query.method
+  let method = common.reqTrans(req, __filename)
   if (method === 'init') {
     initAct(req, res)
   } else if (method === 'search') {

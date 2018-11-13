@@ -25,7 +25,7 @@ exports.AuthMiddleware = async (req, res, next) => {
     }
 
     let patha = req.path.split('/')
-    let func = patha[patha.length - 1].toUpperCase()
+    let func = patha[patha.length - 2].toUpperCase()
     let checkresult = await Security.token2user(req)
 
     if (func in apis) {

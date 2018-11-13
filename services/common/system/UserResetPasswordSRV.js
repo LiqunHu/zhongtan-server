@@ -10,7 +10,7 @@ const tb_usergroup = model.common_usergroup
 const tb_user = model.common_user
 let groups = []
 exports.UserResetPasswordResource = (req, res) => {
-  let method = req.query.method
+  let method = common.reqTrans(req, __filename)
   if (method === 'init') {
     initAct(req, res)
   } else if (method === 'search') {

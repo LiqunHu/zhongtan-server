@@ -73,8 +73,8 @@ exports.token2user = async req => {
       }
 
       let patha = req.path.split('/')
-      let func = patha[patha.length - 1].toUpperCase()
-      let method = req.params.method
+      let func = patha[patha.length - 2].toUpperCase()
+      let method = patha[patha.length - 1]
 
       if (
         config.syslogFlag &&

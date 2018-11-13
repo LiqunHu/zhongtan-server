@@ -10,7 +10,7 @@ const tb_common_domaintemplate = model.common_domaintemplate
 const tb_common_templatemenu = model.common_templatemenu
 
 exports.DomainTemplateControlResource = (req, res) => {
-  let method = req.query.method
+  let method = common.reqTrans(req, __filename)
   if (method === 'init') {
     initAct(req, res)
   } else if (method === 'searchTemplate') {
