@@ -21,7 +21,7 @@ exports.UserSettingResource = (req, res) => {
 
 async function setpwdAct(req, res) {
   try {
-    let doc = common.docTrim(req.body)
+    let doc = common.docValidate(req)
     let user = req.user
 
     if (user.password != doc.oldPwd) {
@@ -50,7 +50,7 @@ async function setpwdAct(req, res) {
 
 async function modifyAct(req, res) {
   try {
-    let doc = common.docTrim(req.body)
+    let doc = common.docValidate(req)
     let user = req.user
 
     let modiuser = await tb_user.findOne({

@@ -150,7 +150,7 @@ async function genUserGroup(domain_id, parentId) {
 
 async function getCheckAct(req, res) {
   try {
-    let doc = common.docTrim(req.body)
+    let doc = common.docValidate(req)
     let returnData = {}
     returnData.groupMenu = []
 
@@ -170,7 +170,7 @@ async function getCheckAct(req, res) {
 
 async function addAct(req, res) {
   try {
-    let doc = common.docTrim(req.body)
+    let doc = common.docValidate(req)
     let user = req.user
 
     let usergroup = await tb_common_usergroup.create({
@@ -198,7 +198,7 @@ async function addAct(req, res) {
 
 async function modifyAct(req, res) {
   try {
-    let doc = common.docTrim(req.body)
+    let doc = common.docValidate(req)
     let user = req.user
     let usergroup = await tb_common_usergroup.findOne({
       where: {
@@ -234,7 +234,7 @@ async function modifyAct(req, res) {
 
 async function deleteAct(req, res) {
   try {
-    let doc = common.docTrim(req.body)
+    let doc = common.docValidate(req)
     let user = req.user
     let usergroup = await tb_common_usergroup.findOne({
       where: {

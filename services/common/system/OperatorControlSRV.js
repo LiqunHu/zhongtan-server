@@ -6,7 +6,6 @@ const logger = require('../../../util/Logger').createLogger('GroupControlSRV')
 const model = require('../../../model')
 const RedisClient = require('../../../util/RedisClient')
 
-const sequelize = model.sequelize
 const tb_usergroup = model.common_usergroup
 const tb_user = model.common_user
 
@@ -46,7 +45,7 @@ async function initAct(req, res) {
 
 async function searchAct(req, res) {
   try {
-    let doc = common.docTrim(req.body),
+    let doc = common.docValidate(req),
       user = req.user,
       returnData = {}
 
@@ -67,8 +66,7 @@ async function searchAct(req, res) {
       replacements.push(search_text)
     }
 
-    let result = await common.queryWithCount(
-      sequelize,
+    let result = await model.queryWithCount(
       req,
       queryStr,
       replacements
@@ -92,7 +90,7 @@ async function searchAct(req, res) {
 
 async function addAct(req, res) {
   try {
-    let doc = common.docTrim(req.body)
+    let doc = common.docValidate(req)
     let user = req.user
 
     let usergroup = await tb_usergroup.findOne({
@@ -146,7 +144,7 @@ async function addAct(req, res) {
 
 async function modifyAct(req, res) {
   try {
-    let doc = common.docTrim(req.body)
+    let doc = common.docValidate(req)
     let user = req.user
 
     let modiuser = await tb_user.findOne({
@@ -188,7 +186,7 @@ async function modifyAct(req, res) {
 
 async function deleteAct(req, res) {
   try {
-    let doc = common.docTrim(req.body)
+    let doc = common.docValidate(req)
     let user = req.user
 
     let deluser = await tb_user.findOne({

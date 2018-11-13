@@ -4,11 +4,10 @@ const GLBConfig = require('../../../util/GLBConfig')
 const logger = require('../../../util/Logger').createLogger('BookingSRV')
 const model = require('../../../model')
 
-const sequelize = model.sequelize
 const tb_web_article = model.zhongtan_web_article
 
 exports.WebControlResource = (req, res) => {
-  let method = req.query.method
+  let method = common.reqTrans(req, __filename)
   if (method === 'init') {
     initAct(req, res)
   } else if (method === 'search') {
@@ -30,7 +29,7 @@ exports.WebControlResource = (req, res) => {
 
 async function initAct(req, res) {
   try {
-    let doc = common.docTrim(req.body)
+    let doc = common.docValidate(req)
     let user = req.user
     common.sendData(res)
   } catch (error) {
@@ -40,20 +39,14 @@ async function initAct(req, res) {
 
 async function searchAct(req, res) {
   try {
-    let doc = common.docTrim(req.body),
+    let doc = common.docValidate(req),
       user = req.user,
       returnData = {}
 
-    let queryStr =
-      'select * from tbl_zhongtan_web_article where state = "1" and web_article_type = "1" order by created_at desc'
+    let queryStr = 'select * from tbl_zhongtan_web_article where state = "1" and web_article_type = "1" order by created_at desc'
     let replacements = []
 
-    let result = await common.queryWithCount(
-      sequelize,
-      req,
-      queryStr,
-      replacements
-    )
+    let result = await model.queryWithCount(req, queryStr, replacements)
 
     returnData.total = result.count
     returnData.rows = result.data
@@ -66,7 +59,7 @@ async function searchAct(req, res) {
 
 async function addAct(req, res) {
   try {
-    let doc = common.docTrim(req.body)
+    let doc = common.docValidate(req)
     if (!doc.web_article_img) {
       doc.web_article_img = ''
     }
@@ -87,7 +80,7 @@ async function addAct(req, res) {
 
 async function modifyAct(req, res) {
   try {
-    let doc = common.docTrim(req.body)
+    let doc = common.docValidate(req)
 
     let article = await tb_web_article.findOne({
       where: {
@@ -108,7 +101,7 @@ async function modifyAct(req, res) {
 
 async function deleteAct(req, res) {
   try {
-    let doc = common.docTrim(req.body)
+    let doc = common.docValidate(req)
 
     let article = await tb_web_article.findOne({
       where: {
@@ -140,7 +133,7 @@ async function mduploadAct(req, res) {
 
 async function mddeleteAct(req, res) {
   try {
-    let doc = common.docTrim(req.body)
+    let doc = common.docValidate(req)
     await common.fileRemove(doc.file_url)
 
     common.sendData(res)

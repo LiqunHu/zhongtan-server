@@ -22,7 +22,7 @@ const tb_common_usergroup = model.common_usergroup
 
 exports.AuthResource = async (req, res) => {
   try {
-    let doc = common.docTrim(req.body)
+    let doc = common.docValidate(req)
     let user
 
     if (!('loginType' in doc)) {
@@ -70,11 +70,11 @@ exports.AuthResource = async (req, res) => {
           doc.identifyCode,
           doc.magicNo
         )
-        res.append('authorization', session_token)
+        res.append('Authorization', session_token)
         let loginData = await loginInit(user, session_token, doc.loginType)
 
         if (loginData) {
-          loginData.authorization = session_token
+          loginData.Authorization = session_token
           return common.sendData(res, loginData)
         } else {
           return common.sendError(res, 'auth_05')
@@ -119,10 +119,10 @@ exports.AuthResource = async (req, res) => {
           user.user_username
         )
         user.session_key = wxAuthjs.session_key
-        res.append('authorization', session_token)
+        res.append('Authorization', session_token)
         let loginData = await loginInit(user, session_token, doc.loginType)
         if (loginData) {
-          loginData.authorization = session_token
+          loginData.Authorization = session_token
           return common.sendData(res, loginData)
         } else {
           return common.sendError(res, 'auth_05')
@@ -147,7 +147,7 @@ exports.AuthResource = async (req, res) => {
  */
 exports.SignOutResource = async (req, res) => {
   try {
-    let token_str = req.get('authorization')
+    let token_str = req.get('Authorization')
     if (token_str) {
       let tokensplit = token_str.split('-')
 
@@ -168,7 +168,7 @@ exports.SignOutResource = async (req, res) => {
   }
 }
 exports.SMSResource = async (req, res) => {
-  let doc = common.docTrim(req.body)
+  let doc = common.docValidate(req)
   if (!('phone' in doc)) {
     common.sendError(res, 'auth_06')
     return
@@ -195,7 +195,7 @@ exports.SMSResource = async (req, res) => {
 }
 exports.PhoneResetPasswordResource = async (req, res) => {
   try {
-    let doc = common.docTrim(req.body),
+    let doc = common.docValidate(req),
       user = req.user
 
     if (!('username' in doc)) {

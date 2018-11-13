@@ -95,7 +95,7 @@ async function genDomainMenu(domain_id, parentId) {
 
 async function searchAct(req, res) {
   try {
-    let doc = common.docTrim(req.body)
+    let doc = common.docValidate(req)
     let returnData = {}
     returnData.groupMenu = []
 
@@ -115,7 +115,7 @@ async function searchAct(req, res) {
 
 async function modifyAct(req, res) {
   try {
-    let doc = common.docTrim(req.body)
+    let doc = common.docValidate(req)
 
     await tb_common_usergroupmenu.destroy({
       where: {

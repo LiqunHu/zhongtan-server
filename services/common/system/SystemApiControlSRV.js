@@ -5,7 +5,6 @@ const logger = require('../../../util/Logger').createLogger('GroupControlSRV')
 const model = require('../../../model')
 
 // tables
-const sequelize = model.sequelize
 const tb_common_systemmenu = model.common_systemmenu
 const tb_common_api = model.common_api
 
@@ -101,7 +100,7 @@ async function genMenu(parentId) {
 
 async function addFolderAct(req, res) {
   try {
-    let doc = common.docTrim(req.body)
+    let doc = common.docValidate(req)
     let user = req.user
 
     let afolder = await tb_common_systemmenu.findOne({
@@ -134,7 +133,7 @@ async function addFolderAct(req, res) {
 
 async function modifyFolderAct(req, res) {
   try {
-    let doc = common.docTrim(req.body)
+    let doc = common.docValidate(req)
     let user = req.user
 
     let afolder = await tb_common_systemmenu.findOne({
@@ -174,7 +173,7 @@ async function modifyFolderAct(req, res) {
 
 async function addMenuAct(req, res) {
   try {
-    let doc = common.docTrim(req.body)
+    let doc = common.docValidate(req)
     let user = req.user
 
     let afolder = await tb_common_systemmenu.findOne({
@@ -222,7 +221,7 @@ async function addMenuAct(req, res) {
 
 async function modifyMenuAct(req, res) {
   try {
-    let doc = common.docTrim(req.body)
+    let doc = common.docValidate(req)
     let user = req.user
 
     let menum = await tb_common_systemmenu.findOne({
@@ -291,7 +290,7 @@ async function modifyMenuAct(req, res) {
 
 async function getApiAct(req, res) {
   try {
-    let doc = common.docTrim(req.body)
+    let doc = common.docValidate(req)
     let user = req.user
 
     let api = await tb_common_api.findOne({

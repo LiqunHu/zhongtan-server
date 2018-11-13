@@ -1,6 +1,5 @@
 const http = require('http')
 const querystring = require('querystring')
-const sendsms = require('send-sms')
 const common = require('../util/CommonUtil.js')
 const GLBConfig = require('../util/GLBConfig')
 const RedisClient = require('../util/RedisClient')
@@ -178,32 +177,33 @@ function sedRLYMsg(phone, templateId, msg) {
       reject('msg miss')
     }
 
-    let yurongyun = new sendsms.adapters.RonglianYun(
-      {
-        sid: 'aaf98f894f4fbec2014f6c943d4d135b',
-        token: '29ef088c9cc740908f96eec00ba2354c',
-        appId: '8a216da85cf298b3015d11944c6d0d07'
-      },
-      'sandbox'
-    )
+    // let yurongyun = new sendsms.adapters.RonglianYun(
+    //   {
+    //     sid: 'aaf98f894f4fbec2014f6c943d4d135b',
+    //     token: '29ef088c9cc740908f96eec00ba2354c',
+    //     appId: '8a216da85cf298b3015d11944c6d0d07'
+    //   },
+    //   'sandbox'
+    // )
 
-    let sms = new sendsms.SMS('ronglianyun', yurongyun)
+    // let sms = new sendsms.SMS('ronglianyun', yurongyun)
 
-    try {
-      if (typeof msg === 'string') {
-        sms.send(phone, {
-          templateId: templateId,
-          datas: [msg]
-        })
-      } else {
-        sms.send(phone, {
-          templateId: templateId,
-          datas: msg
-        })
-      }
-      resolve()
-    } catch (err) {
-      reject(err)
-    }
+    // try {
+    //   if (typeof msg === 'string') {
+    //     sms.send(phone, {
+    //       templateId: templateId,
+    //       datas: [msg]
+    //     })
+    //   } else {
+    //     sms.send(phone, {
+    //       templateId: templateId,
+    //       datas: msg
+    //     })
+    //   }
+    //   resolve()
+    // } catch (err) {
+    //   reject(err)
+    // }
+    resolve()
   })
 }

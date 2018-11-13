@@ -2,14 +2,13 @@ const moment = require('moment')
 const common = require('../../../util/CommonUtil')
 const GLBConfig = require('../../../util/GLBConfig')
 const logger = require('../../../util/Logger').createLogger('BookingSRV')
-const MarkdownIt = require('../../../util/markdown.js');
+const MarkdownIt = require('../../../util/markdown.js')
 const model = require('../../../model')
 
-const sequelize = model.sequelize
 const tb_web_article = model.zhongtan_web_article
 
 exports.WebResource = (req, res) => {
-  let method = req.query.method
+  let method = common.reqTrans(req, __filename)
   if (method === 'getHomePageBoard') {
     getHomePageBoardAct(req, res)
   } else if (method === 'getMessages') {
@@ -82,7 +81,7 @@ async function getMessagesAct(req, res) {
 
 async function getArticleAct(req, res) {
   try {
-    let doc = common.docTrim(req.body)
+    let doc = common.docValidate(req)
 
     let article = await tb_web_article.findOne({
       where: {
@@ -93,9 +92,9 @@ async function getArticleAct(req, res) {
     let returnData = JSON.parse(JSON.stringify(article))
 
     returnData.web_article_markdown = MarkdownIt.render(returnData.web_article_body)
-    returnData.created_at = moment(article.created_at).format("YYYY/MM/DD")
-    common.sendData(res, returnData);
+    returnData.created_at = moment(article.created_at).format('YYYY/MM/DD')
+    common.sendData(res, returnData)
   } catch (error) {
-    common.sendFault(res, error);
+    common.sendFault(res, error)
   }
 }

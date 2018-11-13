@@ -6,7 +6,6 @@ const logger = require('../../../util/Logger').createLogger('GroupControlSRV')
 const model = require('../../../model')
 
 // tables
-const sequelize = model.sequelize
 const tb_usergroup = model.common_usergroup
 const tb_user = model.common_user
 
@@ -23,7 +22,7 @@ exports.UserSelectDialogResource = (req, res) => {
 
 async function searchAct(req, res) {
   try {
-    let doc = common.docTrim(req.body),
+    let doc = common.docValidate(req),
       user = req.user,
       returnData = {}
     let groups = []
@@ -102,7 +101,7 @@ async function genUserGroup(domain_id, parentId) {
 
 async function searchUserAct(req, res) {
   try {
-    let doc = common.docTrim(req.body),
+    let doc = common.docValidate(req),
       user = req.user,
       returnData = []
 

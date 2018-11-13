@@ -1,0 +1,18 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Nodejs Service",
+    "description": "Nodejs Service",
+    "version": "1.0.0",
+    "contact": {
+      "email": "huliquns@126.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:9090",
+      "description": "dev"
+    }
+  ],
+  "security": [{ "ApiKeyAuth": [] }]
+}

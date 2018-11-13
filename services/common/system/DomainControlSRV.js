@@ -1,12 +1,10 @@
-const fs = require('fs')
+const Joi = require('joi')
 const common = require('../../../util/CommonUtil')
 const GLBConfig = require('../../../util/GLBConfig')
 const Sequence = require('../../../util/Sequence')
 const logger = require('../../../util/Logger').createLogger('GroupControlSRV')
 const model = require('../../../model')
 
-// tables
-const sequelize = model.sequelize
 const tb_common_domain = model.common_domain
 const tb_common_domaintemplate = model.common_domaintemplate
 const tb_usergroup = model.common_usergroup
@@ -14,10 +12,10 @@ const tb_user = model.common_user
 const tb_common_templatemenu = model.common_templatemenu
 const tb_common_domainmenu = model.common_domainmenu
 const tb_common_systemmenu = model.common_systemmenu
-const tb_usergroupmenu = model.common_usergroupmenu
 
 exports.DomainControlResource = (req, res) => {
-  let method = req.query.method
+  let method = common.reqTrans(req, __filename)
+  
   if (method === 'init') {
     initAct(req, res)
   } else if (method === 'search') {
@@ -43,9 +41,18 @@ exports.DomainControlResource = (req, res) => {
   }
 }
 
+/**
+ * @api {post} /api/common/system/DomainControl?method=init 获取机构数据字典
+ * @apiName DomainControl init
+ * @apiGroup DomainControl
+ * @apiVersion 1.0.0
+ * @apiDescription 获取机构数据字典
+ *
+ * @apiHeader {String} Authorization                 Authorization token.
+ */
 async function initAct(req, res) {
   try {
-    let doc = common.docTrim(req.body),
+    let doc = common.docValidate(req),
       user = req.user,
       returnData = {
         tfInfo: GLBConfig.TFINFO
@@ -68,9 +75,7 @@ async function initAct(req, res) {
         children: []
       }
     ]
-    returnData.sysmenus[0].children = JSON.parse(
-      JSON.stringify(await genMenu('0'))
-    )
+    returnData.sysmenus[0].children = JSON.parse(JSON.stringify(await genMenu('0')))
 
     common.sendData(res, returnData)
   } catch (error) {
@@ -118,9 +123,29 @@ async function genMenu(parentId) {
   return return_list
 }
 
+/**
+ * @api {post} /api/common/system/DomainControl?method=search 机构查询
+ * @apiName Domain search
+ * @apiGroup DomainControl
+ * @apiVersion 1.0.0
+ * @apiDescription 机构查询
+ *
+ * @apiHeader {String} Authorization                Authorization token.
+ *
+ * @apiParam {String} search_text                   Type, optional 查询条件.
+ * @apiParam {String} order                         Type, optional 排序.
+ * @apiParam {Number} limit                         Type, optional 数量限制.
+ * @apiParam {Number} offset                        Type, optional 偏移量.
+ */
+// const searchSchema = {
+//   search_text: Joi.string().empty('').max(50),
+//   order: Joi.string().empty('').max(50),
+//   limit: Joi.number().integer(),
+//   offset: Joi.number().integer()
+// }
 async function searchAct(req, res) {
   try {
-    let doc = common.docTrim(req.body),
+    let doc = common.docValidate(req),
       user = req.user,
       returnData = {}
 
@@ -128,20 +153,14 @@ async function searchAct(req, res) {
     let replacements = []
 
     if (doc.search_text) {
-      queryStr +=
-        ' and (domain like ? or domain_name like ? or domain_address like ?)'
+      queryStr += ' and (domain like ? or domain_name like ? or domain_address like ?)'
       let search_text = '%' + doc.search_text + '%'
       replacements.push(search_text)
       replacements.push(search_text)
       replacements.push(search_text)
     }
 
-    let result = await common.queryWithCount(
-      sequelize,
-      req,
-      queryStr,
-      replacements
-    )
+    let result = await model.queryWithCount(doc, queryStr, replacements)
 
     returnData.total = result.count
     returnData.rows = result.data
@@ -152,9 +171,29 @@ async function searchAct(req, res) {
   }
 }
 
+/**
+ * @api {post} /api/common/system/DomainControl?method=add 机构增加
+ * @apiName Domain add
+ * @apiGroup DomainControl
+ * @apiVersion 1.0.0
+ * @apiDescription 机构增加
+ *
+ * @apiHeader {String} Authorization                Authorization token.
+ *
+ * @apiParam {String} domain                        Type, parameter and Domain编号.
+ * @apiParam {Number} domaintemplate_id             Type, parameter and Domain模板id.
+ * @apiParam {String} domain_name                   Type, parameter and Domain名称.
+ * @apiParam {String} domain_province               Type, parameter and 省.
+ * @apiParam {String} domain_city                   Type, parameter and 市.
+ * @apiParam {String} domain_district               Type, parameter and 区.
+ * @apiParam {String} domain_address                Type, parameter and 地址.
+ * @apiParam {String} domain_contact                Type, parameter and 联系人.
+ * @apiParam {String} domain_phone                  Type, parameter and 联系电话.
+ * @apiParam {String} domain_description            Type, parameter and domain描述.
+ */
 async function addAct(req, res) {
   try {
-    let doc = common.docTrim(req.body)
+    let doc = common.docValidate(req)
     let user = req.user
     let domain = await tb_common_domain.findOne({
       where: {
@@ -224,11 +263,7 @@ async function addAct(req, res) {
               root_show_flag: m.root_show_flag,
               parent_id: cparentId
             })
-            sub_menus = await genDomainMenu(
-              domaintemplate_id,
-              m.templatemenu_id,
-              dm.domainmenu_id
-            )
+            sub_menus = await genDomainMenu(domaintemplate_id, m.templatemenu_id, dm.domainmenu_id)
           } else {
             let dm = await tb_common_domainmenu.create({
               domain_id: domain.domain_id,
@@ -253,9 +288,25 @@ async function addAct(req, res) {
   }
 }
 
+/**
+ * @api {post} /api/common/system/DomainControl?method=modify 机构修改
+ * @apiName Domain modify
+ * @apiGroup DomainControl
+ * @apiVersion 1.0.0
+ * @apiDescription 机构修改
+ *
+ * @apiHeader {String} Authorization                Authorization token.
+ *
+ * @apiParam {Object} new                           Type, parameter and 修改后数据.
+ * @apiParam {Object} old                           Type, parameter and 修改前记录.
+ */
+// const modifySchema = {
+//   new: Joi.object().keys(common.model2Schema(tb_common_domain)),
+//   old: Joi.object().keys(common.model2Schema(tb_common_domain))
+// }
 async function modifyAct(req, res) {
   try {
-    let doc = common.docTrim(req.body)
+    let doc = common.docValidate(req)
     let user = req.user
     let domain = await tb_common_domain.findOne({
       where: {
@@ -278,9 +329,20 @@ async function modifyAct(req, res) {
   }
 }
 
+/**
+ * @api {post} /api/common/system/DomainControl?method=searchDomainMenu 查询机构菜单
+ * @apiName Domain searchDomainMenu
+ * @apiGroup DomainControl
+ * @apiVersion 1.0.0
+ * @apiDescription 查询机构菜单
+ *
+ * @apiHeader {String} Authorization                Authorization token.
+ *
+ * @apiParam {Number} domain_id                     查询domain id.
+ */
 async function searchDomainMenuAct(req, res) {
   try {
-    let doc = common.docTrim(req.body),
+    let doc = common.docValidate(req),
       user = req.user
 
     let menus = [
@@ -292,9 +354,7 @@ async function searchDomainMenuAct(req, res) {
         children: []
       }
     ]
-    menus[0].children = JSON.parse(
-      JSON.stringify(await genDomainMenu(doc.domain_id, '0'))
-    )
+    menus[0].children = JSON.parse(JSON.stringify(await genDomainMenu(doc.domain_id, '0')))
 
     common.sendData(res, menus)
   } catch (error) {
@@ -341,9 +401,24 @@ async function genDomainMenu(domain_id, parentId) {
   return return_list
 }
 
+/**
+ * @api {post} /api/common/system/DomainControl?method=addFolder 增加目录
+ * @apiName Domain addFolder
+ * @apiGroup DomainControl
+ * @apiVersion 1.0.0
+ * @apiDescription Domain 增加目录
+ *
+ * @apiHeader {String} Authorization                Authorization token.
+ *
+ * @apiParam {Number} parent_id                     上级id.
+ * @apiParam {Number} domain_id                     机构id.
+ * @apiParam {String} domainmenu_name               目录名称.
+ * @apiParam {String} domainmenu_icon               目录图标.
+ * @apiParam {String} root_show_flag                是否显示表示.
+ */
 async function addFolderAct(req, res) {
   try {
-    let doc = common.docTrim(req.body)
+    let doc = common.docValidate(req)
     let user = req.user
 
     let nextIndex = await tb_common_domainmenu.max('domainmenu_index', {
@@ -373,9 +448,21 @@ async function addFolderAct(req, res) {
   }
 }
 
+/**
+ * @api {post} /api/common/system/DomainControl?method=modifyFolder 修改目录
+ * @apiName Domain modifyFolder
+ * @apiGroup DomainControl
+ * @apiVersion 1.0.0
+ * @apiDescription Domain 目录修改
+ *
+ * @apiHeader {String} Authorization                Authorization token.
+ *
+ * @apiParam {Object} new                           Type, parameter and 修改后数据.
+ * @apiParam {Object} old                           Type, parameter and 修改前记录.
+ */
 async function modifyFolderAct(req, res) {
   try {
-    let doc = common.docTrim(req.body)
+    let doc = common.docValidate(req)
     let user = req.user
 
     let folder = await tb_common_domainmenu.findOne({
@@ -399,9 +486,20 @@ async function modifyFolderAct(req, res) {
   }
 }
 
+/**
+ * @api {post} /api/common/system/DomainControl?method=deleteSelect 删除选定项
+ * @apiName Domain deleteSelect
+ * @apiGroup DomainControl
+ * @apiVersion 1.0.0
+ * @apiDescription Domain 删除选定项
+ *
+ * @apiHeader {String} Authorization                Authorization token.
+ *
+ * @apiParam {Number} domainmenu_id                 删除对象id.
+ */
 async function deleteSelectAct(req, res) {
   try {
-    let doc = common.docTrim(req.body)
+    let doc = common.docValidate(req)
     let user = req.user
 
     let tm = await tb_common_domainmenu.findOne({
@@ -438,9 +536,22 @@ async function folderDelete(domainmenu_id) {
   }
 }
 
+/**
+ * @api {post} /api/common/system/DomainControl?method=addMenus 目录增加菜单
+ * @apiName Domain addMenus
+ * @apiGroup DomainControl
+ * @apiVersion 1.0.0
+ * @apiDescription 向选定目录增加菜单
+ *
+ * @apiHeader {String} Authorization                Authorization token.
+ *
+ * @apiParam {Number} domain_id                     机构id.
+ * @apiParam {Number} parent_id                     目标目录id.
+ * @apiParam {Object[]} menus                       增加的菜单.
+ */
 async function addMenusAct(req, res) {
   try {
-    let doc = common.docTrim(req.body)
+    let doc = common.docValidate(req)
     let user = req.user
 
     let existM = await tb_common_domainmenu.findAll({
@@ -493,9 +604,20 @@ async function addMenusAct(req, res) {
   }
 }
 
+/**
+ * @api {post} /api/common/system/DomainControl?method=changeOrder 修改菜单顺序
+ * @apiName Domain changeOrder
+ * @apiGroup DomainControl
+ * @apiVersion 1.0.0
+ * @apiDescription 修改菜单顺序
+ *
+ * @apiHeader {String} Authorization                Authorization token.
+ *
+ * @apiParam {Object[]} menus                       新排序的菜单.
+ */
 async function changeOrderAct(req, res) {
   try {
-    let doc = common.docTrim(req.body)
+    let doc = common.docValidate(req)
     let user = req.user
 
     for (let i = 0; i < doc.menus.length; i++) {

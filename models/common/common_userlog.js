@@ -1,4 +1,4 @@
-const db = require('../../util/db');
+const db = require('../../util/db')
 
 module.exports = db.defineModel('tbl_common_userlog', {
   userlog_id: {
@@ -7,7 +7,7 @@ module.exports = db.defineModel('tbl_common_userlog', {
     primaryKey: true
   },
   user_id: {
-    type: db.ID,
+    type: db.ID
   },
   api_function: {
     type: db.STRING(100)
@@ -17,5 +17,5 @@ module.exports = db.defineModel('tbl_common_userlog', {
   },
   userlog_para: {
     type: db.TEXT
-  } 
-});
+  }
+})

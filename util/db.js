@@ -5,6 +5,7 @@ const config = require('../config')
 const common = require('./CommonUtil.js')
 const logger = require('./Logger').createLogger('db.js')
 const elaClient = require('./elasticsearchClient.js')
+const MongoCli = require('./MongoClient')
 
 logger.debug('init sequelize...')
 
@@ -102,13 +103,13 @@ function defineModel(name, attributes, params) {
               obj.version++
             }
           },
-          afterCreate: function(obj) {
-            if (config.elasticsearchFlag) {
-              try {
-                let jsonObj = JSON.parse(JSON.stringify(obj))
-                if (obj.constructor.tableName === 'tbl_common_user') {
-                  delete jsonObj.password
-                }
+          afterCreate: async function(obj) {
+            try {
+              let jsonObj = JSON.parse(JSON.stringify(obj))
+              if (obj.constructor.tableName === 'tbl_common_user') {
+                delete jsonObj.password
+              }
+              if (config.elasticsearchFlag) {
                 elaClient
                   .create({
                     index:
@@ -125,18 +126,24 @@ function defineModel(name, attributes, params) {
                       logger.error(err)
                     }
                   )
-              } catch (error) {
-                logger.error(err)
               }
+
+              if (config.mongoSyncFlag) {
+                let db = await MongoCli.getDb()
+                let collection = db.collection(obj.constructor.tableName)
+                await collection.insertOne(jsonObj)
+              }
+            } catch (error) {
+              logger.error(err)
             }
           },
-          afterUpdate: function(obj) {
-            if (config.elasticsearchFlag) {
-              try {
-                let jsonObj = JSON.parse(JSON.stringify(obj))
-                if (obj.constructor.tableName === 'tbl_common_user') {
-                  delete jsonObj.password
-                }
+          afterUpdate: async function(obj) {
+            try {
+              let jsonObj = JSON.parse(JSON.stringify(obj))
+              if (obj.constructor.tableName === 'tbl_common_user') {
+                delete jsonObj.password
+              }
+              if (config.elasticsearchFlag) {
                 elaClient
                   .index({
                     index:
@@ -153,9 +160,19 @@ function defineModel(name, attributes, params) {
                       logger.error(err)
                     }
                   )
-              } catch (error) {
-                logger.error(err)
               }
+
+              if (config.mongoSyncFlag) {
+                let db = await MongoCli.getDb()
+                let collection = db.collection(obj.constructor.tableName)
+                let key = obj.constructor.primaryKeyField
+                let queryCondition = {}
+                queryCondition[key] = obj[key]
+
+                let result = await collection.updateOne(queryCondition, { $set: jsonObj })
+              }
+            } catch (error) {
+              logger.error(err)
             }
           },
           afterBulkCreate: function(instances) {
@@ -227,5 +244,32 @@ for (let type of TYPES) {
 exp.ID = ID_TYPE
 exp.IDNO = IDNO_TYPE
 exp.sequelize = sequelize
+
+if (config.RWSeperateFlag) {
+  let sequelizeQuery = new Sequelize(
+    config.sequelizeQuery.database,
+    config.sequelizeQuery.username,
+    config.sequelizeQuery.password,
+    {
+      host: config.sequelizeQuery.host,
+      port: config.sequelizeQuery.port,
+      dialect: config.sequelizeQuery.dialect,
+      timezone: '+08:00', //东八时区
+      pool: {
+        max: 5, // max
+        min: 0, // min
+        idle: 10000 //10 seconds
+      },
+      retry: {
+        match: 'getaddrinfo ENOTFOUND',
+        max: 3
+      },
+      logging: function(sql) {
+        logger.debug(sql)
+      }
+    }
+  )
+  exp.sequelizeQuery = sequelizeQuery
+}
 
 module.exports = exp

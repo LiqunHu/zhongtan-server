@@ -6,3 +6,5 @@ mongodb
 .DS_Store
 .DS_Store?
 log
+public/apidoc
+public/swagger/swagger.json

@@ -4,12 +4,11 @@ const GLBConfig = require('../../../util/GLBConfig')
 const logger = require('../../../util/Logger').createLogger('BookingSRV')
 const model = require('../../../model')
 
-const sequelize = model.sequelize
 const tb_billloading = model.zhongtan_billloading
 const tb_billloading_container = model.zhongtan_billloading_container
 
 exports.BookingResource = (req, res) => {
-  let method = req.query.method
+  let method = common.reqTrans(req, __filename)
   if (method === 'init') {
     initAct(req, res)
   } else if (method === 'search') {
@@ -27,7 +26,7 @@ exports.BookingResource = (req, res) => {
 
 async function initAct(req, res) {
   try {
-    let doc = common.docTrim(req.body)
+    let doc = common.docValidate(req)
     let user = req.user
     let returnData = {
       PackageUnitINFO: GLBConfig.PackageUnitINFO,
@@ -41,13 +40,13 @@ async function initAct(req, res) {
     }
     common.sendData(res, returnData)
   } catch (error) {
-    common.sendFault(res, error)
+    return common.sendFault(res, error)
   }
 }
 
 async function searchAct(req, res) {
   try {
-    let doc = common.docTrim(req.body)
+    let doc = common.docValidate(req)
     let user = req.user
     let returnData = {}
 
@@ -59,17 +58,12 @@ async function searchAct(req, res) {
       replacements.push(doc.start_date)
       replacements.push(
         moment(doc.end_date, 'YYYY-MM-DD')
-        .add(1, 'days')
-        .format('YYYY-MM-DD')
+          .add(1, 'days')
+          .format('YYYY-MM-DD')
       )
     }
 
-    let result = await common.queryWithCount(
-      sequelize,
-      req,
-      queryStr,
-      replacements
-    )
+    let result = await model.queryWithCount(req, queryStr, replacements)
 
     returnData.total = result.count
     returnData.rows = []
@@ -92,13 +86,13 @@ async function searchAct(req, res) {
 
     common.sendData(res, returnData)
   } catch (error) {
-    common.sendFault(res, error)
+    return common.sendFault(res, error)
   }
 }
 
 async function bookingAct(req, res) {
   try {
-    let doc = common.docTrim(req.body)
+    let doc = common.docValidate(req)
     let user = req.user
 
     let billloading = await tb_billloading.create({
@@ -145,14 +139,13 @@ async function bookingAct(req, res) {
 
     common.sendData(res)
   } catch (error) {
-    common.sendFault(res, error)
-    return
+    return common.sendFault(res, error)
   }
 }
 
 async function modifyAct(req, res) {
   try {
-    let doc = common.docTrim(req.body)
+    let doc = common.docValidate(req)
     let user = req.user
 
     let modibillloading = await tb_billloading.findOne({
@@ -182,14 +175,11 @@ async function modifyAct(req, res) {
         address: d.billloading_notify_address,
         telephone: d.billloading_notify_tel
       }
-      common.sendData(res, d)
-      return
+      return common.sendData(res, d)
     } else {
-      common.sendError(res, 'operator_03')
-      return
+      return common.sendError(res, 'operator_03')
     }
   } catch (error) {
-    common.sendFault(res, error)
-    return null
+    return common.sendFault(res, error)
   }
 }

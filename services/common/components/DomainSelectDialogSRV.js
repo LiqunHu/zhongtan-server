@@ -6,7 +6,6 @@ const logger = require('../../../util/Logger').createLogger('GroupControlSRV')
 const model = require('../../../model')
 
 // tables
-const sequelize = model.sequelize
 const tb_common_domain = model.common_domain
 const tb_common_apidomain = model.common_apidomain
 
@@ -23,7 +22,7 @@ exports.DomainSelectDialogResource = (req, res) => {
 
 async function searchAct(req, res) {
   try {
-    let doc = common.docTrim(req.body),
+    let doc = common.docValidate(req),
       user = req.user,
       returnData = {}
     returnData.follow_list = []
@@ -36,7 +35,7 @@ async function searchAct(req, res) {
                       `
     let replacements = [doc.api_name, user.domain_id]
 
-    let result = await common.simpleSelect(sequelize, queryStr, replacements)
+    let result = await model.simpleSelect(queryStr, replacements)
 
     for (let r of result) {
       let row = JSON.parse(JSON.stringify(r))
@@ -60,14 +59,13 @@ async function searchAct(req, res) {
 
     let dequeryStr = `select *, b.domain_id bdomain_id, a.state state from tbl_common_apidomain a, tbl_common_domain b
                       where a.follow_domain_id = b.domain_id
-                      and (a.effect_state = '0' and a.state = '1' )
+                      and (a.effect_state = '0' and a.state = '1')
                       and a.api_name = ?
                       and a.domain_id = ?
                       `
     let dereplacements = [doc.api_name, user.domain_id]
 
-    let deresult = await common.simpleSelect(
-      sequelize,
+    let deresult = await model.simpleSelect(
       dequeryStr,
       dereplacements
     )
@@ -102,7 +100,7 @@ async function searchAct(req, res) {
 
 async function modifyAct(req, res) {
   try {
-    let doc = common.docTrim(req.body),
+    let doc = common.docValidate(req),
       user = req.user,
       returnData = []
 

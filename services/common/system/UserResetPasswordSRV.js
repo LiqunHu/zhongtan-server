@@ -35,7 +35,7 @@ let initAct = async (req, res) => {
 }
 let searchAct = async (req, res) => {
   try {
-    let doc = common.docTrim(req.body)
+    let doc = common.docValidate(req)
     let user = req.user
     let returnData = {}
     let users = await tb_user.findAll({
@@ -62,7 +62,7 @@ let searchAct = async (req, res) => {
 }
 let resetAct = async (req, res) => {
   try {
-    let doc = common.docTrim(req.body)
+    let doc = common.docValidate(req)
     let user = req.user
     let modUser = await tb_user.findOne({
       where: {

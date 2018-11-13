@@ -1,3 +1,4 @@
+const _ = require('lodash')
 const uuid = require('uuid')
 const path = require('path')
 const fs = require('fs')
@@ -6,14 +7,12 @@ const wkhtmltopdf = require('wkhtmltopdf')
 const wkhtmltoimage = require('wkhtmltoimage')
 const ejsExcel = require('ejsexcel')
 const format = require('util').format
+const Joi = require('joi')
+const WebSocket = require('ws')
 
 const config = require('../config')
 const Error = require('./Error')
 const logger = require('./Logger').createLogger('CommonUtil.js')
-const model = require('../model')
-const sequelize = model.sequelize
-const MongoCli = require('./MongoClient')
-const WebSocket = require('ws')
 
 // String trim
 String.prototype.trim = function() {
@@ -23,15 +22,40 @@ String.prototype.trim = function() {
 }
 
 // common response
-function docTrim(req) {
-  let doc = req
-  for (let idx in doc) {
-    //不使用过滤
-    if (typeof doc[idx] == 'string') {
-      doc[idx] = doc[idx].trim()
+function docValidate(req) {
+  let doc = req.body
+  if (req.JoiSchema) {
+    let result = Joi.validate(doc, req.JoiSchema)
+    if (result.error === null) {
+      return doc
+    } else {
+      throw result.error
+    }
+  } else {
+    return doc
+  }
+  // for (let idx in doc) {
+  //   //不使用过滤
+  //   if (typeof doc[idx] == 'string') {
+  //     doc[idx] = doc[idx].trim()
+  //   }
+  // }
+}
+
+function reqTrans(req, callFile) {
+  let method = req.params.method
+  let validatorFile = callFile.substring(0, callFile.length - 3) + '.validator.js'
+  if (fs.existsSync(validatorFile)) {
+    let validator = require(validatorFile)
+    if (validator.apiList[method]) {
+      let reqJoiSchema = validator.apiList[method].JoiSchema
+      if(reqJoiSchema.body) {
+        req.JoiSchema = reqJoiSchema.body
+      }
     }
   }
-  return doc
+
+  return method
 }
 
 // common response
@@ -79,39 +103,6 @@ function sendFault(res, msg) {
     }
   }
   res.status(500).send(sendData)
-}
-
-/**
- * 事务方法
- * @param options
- * @param autoCallback
- * @returns {*}
- */
-let transaction = function(callback) {
-  return new Promise(function(resolve, reject) {
-    if (Object.prototype.toString.call(callback) === '[object AsyncFunction]') {
-      sequelize
-        .transaction(function(t) {
-          // chain all your queries here. make sure you return them.
-          return Promise.all([callback(t)])
-        })
-        .then(function(result) {
-          resolve()
-        })
-        .catch(function(err) {
-          reject(err)
-        })
-    } else {
-      sequelize
-        .transaction(callback)
-        .then(function(result) {
-          resolve()
-        })
-        .catch(function(err) {
-          reject(err)
-        })
-    }
-  })
 }
 
 // function fileMove(url, mode) {
@@ -259,90 +250,6 @@ function generateRandomAlphaNum(len) {
   return randomString
 }
 
-//列表分页查询，查询语句queryStr传完整的sql语句
-async function queryWithCount(db, req, queryStr, replacements) {
-  let doc = req.body
-
-  let cnt = queryStr.indexOf('from') + 5
-  let queryStrCnt = queryStr.substr(cnt)
-
-  let count = await db.query('select count(*) num from ' + queryStrCnt, {
-    replacements: replacements,
-    type: db.QueryTypes.SELECT
-  })
-
-  let rep = replacements
-  rep.push(doc.offset || 0)
-  rep.push(doc.limit || 100)
-
-  let queryRst = await db.query(queryStr + ' LIMIT ?,?', {
-    replacements: rep,
-    type: db.QueryTypes.SELECT
-  })
-
-  return {
-    count: count[0].num,
-    data: queryRst
-  }
-}
-
-async function queryWithDocCount(db, doc, queryStr, replacements) {
-  let cnt = queryStr.indexOf('from') + 5
-  let queryStrCnt = queryStr.substr(cnt)
-
-  let count = await db.query('select count(*) num from ' + queryStrCnt, {
-    replacements: replacements,
-    type: db.QueryTypes.SELECT
-  })
-
-  let rep = replacements
-  rep.push(doc.offset || 0)
-  rep.push(doc.limit || 100)
-
-  let queryRst = await db.query(queryStr + ' LIMIT ?,?', {
-    replacements: rep,
-    type: db.QueryTypes.SELECT
-  })
-
-  return {
-    count: count[0].num,
-    data: queryRst
-  }
-}
-
-async function queryWithGroupByCount(db, req, queryStr, replacements) {
-  let doc = req.body
-
-  let count = await db.query(
-    'select count(*) num from (' + queryStr + ') as count',
-    {
-      replacements: replacements,
-      type: db.QueryTypes.SELECT
-    }
-  )
-
-  let rep = replacements
-  rep.push(doc.offset || 0)
-  rep.push(doc.limit || 100)
-
-  let queryRst = await db.query(queryStr + ' LIMIT ?,?', {
-    replacements: rep,
-    type: db.QueryTypes.SELECT
-  })
-
-  return {
-    count: count[0].num,
-    data: queryRst
-  }
-}
-
-async function simpleSelect(db, queryStr, replacements) {
-  return await db.query(queryStr, {
-    replacements: replacements,
-    type: db.QueryTypes.SELECT
-  })
-}
-
 function getApiName(path) {
   if (path) {
     let patha = path.split('/')
@@ -384,10 +291,7 @@ function generateNonceString(length) {
 
 function getUploadTempPath(uploadurl) {
   let fileName = path.basename(uploadurl)
-  return path.join(
-    __dirname,
-    '../' + config.uploadOptions.uploadDir + '/' + fileName
-  )
+  return path.join(__dirname, '../' + config.uploadOptions.uploadDir + '/' + fileName)
 }
 
 function getUUIDByTime(offset) {
@@ -430,18 +334,12 @@ function ejs2File(templateFile, renderData, options, outputType, res) {
       }
 
       data.basedir = path.join(__dirname, '../printTemplate')
-      let ejsFile = fs.readFileSync(
-        path.join(__dirname, '../printTemplate/' + templateFile),
-        'utf8'
-      )
+      let ejsFile = fs.readFileSync(path.join(__dirname, '../printTemplate/' + templateFile), 'utf8')
       let html = ejs.render(ejsFile, data)
 
       if (options.htmlFlag || outputType === 'htmlurl') {
         let htmlData = data
-        fs.writeFileSync(
-          path.join(__dirname, '../', config.tempDir, tempName + '.html'),
-          html
-        )
+        fs.writeFileSync(path.join(__dirname, '../', config.tempDir, tempName + '.html'), html)
       }
 
       if (outputType === 'htmlurl') {
@@ -460,11 +358,7 @@ function ejs2File(templateFile, renderData, options, outputType, res) {
           resolve()
         } else {
           let tempFile = tempName + '.jpg'
-          outSteam.pipe(
-            fs.createWriteStream(
-              path.join(__dirname, '../', config.tempDir, tempFile)
-            )
-          )
+          outSteam.pipe(fs.createWriteStream(path.join(__dirname, '../', config.tempDir, tempFile)))
           outSteam.on('end', function() {
             resolve(config.tmpUrlBase + tempFile)
           })
@@ -484,11 +378,7 @@ function ejs2File(templateFile, renderData, options, outputType, res) {
           resolve()
         } else {
           let tempFile = tempName + '.pdf'
-          outSteam.pipe(
-            fs.createWriteStream(
-              path.join(__dirname, '../', config.tempDir, tempFile)
-            )
-          )
+          outSteam.pipe(fs.createWriteStream(path.join(__dirname, '../', config.tempDir, tempFile)))
           outSteam.on('end', function() {
             resolve(config.tmpUrlBase + tempFile)
           })
@@ -505,9 +395,7 @@ function ejs2File(templateFile, renderData, options, outputType, res) {
 function ejs2xlsx(templateFile, renderData, res) {
   return new Promise(function(resolve, reject) {
     try {
-      let templateBuf = fs.readFileSync(
-        path.join(__dirname, '../dumpTemplate/' + templateFile)
-      )
+      let templateBuf = fs.readFileSync(path.join(__dirname, '../dumpTemplate/' + templateFile))
       ejsExcel
         .renderExcel(templateBuf, renderData)
         .then(function(exlBuf) {
@@ -520,10 +408,7 @@ function ejs2xlsx(templateFile, renderData, res) {
             res.send(exlBuf)
             resolve()
           } else {
-            fs.writeFileSync(
-              path.join(__dirname, '../', config.tempDir, tempName),
-              exlBuf
-            )
+            fs.writeFileSync(path.join(__dirname, '../', config.tempDir, tempName), exlBuf)
             resolve(config.tmpUrlBase + tempName)
           }
         })
@@ -540,10 +425,7 @@ function getWSClients(req) {
   let authorization = req.get('authorization')
   let clients = []
   global.wss.clients.forEach(function each(client) {
-    if (
-      client.readyState === WebSocket.OPEN &&
-      authorization === client.authorization
-    ) {
+    if (client.readyState === WebSocket.OPEN && authorization === client.authorization) {
       clients.push(client)
     }
   })
@@ -553,10 +435,7 @@ function getWSClients(req) {
 function getWSClientsByToken(token) {
   let clients = []
   global.wss.clients.forEach(function each(client) {
-    if (
-      client.readyState === WebSocket.OPEN &&
-      token === client.authorization
-    ) {
+    if (client.readyState === WebSocket.OPEN && token === client.authorization) {
       clients.push(client)
     }
   })
@@ -576,18 +455,14 @@ function wsClientsClose(clents, msg) {
 }
 
 module.exports = {
-  docTrim: docTrim,
+  docValidate: docValidate,
+  reqTrans: reqTrans,
   sendData: sendData,
   sendError: sendError,
   sendFault: sendFault,
   getUploadTempPath: getUploadTempPath,
   generateRandomAlphaNum: generateRandomAlphaNum,
-  simpleSelect: simpleSelect,
-  queryWithCount: queryWithCount,
-  queryWithDocCount: queryWithDocCount,
-  queryWithGroupByCount: queryWithGroupByCount,
   getApiName: getApiName,
-  transaction: transaction,
   buildXML: buildXML,
   parseXML: parseXML,
   generateNonceString: generateNonceString,
