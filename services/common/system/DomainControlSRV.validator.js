@@ -10,8 +10,7 @@ module.exports = {
       tags: ['DomainControl'],
       path: '/api/common/system/DomainControl/init',
       type: 'post',
-      JoiSchema: {
-      }
+      JoiSchema: {}
     },
     search: {
       name: '机构查询',
@@ -121,11 +120,17 @@ module.exports = {
           parent_id: Joi.number()
             .integer()
             .required(),
-          menus: Joi.array().items(Joi.object().keys(model.model2Schema(model.common_domainmenu)))
+          menus: Joi.array().items(
+            Joi.object().keys({
+              api_id: Joi.number().integer(),
+              systemmenu_name: Joi.string().max(50),
+              api_function: Joi.string().max(50)
+            })
+          )
         })
       }
     },
-    addMenus: {
+    changeOrder: {
       name: '修改菜单顺序',
       enname: 'DomainControlchangeOrder',
       tags: ['DomainControl'],
@@ -133,7 +138,11 @@ module.exports = {
       type: 'post',
       JoiSchema: {
         body: Joi.object().keys({
-          menus: Joi.array().items(Joi.object().keys(model.model2Schema(model.common_domainmenu)))
+          menus: Joi.array().items(
+            Joi.object().keys({
+              domainmenu_id: Joi.number().integer()
+            })
+          )
         })
       }
     }

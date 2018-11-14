@@ -4,7 +4,8 @@ const GLBConfig = require('../../../util/GLBConfig')
 const logger = require('../../../util/Logger').createLogger('BookingSRV')
 const model = require('../../../model')
 
-const tb_web_article = model.zhongtan_web_article
+const tb_sail_schedule_upload = model.zhongtan_sail_schedule_upload
+const tb_uploadfile = model.uploadfile
 
 exports.SailScheduleControlResource = (req, res) => {
   let method = common.reqTrans(req, __filename)
@@ -43,13 +44,31 @@ async function searchAct(req, res) {
       user = req.user,
       returnData = {}
 
-    let queryStr = 'select * from tbl_zhongtan_web_article where state = "1" and web_article_type = "1" order by created_at desc'
+    let queryStr = 'select * from tbl_zhongtan_sail_schedule_upload where state = "1" order by created_at desc'
     let replacements = []
 
     let result = await model.queryWithCount(req, queryStr, replacements)
 
     returnData.total = result.count
-    returnData.rows = result.data
+    returnData.rows = []
+
+    for(let d of result.data) {
+      let files = await tb_uploadfile.findAll({
+        where: {
+          api_name: common.getApiName(req.path),
+          uploadfile_index1: d.sail_schedule_upload_id
+        }
+      })
+      d.files = []
+      for(let f of files) {
+        d.files.push({
+          file_id: f.uploadfile_id,
+          url: f.uploadfile_url,
+          name: f.uploadfile_name
+        })
+      }
+      returnData.rows.push(d)
+    }
 
     common.sendData(res, returnData)
   } catch (error) {
