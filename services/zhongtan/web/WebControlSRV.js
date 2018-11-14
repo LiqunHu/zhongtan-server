@@ -3,6 +3,7 @@ const common = require('../../../util/CommonUtil')
 const GLBConfig = require('../../../util/GLBConfig')
 const logger = require('../../../util/Logger').createLogger('BookingSRV')
 const model = require('../../../model')
+const FileSRV = require('../../../util/FileSRV')
 
 const tb_web_article = model.zhongtan_web_article
 
@@ -43,7 +44,8 @@ async function searchAct(req, res) {
       user = req.user,
       returnData = {}
 
-    let queryStr = 'select * from tbl_zhongtan_web_article where state = "1" and web_article_type = "1" order by created_at desc'
+    let queryStr =
+      'select * from tbl_zhongtan_web_article where state = "1" and web_article_type = "1" order by created_at desc'
     let replacements = []
 
     let result = await model.queryWithCount(req, queryStr, replacements)
@@ -120,10 +122,9 @@ async function deleteAct(req, res) {
 
 async function mduploadAct(req, res) {
   try {
-    let uploadurl = await common.fileSave(req)
-    let fileUrl = await common.fileMove(uploadurl.url, 'upload')
+    let fileInfo = await FileSRV.fileSave(req)
     common.sendData(res, {
-      uploadurl: fileUrl
+      uploadurl: fileInfo.url
     })
   } catch (error) {
     common.sendFault(res, error)
@@ -134,7 +135,7 @@ async function mduploadAct(req, res) {
 async function mddeleteAct(req, res) {
   try {
     let doc = common.docValidate(req)
-    await common.fileRemove(doc.file_url)
+    // await FileSRV.fileDeleteByUrl('/files/upload/2018/11/14/aa596f6d-c073-4090-8f76-e790fc59f29c.jpg')
 
     common.sendData(res)
   } catch (error) {

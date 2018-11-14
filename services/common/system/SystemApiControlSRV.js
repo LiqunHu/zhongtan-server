@@ -171,6 +171,16 @@ async function modifyFolderAct(req, res) {
   }
 }
 
+function getApiName(path) {
+  if (path) {
+    let patha = path.split('/')
+    let func = patha[patha.length - 1].toUpperCase()
+    return func
+  } else {
+    return ''
+  }
+}
+
 async function addMenuAct(req, res) {
   try {
     let doc = common.docValidate(req)
@@ -190,7 +200,7 @@ async function addMenuAct(req, res) {
 
     let tapi = await tb_common_api.findOne({
       where: {
-        api_function: common.getApiName(doc.api_path)
+        api_function: getApiName(doc.api_path)
       }
     })
     if (afolder || aapi || tapi) {
@@ -199,7 +209,7 @@ async function addMenuAct(req, res) {
       let api = await tb_common_api.create({
         api_name: doc.systemmenu_name,
         api_path: doc.api_path,
-        api_function: common.getApiName(doc.api_path),
+        api_function: getApiName(doc.api_path),
         auth_flag: doc.auth_flag,
         show_flag: doc.show_flag
       })
@@ -254,10 +264,10 @@ async function modifyMenuAct(req, res) {
         }
       }
 
-      if (api.api_function != common.getApiName(doc.api_path)) {
+      if (api.api_function != getApiName(doc.api_path)) {
         let tapi = await tb_common_api.findOne({
           where: {
-            api_function: common.getApiName(doc.api_path)
+            api_function: getApiName(doc.api_path)
           }
         })
         if (tapi) {
@@ -268,7 +278,7 @@ async function modifyMenuAct(req, res) {
       if (api) {
         api.api_name = doc.systemmenu_name
         api.api_path = doc.api_path
-        api.api_function = common.getApiName(doc.api_path)
+        api.api_function = getApiName(doc.api_path)
         api.auth_flag = doc.auth_flag
         api.show_flag = doc.show_flag
         await api.save()

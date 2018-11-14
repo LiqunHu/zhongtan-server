@@ -42,8 +42,7 @@ exports.AuthResource = async (req, res) => {
 
       let replacements = []
       let userQueryStr =
-        'select * from tbl_common_user t where t.user_username=? and t.state=' +
-        GLBConfig.ENABLE
+        'select * from tbl_common_user t where t.user_username=? and t.state=' + GLBConfig.ENABLE
       replacements.push(doc.username)
       user = await sequelize.query(userQueryStr, {
         replacements: replacements,
@@ -55,21 +54,12 @@ exports.AuthResource = async (req, res) => {
       }
       user = user[0]
 
-      let decrypted = Security.aesDecryptModeCFB(
-        doc.identifyCode,
-        user.user_password,
-        doc.magicNo
-      )
+      let decrypted = Security.aesDecryptModeCFB(doc.identifyCode, user.user_password, doc.magicNo)
 
       if (!(decrypted == user.user_username)) {
         return common.sendError(res, 'auth_05')
       } else {
-        let session_token = Security.user2token(
-          doc.loginType,
-          user,
-          doc.identifyCode,
-          doc.magicNo
-        )
+        let session_token = Security.user2token(doc.loginType, user, doc.identifyCode, doc.magicNo)
         res.append('Authorization', session_token)
         let loginData = await loginInit(user, session_token, doc.loginType)
 
@@ -156,9 +146,7 @@ exports.SignOutResource = async (req, res) => {
         magicNo = tokensplit[2],
         expires = tokensplit[3],
         sha1 = tokensplit[4]
-      let error = await RedisClient.removeItem(
-        GLBConfig.REDISKEY.AUTH + type + uid
-      )
+      let error = await RedisClient.removeItem(GLBConfig.REDISKEY.AUTH + type + uid)
       if (error) logger.error(error)
     }
     return common.sendData(res)
@@ -228,11 +216,7 @@ exports.PhoneResetPasswordResource = async (req, res) => {
     if (!modUser) {
       return common.sendError(res, 'operator_03')
     }
-    let checkResult = await sms.certifySMSCode(
-      doc.phone,
-      doc.code,
-      GLBConfig.SMSTYPE[1].value
-    )
+    let checkResult = await sms.certifySMSCode(doc.phone, doc.code, GLBConfig.SMSTYPE[1].value)
     if (checkResult) {
       modUser.password = doc.password
       await modUser.save()
@@ -432,14 +416,7 @@ async function queryGroupApi(GroupID) {
   }
 }
 
-async function iterationMenu(
-  user,
-  domain,
-  GroupID,
-  parent_id,
-  m_list,
-  actGroups
-) {
+async function iterationMenu(user, domain, GroupID, parent_id, m_list, actGroups) {
   if (user.user_type === GLBConfig.TYPE_ADMINISTRATOR) {
     let return_list = []
     return_list.push({
@@ -526,14 +503,7 @@ async function iterationMenu(
             actGroups
           )
         } else {
-          sub_menu = await iterationMenu(
-            user,
-            domain,
-            GroupID,
-            m.domainmenu_id,
-            [],
-            actGroups
-          )
+          sub_menu = await iterationMenu(user, domain, GroupID, m.domainmenu_id, [], actGroups)
         }
       }
 
