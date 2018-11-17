@@ -15,6 +15,8 @@ exports.WebResource = (req, res) => {
     getHomePageBoardAct(req, res)
   } else if (method === 'getMessages') {
     getMessagesAct(req, res)
+  } else if (method === 'getSchedule') {
+    getScheduleAct(req, res)
   } else if (method === 'getArticle') {
     getArticleAct(req, res)
   } else {
@@ -91,6 +93,7 @@ async function getMessagesAct(req, res) {
       where: {
         web_article_type: '1'
       },
+      limit: 50,
       order: [['created_at', 'DESC']]
     })
 
@@ -100,6 +103,47 @@ async function getMessagesAct(req, res) {
         web_article_title: m.web_article_title,
         created_at: moment(m.created_at).format('YYYY/MM/DD')
       })
+    }
+
+    common.sendData(res, returnData)
+  } catch (error) {
+    common.sendFault(res, error)
+  }
+}
+
+async function getScheduleAct(req, res) {
+  try {
+    let returnData = {
+      data: {
+        schedule: []
+      }
+    }
+
+    let schedule = await tb_sail_schedule_upload.findAll({
+      limit: 50,
+      order: [['created_at', 'DESC']]
+    })
+    for (let s of schedule) {
+      let row = {
+        sail_schedule_upload_id: s.sail_schedule_upload_id,
+        sail_schedule_upload_desc: s.sail_schedule_upload_desc,
+        created_at: moment(s.created_at).format('YYYY/MM/DD'),
+        files: []
+      }
+      let files = await tb_uploadfile.findAll({
+        where: {
+          api_name: 'SAILSCHEDULECONTROL',
+          uploadfile_index1: s.sail_schedule_upload_id
+        }
+      })
+      for (let f of files) {
+        row.files.push({
+          uploadfile_id: f.uploadfile_id,
+          uploadfile_name: f.uploadfile_name,
+          uploadfile_url: f.uploadfile_url
+        })
+      }
+      returnData.data.schedule.push(row)
     }
 
     common.sendData(res, returnData)
