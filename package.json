@@ -5,7 +5,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "node --use-strict ./bin/www",
+    "start": "node ./bin/www",
     "debug": "node --inspect=0.0.0.0:9229 --use-strict ./bin/www",
     "webstorm": "node $NODE_DEBUG_OPTION ./bin/www",
     "gendoc": "rimraf public/apidoc && apidoc -i services -o public/apidoc/",

@@ -1,4 +1,3 @@
-const fs = require('fs')
 const common = require('../../../util/CommonUtil')
 const GLBConfig = require('../../../util/GLBConfig')
 const Sequence = require('../../../util/Sequence')

@@ -1,4 +1,3 @@
-const moment = require('moment')
 const common = require('../../../util/CommonUtil')
 const GLBConfig = require('../../../util/GLBConfig')
 const logger = require('../../../util/Logger').createLogger('BookingSRV')
@@ -42,6 +41,7 @@ async function searchAct(req, res) {
     let returnData = {}
 
     let queryStr = `select * from tbl_zhongtan_portinfo where state = '1'`
+    let replacements = []
 
     if (doc.search_text) {
       queryStr +=
@@ -114,7 +114,7 @@ async function deleteAct(req, res) {
 
     let portinfo = await tb_portinfo.findOne({
       where: {
-        portinfo_id: doc.old.portinfo_id,
+        portinfo_id: doc.portinfo_id,
         state: GLBConfig.ENABLE
       }
     })
