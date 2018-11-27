@@ -1,7 +1,7 @@
-const db = require('../../util/db');
+const db = require('../../util/db')
 // 航班表
 
-module.exports = db.defineModel('tbl_zhongtan_vessel', {
+module.exports = db.defineModel('tbl_zhongtan_voyage', {
   voyage_id: {
     type: db.IDNO,
     autoIncrement: true,
@@ -11,12 +11,18 @@ module.exports = db.defineModel('tbl_zhongtan_vessel', {
     type: db.IDNO,
     allowNull: false
   },
-  voyage_code: { // 航线编码
+  vessel_service_name: {
+    type: db.STRING(20),
+    allowNull: false
+  },
+  voyage_number: {
+    // 航线编码
     type: db.STRING(100),
     allowNull: false
   },
-  voyage_cycke: { // 航线轮次
-    type: db.STRING(10),
+  voyage_eta_date: {
+    // 开始日期
+    type: db.DATEONLY,
     allowNull: false
   }
-});
+})

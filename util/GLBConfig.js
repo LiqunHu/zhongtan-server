@@ -108,6 +108,11 @@ module.exports = {
     { id: 'CY', text: 'CY' },
     { id: 'CFS', text: 'CFS' }
   ],
+  PortCountryINFO: [
+    { id: 'TZ', text: 'TZ' },
+    { id: 'CN', text: 'CN' },
+    { id: 'SIN', text: 'SIN' }
+  ],
   BLSTATUS_PRE_BOOKING: '1',
   BLSTATUSINFO: [
     {id:'1', text: 'Pre-Booking', style: 'label-default'}

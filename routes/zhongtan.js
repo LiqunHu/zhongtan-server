@@ -2,6 +2,7 @@ const express = require('express')
 const services = require('./service')
 const router = express.Router()
 
+router.post('/configuration/PortConfig/:method', services.PortConfigSRV.PortConfigResource)
 router.post('/export/Booking/:method', services.BookingSRV.BookingResource)
 router.post('/web/WebControl/:method', services.WebControlSRV.WebControlResource)
 router.post('/web/SailScheduleControl/:method', services.SailScheduleControlSRV.SailScheduleControlResource)

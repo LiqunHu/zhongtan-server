@@ -169,7 +169,9 @@ function defineModel(name, attributes, params) {
                 let queryCondition = {}
                 queryCondition[key] = obj[key]
 
-                let result = await collection.updateOne(queryCondition, { $set: jsonObj })
+                let result = await collection.updateOne(queryCondition, {
+                  $set: jsonObj
+                })
               }
             } catch (error) {
               logger.error(err)
