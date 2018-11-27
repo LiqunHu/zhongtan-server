@@ -11,10 +11,6 @@ module.exports = db.defineModel('tbl_zhongtan_voyage', {
     type: db.IDNO,
     allowNull: false
   },
-  vessel_service_name: {
-    type: db.STRING(20),
-    allowNull: false
-  },
   voyage_number: {
     // 航线编码
     type: db.STRING(100),

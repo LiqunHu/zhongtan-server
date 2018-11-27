@@ -4,8 +4,9 @@ const logger = require('../../../util/Logger').createLogger('BookingSRV')
 const model = require('../../../model')
 
 const tb_vessel = model.zhongtan_vessel
+const tb_voyage = model.zhongtan_voyage
 
-exports.VessleConfigResource = (req, res) => {
+exports.VoyageConfigResource = (req, res) => {
   let method = common.reqTrans(req, __filename)
   if (method === 'init') {
     initAct(req, res)
@@ -26,8 +27,22 @@ async function initAct(req, res) {
   try {
     let doc = common.docValidate(req)
     let returnData = {
-      VesselServiceINFO: GLBConfig.VesselServiceINFO
+      VesselINFO: []
     }
+
+    let Vessels = await tb_vessel.findAll({
+      where: {
+        state: GLBConfig.ENABLE
+      }
+    })
+
+    for(let v of Vessels){
+      returnData.VesselINFO.push({
+        id: v.vessel_id,
+        text: v.vessel_name
+      })
+    }
+
     common.sendData(res, returnData)
   } catch (error) {
     return common.sendFault(res, error)
@@ -40,15 +55,13 @@ async function searchAct(req, res) {
     let user = req.user
     let returnData = {}
 
-    let queryStr = `select * from tbl_zhongtan_vessel where state = '1'`
+    let queryStr = `select * from tbl_zhongtan_voyage where state = '1'`
     let replacements = []
 
     if (doc.search_text) {
       queryStr +=
-        ' and (vessel_name like ? or vessel_operator like ? or vessel_code like ?)'
+        ' and voyage_number like ?'
       let search_text = '%' + doc.search_text + '%'
-      replacements.push(search_text)
-      replacements.push(search_text)
       replacements.push(search_text)
     }
 
@@ -67,13 +80,13 @@ async function addAct(req, res) {
   try {
     let doc = common.docValidate(req)
 
-    let vessel = await tb_vessel.create({
-      vessel_name: doc.vessel_name,
-      vessel_operator: doc.vessel_operator,
-      vessel_code: doc.vessel_code
+    let voyage = await tb_voyage.create({
+      vessel_id: doc.vessel_id,
+      voyage_number: doc.voyage_number,
+      voyage_eta_date: doc.voyage_eta_date
     })
 
-    common.sendData(res, vessel)
+    common.sendData(res, voyage)
   } catch (error) {
     return common.sendFault(res, error)
   }
@@ -83,20 +96,20 @@ async function modifyAct(req, res) {
   try {
     let doc = common.docValidate(req)
 
-    let vessel = await tb_vessel.findOne({
+    let voyage = await tb_voyage.findOne({
       where: {
-        vessel_id: doc.old.vessel_id,
+        voyage_id: doc.old.voyage_id,
         state: GLBConfig.ENABLE
       }
     })
-    if (vessel) {
-      vessel.vessel_name = doc.new.vessel_name
-      vessel.vessel_operator = doc.new.vessel_operator
-      vessel.vessel_code = doc.new.vessel_code
+    if (voyage) {
+      voyage.vessel_id = doc.new.vessel_id
+      voyage.voyage_number = doc.new.voyage_number
+      voyage.voyage_eta_date = doc.new.voyage_eta_date
 
-      await vessel.save()
+      await voyage.save()
 
-      return common.sendData(res, vessel)
+      return common.sendData(res, voyage)
     } else {
       return common.sendError(res, 'operator_03')
     }
@@ -109,15 +122,15 @@ async function deleteAct(req, res) {
   try {
     let doc = common.docValidate(req)
 
-    let vessel = await tb_vessel.findOne({
+    let voyage = await tb_voyage.findOne({
       where: {
-        portinfo_id: doc.portinfo_id,
+        voyage_id: doc.old.voyage_id,
         state: GLBConfig.ENABLE
       }
     })
-    if (portinfo) {
-      vessel.state = GLBConfig.DISABLE
-      await vessel.save()
+    if (voyage) {
+      voyage.state = GLBConfig.DISABLE
+      await voyage.save()
 
       return common.sendData(res)
     } else {

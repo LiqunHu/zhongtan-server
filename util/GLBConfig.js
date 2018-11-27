@@ -108,6 +108,15 @@ module.exports = {
     { id: 'CY', text: 'CY' },
     { id: 'CFS', text: 'CFS' }
   ],
+  PayStatusINFO: [
+    { id: 'CY', text: 'CY' },
+    { id: 'CFS', text: 'CFS' }
+  ],
+  VesselServiceINFO: [
+    { id: 'EAX1', text: 'EAX1' },
+    { id: 'EAX2', text: 'EAX2' },
+    { id: 'EAX4', text: 'EAX4' }
+  ],
   PortCountryINFO: [
     { id: 'TZ', text: 'TZ' },
     { id: 'CN', text: 'CN' },

@@ -7,6 +7,10 @@ module.exports = db.defineModel('tbl_zhongtan_vessel', {
     autoIncrement: true,
     primaryKey: true
   },
+  vessel_service_name: {
+    type: db.STRING(20),
+    allowNull: false
+  },
   vessel_name: { // 船名
     type: db.STRING(100)
   },
