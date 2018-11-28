@@ -25,7 +25,6 @@ exports.VoyageConfigResource = (req, res) => {
 
 async function initAct(req, res) {
   try {
-    let doc = common.docValidate(req)
     let returnData = {
       VesselINFO: []
     }
@@ -52,7 +51,6 @@ async function initAct(req, res) {
 async function searchAct(req, res) {
   try {
     let doc = common.docValidate(req)
-    let user = req.user
     let returnData = {}
 
     let queryStr = `select * from tbl_zhongtan_voyage where state = '1'`
@@ -124,7 +122,7 @@ async function deleteAct(req, res) {
 
     let voyage = await tb_voyage.findOne({
       where: {
-        voyage_id: doc.old.voyage_id,
+        voyage_id: doc.voyage_id,
         state: GLBConfig.ENABLE
       }
     })

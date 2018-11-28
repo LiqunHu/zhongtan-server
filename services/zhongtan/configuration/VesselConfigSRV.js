@@ -68,6 +68,7 @@ async function addAct(req, res) {
     let doc = common.docValidate(req)
 
     let vessel = await tb_vessel.create({
+      vessel_service_name: doc.vessel_service_name,
       vessel_name: doc.vessel_name,
       vessel_operator: doc.vessel_operator,
       vessel_code: doc.vessel_code
@@ -90,6 +91,7 @@ async function modifyAct(req, res) {
       }
     })
     if (vessel) {
+      vessel.vessel_service_name = doc.new.vessel_service_name
       vessel.vessel_name = doc.new.vessel_name
       vessel.vessel_operator = doc.new.vessel_operator
       vessel.vessel_code = doc.new.vessel_code
