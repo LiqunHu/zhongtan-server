@@ -35,7 +35,7 @@ async function initAct(req, res) {
       }
     })
 
-    for(let v of Vessels){
+    for (let v of Vessels) {
       returnData.VesselINFO.push({
         id: v.vessel_id,
         text: v.vessel_name
@@ -57,8 +57,7 @@ async function searchAct(req, res) {
     let replacements = []
 
     if (doc.search_text) {
-      queryStr +=
-        ' and voyage_number like ?'
+      queryStr += ' and voyage_number like ?'
       let search_text = '%' + doc.search_text + '%'
       replacements.push(search_text)
     }

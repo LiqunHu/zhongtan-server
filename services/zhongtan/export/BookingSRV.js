@@ -6,6 +6,8 @@ const model = require('../../../model')
 
 const tb_billloading = model.zhongtan_billloading
 const tb_billloading_container = model.zhongtan_billloading_container
+const tb_vessel = model.zhongtan_vessel
+const tb_voyage = model.zhongtan_voyage
 
 exports.BookingResource = (req, res) => {
   let method = common.reqTrans(req, __filename)
@@ -26,8 +28,6 @@ exports.BookingResource = (req, res) => {
 
 async function initAct(req, res) {
   try {
-    let doc = common.docValidate(req)
-    let user = req.user
     let returnData = {
       PackageUnitINFO: GLBConfig.PackageUnitINFO,
       VolumeUnitINFO: GLBConfig.VolumeUnitINFO,
@@ -36,8 +36,23 @@ async function initAct(req, res) {
       ContainerTypeINFO: GLBConfig.ContainerTypeINFO,
       PayTypeINFO: GLBConfig.PayTypeINFO,
       PayStatusINFO: GLBConfig.PayStatusINFO,
-      BLSTATUSINFO: GLBConfig.BLSTATUSINFO
+      BLSTATUSINFO: GLBConfig.BLSTATUSINFO,
+      VesselINFO: []
     }
+
+    let Vessels = await tb_vessel.findAll({
+      where: {
+        state: GLBConfig.ENABLE
+      }
+    })
+
+    for (let v of Vessels) {
+      returnData.VesselINFO.push({
+        id: v.vessel_id,
+        text: v.vessel_name
+      })
+    }
+
     common.sendData(res, returnData)
   } catch (error) {
     return common.sendFault(res, error)
@@ -50,7 +65,7 @@ async function searchAct(req, res) {
     let user = req.user
     let returnData = {}
 
-    let queryStr = `select * from tbl_zhongtan_billoading where state = '1' and billloading_shipper_id = ?`
+    let queryStr = `select * from tbl_zhongtan_billoading a tbl_zhongtan_voyage b where a.billloading_voyage_id = b.voyage_id state = '1' and billloading_shipper_id = ?`
     let replacements = [user.user_id]
 
     if (doc.start_date) {
@@ -98,8 +113,8 @@ async function bookingAct(req, res) {
     let billloading = await tb_billloading.create({
       billloading_type: 'E',
       billloading_state: GLBConfig.BLSTATUS_PRE_BOOKING,
-      billloading_vessel: doc.billloading_vessel,
-      billloading_voyage: doc.billloading_voyage,
+      billloading_vessel_id: doc.billloading_vessel_id,
+      billloading_voyage_id: doc.billloading_voyage_id,
       billloading_shipper_id: user.user_id,
       billloading_consignee_name: doc.billloading_consignee_name,
       billloading_consignee_tel: doc.billloading_consignee_tel,
@@ -155,8 +170,8 @@ async function modifyAct(req, res) {
       }
     })
     if (modibillloading) {
-      modibillloading.billloading_vessel = doc.new.billloading_vessel
-      modibillloading.billloading_voyage = doc.new.billloading_voyage
+      modibillloading.billloading_vessel_id = doc.new.billloading_vessel_id
+      modibillloading.billloading_voyage_id = doc.new.billloading_voyage_id
       modibillloading.billloading_consignee_name = doc.new.billloading_consignee.name
       modibillloading.billloading_consignee_address = doc.new.billloading_consignee.address
       modibillloading.billloading_consignee_tel = doc.new.billloading_consignee.telephone
