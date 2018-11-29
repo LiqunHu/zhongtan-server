@@ -82,15 +82,13 @@ async function searchAct(req, res) {
     let user = req.user
     let returnData = {}
 
-    let queryStr = `select * 
-                    from tbl_zhongtan_billoading a, tbl_zhongtan_voyage b 
-                    where a.billloading_voyage_id = b.voyage_id 
-                    and a.state = '1' 
+    let queryStr = `select * from tbl_zhongtan_billoading
+                    where state = '1' 
                     and billloading_shipper_id = ?`
     let replacements = [user.user_id]
 
     if (doc.start_date) {
-      queryStr += ' and a.created_at >= ? and a.created_at <= ?'
+      queryStr += ' and created_at >= ? and created_at <= ?'
       replacements.push(doc.start_date)
       replacements.push(
         moment(doc.end_date, 'YYYY-MM-DD')
@@ -117,6 +115,24 @@ async function searchAct(req, res) {
         address: d.billloading_notify_address,
         telephone: d.billloading_notify_tel
       }
+
+      d.VoyageINFO = []
+
+      let voyages = await tb_voyage.findAll({
+        where: {
+          vessel_id: d.billloading_vessel_id,
+          state: GLBConfig.ENABLE
+        },
+        limit: 10,
+        order: [['voyage_eta_date', 'DESC']]
+      })
+      for (let v of voyages) {
+        d.VoyageINFO.push({
+          id: v.voyage_id,
+          text: v.voyage_number + ' - ' + moment(v.voyage_eta_date, 'YYYY-MM-DD').format('MM-DD')
+        })
+      }
+
       returnData.rows.push(d)
     }
 
@@ -196,6 +212,11 @@ async function modifyAct(req, res) {
       modibillloading.billloading_consignee_name = doc.new.billloading_consignee.name
       modibillloading.billloading_consignee_address = doc.new.billloading_consignee.address
       modibillloading.billloading_consignee_tel = doc.new.billloading_consignee.telephone
+      modibillloading.billloading_notify_name = doc.new.billloading_notify.name
+      modibillloading.billloading_notify_address = doc.new.billloading_notify.address
+      modibillloading.billloading_notify_tel = doc.new.billloading_notify.telephone
+      modibillloading.billloading_loading_port_id = doc.new.billloading_loading_port_id
+      modibillloading.billloading_discharge_port_id = doc.new.billloading_discharge_port_id
 
       await modibillloading.save()
 
