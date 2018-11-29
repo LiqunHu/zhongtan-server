@@ -8,6 +8,7 @@ const tb_billloading = model.zhongtan_billloading
 const tb_billloading_container = model.zhongtan_billloading_container
 const tb_vessel = model.zhongtan_vessel
 const tb_voyage = model.zhongtan_voyage
+const tb_portinfo = model.zhongtan_portinfo
 
 exports.BookingResource = (req, res) => {
   let method = common.reqTrans(req, __filename)
@@ -21,6 +22,8 @@ exports.BookingResource = (req, res) => {
     modifyAct(req, res)
   } else if (method === 'delete') {
     deleteAct(req, res)
+  } else if (method === 'searchVoyage') {
+    searchVoyageAct(req, res)
   } else {
     common.sendError(res, 'common_01')
   }
@@ -37,7 +40,8 @@ async function initAct(req, res) {
       PayTypeINFO: GLBConfig.PayTypeINFO,
       PayStatusINFO: GLBConfig.PayStatusINFO,
       BLSTATUSINFO: GLBConfig.BLSTATUSINFO,
-      VesselINFO: []
+      VesselINFO: [],
+      PortINFO: []
     }
 
     let Vessels = await tb_vessel.findAll({
@@ -53,6 +57,19 @@ async function initAct(req, res) {
       })
     }
 
+    let ports = await tb_portinfo.findAll({
+      where: {
+        state: GLBConfig.ENABLE
+      }
+    })
+
+    for (let p of ports) {
+      returnData.PortINFO.push({
+        id: p.portinfo_id,
+        text: p.portinfo_name + ' - ' + p.portinfo_code
+      })
+    }
+
     common.sendData(res, returnData)
   } catch (error) {
     return common.sendFault(res, error)
@@ -65,11 +82,15 @@ async function searchAct(req, res) {
     let user = req.user
     let returnData = {}
 
-    let queryStr = `select * from tbl_zhongtan_billoading a tbl_zhongtan_voyage b where a.billloading_voyage_id = b.voyage_id state = '1' and billloading_shipper_id = ?`
+    let queryStr = `select * 
+                    from tbl_zhongtan_billoading a, tbl_zhongtan_voyage b 
+                    where a.billloading_voyage_id = b.voyage_id 
+                    and a.state = '1' 
+                    and billloading_shipper_id = ?`
     let replacements = [user.user_id]
 
     if (doc.start_date) {
-      queryStr += ' and created_at >= ? and created_at <= ?'
+      queryStr += ' and a.created_at >= ? and a.created_at <= ?'
       replacements.push(doc.start_date)
       replacements.push(
         moment(doc.end_date, 'YYYY-MM-DD')
@@ -124,8 +145,8 @@ async function bookingAct(req, res) {
       billloading_notify_address: doc.billloading_notify_address,
       billloading_original_num: doc.billloading_original_num,
       billloading_copys_num: doc.billloading_copys_num,
-      billloading_loading_port: doc.billloading_loading_port,
-      billloading_discharge_port: doc.billloading_discharge_port,
+      billloading_loading_port_id: doc.billloading_loading_port_id,
+      billloading_discharge_port_id: doc.billloading_discharge_port_id,
       billloading_delivery_place: doc.billloading_delivery_place,
       billloading_stuffing_place: doc.billloading_stuffing_place,
       billloading_stuffing_date: doc.billloading_stuffing_date,
@@ -194,6 +215,33 @@ async function modifyAct(req, res) {
     } else {
       return common.sendError(res, 'operator_03')
     }
+  } catch (error) {
+    return common.sendFault(res, error)
+  }
+}
+
+async function searchVoyageAct(req, res) {
+  try {
+    let doc = common.docValidate(req)
+    let returnData = {
+      VoyageINFO: []
+    }
+    let voyages = await tb_voyage.findAll({
+      where: {
+        vessel_id: doc.vessel_id,
+        state: GLBConfig.ENABLE
+      },
+      limit: 10,
+      order: [['voyage_eta_date', 'DESC']]
+    })
+    for (let v of voyages) {
+      returnData.VoyageINFO.push({
+        id: v.voyage_id,
+        text: v.voyage_number + ' - ' + moment(v.voyage_eta_date, 'YYYY-MM-DD').format('MM-DD')
+      })
+    }
+
+    common.sendData(res, returnData)
   } catch (error) {
     return common.sendFault(res, error)
   }

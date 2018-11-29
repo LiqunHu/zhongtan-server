@@ -84,14 +84,14 @@ module.exports = db.defineModel('tbl_zhongtan_billoading', {
     type: db.STRING(10),
     allowNull: true
   },
-  billloading_loading_port: {
+  billloading_loading_port_id: {
     // 起始港
-    type: db.STRING(100),
+    type: db.IDNO,
     allowNull: true
   },
-  billloading_discharge_port: {
+  billloading_discharge_port_id: {
     // 目的港
-    type: db.STRING(100),
+    type: db.IDNO,
     allowNull: true
   },
   billloading_delivery_place: {
