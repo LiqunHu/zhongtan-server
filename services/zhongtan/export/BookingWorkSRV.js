@@ -10,14 +10,12 @@ const tb_vessel = model.zhongtan_vessel
 const tb_voyage = model.zhongtan_voyage
 const tb_portinfo = model.zhongtan_portinfo
 
-exports.BookingResource = (req, res) => {
+exports.BookingWorkResource = (req, res) => {
   let method = common.reqTrans(req, __filename)
   if (method === 'init') {
     initAct(req, res)
   } else if (method === 'search') {
     searchAct(req, res)
-  } else if (method === 'booking') {
-    bookingAct(req, res)
   } else if (method === 'modify') {
     modifyAct(req, res)
   } else if (method === 'searchVoyage') {
@@ -135,59 +133,6 @@ async function searchAct(req, res) {
     }
 
     common.sendData(res, returnData)
-  } catch (error) {
-    return common.sendFault(res, error)
-  }
-}
-
-async function bookingAct(req, res) {
-  try {
-    let doc = common.docValidate(req)
-    let user = req.user
-
-    let billloading = await tb_billloading.create({
-      billloading_type: 'E',
-      billloading_state: GLBConfig.BLSTATUS_PRE_BOOKING,
-      billloading_vessel_id: doc.billloading_vessel_id,
-      billloading_voyage_id: doc.billloading_voyage_id,
-      billloading_shipper_id: user.user_id,
-      billloading_consignee_name: doc.billloading_consignee_name,
-      billloading_consignee_tel: doc.billloading_consignee_tel,
-      billloading_consignee_address: doc.billloading_consignee_address,
-      billloading_notify_name: doc.billloading_notify_name,
-      billloading_notify_tel: doc.billloading_notify_tel,
-      billloading_notify_address: doc.billloading_notify_address,
-      billloading_original_num: doc.billloading_original_num,
-      billloading_copys_num: doc.billloading_copys_num,
-      billloading_loading_port_id: doc.billloading_loading_port_id,
-      billloading_discharge_port_id: doc.billloading_discharge_port_id,
-      billloading_delivery_place: doc.billloading_delivery_place,
-      billloading_stuffing_place: doc.billloading_stuffing_place,
-      billloading_stuffing_date: doc.billloading_stuffing_date,
-      billloading_stuffing_requirement: doc.billloading_stuffing_requirement,
-      billloading_pay_date: doc.billloading_pay_date,
-      billloading_invoice_currency: doc.billloading_invoice_currency
-    })
-
-    for (let c of doc.billloading_containers) {
-      await tb_billloading_container.create({
-        billloading_id: billloading.billloading_id,
-        billloading_container_number: c.billloading_container_number,
-        billloading_container_size: c.billloading_container_size,
-        billloading_container_type: c.billloading_container_type,
-        billloading_container_goods_description: c.billloading_container_goods_description,
-        billloading_container_package_number: c.billloading_container_package_number,
-        billloading_container_package_unit: c.billloading_container_package_unit,
-        billloading_container_gross_weight: c.billloading_container_gross_weight,
-        billloading_container_gross_unit: c.billloading_container_gross_unit,
-        billloading_container_gross_volume: c.billloading_container_gross_volume,
-        billloading_container_gross_volume_unit: c.billloading_container_gross_volume_unit,
-        billloading_container_net_weight: c.billloading_container_net_weight,
-        billloading_container_net_weight_unit: c.billloading_container_net_weight_unit
-      })
-    }
-
-    common.sendData(res)
   } catch (error) {
     return common.sendFault(res, error)
   }

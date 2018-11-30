@@ -84,11 +84,7 @@ module.exports = {
       text: 'KG'
     }
   ],
-  ContainerSizeINFO: [
-    { id: '20', text: '20' },
-    { id: '40', text: '40' },
-    { id: '45', text: '45' }
-  ],
+  ContainerSizeINFO: [{ id: '20', text: '20' }, { id: '40', text: '40' }, { id: '45', text: '45' }],
   ContainerTypeINFO: [
     { id: 'GP', text: 'GP' },
     { id: 'HC', text: 'HC' },
@@ -100,30 +96,12 @@ module.exports = {
     { id: 'TK', text: 'TK' },
     { id: 'FR', text: 'FR' }
   ],
-  PayTypeINFO: [
-    { id: 'Prepaid', text: 'Prepaid' },
-    { id: 'Collect', text: 'Collect' }
-  ],
-  PayStatusINFO: [
-    { id: 'CY', text: 'CY' },
-    { id: 'CFS', text: 'CFS' }
-  ],
-  PayStatusINFO: [
-    { id: 'CY', text: 'CY' },
-    { id: 'CFS', text: 'CFS' }
-  ],
-  VesselServiceINFO: [
-    { id: 'EAX1', text: 'EAX1' },
-    { id: 'EAX2', text: 'EAX2' },
-    { id: 'EAX4', text: 'EAX4' }
-  ],
-  PortCountryINFO: [
-    { id: 'TZ', text: 'TZ' },
-    { id: 'CN', text: 'CN' },
-    { id: 'SIN', text: 'SIN' }
-  ],
-  BLSTATUS_PRE_BOOKING: '1',
-  BLSTATUSINFO: [
-    {id:'1', text: 'Pre-Booking', style: 'label-default'}
-  ]
+  PayTypeINFO: [{ id: 'Prepaid', text: 'Prepaid' }, { id: 'Collect', text: 'Collect' }],
+  PayStatusINFO: [{ id: 'CY', text: 'CY' }, { id: 'CFS', text: 'CFS' }],
+  PayStatusINFO: [{ id: 'CY', text: 'CY' }, { id: 'CFS', text: 'CFS' }],
+  VesselServiceINFO: [{ id: 'EAX1', text: 'EAX1' }, { id: 'EAX2', text: 'EAX2' }, { id: 'EAX4', text: 'EAX4' }],
+  PortCountryINFO: [{ id: 'TZ', text: 'TZ' }, { id: 'CN', text: 'CN' }, { id: 'SIN', text: 'SIN' }],
+  BLSTATUS_PRE_BOOKING: 'PBK',
+  BLSTATUS_BOOKING: 'BK',
+  BLSTATUSINFO: [{ id: 'PBK', text: 'Pre-Booking', style: 'label-default' }, { id: 'BK', text: 'Booking', style: 'label-info' }]
 }
