@@ -97,11 +97,17 @@ module.exports = {
     { id: 'FR', text: 'FR' }
   ],
   PayTypeINFO: [{ id: 'Prepaid', text: 'Prepaid' }, { id: 'Collect', text: 'Collect' }],
-  PayStatusINFO: [{ id: 'CY', text: 'CY' }, { id: 'CFS', text: 'CFS' }],
-  PayStatusINFO: [{ id: 'CY', text: 'CY' }, { id: 'CFS', text: 'CFS' }],
+  PayCurrencyINFO: [{ id: 'CY', text: 'CY' }, { id: 'CFS', text: 'CFS' }],
   VesselServiceINFO: [{ id: 'EAX1', text: 'EAX1' }, { id: 'EAX2', text: 'EAX2' }, { id: 'EAX4', text: 'EAX4' }],
   PortCountryINFO: [{ id: 'TZ', text: 'TZ' }, { id: 'CN', text: 'CN' }, { id: 'SIN', text: 'SIN' }],
   BLSTATUS_PRE_BOOKING: 'PBK',
   BLSTATUS_BOOKING: 'BK',
-  BLSTATUSINFO: [{ id: 'PBK', text: 'Pre-Booking', style: 'label-default' }, { id: 'BK', text: 'Booking', style: 'label-info' }]
+  BLSTATUS_PUTBOX_APPLY: 'PA',
+  BLSTATUS_PUTBOX_CONFIRM: 'PC',
+  BLSTATUSINFO: [
+    { id: 'PBK', text: 'Pre-Booking', style: 'label-default' },
+    { id: 'BK', text: 'Booking', style: 'label-booking' },
+    { id: 'PA', text: 'Putbox Apply', style: 'label-putbox-apply' },
+    { id: 'PC', text: 'Putbox Confirm', style: 'label-putbox-confirm' }
+  ]
 }

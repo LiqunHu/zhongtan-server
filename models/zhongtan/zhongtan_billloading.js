@@ -34,6 +34,10 @@ module.exports = db.defineModel('tbl_zhongtan_billoading', {
     type: db.ID,
     allowNull: true
   },
+  container_yard_id: { // 堆场 id
+    type: db.IDNO,
+    allowNull: true
+  },
   billloading_consignee_name: {
     // 收货人姓名
     type: db.STRING(50),

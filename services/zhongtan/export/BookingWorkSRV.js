@@ -1,3 +1,4 @@
+const _ = require('lodash')
 const moment = require('moment')
 const common = require('../../../util/CommonUtil')
 const GLBConfig = require('../../../util/GLBConfig')
@@ -18,8 +19,12 @@ exports.BookingWorkResource = (req, res) => {
     searchAct(req, res)
   } else if (method === 'modify') {
     modifyAct(req, res)
-  } else if (method === 'searchVoyage') {
-    searchVoyageAct(req, res)
+  } else if (method === 'cancel') {
+    cancelAct(req, res)
+  } else if (method === 'bookingConfirm') {
+    bookingConfirmAct(req, res)
+  } else if (method === 'putboxConfirm') {
+    putboxConfirmAct(req, res)
   } else {
     common.sendError(res, 'common_01')
   }
@@ -34,7 +39,7 @@ async function initAct(req, res) {
       ContainerSizeINFO: GLBConfig.ContainerSizeINFO,
       ContainerTypeINFO: GLBConfig.ContainerTypeINFO,
       PayTypeINFO: GLBConfig.PayTypeINFO,
-      PayStatusINFO: GLBConfig.PayStatusINFO,
+      PayCurrencyINFO: GLBConfig.PayCurrencyINFO,
       BLSTATUSINFO: GLBConfig.BLSTATUSINFO,
       VesselINFO: [],
       PortINFO: []
@@ -184,28 +189,75 @@ async function modifyAct(req, res) {
   }
 }
 
-async function searchVoyageAct(req, res) {
+async function cancelAct(req, res) {
   try {
     let doc = common.docValidate(req)
-    let returnData = {
-      VoyageINFO: []
-    }
-    let voyages = await tb_voyage.findAll({
-      where: {
-        vessel_id: doc.vessel_id,
-        state: GLBConfig.ENABLE
-      },
-      limit: 10,
-      order: [['voyage_eta_date', 'DESC']]
-    })
-    for (let v of voyages) {
-      returnData.VoyageINFO.push({
-        id: v.voyage_id,
-        text: v.voyage_number + ' - ' + moment(v.voyage_eta_date, 'YYYY-MM-DD').format('MM-DD')
-      })
-    }
 
-    common.sendData(res, returnData)
+    let billloading = await tb_billloading.findOne({
+      where: {
+        billloading_id: doc.billloading_id,
+        state: GLBConfig.ENABLE
+      }
+    })
+
+    if (billloading.billloading_state != GLBConfig.BLSTATUS_PRE_BOOKING) {
+      return common.sendError(res, 'billloading_01')
+    } else {
+      billloading.state = GLBConfig.DISABLE
+      await billloading.save()
+      return common.sendData(res)
+    }
+  } catch (error) {
+    return common.sendFault(res, error)
+  }
+}
+
+async function bookingConfirmAct(req, res) {
+  try {
+    let doc = common.docValidate(req)
+
+    let billloading = await tb_billloading.findOne({
+      where: {
+        billloading_id: doc.billloading_id,
+        state: GLBConfig.ENABLE
+      }
+    })
+
+    if (billloading.billloading_state != GLBConfig.BLSTATUS_PRE_BOOKING) {
+      return common.sendError(res, 'billloading_01')
+    } else {
+      billloading.billloading_no = _.random(0, 1000)
+      billloading.billloading_freight_charge = common.str2Money(doc.billloading_freight_charge)
+      billloading.billloading_state = GLBConfig.BLSTATUS_BOOKING
+
+      await billloading.save()
+      return common.sendData(res)
+    }
+  } catch (error) {
+    return common.sendFault(res, error)
+  }
+}
+
+async function putboxConfirmAct(req, res) {
+  try {
+    let doc = common.docValidate(req)
+
+    let billloading = await tb_billloading.findOne({
+      where: {
+        billloading_id: doc.billloading_id,
+        state: GLBConfig.ENABLE
+      }
+    })
+
+    if (billloading.billloading_state != GLBConfig.BLSTATUS_PUTBOX_APPLY) {
+      return common.sendError(res, 'billloading_01')
+    } else {
+      billloading.container_yard_id = doc.container_yard_id
+      billloading.billloading_state = GLBConfig.BLSTATUS_PUTBOX_CONFIRM
+
+      await billloading.save()
+      return common.sendData(res)
+    }
   } catch (error) {
     return common.sendFault(res, error)
   }

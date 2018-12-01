@@ -49,7 +49,7 @@ function reqTrans(req, callFile) {
     let validator = require(validatorFile)
     if (validator.apiList[method]) {
       let reqJoiSchema = validator.apiList[method].JoiSchema
-      if(reqJoiSchema.body) {
+      if (reqJoiSchema.body) {
         req.JoiSchema = reqJoiSchema.body
       }
     }
@@ -454,6 +454,15 @@ function wsClientsClose(clents, msg) {
   }
 }
 
+function str2Money(str) {
+  let money = parseFloat(str)
+  return Math.round(money * 100)
+}
+
+function Money2Str(money) {
+  return (money / 100).toFixed(2)
+}
+
 module.exports = {
   docValidate: docValidate,
   reqTrans: reqTrans,
@@ -472,5 +481,7 @@ module.exports = {
   getWSClients: getWSClients,
   wsClientsSend: wsClientsSend,
   getWSClientsByToken: getWSClientsByToken,
-  wsClientsClose: wsClientsClose
+  wsClientsClose: wsClientsClose,
+  str2Money: str2Money,
+  Money2Str: Money2Str
 }

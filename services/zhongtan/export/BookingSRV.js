@@ -9,6 +9,7 @@ const tb_billloading_container = model.zhongtan_billloading_container
 const tb_vessel = model.zhongtan_vessel
 const tb_voyage = model.zhongtan_voyage
 const tb_portinfo = model.zhongtan_portinfo
+const tb_container_yard = model.zhongtan_container_yard
 
 exports.BookingResource = (req, res) => {
   let method = common.reqTrans(req, __filename)
@@ -22,6 +23,10 @@ exports.BookingResource = (req, res) => {
     modifyAct(req, res)
   } else if (method === 'searchVoyage') {
     searchVoyageAct(req, res)
+  } else if (method === 'cancel') {
+    cancelAct(req, res)
+  } else if (method === 'putboxApply') {
+    putboxApplyAct(req, res)
   } else {
     common.sendError(res, 'common_01')
   }
@@ -36,10 +41,11 @@ async function initAct(req, res) {
       ContainerSizeINFO: GLBConfig.ContainerSizeINFO,
       ContainerTypeINFO: GLBConfig.ContainerTypeINFO,
       PayTypeINFO: GLBConfig.PayTypeINFO,
-      PayStatusINFO: GLBConfig.PayStatusINFO,
+      PayCurrencyINFO: GLBConfig.PayCurrencyINFO,
       BLSTATUSINFO: GLBConfig.BLSTATUSINFO,
       VesselINFO: [],
-      PortINFO: []
+      PortINFO: [],
+      ContainerYardINFO: []
     }
 
     let Vessels = await tb_vessel.findAll({
@@ -65,6 +71,19 @@ async function initAct(req, res) {
       returnData.PortINFO.push({
         id: p.portinfo_id,
         text: p.portinfo_name + ' - ' + p.portinfo_code
+      })
+    }
+
+    let yards = await tb_container_yard.findAll({
+      where: {
+        state: GLBConfig.ENABLE
+      }
+    })
+
+    for (let y of yards) {
+      returnData.ContainerYardINFO.push({
+        id: p.container_yard_id,
+        text: p.container_yard_code + ' - ' + p.container_yard_name
       })
     }
 
@@ -166,7 +185,7 @@ async function bookingAct(req, res) {
       billloading_stuffing_date: doc.billloading_stuffing_date,
       billloading_stuffing_requirement: doc.billloading_stuffing_requirement,
       billloading_pay_date: doc.billloading_pay_date,
-      billloading_invoice_currency: doc.billloading_invoice_currency
+      billloading_freight_currency: doc.billloading_freight_currency
     })
 
     for (let c of doc.billloading_containers) {
@@ -201,6 +220,7 @@ async function modifyAct(req, res) {
     let modibillloading = await tb_billloading.findOne({
       where: {
         billloading_id: doc.old.billloading_id,
+        billloading_shipper_id: user.user_id,
         state: GLBConfig.ENABLE
       }
     })
@@ -261,6 +281,56 @@ async function searchVoyageAct(req, res) {
     }
 
     common.sendData(res, returnData)
+  } catch (error) {
+    return common.sendFault(res, error)
+  }
+}
+
+async function cancelAct(req, res) {
+  try {
+    let doc = common.docValidate(req)
+    let user = req.user
+
+    let billloading = await tb_billloading.findOne({
+      where: {
+        billloading_id: doc.billloading_id,
+        billloading_shipper_id: user.user_id,
+        state: GLBConfig.ENABLE
+      }
+    })
+
+    if (billloading.billloading_state != GLBConfig.BLSTATUS_PRE_BOOKING) {
+      return common.sendError(res, 'billloading_01')
+    } else {
+      billloading.state = GLBConfig.DISABLE
+      await billloading.save()
+      return common.sendData(res)
+    }
+  } catch (error) {
+    return common.sendFault(res, error)
+  }
+}
+
+async function putboxApplyAct(req, res) {
+  try {
+    let doc = common.docValidate(req)
+    let user = req.user
+
+    let billloading = await tb_billloading.findOne({
+      where: {
+        billloading_id: doc.billloading_id,
+        billloading_shipper_id: user.user_id,
+        state: GLBConfig.ENABLE
+      }
+    })
+
+    if (billloading.billloading_state != GLBConfig.BLSTATUS_BOOKING) {
+      return common.sendError(res, 'billloading_01')
+    } else {
+      billloading.billloading_state = GLBConfig.BLSTATUS_PUTBOX_APPLY
+      await billloading.save()
+      return common.sendData(res)
+    }
   } catch (error) {
     return common.sendFault(res, error)
   }

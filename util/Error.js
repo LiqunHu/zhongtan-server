@@ -56,5 +56,6 @@ module.exports = {
   farmerbuywx_02: 'phone is missing',
   farmerbuywx_03: 'captcha is missing',
   farmerbuywx_04: 'info is missing',
-  farmerbuywx_05: '微信授权失败'
+  farmerbuywx_05: '微信授权失败',
+  billloading_01: 'billloading state error',
 }
