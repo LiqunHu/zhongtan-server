@@ -30,6 +30,8 @@ exports.BookingResource = (req, res) => {
     putboxApplyAct(req, res)
   } else if (method === 'submitloading') {
     submitloadingAct(req, res)
+  } else if (method === 'confirmInstruction') {
+    confirmInstructionAct(req, res)
   } else if (method === 'upload') {
     uploadAct(req, res)
   } else {
@@ -392,6 +394,32 @@ async function submitloadingAct(req, res) {
       }
 
       billloading.billloading_state = GLBConfig.BLSTATUS_SUBMIT_LOADING
+      await billloading.save()
+
+      return common.sendData(res)
+    }
+  } catch (error) {
+    return common.sendFault(res, error)
+  }
+}
+
+async function confirmInstructionAct(req, res) {
+  try {
+    let doc = common.docValidate(req)
+    let user = req.user
+
+    let billloading = await tb_billloading.findOne({
+      where: {
+        billloading_id: doc.billloading_id,
+        billloading_shipper_id: user.user_id,
+        state: GLBConfig.ENABLE
+      }
+    })
+
+    if (billloading.billloading_state != GLBConfig.BLSTATUS_DECLARATION) {
+      return common.sendError(res, 'billloading_01')
+    } else {
+      billloading.billloading_state = GLBConfig.BLSTATUS_CONFIRM_INSTRUCTUON
       await billloading.save()
 
       return common.sendData(res)

@@ -107,6 +107,7 @@ module.exports = {
   BLSTATUS_SUBMIT_LOADING: 'SL',
   BLSTATUS_REJECT_LOADING: 'RL',
   BLSTATUS_DECLARATION: 'DE',
+  BLSTATUS_CONFIRM_INSTRUCTUON: 'CI',
   BLSTATUSINFO: [
     { id: 'PBK', text: 'Pre-Booking', style: 'label-default' },
     { id: 'BK', text: 'Booking', style: 'label-booking' },
@@ -114,6 +115,7 @@ module.exports = {
     { id: 'PC', text: 'Putbox Confirm', style: 'label-putbox-confirm' },
     { id: 'SL', text: 'Submit Loading', style: 'label-submit-loading' },
     { id: 'RL', text: 'Reject Loading', style: 'label-reject-loading' },
-    { id: 'DE', text: 'Declaration', style: 'label-declaration' }
+    { id: 'DE', text: 'Declaration', style: 'label-declaration' },
+    { id: 'CI', text: 'Shipping Instruction', style: 'label-confirm-instruction' }
   ]
 }
