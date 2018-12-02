@@ -4,6 +4,7 @@ const common = require('../../../util/CommonUtil')
 const GLBConfig = require('../../../util/GLBConfig')
 const logger = require('../../../util/Logger').createLogger('BookingSRV')
 const model = require('../../../model')
+const FileSRV = require('../../../util/FileSRV')
 
 const tb_billloading = model.zhongtan_billloading
 const tb_billloading_container = model.zhongtan_billloading_container
@@ -11,6 +12,7 @@ const tb_vessel = model.zhongtan_vessel
 const tb_voyage = model.zhongtan_voyage
 const tb_portinfo = model.zhongtan_portinfo
 const tb_container_manager = model.zhongtan_container_manager
+const tb_uploadfile = model.zhongtan_uploadfile
 
 exports.BookingWorkResource = (req, res) => {
   let method = common.reqTrans(req, __filename)
@@ -26,6 +28,12 @@ exports.BookingWorkResource = (req, res) => {
     bookingConfirmAct(req, res)
   } else if (method === 'putboxConfirm') {
     putboxConfirmAct(req, res)
+  } else if (method === 'rejectLoading') {
+    rejectLoadingAct(req, res)
+  } else if (method === 'declaration') {
+    declarationAct(req, res)
+  } else if (method === 'upload') {
+    uploadAct(req, res)
   } else {
     common.sendError(res, 'common_01')
   }
@@ -99,9 +107,8 @@ async function searchAct(req, res) {
     let returnData = {}
 
     let queryStr = `select * from tbl_zhongtan_billoading
-                    where state = '1' 
-                    and billloading_shipper_id = ?`
-    let replacements = [user.user_id]
+                    where state = '1'`
+    let replacements = []
 
     if (doc.start_date) {
       queryStr += ' and created_at >= ? and created_at <= ?'
@@ -146,6 +153,43 @@ async function searchAct(req, res) {
         d.VoyageINFO.push({
           id: v.voyage_id,
           text: v.voyage_number + ' - ' + moment(v.voyage_eta_date, 'YYYY-MM-DD').format('MM-DD')
+        })
+      }
+
+      // loading list files
+      d.loading_files = []
+      let files = await tb_uploadfile.findAll({
+        where: {
+          api_name: 'BOOKING-LOADINGLIST',
+          uploadfile_index1: d.billloading_id
+        },
+        order: [['created_at', 'DESC']]
+      })
+
+      for (let f of files) {
+        d.loading_files.push({
+          file_id: f.uploadfile_id,
+          url: f.uploadfile_url,
+          name: f.uploadfile_name,
+          remark: f.uploadfile_remark
+        })
+      }
+
+      // declaration files
+      d.permission_files = []
+      let dfiles = await tb_uploadfile.findAll({
+        where: {
+          api_name: 'BOOKING-DECLARATION',
+          uploadfile_index1: d.billloading_id
+        },
+        order: [['created_at', 'DESC']]
+      })
+
+      for (let f of dfiles) {
+        d.permission_files.push({
+          file_id: f.uploadfile_id,
+          url: f.uploadfile_url,
+          name: f.uploadfile_name
         })
       }
 
@@ -275,5 +319,86 @@ async function putboxConfirmAct(req, res) {
     }
   } catch (error) {
     return common.sendFault(res, error)
+  }
+}
+
+async function rejectLoadingAct(req, res) {
+  try {
+    let doc = common.docValidate(req)
+
+    let billloading = await tb_billloading.findOne({
+      where: {
+        billloading_id: doc.billloading_id,
+        state: GLBConfig.ENABLE
+      }
+    })
+
+    if (billloading.billloading_state != GLBConfig.BLSTATUS_SUBMIT_LOADING) {
+      return common.sendError(res, 'billloading_01')
+    } else {
+      let file = await tb_uploadfile.findOne({
+        where: {
+          api_name: 'BOOKING-LOADINGLIST',
+          uploadfile_index1: billloading.billloading_id
+        },
+        order: [['created_at', 'DESC']]
+      })
+
+      file.uploadfile_remark = doc.reject_reason
+      await file.save()
+
+      billloading.billloading_state = GLBConfig.BLSTATUS_REJECT_LOADING
+      await billloading.save()
+      return common.sendData(res)
+    }
+  } catch (error) {
+    return common.sendFault(res, error)
+  }
+}
+
+async function declarationAct(req, res) {
+  try {
+    let doc = common.docValidate(req)
+    let user = req.user
+
+    let billloading = await tb_billloading.findOne({
+      where: {
+        billloading_id: doc.billloading_id,
+        state: GLBConfig.ENABLE
+      }
+    })
+
+    if (billloading.billloading_state != GLBConfig.BLSTATUS_SUBMIT_LOADING) {
+      return common.sendError(res, 'billloading_01')
+    } else {
+      for (let f of doc.permission_files) {
+        let mv = await FileSRV.fileMove(f.url)
+        await tb_uploadfile.create({
+          api_name: 'BOOKING-DECLARATION',
+          user_id: user.user_id,
+          uploadfile_index1: billloading.billloading_id,
+          uploadfile_name: f.name,
+          uploadfile_url: mv.url
+        })
+      }
+
+      billloading.billloading_declare_number = doc.billloading_declare_number
+      billloading.billloading_state = GLBConfig.BLSTATUS_DECLARATION
+      await billloading.save()
+
+      return common.sendData(res)
+    }
+  } catch (error) {
+    return common.sendFault(res, error)
+  }
+}
+
+async function uploadAct(req, res) {
+  try {
+    let fileInfo = await FileSRV.fileSaveTemp(req)
+    common.sendData(res, fileInfo)
+  } catch (error) {
+    common.sendFault(res, error)
+    return
   }
 }

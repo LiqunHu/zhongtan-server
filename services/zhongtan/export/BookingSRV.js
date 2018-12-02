@@ -10,6 +10,7 @@ const tb_billloading_container = model.zhongtan_billloading_container
 const tb_vessel = model.zhongtan_vessel
 const tb_voyage = model.zhongtan_voyage
 const tb_portinfo = model.zhongtan_portinfo
+const tb_uploadfile = model.zhongtan_uploadfile
 
 exports.BookingResource = (req, res) => {
   let method = common.reqTrans(req, __filename)
@@ -27,6 +28,8 @@ exports.BookingResource = (req, res) => {
     cancelAct(req, res)
   } else if (method === 'putboxApply') {
     putboxApplyAct(req, res)
+  } else if (method === 'submitloading') {
+    submitloadingAct(req, res)
   } else if (method === 'upload') {
     uploadAct(req, res)
   } else {
@@ -135,6 +138,43 @@ async function searchAct(req, res) {
         d.VoyageINFO.push({
           id: v.voyage_id,
           text: v.voyage_number + ' - ' + moment(v.voyage_eta_date, 'YYYY-MM-DD').format('MM-DD')
+        })
+      }
+
+      // loading list files
+      d.loading_files = []
+      let files = await tb_uploadfile.findAll({
+        where: {
+          api_name: 'BOOKING-LOADINGLIST',
+          uploadfile_index1: d.billloading_id
+        },
+        order: [['created_at', 'DESC']]
+      })
+
+      for (let f of files) {
+        d.loading_files.push({
+          file_id: f.uploadfile_id,
+          url: f.uploadfile_url,
+          name: f.uploadfile_name,
+          remark: f.uploadfile_remark
+        })
+      }
+
+      // declaration files
+      d.permission_files = []
+      let dfiles = await tb_uploadfile.findAll({
+        where: {
+          api_name: 'BOOKING-DECLARATION',
+          uploadfile_index1: d.billloading_id
+        },
+        order: [['created_at', 'DESC']]
+      })
+
+      for (let f of dfiles) {
+        d.permission_files.push({
+          file_id: f.uploadfile_id,
+          url: f.uploadfile_url,
+          name: f.uploadfile_name
         })
       }
 
@@ -317,6 +357,43 @@ async function putboxApplyAct(req, res) {
     } else {
       billloading.billloading_state = GLBConfig.BLSTATUS_PUTBOX_APPLY
       await billloading.save()
+      return common.sendData(res)
+    }
+  } catch (error) {
+    return common.sendFault(res, error)
+  }
+}
+
+async function submitloadingAct(req, res) {
+  try {
+    let doc = common.docValidate(req)
+    let user = req.user
+
+    let billloading = await tb_billloading.findOne({
+      where: {
+        billloading_id: doc.billloading_id,
+        billloading_shipper_id: user.user_id,
+        state: GLBConfig.ENABLE
+      }
+    })
+
+    if (billloading.billloading_state != GLBConfig.BLSTATUS_PUTBOX_CONFIRM && billloading.billloading_state != GLBConfig.BLSTATUS_REJECT_LOADING) {
+      return common.sendError(res, 'billloading_01')
+    } else {
+      for (let f of doc.loading_files) {
+        let mv = await FileSRV.fileMove(f.url)
+        await tb_uploadfile.create({
+          api_name: 'BOOKING-LOADINGLIST',
+          user_id: user.user_id,
+          uploadfile_index1: billloading.billloading_id,
+          uploadfile_name: f.name,
+          uploadfile_url: mv.url
+        })
+      }
+
+      billloading.billloading_state = GLBConfig.BLSTATUS_SUBMIT_LOADING
+      await billloading.save()
+
       return common.sendData(res)
     }
   } catch (error) {

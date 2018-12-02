@@ -104,10 +104,16 @@ module.exports = {
   BLSTATUS_BOOKING: 'BK',
   BLSTATUS_PUTBOX_APPLY: 'PA',
   BLSTATUS_PUTBOX_CONFIRM: 'PC',
+  BLSTATUS_SUBMIT_LOADING: 'SL',
+  BLSTATUS_REJECT_LOADING: 'RL',
+  BLSTATUS_DECLARATION: 'DE',
   BLSTATUSINFO: [
     { id: 'PBK', text: 'Pre-Booking', style: 'label-default' },
     { id: 'BK', text: 'Booking', style: 'label-booking' },
     { id: 'PA', text: 'Putbox Apply', style: 'label-putbox-apply' },
-    { id: 'PC', text: 'Putbox Confirm', style: 'label-putbox-confirm' }
+    { id: 'PC', text: 'Putbox Confirm', style: 'label-putbox-confirm' },
+    { id: 'SL', text: 'Submit Loading', style: 'label-submit-loading' },
+    { id: 'RL', text: 'Reject Loading', style: 'label-reject-loading' },
+    { id: 'DE', text: 'Declaration', style: 'label-declaration' }
   ]
 }
