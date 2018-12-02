@@ -34,7 +34,7 @@ module.exports = db.defineModel('tbl_zhongtan_billoading', {
     type: db.ID,
     allowNull: true
   },
-  container_yard_id: { // 堆场 id
+  container_manager_id: { // 箱管 id
     type: db.IDNO,
     allowNull: true
   },
@@ -116,6 +116,10 @@ module.exports = db.defineModel('tbl_zhongtan_billoading', {
   billloading_stuffing_requirement: {
     //装货特殊要求
     type: db.STRING(500),
+    allowNull: true
+  },
+  billloading_declare_number: {
+    type: db.STRING(100),
     allowNull: true
   },
   billloading_pay_date: {

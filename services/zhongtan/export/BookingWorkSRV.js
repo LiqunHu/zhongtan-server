@@ -10,6 +10,7 @@ const tb_billloading_container = model.zhongtan_billloading_container
 const tb_vessel = model.zhongtan_vessel
 const tb_voyage = model.zhongtan_voyage
 const tb_portinfo = model.zhongtan_portinfo
+const tb_container_manager = model.zhongtan_container_manager
 
 exports.BookingWorkResource = (req, res) => {
   let method = common.reqTrans(req, __filename)
@@ -42,7 +43,8 @@ async function initAct(req, res) {
       PayCurrencyINFO: GLBConfig.PayCurrencyINFO,
       BLSTATUSINFO: GLBConfig.BLSTATUSINFO,
       VesselINFO: [],
-      PortINFO: []
+      PortINFO: [],
+      ContainerManagerINFO: []
     }
 
     let Vessels = await tb_vessel.findAll({
@@ -68,6 +70,19 @@ async function initAct(req, res) {
       returnData.PortINFO.push({
         id: p.portinfo_id,
         text: p.portinfo_name + ' - ' + p.portinfo_code
+      })
+    }
+
+    let managers = await tb_container_manager.findAll({
+      where: {
+        state: GLBConfig.ENABLE
+      }
+    })
+
+    for (let m of managers) {
+      returnData.ContainerManagerINFO.push({
+        id: m.container_manager_id,
+        text: m.container_manager_code + ' - ' + m.container_manager_name
       })
     }
 
@@ -252,7 +267,7 @@ async function putboxConfirmAct(req, res) {
     if (billloading.billloading_state != GLBConfig.BLSTATUS_PUTBOX_APPLY) {
       return common.sendError(res, 'billloading_01')
     } else {
-      billloading.container_yard_id = doc.container_yard_id
+      billloading.container_manager_id = doc.container_manager_id
       billloading.billloading_state = GLBConfig.BLSTATUS_PUTBOX_CONFIRM
 
       await billloading.save()

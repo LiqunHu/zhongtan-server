@@ -3,13 +3,13 @@ const common = require('../../../util/CommonUtil')
 const GLBConfig = require('../../../util/GLBConfig')
 const logger = require('../../../util/Logger').createLogger('BookingSRV')
 const model = require('../../../model')
+const FileSRV = require('../../../util/FileSRV')
 
 const tb_billloading = model.zhongtan_billloading
 const tb_billloading_container = model.zhongtan_billloading_container
 const tb_vessel = model.zhongtan_vessel
 const tb_voyage = model.zhongtan_voyage
 const tb_portinfo = model.zhongtan_portinfo
-const tb_container_yard = model.zhongtan_container_yard
 
 exports.BookingResource = (req, res) => {
   let method = common.reqTrans(req, __filename)
@@ -27,6 +27,8 @@ exports.BookingResource = (req, res) => {
     cancelAct(req, res)
   } else if (method === 'putboxApply') {
     putboxApplyAct(req, res)
+  } else if (method === 'upload') {
+    uploadAct(req, res)
   } else {
     common.sendError(res, 'common_01')
   }
@@ -44,8 +46,7 @@ async function initAct(req, res) {
       PayCurrencyINFO: GLBConfig.PayCurrencyINFO,
       BLSTATUSINFO: GLBConfig.BLSTATUSINFO,
       VesselINFO: [],
-      PortINFO: [],
-      ContainerYardINFO: []
+      PortINFO: []
     }
 
     let Vessels = await tb_vessel.findAll({
@@ -71,19 +72,6 @@ async function initAct(req, res) {
       returnData.PortINFO.push({
         id: p.portinfo_id,
         text: p.portinfo_name + ' - ' + p.portinfo_code
-      })
-    }
-
-    let yards = await tb_container_yard.findAll({
-      where: {
-        state: GLBConfig.ENABLE
-      }
-    })
-
-    for (let y of yards) {
-      returnData.ContainerYardINFO.push({
-        id: p.container_yard_id,
-        text: p.container_yard_code + ' - ' + p.container_yard_name
       })
     }
 
@@ -333,5 +321,15 @@ async function putboxApplyAct(req, res) {
     }
   } catch (error) {
     return common.sendFault(res, error)
+  }
+}
+
+async function uploadAct(req, res) {
+  try {
+    let fileInfo = await FileSRV.fileSaveTemp(req)
+    common.sendData(res, fileInfo)
+  } catch (error) {
+    common.sendFault(res, error)
+    return
   }
 }
