@@ -14,6 +14,7 @@ module.exports = db.defineModel('tbl_zhongtan_voyage', {
   voyage_number: {
     // 航线编码
     type: db.STRING(100),
+    unique: 'voyage_number',
     allowNull: false
   },
   voyage_eta_date: {

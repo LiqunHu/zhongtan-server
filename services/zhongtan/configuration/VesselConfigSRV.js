@@ -2,6 +2,7 @@ const common = require('../../../util/CommonUtil')
 const GLBConfig = require('../../../util/GLBConfig')
 const logger = require('../../../util/Logger').createLogger('BookingSRV')
 const model = require('../../../model')
+const Op = model.Op
 
 const tb_vessel = model.zhongtan_vessel
 
@@ -44,8 +45,7 @@ async function searchAct(req, res) {
     let replacements = []
 
     if (doc.search_text) {
-      queryStr +=
-        ' and (vessel_name like ? or vessel_operator like ? or vessel_code like ?)'
+      queryStr += ' and (vessel_name like ? or vessel_operator like ? or vessel_code like ?)'
       let search_text = '%' + doc.search_text + '%'
       replacements.push(search_text)
       replacements.push(search_text)
@@ -67,14 +67,24 @@ async function addAct(req, res) {
   try {
     let doc = common.docValidate(req)
 
-    let vessel = await tb_vessel.create({
-      vessel_service_name: doc.vessel_service_name,
-      vessel_name: doc.vessel_name,
-      vessel_operator: doc.vessel_operator,
-      vessel_code: doc.vessel_code
+    let vessel = await tb_vessel.findOne({
+      where: {
+        [Op.or]: [{ vessel_name: doc.vessel_name }, { vessel_code: doc.vessel_code }]
+      }
     })
 
-    common.sendData(res, vessel)
+    if (vessel) {
+      return common.sendError(res, 'common_02')
+    } else {
+      vessel = await tb_vessel.create({
+        vessel_service_name: doc.vessel_service_name,
+        vessel_name: doc.vessel_name,
+        vessel_operator: doc.vessel_operator,
+        vessel_code: doc.vessel_code
+      })
+
+      common.sendData(res, vessel)
+    }
   } catch (error) {
     return common.sendFault(res, error)
   }

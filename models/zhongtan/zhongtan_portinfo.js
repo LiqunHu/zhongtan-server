@@ -13,8 +13,8 @@ module.exports = db.defineModel('tbl_zhongtan_portinfo', {
   },
   portinfo_name: {
     type: db.STRING(20),
-    defaultValue: '',
-    allowNull: true
+    unique: true,
+    allowNull: false
   },
   portinfo_name_cn: {
     type: db.STRING(20),
@@ -23,7 +23,7 @@ module.exports = db.defineModel('tbl_zhongtan_portinfo', {
   },
   portinfo_code: {
     type: db.STRING(20),
-    defaultValue: '',
-    allowNull: true
-  },
+    unique: true,
+    allowNull: false
+  }
 })

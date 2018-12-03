@@ -77,13 +77,23 @@ async function addAct(req, res) {
   try {
     let doc = common.docValidate(req)
 
-    let voyage = await tb_voyage.create({
-      vessel_id: doc.vessel_id,
-      voyage_number: doc.voyage_number,
-      voyage_eta_date: doc.voyage_eta_date
+    let voyage = tb_voyage.findOne({
+      where: {
+        voyage_number: doc.voyage_number
+      }
     })
 
-    common.sendData(res, voyage)
+    if (voyage) {
+      return common.sendError(res, 'common_02')
+    } else {
+      let voyage = await tb_voyage.create({
+        vessel_id: doc.vessel_id,
+        voyage_number: doc.voyage_number,
+        voyage_eta_date: doc.voyage_eta_date
+      })
+
+      common.sendData(res, voyage)
+    }
   } catch (error) {
     return common.sendFault(res, error)
   }

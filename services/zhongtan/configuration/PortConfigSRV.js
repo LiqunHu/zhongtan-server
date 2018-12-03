@@ -66,7 +66,6 @@ async function searchAct(req, res) {
 async function addAct(req, res) {
   try {
     let doc = common.docValidate(req)
-    let user = req.user
 
     let portinfo = await tb_portinfo.create({
       portinfo_country: doc.portinfo_country,
