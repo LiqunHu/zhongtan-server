@@ -111,3 +111,5 @@ module.exports.model2Schema = function() {
 module.exports.sync = () => {
   return db.sync()
 }
+
+module.exports.Op = db.Op
