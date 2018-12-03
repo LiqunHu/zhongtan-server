@@ -77,7 +77,7 @@ async function addAct(req, res) {
   try {
     let doc = common.docValidate(req)
 
-    let voyage = tb_voyage.findOne({
+    let voyage = await tb_voyage.findOne({
       where: {
         voyage_number: doc.voyage_number
       }
