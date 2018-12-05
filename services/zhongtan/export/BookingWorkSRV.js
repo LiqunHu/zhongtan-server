@@ -139,8 +139,15 @@ async function searchAct(req, res) {
         telephone: d.billloading_notify_tel
       }
 
+      d.billloading_containers = []
+      let billloading_containers = await tb_billloading_container.findAll({
+        where: { billloading_id: d.billloading_id }
+      })
+      for(let c of billloading_containers){
+        d.billloading_containers.push(JSON.parse(JSON.stringify(c)))
+      }
+      
       d.VoyageINFO = []
-
       let voyages = await tb_voyage.findAll({
         where: {
           vessel_id: d.billloading_vessel_id,
