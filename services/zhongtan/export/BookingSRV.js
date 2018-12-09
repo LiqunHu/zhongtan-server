@@ -92,13 +92,15 @@ async function searchAct(req, res) {
     let user = req.user
     let returnData = {}
 
-    let queryStr = `select * from tbl_zhongtan_billoading
-                    where state = '1' 
+    let queryStr = `select a.*, b.vessel_name, c.voyage_number, c.voyage_eta_date from tbl_zhongtan_billoading a, tbl_zhongtan_vessel b, tbl_zhongtan_voyage c
+                    where a.state = '1'
+                    and a.billloading_vessel_id = b.vessel_id
+                    and a.billloading_voyage_id = c.voyage_id 
                     and billloading_shipper_id = ?`
     let replacements = [user.user_id]
 
     if (doc.start_date) {
-      queryStr += ' and created_at >= ? and created_at <= ?'
+      queryStr += ' and a.created_at >= ? and a.created_at <= ?'
       replacements.push(doc.start_date)
       replacements.push(
         moment(doc.end_date, 'YYYY-MM-DD')
@@ -106,6 +108,7 @@ async function searchAct(req, res) {
           .format('YYYY-MM-DD')
       )
     }
+    queryStr += ' order by a.created_at desc'
 
     let result = await model.queryWithCount(req, queryStr, replacements)
 
@@ -114,6 +117,7 @@ async function searchAct(req, res) {
 
     for (let bl of result.data) {
       let d = JSON.parse(JSON.stringify(bl))
+      d.booking_date = moment(bl.created_at).format('YYYY-MM-DD')
       d.billloading_consignee = {
         name: d.billloading_consignee_name,
         address: d.billloading_consignee_address,
@@ -126,28 +130,19 @@ async function searchAct(req, res) {
         telephone: d.billloading_notify_tel
       }
 
+      d.shipline = {
+        vessel: d.billloading_vessel_id,
+        voyage: d.billloading_voyage_id,
+        vessel_name: d.vessel_name,
+        voyage_number: d.voyage_number + moment(d.voyage_eta_date, 'YYYY-MM-DD').format('MM-DD')
+      }
+
       d.billloading_containers = []
       let billloading_containers = await tb_billloading_container.findAll({
         where: { billloading_id: d.billloading_id }
       })
-      for(let c of billloading_containers){
+      for (let c of billloading_containers) {
         d.billloading_containers.push(JSON.parse(JSON.stringify(c)))
-      }
-
-      d.VoyageINFO = []
-      let voyages = await tb_voyage.findAll({
-        where: {
-          vessel_id: d.billloading_vessel_id,
-          state: GLBConfig.ENABLE
-        },
-        limit: 10,
-        order: [['voyage_eta_date', 'DESC']]
-      })
-      for (let v of voyages) {
-        d.VoyageINFO.push({
-          id: v.voyage_id,
-          text: v.voyage_number + ' - ' + moment(v.voyage_eta_date, 'YYYY-MM-DD').format('MM-DD')
-        })
       }
 
       // loading list files
@@ -262,8 +257,8 @@ async function modifyAct(req, res) {
       }
     })
     if (modibillloading) {
-      modibillloading.billloading_vessel_id = doc.new.billloading_vessel_id
-      modibillloading.billloading_voyage_id = doc.new.billloading_voyage_id
+      modibillloading.billloading_vessel_id = doc.new.shipline.vessel
+      modibillloading.billloading_voyage_id = doc.new.shipline.voyage
       modibillloading.billloading_consignee_name = doc.new.billloading_consignee.name
       modibillloading.billloading_consignee_address = doc.new.billloading_consignee.address
       modibillloading.billloading_consignee_tel = doc.new.billloading_consignee.telephone
@@ -287,6 +282,26 @@ async function modifyAct(req, res) {
         address: d.billloading_notify_address,
         telephone: d.billloading_notify_tel
       }
+
+      let vessel = await tb_vessel.findOne({
+        where: {
+          vessel_id: d.billloading_vessel_id
+        }
+      })
+
+      let voyage = await tb_voyage.findOne({
+        where: {
+          voyage_id: d.billloading_voyage_id
+        }
+      })
+
+      d.shipline = {
+        vessel: d.billloading_vessel_id,
+        voyage: d.billloading_voyage_id,
+        vessel_name: vessel.vessel_name,
+        voyage_number: voyage.voyage_number + moment(voyage.voyage_eta_date, 'YYYY-MM-DD').format('MM-DD')
+      }
+
       return common.sendData(res, d)
     } else {
       return common.sendError(res, 'operator_03')
