@@ -24,6 +24,8 @@ exports.BookingWorkResource = (req, res) => {
     modifyAct(req, res)
   } else if (method === 'cancel') {
     cancelAct(req, res)
+  } else if (method === 'searchVoyage') {
+    searchVoyageAct(req, res)
   } else if (method === 'bookingConfirm') {
     bookingConfirmAct(req, res)
   } else if (method === 'putboxConfirm') {
@@ -106,12 +108,14 @@ async function searchAct(req, res) {
     let user = req.user
     let returnData = {}
 
-    let queryStr = `select * from tbl_zhongtan_billoading
-                    where state = '1'`
+    let queryStr = `select a.*, b.vessel_name, c.voyage_number, c.voyage_eta_date from tbl_zhongtan_billoading a, tbl_zhongtan_vessel b, tbl_zhongtan_voyage c
+                    where a.state = '1'
+                    and a.billloading_vessel_id = b.vessel_id
+                    and a.billloading_voyage_id = c.voyage_id `
     let replacements = []
 
     if (doc.start_date) {
-      queryStr += ' and created_at >= ? and created_at <= ?'
+      queryStr += ' and a.created_at >= ? and a.created_at <= ?'
       replacements.push(doc.start_date)
       replacements.push(
         moment(doc.end_date, 'YYYY-MM-DD')
@@ -119,6 +123,7 @@ async function searchAct(req, res) {
           .format('YYYY-MM-DD')
       )
     }
+    queryStr += ' order by a.created_at desc'
 
     let result = await model.queryWithCount(req, queryStr, replacements)
 
@@ -139,28 +144,24 @@ async function searchAct(req, res) {
         telephone: d.billloading_notify_tel
       }
 
+      d.shipline = {
+        vessel: d.billloading_vessel_id,
+        voyage: d.billloading_voyage_id,
+        vessel_name: d.vessel_name,
+        voyage_number: d.voyage_number + moment(d.voyage_eta_date, 'YYYY-MM-DD').format('MM-DD')
+      }
+
+      d.portinfo = {
+        loading: d.billloading_loading_port_id,
+        discharge: d.billloading_discharge_port_id
+      }
+
       d.billloading_containers = []
       let billloading_containers = await tb_billloading_container.findAll({
         where: { billloading_id: d.billloading_id }
       })
-      for(let c of billloading_containers){
+      for (let c of billloading_containers) {
         d.billloading_containers.push(JSON.parse(JSON.stringify(c)))
-      }
-      
-      d.VoyageINFO = []
-      let voyages = await tb_voyage.findAll({
-        where: {
-          vessel_id: d.billloading_vessel_id,
-          state: GLBConfig.ENABLE
-        },
-        limit: 10,
-        order: [['voyage_eta_date', 'DESC']]
-      })
-      for (let v of voyages) {
-        d.VoyageINFO.push({
-          id: v.voyage_id,
-          text: v.voyage_number + ' - ' + moment(v.voyage_eta_date, 'YYYY-MM-DD').format('MM-DD')
-        })
       }
 
       // loading list files
@@ -217,20 +218,21 @@ async function modifyAct(req, res) {
     let modibillloading = await tb_billloading.findOne({
       where: {
         billloading_id: doc.old.billloading_id,
+        billloading_shipper_id: user.user_id,
         state: GLBConfig.ENABLE
       }
     })
     if (modibillloading) {
-      modibillloading.billloading_vessel_id = doc.new.billloading_vessel_id
-      modibillloading.billloading_voyage_id = doc.new.billloading_voyage_id
+      modibillloading.billloading_vessel_id = doc.new.shipline.vessel
+      modibillloading.billloading_voyage_id = doc.new.shipline.voyage
       modibillloading.billloading_consignee_name = doc.new.billloading_consignee.name
       modibillloading.billloading_consignee_address = doc.new.billloading_consignee.address
       modibillloading.billloading_consignee_tel = doc.new.billloading_consignee.telephone
       modibillloading.billloading_notify_name = doc.new.billloading_notify.name
       modibillloading.billloading_notify_address = doc.new.billloading_notify.address
       modibillloading.billloading_notify_tel = doc.new.billloading_notify.telephone
-      modibillloading.billloading_loading_port_id = doc.new.billloading_loading_port_id
-      modibillloading.billloading_discharge_port_id = doc.new.billloading_discharge_port_id
+      modibillloading.billloading_loading_port_id = doc.new.portinfo.loading
+      modibillloading.billloading_discharge_port_id = doc.new.portinfo.discharge
 
       await modibillloading.save()
 
@@ -246,6 +248,31 @@ async function modifyAct(req, res) {
         address: d.billloading_notify_address,
         telephone: d.billloading_notify_tel
       }
+
+      let vessel = await tb_vessel.findOne({
+        where: {
+          vessel_id: d.billloading_vessel_id
+        }
+      })
+
+      let voyage = await tb_voyage.findOne({
+        where: {
+          voyage_id: d.billloading_voyage_id
+        }
+      })
+
+      d.shipline = {
+        vessel: d.billloading_vessel_id,
+        voyage: d.billloading_voyage_id,
+        vessel_name: vessel.vessel_name,
+        voyage_number: voyage.voyage_number + moment(voyage.voyage_eta_date, 'YYYY-MM-DD').format('MM-DD')
+      }
+
+      d.portinfo = {
+        loading: d.billloading_loading_port_id,
+        discharge: d.billloading_discharge_port_id
+      }
+
       return common.sendData(res, d)
     } else {
       return common.sendError(res, 'operator_03')
@@ -273,6 +300,33 @@ async function cancelAct(req, res) {
       await billloading.save()
       return common.sendData(res)
     }
+  } catch (error) {
+    return common.sendFault(res, error)
+  }
+}
+
+async function searchVoyageAct(req, res) {
+  try {
+    let doc = common.docValidate(req)
+    let returnData = {
+      VoyageINFO: []
+    }
+    let voyages = await tb_voyage.findAll({
+      where: {
+        vessel_id: doc.vessel_id,
+        state: GLBConfig.ENABLE
+      },
+      limit: 10,
+      order: [['voyage_eta_date', 'DESC']]
+    })
+    for (let v of voyages) {
+      returnData.VoyageINFO.push({
+        id: v.voyage_id,
+        text: v.voyage_number + ' - ' + moment(v.voyage_eta_date, 'YYYY-MM-DD').format('MM-DD')
+      })
+    }
+
+    common.sendData(res, returnData)
   } catch (error) {
     return common.sendFault(res, error)
   }

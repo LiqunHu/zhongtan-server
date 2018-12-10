@@ -137,6 +137,11 @@ async function searchAct(req, res) {
         voyage_number: d.voyage_number + moment(d.voyage_eta_date, 'YYYY-MM-DD').format('MM-DD')
       }
 
+      d.portinfo ={
+        loading: d.billloading_loading_port_id,
+        discharge: d.billloading_discharge_port_id
+      }
+
       d.billloading_containers = []
       let billloading_containers = await tb_billloading_container.findAll({
         where: { billloading_id: d.billloading_id }
@@ -265,8 +270,8 @@ async function modifyAct(req, res) {
       modibillloading.billloading_notify_name = doc.new.billloading_notify.name
       modibillloading.billloading_notify_address = doc.new.billloading_notify.address
       modibillloading.billloading_notify_tel = doc.new.billloading_notify.telephone
-      modibillloading.billloading_loading_port_id = doc.new.billloading_loading_port_id
-      modibillloading.billloading_discharge_port_id = doc.new.billloading_discharge_port_id
+      modibillloading.billloading_loading_port_id = doc.new.portinfo.loading
+      modibillloading.billloading_discharge_port_id = doc.new.portinfo.discharge
 
       await modibillloading.save()
 
@@ -300,6 +305,11 @@ async function modifyAct(req, res) {
         voyage: d.billloading_voyage_id,
         vessel_name: vessel.vessel_name,
         voyage_number: voyage.voyage_number + moment(voyage.voyage_eta_date, 'YYYY-MM-DD').format('MM-DD')
+      }
+
+      d.portinfo ={
+        loading: d.billloading_loading_port_id,
+        discharge: d.billloading_discharge_port_id
       }
 
       return common.sendData(res, d)
