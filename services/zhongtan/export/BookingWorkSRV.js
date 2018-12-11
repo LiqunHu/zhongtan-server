@@ -156,6 +156,12 @@ async function searchAct(req, res) {
         discharge: d.billloading_discharge_port_id
       }
 
+      d.stuffing = {
+        place: d.billloading_stuffing_place,
+        date: d.billloading_stuffing_date,
+        requirement: d.billloading_stuffing_requirement
+      }
+
       d.billloading_containers = []
       let billloading_containers = await tb_billloading_container.findAll({
         where: { billloading_id: d.billloading_id }
@@ -233,6 +239,9 @@ async function modifyAct(req, res) {
       modibillloading.billloading_notify_tel = doc.new.billloading_notify.telephone
       modibillloading.billloading_loading_port_id = doc.new.portinfo.loading
       modibillloading.billloading_discharge_port_id = doc.new.portinfo.discharge
+      modibillloading.billloading_stuffing_place = doc.new.stuffing.place
+      modibillloading.billloading_stuffing_date = doc.new.stuffing.date
+      modibillloading.billloading_stuffing_requirement = doc.new.stuffing.requirement
 
       await modibillloading.save()
 
@@ -271,6 +280,12 @@ async function modifyAct(req, res) {
       d.portinfo = {
         loading: d.billloading_loading_port_id,
         discharge: d.billloading_discharge_port_id
+      }
+
+      d.stuffing = {
+        place: d.billloading_stuffing_place,
+        date: d.billloading_stuffing_date,
+        requirement: d.billloading_stuffing_requirement
       }
 
       return common.sendData(res, d)
