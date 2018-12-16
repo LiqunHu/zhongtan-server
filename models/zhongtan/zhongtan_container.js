@@ -7,7 +7,7 @@ module.exports = db.defineModel('tbl_zhongtan_container', {
     autoIncrement: true,
     primaryKey: true
   },
-  billloading_id: { // 提单号
+  billlading_id: { // 提单号
     type: db.STRING(100),
   },
   container_no: { // 箱号

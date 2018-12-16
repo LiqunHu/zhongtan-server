@@ -5,8 +5,8 @@ const logger = require('../../../util/Logger').createLogger('BookingSRV')
 const model = require('../../../model')
 const FileSRV = require('../../../util/FileSRV')
 
-const tb_billloading = model.zhongtan_billloading
-const tb_billloading_container = model.zhongtan_billloading_container
+const tb_billlading = model.zhongtan_billlading
+const tb_billlading_container = model.zhongtan_billlading_container
 const tb_vessel = model.zhongtan_vessel
 const tb_voyage = model.zhongtan_voyage
 const tb_portinfo = model.zhongtan_portinfo
@@ -92,11 +92,11 @@ async function searchAct(req, res) {
     let user = req.user
     let returnData = {}
 
-    let queryStr = `select a.*, b.vessel_name, c.voyage_number, c.voyage_eta_date from tbl_zhongtan_billoading a, tbl_zhongtan_vessel b, tbl_zhongtan_voyage c
+    let queryStr = `select a.*, b.vessel_name, c.voyage_number, c.voyage_eta_date from tbl_zhongtan_billlading a, tbl_zhongtan_vessel b, tbl_zhongtan_voyage c
                     where a.state = '1'
-                    and a.billloading_vessel_id = b.vessel_id
-                    and a.billloading_voyage_id = c.voyage_id 
-                    and billloading_shipper_id = ?`
+                    and a.billlading_vessel_id = b.vessel_id
+                    and a.billlading_voyage_id = c.voyage_id 
+                    and billlading_shipper_id = ?`
     let replacements = [user.user_id]
 
     if (doc.start_date) {
@@ -118,48 +118,48 @@ async function searchAct(req, res) {
     for (let bl of result.data) {
       let d = JSON.parse(JSON.stringify(bl))
       d.booking_date = moment(bl.created_at).format('YYYY-MM-DD')
-      d.billloading_consignee = {
-        name: d.billloading_consignee_name,
-        address: d.billloading_consignee_address,
-        telephone: d.billloading_consignee_tel
+      d.billlading_consignee = {
+        name: d.billlading_consignee_name,
+        address: d.billlading_consignee_address,
+        telephone: d.billlading_consignee_tel
       }
 
-      d.billloading_notify = {
-        name: d.billloading_notify_name,
-        address: d.billloading_notify_address,
-        telephone: d.billloading_notify_tel
+      d.billlading_notify = {
+        name: d.billlading_notify_name,
+        address: d.billlading_notify_address,
+        telephone: d.billlading_notify_tel
       }
 
       d.shipline = {
-        vessel: d.billloading_vessel_id,
-        voyage: d.billloading_voyage_id,
+        vessel: d.billlading_vessel_id,
+        voyage: d.billlading_voyage_id,
         vessel_name: d.vessel_name,
         voyage_number: d.voyage_number + moment(d.voyage_eta_date, 'YYYY-MM-DD').format('MM-DD')
       }
 
       d.portinfo = {
-        loading: d.billloading_loading_port_id,
-        discharge: d.billloading_discharge_port_id
+        loading: d.billlading_loading_port_id,
+        discharge: d.billlading_discharge_port_id
       }
 
       d.stuffing = {
-        place: d.billloading_stuffing_place,
-        date: d.billloading_stuffing_date,
-        requirement: d.billloading_stuffing_requirement
+        place: d.billlading_stuffing_place,
+        date: d.billlading_stuffing_date,
+        requirement: d.billlading_stuffing_requirement
       }
 
-      d.billloading_containers = []
-      let billloading_containers = await tb_billloading_container.findAll({
-        where: { billloading_id: d.billloading_id }
+      d.billlading_containers = []
+      let billlading_containers = await tb_billlading_container.findAll({
+        where: { billlading_id: d.billlading_id }
       })
-      for (let c of billloading_containers) {
-        d.billloading_containers.push(JSON.parse(JSON.stringify(c)))
+      for (let c of billlading_containers) {
+        d.billlading_containers.push(JSON.parse(JSON.stringify(c)))
       }
 
       d.files = []
       let files = await tb_uploadfile.findAll({
         where: {
-          uploadfile_index1: d.billloading_id
+          uploadfile_index1: d.billlading_id
         },
         order: [['api_name'], ['created_at', 'DESC']]
       })
@@ -199,45 +199,45 @@ async function bookingAct(req, res) {
     let doc = common.docValidate(req)
     let user = req.user
 
-    let billloading = await tb_billloading.create({
-      billloading_type: 'E',
-      billloading_state: GLBConfig.BLSTATUS_PRE_BOOKING,
-      billloading_vessel_id: doc.billloading_vessel_id,
-      billloading_voyage_id: doc.billloading_voyage_id,
-      billloading_shipper_id: user.user_id,
-      billloading_consignee_name: doc.billloading_consignee_name,
-      billloading_consignee_tel: doc.billloading_consignee_tel,
-      billloading_consignee_address: doc.billloading_consignee_address,
-      billloading_notify_name: doc.billloading_notify_name,
-      billloading_notify_tel: doc.billloading_notify_tel,
-      billloading_notify_address: doc.billloading_notify_address,
-      billloading_original_num: doc.billloading_original_num,
-      billloading_copys_num: doc.billloading_copys_num,
-      billloading_loading_port_id: doc.billloading_loading_port_id,
-      billloading_discharge_port_id: doc.billloading_discharge_port_id,
-      billloading_delivery_place: doc.billloading_delivery_place,
-      billloading_stuffing_place: doc.billloading_stuffing_place,
-      billloading_stuffing_date: doc.billloading_stuffing_date,
-      billloading_stuffing_requirement: doc.billloading_stuffing_requirement,
-      billloading_pay_date: doc.billloading_pay_date,
-      billloading_freight_currency: doc.billloading_freight_currency
+    let billlading = await tb_billlading.create({
+      billlading_type: 'E',
+      billlading_state: GLBConfig.BLSTATUS_PRE_BOOKING,
+      billlading_vessel_id: doc.billlading_vessel_id,
+      billlading_voyage_id: doc.billlading_voyage_id,
+      billlading_shipper_id: user.user_id,
+      billlading_consignee_name: doc.billlading_consignee_name,
+      billlading_consignee_tel: doc.billlading_consignee_tel,
+      billlading_consignee_address: doc.billlading_consignee_address,
+      billlading_notify_name: doc.billlading_notify_name,
+      billlading_notify_tel: doc.billlading_notify_tel,
+      billlading_notify_address: doc.billlading_notify_address,
+      billlading_original_num: doc.billlading_original_num,
+      billlading_copys_num: doc.billlading_copys_num,
+      billlading_loading_port_id: doc.billlading_loading_port_id,
+      billlading_discharge_port_id: doc.billlading_discharge_port_id,
+      billlading_delivery_place: doc.billlading_delivery_place,
+      billlading_stuffing_place: doc.billlading_stuffing_place,
+      billlading_stuffing_date: doc.billlading_stuffing_date,
+      billlading_stuffing_requirement: doc.billlading_stuffing_requirement,
+      billlading_pay_date: doc.billlading_pay_date,
+      billlading_freight_currency: doc.billlading_freight_currency
     })
 
-    for (let c of doc.billloading_containers) {
-      await tb_billloading_container.create({
-        billloading_id: billloading.billloading_id,
-        billloading_container_number: c.billloading_container_number,
-        billloading_container_size: c.billloading_container_size,
-        billloading_container_type: c.billloading_container_type,
-        billloading_container_goods_description: c.billloading_container_goods_description,
-        billloading_container_package_number: c.billloading_container_package_number,
-        billloading_container_package_unit: c.billloading_container_package_unit,
-        billloading_container_gross_weight: c.billloading_container_gross_weight,
-        billloading_container_gross_unit: c.billloading_container_gross_unit,
-        billloading_container_gross_volume: c.billloading_container_gross_volume,
-        billloading_container_gross_volume_unit: c.billloading_container_gross_volume_unit,
-        billloading_container_net_weight: c.billloading_container_net_weight,
-        billloading_container_net_weight_unit: c.billloading_container_net_weight_unit
+    for (let c of doc.billlading_containers) {
+      await tb_billlading_container.create({
+        billlading_id: billlading.billlading_id,
+        billlading_container_number: c.billlading_container_number,
+        billlading_container_size: c.billlading_container_size,
+        billlading_container_type: c.billlading_container_type,
+        billlading_container_goods_description: c.billlading_container_goods_description,
+        billlading_container_package_number: c.billlading_container_package_number,
+        billlading_container_package_unit: c.billlading_container_package_unit,
+        billlading_container_gross_weight: c.billlading_container_gross_weight,
+        billlading_container_gross_unit: c.billlading_container_gross_unit,
+        billlading_container_gross_volume: c.billlading_container_gross_volume,
+        billlading_container_gross_volume_unit: c.billlading_container_gross_volume_unit,
+        billlading_container_net_weight: c.billlading_container_net_weight,
+        billlading_container_net_weight_unit: c.billlading_container_net_weight_unit
       })
     }
 
@@ -252,71 +252,71 @@ async function modifyAct(req, res) {
     let doc = common.docValidate(req)
     let user = req.user
 
-    let modibillloading = await tb_billloading.findOne({
+    let modibilllading = await tb_billlading.findOne({
       where: {
-        billloading_id: doc.old.billloading_id,
-        billloading_shipper_id: user.user_id,
+        billlading_id: doc.old.billlading_id,
+        billlading_shipper_id: user.user_id,
         state: GLBConfig.ENABLE
       }
     })
-    if (modibillloading) {
-      modibillloading.billloading_vessel_id = doc.new.shipline.vessel
-      modibillloading.billloading_voyage_id = doc.new.shipline.voyage
-      modibillloading.billloading_consignee_name = doc.new.billloading_consignee.name
-      modibillloading.billloading_consignee_address = doc.new.billloading_consignee.address
-      modibillloading.billloading_consignee_tel = doc.new.billloading_consignee.telephone
-      modibillloading.billloading_notify_name = doc.new.billloading_notify.name
-      modibillloading.billloading_notify_address = doc.new.billloading_notify.address
-      modibillloading.billloading_notify_tel = doc.new.billloading_notify.telephone
-      modibillloading.billloading_loading_port_id = doc.new.portinfo.loading
-      modibillloading.billloading_discharge_port_id = doc.new.portinfo.discharge
-      modibillloading.billloading_stuffing_place = doc.new.stuffing.place
-      modibillloading.billloading_stuffing_date = doc.new.stuffing.date
-      modibillloading.billloading_stuffing_requirement = doc.new.stuffing.requirement
+    if (modibilllading) {
+      modibilllading.billlading_vessel_id = doc.new.shipline.vessel
+      modibilllading.billlading_voyage_id = doc.new.shipline.voyage
+      modibilllading.billlading_consignee_name = doc.new.billlading_consignee.name
+      modibilllading.billlading_consignee_address = doc.new.billlading_consignee.address
+      modibilllading.billlading_consignee_tel = doc.new.billlading_consignee.telephone
+      modibilllading.billlading_notify_name = doc.new.billlading_notify.name
+      modibilllading.billlading_notify_address = doc.new.billlading_notify.address
+      modibilllading.billlading_notify_tel = doc.new.billlading_notify.telephone
+      modibilllading.billlading_loading_port_id = doc.new.portinfo.loading
+      modibilllading.billlading_discharge_port_id = doc.new.portinfo.discharge
+      modibilllading.billlading_stuffing_place = doc.new.stuffing.place
+      modibilllading.billlading_stuffing_date = doc.new.stuffing.date
+      modibilllading.billlading_stuffing_requirement = doc.new.stuffing.requirement
 
-      await modibillloading.save()
+      await modibilllading.save()
 
-      let d = JSON.parse(JSON.stringify(modibillloading))
-      d.billloading_consignee = {
-        name: d.billloading_consignee_name,
-        address: d.billloading_consignee_address,
-        telephone: d.billloading_consignee_tel
+      let d = JSON.parse(JSON.stringify(modibilllading))
+      d.billlading_consignee = {
+        name: d.billlading_consignee_name,
+        address: d.billlading_consignee_address,
+        telephone: d.billlading_consignee_tel
       }
 
-      d.billloading_notify = {
-        name: d.billloading_notify_name,
-        address: d.billloading_notify_address,
-        telephone: d.billloading_notify_tel
+      d.billlading_notify = {
+        name: d.billlading_notify_name,
+        address: d.billlading_notify_address,
+        telephone: d.billlading_notify_tel
       }
 
       let vessel = await tb_vessel.findOne({
         where: {
-          vessel_id: d.billloading_vessel_id
+          vessel_id: d.billlading_vessel_id
         }
       })
 
       let voyage = await tb_voyage.findOne({
         where: {
-          voyage_id: d.billloading_voyage_id
+          voyage_id: d.billlading_voyage_id
         }
       })
 
       d.shipline = {
-        vessel: d.billloading_vessel_id,
-        voyage: d.billloading_voyage_id,
+        vessel: d.billlading_vessel_id,
+        voyage: d.billlading_voyage_id,
         vessel_name: vessel.vessel_name,
         voyage_number: voyage.voyage_number + moment(voyage.voyage_eta_date, 'YYYY-MM-DD').format('MM-DD')
       }
 
       d.portinfo = {
-        loading: d.billloading_loading_port_id,
-        discharge: d.billloading_discharge_port_id
+        loading: d.billlading_loading_port_id,
+        discharge: d.billlading_discharge_port_id
       }
 
       d.stuffing = {
-        place: d.billloading_stuffing_place,
-        date: d.billloading_stuffing_date,
-        requirement: d.billloading_stuffing_requirement
+        place: d.billlading_stuffing_place,
+        date: d.billlading_stuffing_date,
+        requirement: d.billlading_stuffing_requirement
       }
 
       return common.sendData(res, d)
@@ -360,19 +360,19 @@ async function cancelAct(req, res) {
     let doc = common.docValidate(req)
     let user = req.user
 
-    let billloading = await tb_billloading.findOne({
+    let billlading = await tb_billlading.findOne({
       where: {
-        billloading_id: doc.billloading_id,
-        billloading_shipper_id: user.user_id,
+        billlading_id: doc.billlading_id,
+        billlading_shipper_id: user.user_id,
         state: GLBConfig.ENABLE
       }
     })
 
-    if (billloading.billloading_state != GLBConfig.BLSTATUS_PRE_BOOKING) {
-      return common.sendError(res, 'billloading_01')
+    if (billlading.billlading_state != GLBConfig.BLSTATUS_PRE_BOOKING) {
+      return common.sendError(res, 'billlading_01')
     } else {
-      billloading.state = GLBConfig.DISABLE
-      await billloading.save()
+      billlading.state = GLBConfig.DISABLE
+      await billlading.save()
       return common.sendData(res)
     }
   } catch (error) {
@@ -385,19 +385,19 @@ async function putboxApplyAct(req, res) {
     let doc = common.docValidate(req)
     let user = req.user
 
-    let billloading = await tb_billloading.findOne({
+    let billlading = await tb_billlading.findOne({
       where: {
-        billloading_id: doc.billloading_id,
-        billloading_shipper_id: user.user_id,
+        billlading_id: doc.billlading_id,
+        billlading_shipper_id: user.user_id,
         state: GLBConfig.ENABLE
       }
     })
 
-    if (billloading.billloading_state != GLBConfig.BLSTATUS_BOOKING) {
-      return common.sendError(res, 'billloading_01')
+    if (billlading.billlading_state != GLBConfig.BLSTATUS_BOOKING) {
+      return common.sendError(res, 'billlading_01')
     } else {
-      billloading.billloading_state = GLBConfig.BLSTATUS_PUTBOX_APPLY
-      await billloading.save()
+      billlading.billlading_state = GLBConfig.BLSTATUS_PUTBOX_APPLY
+      await billlading.save()
       return common.sendData(res)
     }
   } catch (error) {
@@ -410,30 +410,30 @@ async function submitloadingAct(req, res) {
     let doc = common.docValidate(req)
     let user = req.user
 
-    let billloading = await tb_billloading.findOne({
+    let billlading = await tb_billlading.findOne({
       where: {
-        billloading_id: doc.billloading_id,
-        billloading_shipper_id: user.user_id,
+        billlading_id: doc.billlading_id,
+        billlading_shipper_id: user.user_id,
         state: GLBConfig.ENABLE
       }
     })
 
-    if (billloading.billloading_state != GLBConfig.BLSTATUS_PUTBOX_CONFIRM && billloading.billloading_state != GLBConfig.BLSTATUS_REJECT_LOADING) {
-      return common.sendError(res, 'billloading_01')
+    if (billlading.billlading_state != GLBConfig.BLSTATUS_PUTBOX_CONFIRM && billlading.billlading_state != GLBConfig.BLSTATUS_REJECT_LOADING) {
+      return common.sendError(res, 'billlading_01')
     } else {
       for (let f of doc.loading_files) {
         let mv = await FileSRV.fileMove(f.url)
         await tb_uploadfile.create({
           api_name: 'BOOKING-LOADINGLIST',
           user_id: user.user_id,
-          uploadfile_index1: billloading.billloading_id,
+          uploadfile_index1: billlading.billlading_id,
           uploadfile_name: f.name,
           uploadfile_url: mv.url
         })
       }
 
-      billloading.billloading_state = GLBConfig.BLSTATUS_SUBMIT_LOADING
-      await billloading.save()
+      billlading.billlading_state = GLBConfig.BLSTATUS_SUBMIT_LOADING
+      await billlading.save()
 
       return common.sendData(res)
     }
@@ -447,29 +447,29 @@ async function confirmInstructionAct(req, res) {
     let doc = common.docValidate(req)
     let user = req.user
 
-    let billloading = await tb_billloading.findOne({
+    let billlading = await tb_billlading.findOne({
       where: {
-        billloading_id: doc.billloading_id,
-        billloading_shipper_id: user.user_id,
+        billlading_id: doc.billlading_id,
+        billlading_shipper_id: user.user_id,
         state: GLBConfig.ENABLE
       }
     })
 
-    if (billloading.billloading_state != GLBConfig.BLSTATUS_DECLARATION) {
-      return common.sendError(res, 'billloading_01')
+    if (billlading.billlading_state != GLBConfig.BLSTATUS_DECLARATION) {
+      return common.sendError(res, 'billlading_01')
     } else {
       for (let f of doc.instruction_files) {
         let mv = await FileSRV.fileMove(f.url)
         await tb_uploadfile.create({
           api_name: 'BOOKING-INSTRUCTION',
           user_id: user.user_id,
-          uploadfile_index1: billloading.billloading_id,
+          uploadfile_index1: billlading.billlading_id,
           uploadfile_name: f.name,
           uploadfile_url: mv.url
         })
       }
-      billloading.billloading_state = GLBConfig.BLSTATUS_CONFIRM_INSTRUCTUON
-      await billloading.save()
+      billlading.billlading_state = GLBConfig.BLSTATUS_CONFIRM_INSTRUCTUON
+      await billlading.save()
 
       return common.sendData(res)
     }
