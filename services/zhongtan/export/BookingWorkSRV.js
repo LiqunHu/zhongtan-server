@@ -407,7 +407,7 @@ async function rejectLoadingAct(req, res) {
         order: [['created_at', 'DESC']]
       })
 
-      file.uploadfile_remark = doc.reject_reason
+      file.uploadfile_remark = 'reject: ' + doc.reject_reason
       await file.save()
 
       billloading.billloading_state = GLBConfig.BLSTATUS_REJECT_LOADING
@@ -441,11 +441,11 @@ async function declarationAct(req, res) {
           user_id: user.user_id,
           uploadfile_index1: billloading.billloading_id,
           uploadfile_name: f.name,
-          uploadfile_url: mv.url
+          uploadfile_url: mv.url,
+          uploadfile_remark: 'Declare number: ' + doc.billloading_declare_number
         })
       }
 
-      billloading.billloading_declare_number = doc.billloading_declare_number
       billloading.billloading_state = GLBConfig.BLSTATUS_DECLARATION
       await billloading.save()
 

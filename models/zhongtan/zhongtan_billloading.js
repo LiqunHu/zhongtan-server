@@ -118,10 +118,6 @@ module.exports = db.defineModel('tbl_zhongtan_billoading', {
     type: db.STRING(500),
     allowNull: true
   },
-  billloading_declare_number: {
-    type: db.STRING(100),
-    allowNull: true
-  },
   billloading_pay_date: {
     // 付款日期
     type: db.DATEONLY,
