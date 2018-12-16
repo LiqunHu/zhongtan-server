@@ -170,40 +170,27 @@ async function searchAct(req, res) {
         d.billloading_containers.push(JSON.parse(JSON.stringify(c)))
       }
 
-      // loading list files
-      d.loading_files = []
+      d.files = []
       let files = await tb_uploadfile.findAll({
         where: {
-          api_name: 'BOOKING-LOADINGLIST',
           uploadfile_index1: d.billloading_id
         },
-        order: [['created_at', 'DESC']]
+        order: [['api_name'], ['created_at', 'DESC']]
       })
-
       for (let f of files) {
-        d.loading_files.push({
+        let filetype = ''
+        if (f.api_name === 'BOOKING-LOADINGLIST') {
+          filetype = 'Loading list'
+        } else if (f.api_name === 'BOOKING-DECLARATION') {
+          filetype = 'Permission'
+        }
+        d.files.push({
+          filetype: filetype,
+          date: moment(f.created_at).format('YYYY-MM-DD'),
           file_id: f.uploadfile_id,
           url: f.uploadfile_url,
           name: f.uploadfile_name,
           remark: f.uploadfile_remark
-        })
-      }
-
-      // declaration files
-      d.permission_files = []
-      let dfiles = await tb_uploadfile.findAll({
-        where: {
-          api_name: 'BOOKING-DECLARATION',
-          uploadfile_index1: d.billloading_id
-        },
-        order: [['created_at', 'DESC']]
-      })
-
-      for (let f of dfiles) {
-        d.permission_files.push({
-          file_id: f.uploadfile_id,
-          url: f.uploadfile_url,
-          name: f.uploadfile_name
         })
       }
 
