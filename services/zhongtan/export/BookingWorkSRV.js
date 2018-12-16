@@ -36,6 +36,8 @@ exports.BookingWorkResource = (req, res) => {
     declarationAct(req, res)
   } else if (method === 'sendCDS') {
     sendCDSAct(req, res)
+  } else if (method === 'sendBL') {
+    sendBLAct(req, res)
   } else if (method === 'upload') {
     uploadAct(req, res)
   } else {
@@ -182,11 +184,13 @@ async function searchAct(req, res) {
       for (let f of files) {
         let filetype = ''
         if (f.api_name === 'BOOKING-LOADINGLIST') {
-          filetype = '3.Loading list'
+          filetype = '4.Loading list'
         } else if (f.api_name === 'BOOKING-DECLARATION') {
-          filetype = '2.Permission'
+          filetype = '3.Permission'
         } else if (f.api_name === 'BOOKING-INSTRUCTION') {
-          filetype = '1.Instruction'
+          filetype = '2.Instruction'
+        } else if (f.api_name === 'BOOKING-BILLLADING') {
+          filetype = '1.Deaft bill of lading'
         }
 
         d.files.push({
@@ -477,6 +481,41 @@ async function sendCDSAct(req, res) {
       return common.sendError(res, 'billloading_01')
     } else {
       billloading.billloading_state = GLBConfig.BLSTATUS_CDS_PROCESSING
+      await billloading.save()
+
+      return common.sendData(res)
+    }
+  } catch (error) {
+    return common.sendFault(res, error)
+  }
+}
+
+async function sendBLAct(req, res) {
+  try {
+    let doc = common.docValidate(req)
+    let user = req.user
+
+    let billloading = await tb_billloading.findOne({
+      where: {
+        billloading_id: doc.billloading_id,
+        state: GLBConfig.ENABLE
+      }
+    })
+
+    if (billloading.billloading_state != GLBConfig.BLSTATUS_CDS_PROCESSING) {
+      return common.sendError(res, 'billloading_01')
+    } else {
+      for (let f of doc.bl_files) {
+        let mv = await FileSRV.fileMove(f.url)
+        await tb_uploadfile.create({
+          api_name: 'BOOKING-BILLLADING',
+          user_id: user.user_id,
+          uploadfile_index1: billloading.billloading_id,
+          uploadfile_name: f.name,
+          uploadfile_url: mv.url
+        })
+      }
+      billloading.billloading_state = GLBConfig.BLSTATUS_BILL_LADING
       await billloading.save()
 
       return common.sendData(res)

@@ -109,6 +109,7 @@ module.exports = {
   BLSTATUS_DECLARATION: 'DE',
   BLSTATUS_CONFIRM_INSTRUCTUON: 'CI',
   BLSTATUS_CDS_PROCESSING: 'CP',
+  BLSTATUS_BILL_LADING: 'BL',
   BLSTATUSINFO: [
     { id: 'PBK', text: 'Pre-Booking', style: 'label-default' },
     { id: 'BK', text: 'Booking', style: 'label-booking' },
@@ -118,6 +119,7 @@ module.exports = {
     { id: 'RL', text: 'Reject Loading', style: 'label-reject-loading' },
     { id: 'DE', text: 'Declaration', style: 'label-declaration' },
     { id: 'CI', text: 'Shipping Instruction', style: 'label-confirm-instruction' },
-    { id: 'CP', text: 'CDS Processing', style: 'label-cds-processing' }
+    { id: 'CP', text: 'CDS Processing', style: 'label-cds-processing' },
+    { id: 'BL', text: 'Bill Lading', style: 'label-bill-lading' }
   ]
 }

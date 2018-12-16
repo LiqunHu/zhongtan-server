@@ -166,11 +166,13 @@ async function searchAct(req, res) {
       for (let f of files) {
         let filetype = ''
         if (f.api_name === 'BOOKING-LOADINGLIST') {
-          filetype = '3.Loading list'
+          filetype = '4.Loading list'
         } else if (f.api_name === 'BOOKING-DECLARATION') {
-          filetype = '2.Permission'
+          filetype = '3.Permission'
         } else if (f.api_name === 'BOOKING-INSTRUCTION') {
-          filetype = '1.Instruction'
+          filetype = '2.Instruction'
+        } else if (f.api_name === 'BOOKING-BILLLADING') {
+          filetype = '1.Deaft bill of lading'
         }
 
         d.files.push({
@@ -453,20 +455,19 @@ async function confirmInstructionAct(req, res) {
       }
     })
 
-    for (let f of doc.instruction_files) {
-      let mv = await FileSRV.fileMove(f.url)
-      await tb_uploadfile.create({
-        api_name: 'BOOKING-INSTRUCTION',
-        user_id: user.user_id,
-        uploadfile_index1: billloading.billloading_id,
-        uploadfile_name: f.name,
-        uploadfile_url: mv.url
-      })
-    }
-
     if (billloading.billloading_state != GLBConfig.BLSTATUS_DECLARATION) {
       return common.sendError(res, 'billloading_01')
     } else {
+      for (let f of doc.instruction_files) {
+        let mv = await FileSRV.fileMove(f.url)
+        await tb_uploadfile.create({
+          api_name: 'BOOKING-INSTRUCTION',
+          user_id: user.user_id,
+          uploadfile_index1: billloading.billloading_id,
+          uploadfile_name: f.name,
+          uploadfile_url: mv.url
+        })
+      }
       billloading.billloading_state = GLBConfig.BLSTATUS_CONFIRM_INSTRUCTUON
       await billloading.save()
 
