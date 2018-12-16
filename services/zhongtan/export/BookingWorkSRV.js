@@ -34,6 +34,8 @@ exports.BookingWorkResource = (req, res) => {
     rejectLoadingAct(req, res)
   } else if (method === 'declaration') {
     declarationAct(req, res)
+  } else if (method === 'sendCDS') {
+    sendCDSAct(req, res)
   } else if (method === 'upload') {
     uploadAct(req, res)
   } else {
@@ -180,10 +182,13 @@ async function searchAct(req, res) {
       for (let f of files) {
         let filetype = ''
         if (f.api_name === 'BOOKING-LOADINGLIST') {
-          filetype = 'Loading list'
+          filetype = '3.Loading list'
         } else if (f.api_name === 'BOOKING-DECLARATION') {
-          filetype = 'Permission'
+          filetype = '2.Permission'
+        } else if (f.api_name === 'BOOKING-INSTRUCTION') {
+          filetype = '1.Instruction'
         }
+
         d.files.push({
           filetype: filetype,
           date: moment(f.created_at).format('YYYY-MM-DD'),
@@ -447,6 +452,31 @@ async function declarationAct(req, res) {
       }
 
       billloading.billloading_state = GLBConfig.BLSTATUS_DECLARATION
+      await billloading.save()
+
+      return common.sendData(res)
+    }
+  } catch (error) {
+    return common.sendFault(res, error)
+  }
+}
+
+async function sendCDSAct(req, res) {
+  try {
+    let doc = common.docValidate(req)
+    let user = req.user
+
+    let billloading = await tb_billloading.findOne({
+      where: {
+        billloading_id: doc.billloading_id,
+        state: GLBConfig.ENABLE
+      }
+    })
+
+    if (billloading.billloading_state != GLBConfig.BLSTATUS_CONFIRM_INSTRUCTUON) {
+      return common.sendError(res, 'billloading_01')
+    } else {
+      billloading.billloading_state = GLBConfig.BLSTATUS_CDS_PROCESSING
       await billloading.save()
 
       return common.sendData(res)
