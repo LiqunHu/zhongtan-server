@@ -236,8 +236,8 @@ async function bookingAct(req, res) {
         billlading_container_gross_unit: c.billlading_container_gross_unit,
         billlading_container_gross_volume: c.billlading_container_gross_volume,
         billlading_container_gross_volume_unit: c.billlading_container_gross_volume_unit,
-        billlading_container_net_weight: c.billlading_container_net_weight,
-        billlading_container_net_weight_unit: c.billlading_container_net_weight_unit
+        billlading_container_gross_weight: c.billlading_container_gross_weight,
+        billlading_container_gross_weight_unit: c.billlading_container_gross_weight_unit
       })
     }
 

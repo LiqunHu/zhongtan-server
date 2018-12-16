@@ -49,11 +49,11 @@ module.exports = db.defineModel('tbl_zhongtan_billlading_container', {
     type: db.STRING(50),
     allowNull: true
   },
-  billlading_container_net_weight: { // 净重
+  billlading_container_gross_weight: { // 净重
     type: db.INTEGER,
     allowNull: true
   },
-  billlading_container_net_weight_unit: { // 净重单位
+  billlading_container_gross_weight_unit: { // 净重单位
     type: db.STRING(50),
     allowNull: true
   }

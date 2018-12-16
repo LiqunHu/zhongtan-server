@@ -8,6 +8,7 @@ const FileSRV = require('../../../util/FileSRV')
 
 const tb_billlading = model.zhongtan_billlading
 const tb_billlading_container = model.zhongtan_billlading_container
+const tb_container = model.zhongtan_container
 const tb_vessel = model.zhongtan_vessel
 const tb_voyage = model.zhongtan_voyage
 const tb_portinfo = model.zhongtan_portinfo
@@ -357,6 +358,30 @@ async function bookingConfirmAct(req, res) {
     if (billlading.billlading_state != GLBConfig.BLSTATUS_PRE_BOOKING) {
       return common.sendError(res, 'billlading_01')
     } else {
+      let billlading_containers = await tb_billlading_container.findAll({
+        where: { billlading_id: billlading.billlading_id }
+      })
+
+      for (let b of billlading_containers) {
+        for (let i = 0; i < b.billlading_container_number; i++) {
+          await tb_container.create({
+            billlading_id: billlading.billlading_id,
+            billlading_vessel_id: billlading.billlading_vessel_id,
+            billlading_voyage_id: billlading.billlading_voyage_id,
+            container_size: b.billlading_container_size,
+            container_type: b.billlading_container_type,
+            container_goods_description: b.billlading_container_goods_description,
+            container_package_no: Math.ceil(b.billlading_container_package_number / b.billlading_container_number),
+            container_package_unit: b.billlading_container_package_unit,
+            container_volume: Math.ceil(b.billlading_container_gross_volume / b.billlading_container_number),
+            container_volume_unit: b.billlading_container_gross_volume_unit,
+            container_weight: Math.ceil(b.billlading_container_gross_weight / b.billlading_container_number),
+            container_weight_unit: b.billlading_container_gross_weight_unit
+          })
+        }
+      }
+      
+
       billlading.billlading_no = _.random(0, 1000)
       billlading.billlading_freight_charge = common.str2Money(doc.billlading_freight_charge)
       billlading.billlading_state = GLBConfig.BLSTATUS_BOOKING
