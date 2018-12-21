@@ -48,13 +48,5 @@ module.exports = db.defineModel('tbl_zhongtan_billlading_container', {
   billlading_container_gross_volume_unit: { // 毛体积单位
     type: db.STRING(50),
     allowNull: true
-  },
-  billlading_container_gross_weight: { // 净重
-    type: db.INTEGER,
-    allowNull: true
-  },
-  billlading_container_gross_weight_unit: { // 净重单位
-    type: db.STRING(50),
-    allowNull: true
   }
 });

@@ -137,6 +137,7 @@ async function searchAct(req, res) {
 
     for (let bl of result.data) {
       let d = JSON.parse(JSON.stringify(bl))
+      d.booking_date = moment(bl.created_at).format('YYYY-MM-DD')
       d.billlading_consignee = {
         name: d.billlading_consignee_name,
         address: d.billlading_consignee_address,
@@ -376,7 +377,7 @@ async function bookingConfirmAct(req, res) {
             container_volume: Math.ceil(b.billlading_container_gross_volume / b.billlading_container_number),
             container_volume_unit: b.billlading_container_gross_volume_unit,
             container_weight: Math.ceil(b.billlading_container_gross_weight / b.billlading_container_number),
-            container_weight_unit: b.billlading_container_gross_weight_unit
+            container_weight_unit: b.billlading_container_gross_unit
           })
         }
       }
