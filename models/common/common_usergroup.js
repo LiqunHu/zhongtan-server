@@ -1,4 +1,4 @@
-const db = require('../../util/db')
+const db = require('../../app/db')
 
 module.exports = db.defineModel('tbl_common_usergroup', {
   usergroup_id: {
@@ -6,24 +6,29 @@ module.exports = db.defineModel('tbl_common_usergroup', {
     autoIncrement: true,
     primaryKey: true
   },
-  domain_id: {
-    type: db.IDNO,
-    allowNull: false
-  },
   usergroup_type: {
     type: db.STRING(3),
-    allowNull: true
+    defaultValue: '',
+    allowNull: false
+  },
+  usergroup_code: { // 唯一标示用户组
+    type: db.STRING(20),
+    defaultValue: '',
+    allowNull: false
   },
   usergroup_name: {
     type: db.STRING(50),
+    defaultValue: '',
     allowNull: false
   },
   node_type: {
     type: db.STRING(2),
-    allowNull: true
+    defaultValue: '',
+    allowNull: false
   },
   parent_id: {
     type: db.ID,
-    allowNull: true
+    defaultValue: '',
+    allowNull: false
   }
 })

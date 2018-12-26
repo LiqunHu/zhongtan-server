@@ -1,4 +1,4 @@
-const db = require('../../util/db')
+const db = require('../../app/db')
 // 航班表
 
 module.exports = db.defineModel('tbl_zhongtan_container_manager', {

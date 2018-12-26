@@ -1,12 +1,53 @@
 #!/usr/bin/env node
-const app = require('../app')
-const schedule = require('../schedule')
-const config = require('../config')
+const _ = require('lodash')
 const debug = require('debug')('demo:server')
 const http = require('http')
-const url = require('url')
 const WebSocket = require('ws')
+const serverUtils = require('server-utils')
+// 设置logger
+serverUtils.setLogger(require('../app/logger'))
+
+const app = require('../app')
+const config = require('../app/config')
+const rpcrouter = require('../RPCRoutes')
+
+// 计划任务
+const schedule = require('../schedule')
+const scheduleJob = serverUtils.scheduleJob
+// RPC Websocket 连接池
+const websocketUtil = serverUtils.websocketUtil
+// rabbitmq
+// const rabbitmqClinet = serverUtils.rabbitmqClinet
+// mongo
+const mongoClient = serverUtils.mongoClient
+// elasticsearch
+// const elasticsearchClient = serverUtils.elasticsearchClient
+// sms
+// const smsClient = serverUtils.smsClient
+// file
+// const fileUtil = serverUtils.fileUtil
+
 let port = 9090
+
+/**
+ * Normalize a port into a number, string, or false.
+ */
+
+const normalizePort = val => {
+  let port = parseInt(val, 10)
+
+  if (isNaN(port)) {
+    // named pipe
+    return val
+  }
+
+  if (port >= 0) {
+    // port number
+    return port
+  }
+
+  return false
+}
 
 /**
  * Get port from environment and store in Express.
@@ -24,80 +65,27 @@ global.wss = new WebSocket.Server({
   server
 })
 
-function noop() {}
-
-function heartbeat() {
-  this.isAlive = true
-}
-
-wss.on('connection', function connection(ws, req) {
-  ws.isAlive = true
-
-  const location = url.parse(req.url, true)
-  // You might use location.query.access_token to authenticate or share sessions
-  // or req.headers.cookie (see http://stackoverflow.com/a/16395220/151312)
-  ws.authorization = location.query.authorization
-
-  ws.on('message', function incoming(message) {
-    console.log('received: %s', message)
-  })
-
-  ws.on('pong', heartbeat)
-
-  ws.on('error', err => {
-    // Ignore network errors like `ECONNRESET`, `EPIPE`, etc.
-    if (err.errno) return
-    throw err
-  })
+wss.on('connection', (ws, req) => {
+  websocketUtil.initWSServer(ws, req, rpcrouter)
   // ws.send('something');
 })
 
-const interval = setInterval(function ping() {
-  wss.clients.forEach(function each(ws) {
+const noop = () => {}
+
+const interval = setInterval(() => {
+  wss.clients.forEach(ws => {
     if (ws.isAlive === false) return ws.terminate()
 
     ws.isAlive = false
     ws.ping(noop)
   })
 }, 30000)
-/**
- * Listen on provided port, on all network interfaces.
- */
-server.listen(port, function() {
-  if (config.scheduleFlag) {
-    console.log('App started, gathering monitors')
-    let jobs = schedule.scheduleJob()
-    console.log('Timed task has been turned on!')
-  }
-})
-server.on('error', onError)
-server.on('listening', onListening)
-
-/**
- * Normalize a port into a number, string, or false.
- */
-
-function normalizePort(val) {
-  let port = parseInt(val, 10)
-
-  if (isNaN(port)) {
-    // named pipe
-    return val
-  }
-
-  if (port >= 0) {
-    // port number
-    return port
-  }
-
-  return false
-}
 
 /**
  * Event listener for HTTP server "error" event.
  */
 
-function onError(error) {
+const onError = error => {
   if (error.syscall !== 'listen') {
     throw error
   }
@@ -123,9 +111,42 @@ function onError(error) {
  * Event listener for HTTP server "listening" event.
  */
 
-function onListening() {
+const onListening = () => {
   console.log('services running on port ' + port)
   let addr = server.address()
   let bind = typeof addr === 'string' ? 'pipe ' + addr : 'port ' + addr.port
   debug('Listening on ' + bind)
 }
+
+/**
+ * Listen on provided port, on all network interfaces.
+ */
+server.listen(port, () => {
+  // for schedule job
+  console.log('Init schedule')
+  scheduleJob.initSchedule(config, schedule)
+
+  // RPC Websocket 连接池
+  // console.log('Init connection pools')
+  // websocketUtil.genConnectionPools(config.wsservers)
+
+  // RPC rabbitmq 连接池
+  // console.log('Init rabbitmq')
+  // rabbitmqClinet.initRabbitmqClient(config.rabbitmq, rpcrouter)
+
+  // mongoClient
+  mongoClient.initMongo(config.mongo)
+
+  // elasticsearchClient
+  // elasticsearchClient.initElasticsearch(config.elasticsearch)
+
+  // 短信平台
+  // console.log('Init sms')
+  // smsClient.initSms(config.sms)
+
+  // qiniu
+  // console.log('Init qiniu')
+  // fileUtil.initQiniu(config.qiniu)
+})
+server.on('error', onError)
+server.on('listening', onListening)

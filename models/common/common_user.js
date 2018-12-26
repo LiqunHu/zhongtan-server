@@ -1,21 +1,12 @@
 /* 用户表 */
 const CryptoJS = require('crypto-js')
-const db = require('../../util/db')
-const GLBConfig = require('../../util/GLBConfig')
+const db = require('../../app/db')
 
 module.exports = db.defineModel('tbl_common_user', {
   user_id: {
-    type: db.ID,
+    type: db.UUID,
+    defaultValue: db.UUIDV1,
     primaryKey: true
-  },
-  domain_id: {
-    type: db.IDNO,
-    allowNull: true
-  },
-  usergroup_id: {
-    // 用户组
-    type: db.IDNO,
-    allowNull: true
   },
   user_username: {
     type: db.STRING(100),
@@ -30,17 +21,17 @@ module.exports = db.defineModel('tbl_common_user', {
   user_type: {
     type: db.STRING(10),
     defaultValue: '',
-    allowNull: true
+    allowNull: false
   },
   user_email: {
     type: db.STRING(100),
     defaultValue: '',
-    allowNull: true
+    allowNull: false
   },
   user_phone: {
     type: db.STRING(20),
     defaultValue: '',
-    allowNull: true
+    allowNull: false
   },
   user_password: {
     type: db.STRING(100),
@@ -52,45 +43,45 @@ module.exports = db.defineModel('tbl_common_user', {
   user_name: {
     type: db.STRING(100),
     defaultValue: '',
-    allowNull: true
+    allowNull: false
   },
   user_gender: {
     type: db.STRING(1),
     defaultValue: '',
-    allowNull: true
+    allowNull: false
   },
   user_avatar: {
     type: db.STRING(200),
     defaultValue: '',
-    allowNull: true
+    allowNull: false
   },
   user_province: {
     //省
     type: db.STRING(20),
     defaultValue: '',
-    allowNull: true
+    allowNull: false
   },
   user_city: {
     //市/县
     type: db.STRING(20),
     defaultValue: '',
-    allowNull: true
+    allowNull: false
   },
   user_district: {
     //区
     type: db.STRING(20),
     defaultValue: '',
-    allowNull: true
+    allowNull: false
   },
   user_address: {
     type: db.STRING(100),
     defaultValue: '',
-    allowNull: true
+    allowNull: false
   },
   user_zipcode: {
     type: db.STRING(32),
     defaultValue: '',
-    allowNull: true
+    allowNull: false
   },
   user_remark: {
     type: db.STRING(200),

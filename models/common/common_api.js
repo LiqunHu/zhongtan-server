@@ -1,4 +1,4 @@
-const db = require('../../util/db')
+const db = require('../../app/db')
 const GLBConfig = require('../../util/GLBConfig')
 
 module.exports = db.defineModel('tbl_common_api', {
@@ -25,7 +25,8 @@ module.exports = db.defineModel('tbl_common_api', {
   },
   api_function: {
     type: db.STRING(100),
-    unique: true
+    unique: true,
+    allowNull: false
   },
   auth_flag: {
     type: db.STRING(2),

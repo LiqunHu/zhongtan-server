@@ -1,4 +1,4 @@
-const db = require('../../util/db')
+const db = require('../../app/db')
 // 提单表
 
 module.exports = db.defineModel('tbl_zhongtan_billlading', {
@@ -10,7 +10,8 @@ module.exports = db.defineModel('tbl_zhongtan_billlading', {
   billlading_no: {
     // 提单号
     type: db.STRING(100),
-    allowNull: true
+    defaultValue: '',
+    allowNull: false
   },
   billlading_type: {
     // 提单类型 进口出口
@@ -20,6 +21,7 @@ module.exports = db.defineModel('tbl_zhongtan_billlading', {
   billlading_state: {
     // 提单状态
     type: db.STRING(10),
+    defaultValue: '',
     allowNull: false
   },
   billlading_vessel_id: {
@@ -34,59 +36,70 @@ module.exports = db.defineModel('tbl_zhongtan_billlading', {
     type: db.ID,
     allowNull: true
   },
-  container_manager_id: { // 箱管 id
+  container_manager_id: {
+    // 箱管 id
     type: db.IDNO,
     allowNull: true
   },
   billlading_consignee_name: {
     // 收货人姓名
     type: db.STRING(50),
-    allowNull: true
+    defaultValue: '',
+    allowNull: false
   },
   billlading_consignee_tel: {
     // 收货人电话
     type: db.STRING(50),
-    allowNull: true
+    defaultValue: '',
+    allowNull: false
   },
   billlading_consignee_address: {
     // 收货人地址
     type: db.STRING(200),
-    allowNull: true
+    defaultValue: '',
+    allowNull: false
   },
   billlading_consignee_tin: {
     // 收货人tin
     type: db.STRING(50),
-    allowNull: true
+    defaultValue: '',
+    allowNull: false
   },
   billlading_notify_name: {
     // 联系人姓名
     type: db.STRING(50),
-    allowNull: true
+    defaultValue: '',
+    allowNull: false
   },
   billlading_notify_tel: {
     // 联系人电话
     type: db.STRING(50),
-    allowNull: true
+    defaultValue: '',
+    allowNull: false
   },
   billlading_notify_address: {
     // 联系人地址
     type: db.STRING(200),
-    allowNull: true
+    defaultValue: '',
+    allowNull: false
   },
   billlading_notify_tin: {
     // 联系人tin
     type: db.STRING(50),
-    allowNull: true
+    defaultValue: '',
+    allowNull: false
   },
   billlading_original_num: {
     // 提单原件数量
     type: db.STRING(10),
-    allowNull: true
+    defaultValue: '0',
+    allowNull: false
   },
   billlading_copys_num: {
     // 提单拷贝数量
     type: db.STRING(10),
-    allowNull: true
+    defaultValue: '0',
+    allowNull: false
   },
   billlading_loading_port_id: {
     // 起始港
@@ -101,12 +114,14 @@ module.exports = db.defineModel('tbl_zhongtan_billlading', {
   billlading_delivery_place: {
     // 交货地
     type: db.STRING(100),
-    allowNull: true
+    defaultValue: '',
+    allowNull: false
   },
   billlading_stuffing_place: {
     // 装货地
     type: db.STRING(100),
-    allowNull: true
+    defaultValue: '',
+    allowNull: false
   },
   billlading_stuffing_date: {
     // 装货日期

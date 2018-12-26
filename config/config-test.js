@@ -1,48 +1,58 @@
 const config = {
-  // for sequelize`
-  sequelize: {
-    dialect: 'mysql',
-    database: 'mvnndata',
-    username: 'root',
-    password: '123456',
-    host: 'localhost',
-    port: 33306
+  mysql: {
+    normal: {
+      database: 'zhongtandata',
+      username: 'root',
+      password: '123456',
+      host: 'localhost',
+      port: 33306
+    },
+    readonly: {}
   },
-  RWSeperateFlag: false, // 读写分离标识
-  // for sequelize Query`
-  sequelizeQuery: {
-    dialect: 'mysql',
-    database: 'mvnndata',
-    username: 'root',
-    password: '123456',
-    host: 'localhost',
-    port: 33306
-  },
-  // for redis
-  redisCache: true,
   redis: {
     host: 'localhost',
     port: 16379,
-    opts: {}
+    opts: {},
+    redisKey: {
+      AUTH: 'AUTH',
+      SMS: 'SMS',
+      CAPTCHA: 'CAP'
+    }
   },
   // for mongo
-  mongoFileFlag: true,
-  mongoSyncFlag: true,
+  mongoSyncFlag: false,
   mongo: {
-    connect: 'mongodb://127.0.0.1:27017',
-    dbName: 'mvnndata',
-    bucketName: 'gridfsmvnn'
+    url: 'mongodb://127.0.0.1:27017',
+    options: {},
+    dbName: 'zhongtandata'
   },
   // for elasticsearch
-  elasticsearchFlag: false,
   elasticsearch: {
-    index: 'mvnn',
-    host: 'localhost:9200',
+    index: 'zhongtan',
+    host: '127.0.0.1:9200',
     log: {
       type: 'file',
       level: 'error',
       path: '../log/elasticsearch.log'
     }
+  },
+  // for rabbitmqClinet
+  rabbitmq: {
+    connectOptions: {
+      protocol: 'amqp',
+      hostname: 'localhost',
+      port: 5672,
+      username: 'imccrabbit',
+      password: '123456'
+    },
+    publisherQueue: {
+      config: {
+        max: 2, // maximum size of the pool
+        min: 1 // minimum size of the pool
+      },
+      queues: ['test']
+    },
+    consumerQueue: ['test']
   },
   // for logger
   loggerConfig: {
@@ -57,37 +67,83 @@ const config = {
           filename: '../log/app.log',
           pattern: '-yyyy-MM-dd',
           compress: true
+        },
+        logstash: {
+          category: 'imcc',
+          type: 'log4js-logstash-tcp',
+          host: '127.0.0.1',
+          port: 5050,
+          fields: {
+            instance: 'imccAuth',
+            source: 'imccAuth',
+            environment: 'development'
+          }
         }
       },
       categories: {
         default: {
-          appenders: ['out', 'everything'],
+          appenders: ['out', 'everything', 'logstash'],
           level: 'debug'
         }
       }
     }
   },
-  // schedule Flag
-  scheduleFlag: false,
+  wsservers: {
+    pooltest: {
+      host: '127.0.0.1',
+      port: 9090,
+      config: {
+        max: 10, // maximum size of the pool
+        min: 3 // minimum size of the pool
+      },
+      desc: '内部连接池测试'
+    }
+  },
+  // schedule job
+  scheduleJobs: [],
+  sms: {
+    appid: '26763',
+    appkey: '0d7e27433af7744451809fb2136ae834',
+    signtype: 'normal' /*可选参数normal,md5,sha1*/
+  },
+  qiniu: {
+    ACCESS_KEY: 'n7O-3elJh6lKYOaAywJ5MlmwvGxa6MgMPf1vLAmB',
+    SECRET_KEY: 'ntcyQ9co6mMJTN-raHVbz8FabnLMxuLORmXMG7Qq'
+  },
   weixin: {
-    appid: 'wx1bf0976923162a6b',
-    app_secret: 'f03e63ca1aca1c007b5915b54b6ec8c7'
+    // 小程序授权相关
+    appid: '',
+    app_secret: ''
   },
-  syslogFlag: true,
-  uploadOptions: {
-    uploadDir: '../public/temp',
-    maxFileSize: 2 * 1024 * 1024,
-    keepExtensions: true
+  fileSys: {
+    type: 'qiniu' /* 可选 local qiniu */,
+    filesDir: '../public/temp/' /* 本地目录对于非本地存储是临时文件目录 */,
+    bucket: {
+      /* for qiniu */
+      test: {
+        domain: 'http://testqiniu.goooku.com/'
+      }
+    }
   },
-  tempDir: '../public/temp',
-  filesDir: '../public/files',
-  tmpUrlBase: '/temp/',
-  fileUrlBase: '/files/',
-  fsUrlBase: '/filesys/',
+  // fileSys: {
+  //   type: 'mongo' /* 可选 local qiniu mongo*/,
+  //   filesDir: '../public/temp/' /* 本地目录对于非本地存储是临时文件目录 */,
+  //   bucket: {
+  //     imcc: {
+  //       baseUrl: '/filesys/imcc/'
+  //     }
+  //   }
+  // },
+  // fileSys: { // localFile
+  //   type: 'local' /* 可选 local qiniu */,
+  //   filesDir: '../public/files/' /* 本地目录对于非本地存储是临时文件目录 */,
+  //   urlBaseu: '/files/' /* 文件相对路径 */
+  // },
   // SECRET_KEY
-  SECRET_KEY: 'zc7#_66#g%u2n$j_)j$-r(swt63d(2l%wc2y=wqt_m8kpy%05*',
+  SECRET_KEY: 'zc7#_66#g%u2n$j_)j$-r(swt74d(2l%wc2y=wqt_m8kpy%04*',
   TOKEN_AGE: 43200000, // 12 * 60 * 60 * 10000
-  MOBILE_TOKEN_AGE: 31536000000 // 365 * 24 * 60 * 60 * 1000
+  MOBILE_TOKEN_AGE: 31536000000, // 365 * 24 * 60 * 60 * 1000
+  SMS_TOKEN_AGE: 300000 // 5* 60 * 1000
 }
 
 module.exports = config

@@ -10,9 +10,20 @@
   },
   "servers": [
     {
-      "url": "http://localhost:9090",
+      "url": "http://101.200.2.67/v1/",
       "description": "dev"
     }
   ],
-  "security": [{ "ApiKeyAuth": [] }]
+  "security": [{ "ApiKeyAuth": [] }],
+  "paths": {},
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Authorization"
+      }
+    },
+    "schemas": {}
+  }
 }

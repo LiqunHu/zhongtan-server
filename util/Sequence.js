@@ -1,8 +1,6 @@
-const util = require('util')
 const moment = require('moment')
 const db = require('./db')
-const common = require('../util/CommonUtil')
-const logger = require('./Logger').createLogger('Sequence')
+const logger = require('./Logger').createLogger(__filename)
 const sequelize = db.sequelize
 
 let genUserID = async () => {

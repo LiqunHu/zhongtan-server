@@ -1,4 +1,4 @@
-const db = require('../../util/db')
+const db = require('../../app/db')
 
 module.exports = db.defineModel('tbl_zhongtan_portinfo', {
   portinfo_id: {

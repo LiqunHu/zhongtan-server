@@ -1,4 +1,4 @@
-const db = require('../../util/db');
+const db = require('../../app/db')
 
 module.exports = db.defineModel('tbl_zhongtan_web_article', {
   web_article_id: {
@@ -8,7 +8,7 @@ module.exports = db.defineModel('tbl_zhongtan_web_article', {
   },
   web_article_type: {
     type: db.STRING(10) // 1-通知信息
-  }, 
+  },
   web_article_title: {
     type: db.STRING(200),
     allowNull: true
@@ -25,4 +25,4 @@ module.exports = db.defineModel('tbl_zhongtan_web_article', {
     type: db.STRING(300),
     allowNull: true
   }
-});
+})

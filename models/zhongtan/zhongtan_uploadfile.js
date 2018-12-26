@@ -1,4 +1,4 @@
-const db = require('../../util/db')
+const db = require('../../app/db')
 // 提单表
 
 module.exports = db.defineModel('tbl_zhongtan_uploadfile', {

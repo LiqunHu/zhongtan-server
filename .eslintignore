@@ -1,0 +1,7 @@
+/node_modules/
+/public/
+config.js
+create_single_db.js
+init-data.js
+init-db.js
+.nyc_output

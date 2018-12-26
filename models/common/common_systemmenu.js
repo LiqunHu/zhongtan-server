@@ -1,5 +1,4 @@
-const db = require('../../util/db')
-const GLBConfig = require('../../util/GLBConfig')
+const db = require('../../app/db')
 
 module.exports = db.defineModel('tbl_common_systemmenu', {
   systemmenu_id: {
@@ -9,6 +8,16 @@ module.exports = db.defineModel('tbl_common_systemmenu', {
   },
   systemmenu_name: {
     type: db.STRING(300),
+    allowNull: false
+  },
+  systemmenu_icon: {
+    type: db.STRING(100),
+    defaultValue: '',
+    allowNull: false
+  },
+  systemmenu_index: {
+    type: db.INTEGER,
+    defaultValue: '0',
     allowNull: false
   },
   api_id: {
@@ -23,10 +32,12 @@ module.exports = db.defineModel('tbl_common_systemmenu', {
   node_type: {
     // NODETYPEINFO
     type: db.STRING(2),
-    allowNull: true
+    defaultValue: '',
+    allowNull: false
   },
   parent_id: {
     type: db.ID,
-    allowNull: true
+    defaultValue: '',
+    allowNull: false
   }
 })
