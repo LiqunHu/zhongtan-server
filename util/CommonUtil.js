@@ -155,14 +155,16 @@ const fileSave = async (req, bucket) => {
     return fileInfo
   } else if (config.fileSys.type === 'qiniu') {
     if (config.fileSys.bucket[bucket]) {
-      let fileInfo = await fileUtil.fileSaveQiniu(req, config.fileSys.filesDir, bucket, config.fileSys.bucket[bucket].domain)
+      let tempDir = path.join(process.cwd(), config.fileSys.filesDir)
+      let fileInfo = await fileUtil.fileSaveQiniu(req, tempDir, bucket, config.fileSys.bucket[bucket].domain)
       return fileInfo
     } else {
       throw new Error('bucket do not exist')
     }
   } else if (config.fileSys.type === 'mongo') {
     if (config.fileSys.bucket[bucket]) {
-      let fileInfo = await fileUtil.fileSaveMongo(req, config.fileSys.filesDir, bucket, config.fileSys.bucket[bucket].baseUrl)
+      let tempDir = path.join(process.cwd(), config.fileSys.filesDir)
+      let fileInfo = await fileUtil.fileSaveMongo(req, tempDir, bucket, config.fileSys.bucket[bucket].baseUrl)
       return fileInfo
     } else {
       throw new Error('bucket do not exist')

@@ -8,8 +8,9 @@ router.post('/configuration/PortConfig/:method', services.PortConfigControl)
 // router.post('/configuration/VoyageConfig/:method', services.VoyageConfigSRV.VoyageConfigResource)
 // router.post('/export/Booking/:method', services.BookingSRV.BookingResource)
 // router.post('/export/BookingWork/:method', services.BookingWorkSRV.BookingWorkResource)
-// router.post('/web/WebControl/:method', services.WebControlSRV.WebControlResource)
-// router.post('/web/SailScheduleControl/:method', services.SailScheduleControlSRV.SailScheduleControlResource)
-// router.post('/web/Web/:method', services.WebSRV.WebResource)
+
+router.post('/web/SailSchedule/:method', services.SailScheduleControl)
+router.post('/web/WebConfig/:method', services.WebConfigControl)
+router.post('/web/Web/:method', services.WebControl)
 
 module.exports = router
