@@ -3,7 +3,7 @@ const GLBConfig = require('../../../util/GLBConfig')
 const logger = require('../../../app/logger').createLogger(__filename)
 const model = require('../../../app/model')
 
-const tb_portinfo = model.zhongtan_portinfo
+const tb_port = model.zhongtan_port
 
 exports.initAct = async () => {
   let returnData = {
@@ -17,11 +17,11 @@ exports.searchAct = async req => {
   let doc = common.docValidate(req)
   let returnData = {}
 
-  let queryStr = `select * from tbl_zhongtan_portinfo where state = '1'`
+  let queryStr = `select * from tbl_zhongtan_port where state = '1'`
   let replacements = []
 
   if (doc.search_text) {
-    queryStr += ' and (portinfo_name like ? or portinfo_name_cn like ? or portinfo_code like ?)'
+    queryStr += ' and (port_name like ? or port_name_cn like ? or port_code like ?)'
     let search_text = '%' + doc.search_text + '%'
     replacements.push(search_text)
     replacements.push(search_text)
@@ -39,34 +39,34 @@ exports.searchAct = async req => {
 exports.addAct = async req => {
   let doc = common.docValidate(req)
 
-  let portinfo = await tb_portinfo.create({
-    portinfo_country: doc.portinfo_country,
-    portinfo_name: doc.portinfo_name,
-    portinfo_name_cn: doc.portinfo_name_cn,
-    portinfo_code: doc.portinfo_code
+  let port = await tb_port.create({
+    port_country: doc.port_country,
+    port_name: doc.port_name,
+    port_name_cn: doc.port_name_cn,
+    port_code: doc.port_code
   })
 
-  return common.success(portinfo)
+  return common.success(port)
 }
 
 exports.modifyAct = async req => {
   let doc = common.docValidate(req)
 
-  let portinfo = await tb_portinfo.findOne({
+  let port = await tb_port.findOne({
     where: {
-      portinfo_id: doc.old.portinfo_id,
+      port_id: doc.old.port_id,
       state: GLBConfig.ENABLE
     }
   })
-  if (portinfo) {
-    portinfo.portinfo_country = doc.new.portinfo_country
-    portinfo.portinfo_name = doc.new.portinfo_name
-    portinfo.portinfo_name_cn = doc.new.portinfo_name_cn
-    portinfo.portinfo_code = doc.new.portinfo_code
+  if (port) {
+    port.port_country = doc.new.port_country
+    port.port_name = doc.new.port_name
+    port.port_name_cn = doc.new.port_name_cn
+    port.port_code = doc.new.port_code
 
-    await portinfo.save()
+    await port.save()
 
-    return common.success(portinfo)
+    return common.success(port)
   } else {
     return common.error('operator_03')
   }
@@ -75,15 +75,15 @@ exports.modifyAct = async req => {
 exports.deleteAct = async req => {
   let doc = common.docValidate(req)
 
-  let portinfo = await tb_portinfo.findOne({
+  let port = await tb_port.findOne({
     where: {
-      portinfo_id: doc.portinfo_id,
+      port_id: doc.port_id,
       state: GLBConfig.ENABLE
     }
   })
-  if (portinfo) {
-    portinfo.state = GLBConfig.DISABLE
-    await portinfo.save()
+  if (port) {
+    port.state = GLBConfig.DISABLE
+    await port.save()
 
     return common.success()
   } else {

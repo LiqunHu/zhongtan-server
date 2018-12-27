@@ -63,4 +63,7 @@ app.use('/api/common', routers.common)
 //auth 
 app.use('/api/auth', routers.auth)
 
+//zhongtan 
+app.use('/api/zhongtan', routers.zhongtan)
+
 module.exports = app

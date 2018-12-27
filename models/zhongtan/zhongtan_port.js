@@ -1,27 +1,27 @@
 const db = require('../../app/db')
 
-module.exports = db.defineModel('tbl_zhongtan_portinfo', {
-  portinfo_id: {
+module.exports = db.defineModel('tbl_zhongtan_port', {
+  port_id: {
     type: db.IDNO,
     autoIncrement: true,
     primaryKey: true
   },
-  portinfo_country: {
+  port_country: {
     type: db.STRING(30),
     defaultValue: '',
     allowNull: true
   },
-  portinfo_name: {
+  port_name: {
     type: db.STRING(20),
     unique: true,
     allowNull: false
   },
-  portinfo_name_cn: {
+  port_name_cn: {
     type: db.STRING(20),
     defaultValue: '',
     allowNull: true
   },
-  portinfo_code: {
+  port_code: {
     type: db.STRING(20),
     unique: true,
     allowNull: false
