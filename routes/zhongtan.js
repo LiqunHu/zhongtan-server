@@ -5,7 +5,7 @@ const router = express.Router()
 // zhongtan
 router.post('/configuration/PortConfig/:method', services.PortConfigControl)
 router.post('/configuration/VesselConfig/:method', services.VesselConfigControl)
-// router.post('/configuration/VoyageConfig/:method', services.VoyageConfigSRV.VoyageConfigResource)
+router.post('/configuration/VoyageConfig/:method', services.VoyageConfigControl)
 // router.post('/export/Booking/:method', services.BookingSRV.BookingResource)
 // router.post('/export/BookingWork/:method', services.BookingWorkSRV.BookingWorkResource)
 
