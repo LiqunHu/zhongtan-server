@@ -33,7 +33,7 @@ module.exports = db.defineModel('tbl_zhongtan_billlading', {
     allowNull: true
   },
   billlading_shipper_id: {
-    type: db.ID,
+    type: db.UUID,
     allowNull: true
   },
   container_manager_id: {

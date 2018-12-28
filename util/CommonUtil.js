@@ -125,7 +125,7 @@ const generateRandomAlphaNum = len => {
 const getApiName = path => {
   if (path) {
     let patha = path.split('/')
-    let func = patha[patha.length - 1].toUpperCase()
+    let func = patha[patha.length - 2].toUpperCase()
     return func
   } else {
     return ''

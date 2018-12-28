@@ -108,7 +108,7 @@ exports.getScheduleAct = async () => {
     }
     let files = await tb_uploadfile.findAll({
       where: {
-        api_name: 'SAILSCHEDULECONTROL',
+        api_name: 'SAILSCHEDULE',
         uploadfile_index1: s.sail_schedule_upload_id
       }
     })

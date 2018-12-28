@@ -12,7 +12,7 @@ module.exports = db.defineModel('tbl_zhongtan_uploadfile', {
     allowNull: false
   },
   user_id: {
-    type: db.ID,
+    type: db.UUID,
     allowNull: true
   },
   uploadfile_index1: {

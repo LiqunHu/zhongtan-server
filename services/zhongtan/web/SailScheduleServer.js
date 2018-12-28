@@ -1,4 +1,6 @@
 const moment = require('moment')
+const fileUtil = require('server-utils').fileUtil
+
 const common = require('../../../util/CommonUtil')
 const logger = require('../../../app/logger').createLogger(__filename)
 const model = require('../../../app/model')
@@ -52,13 +54,12 @@ exports.addAct = async req => {
   })
 
   for (let f of doc.files) {
-    let mv = await common.fileSave(req, 'zhongtan')
     await tb_uploadfile.create({
       api_name: common.getApiName(req.path),
       user_id: user.user_id,
       uploadfile_index1: ssu.sail_schedule_upload_id,
       uploadfile_name: f.name,
-      uploadfile_url: mv.url
+      uploadfile_url: f.url
     })
   }
   return common.success()
@@ -73,17 +74,17 @@ exports.deleteAct = async req => {
     }
   })
 
-  // let files = await tb_uploadfile.findAll({
-  //   where: {
-  //     api_name: common.getApiName(req.path),
-  //     uploadfile_index1: ssu.sail_schedule_upload_id
-  //   }
-  // })
+  let files = await tb_uploadfile.findAll({
+    where: {
+      api_name: common.getApiName(req.path),
+      uploadfile_index1: ssu.sail_schedule_upload_id
+    }
+  })
 
-  // for (let f of files) {
-  //   FileSRV.fileDeleteByUrl(f.uploadfile_url)
-  //   f.destroy()
-  // }
+  for (let f of files) {
+    fileUtil.fileDeleteMongoByUrl(f.uploadfile_url)
+    f.destroy()
+  }
   ssu.destroy()
 
   return common.success()
