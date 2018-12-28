@@ -1,6 +1,7 @@
 module.exports = {
   common_01: '方法不支持',
   common_02: '未指定错误',
+  common_03: '数据不存在',
   common_api_01: '已经存在',
   common_api_02: '选定项目不存在',
   common_api_03: '文件类型错误',
