@@ -20,8 +20,8 @@ module.exports = async (req, res) => {
     } else if (method === 'captcha') {
       ret = await srv.captchaAct(req)
     }
-    return common.sendData(res, ret)
+    common.sendData(res, ret)
   } catch (error) {
-    return common.sendFault(res, error)
+    common.sendFault(res, error)
   }
 }

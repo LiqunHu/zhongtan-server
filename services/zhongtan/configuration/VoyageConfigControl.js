@@ -18,8 +18,8 @@ module.exports = async (req, res) => {
     } else if (method === 'delete') {
       ret = await srv.deleteAct(req)
     }
-    return common.sendData(res, ret)
+    common.sendData(res, ret)
   } catch (error) {
-    return common.sendFault(res, error)
+    common.sendFault(res, error)
   }
 }

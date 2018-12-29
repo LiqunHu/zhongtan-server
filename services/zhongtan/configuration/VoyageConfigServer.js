@@ -49,6 +49,7 @@ exports.searchAct = async req => {
 }
 
 exports.addAct = async req => {
+  JSON.parse('{{')
   let doc = common.docValidate(req)
 
   let voyage = await tb_voyage.findOne({
