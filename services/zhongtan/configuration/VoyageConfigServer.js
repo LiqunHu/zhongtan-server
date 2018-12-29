@@ -45,11 +45,10 @@ exports.searchAct = async req => {
   returnData.total = result.count
   returnData.rows = result.data
 
-  return common.success()
+  return common.success(returnData)
 }
 
 exports.addAct = async req => {
-  JSON.parse('{{')
   let doc = common.docValidate(req)
 
   let voyage = await tb_voyage.findOne({
@@ -59,7 +58,7 @@ exports.addAct = async req => {
   })
 
   if (voyage) {
-    return common.error('common_02')
+    return common.error('common_04')
   } else {
     let voyage = await tb_voyage.create({
       vessel_id: doc.vessel_id,

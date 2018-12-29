@@ -6,7 +6,7 @@ const router = express.Router()
 router.post('/configuration/PortConfig/:method', services.PortConfigControl)
 router.post('/configuration/VesselConfig/:method', services.VesselConfigControl)
 router.post('/configuration/VoyageConfig/:method', services.VoyageConfigControl)
-// router.post('/export/Booking/:method', services.BookingSRV.BookingResource)
+router.post('/export/Booking/:method', services.BookingControl)
 // router.post('/export/BookingWork/:method', services.BookingWorkSRV.BookingWorkResource)
 
 router.post('/web/SailSchedule/:method', services.SailScheduleControl)

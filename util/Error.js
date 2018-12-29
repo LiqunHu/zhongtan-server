@@ -2,6 +2,7 @@ module.exports = {
   common_01: '方法不支持',
   common_02: '未指定错误',
   common_03: '数据不存在',
+  common_04: '数据已存在',
   common_api_01: '已经存在',
   common_api_02: '选定项目不存在',
   common_api_03: '文件类型错误',
@@ -42,5 +43,6 @@ module.exports = {
   auth_20: 'wxCode is missing',
   auth_21: '微信验证失败',
   auth_22: '用户不存在',
-  auth_23: '验证码请求太频繁'
+  auth_23: '验证码请求太频繁',
+  billloading_01: 'billloading state error'
 }
