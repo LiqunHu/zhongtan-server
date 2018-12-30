@@ -5,7 +5,7 @@ const logger = require('../../../app/logger').createLogger(__filename)
 const model = require('../../../app/model')
 
 const tb_billlading = model.zhongtan_billlading
-const tb_billlading_container = model.zhongtan_billlading_container
+const tb_billlading_goods = model.zhongtan_billlading_goods
 const tb_vessel = model.zhongtan_vessel
 const tb_voyage = model.zhongtan_voyage
 const tb_port = model.zhongtan_port
@@ -46,8 +46,8 @@ exports.initAct = async () => {
 
   for (let p of ports) {
     returnData.PortINFO.push({
-      id: p.portinfo_id,
-      text: p.portinfo_name + ' - ' + p.portinfo_code
+      id: p.port_id,
+      text: p.port_name + ' - ' + p.port_code
     })
   }
   logger.debug(returnData)
@@ -84,43 +84,32 @@ exports.searchAct = async req => {
 
   for (let bl of result.data) {
     let d = JSON.parse(JSON.stringify(bl))
+
+    d.VoyageINFO = []
+
+    let voyages = await tb_voyage.findAll({
+      where: {
+        vessel_id: d.billlading_vessel_id,
+        state: GLBConfig.ENABLE
+      },
+      limit: 10,
+      order: [['voyage_eta_date', 'DESC']]
+    })
+    for (let v of voyages) {
+      d.VoyageINFO.push({
+        id: v.voyage_id,
+        text: v.voyage_number + ' - ' + moment(v.voyage_eta_date, 'YYYY-MM-DD').format('MM-DD')
+      })
+    }
+
     d.booking_date = moment(bl.created_at).format('YYYY-MM-DD')
-    d.billlading_consignee = {
-      name: d.billlading_consignee_name,
-      address: d.billlading_consignee_address,
-      telephone: d.billlading_consignee_tel
-    }
 
-    d.billlading_notify = {
-      name: d.billlading_notify_name,
-      address: d.billlading_notify_address,
-      telephone: d.billlading_notify_tel
-    }
-
-    d.shipline = {
-      vessel: d.billlading_vessel_id,
-      voyage: d.billlading_voyage_id,
-      vessel_name: d.vessel_name,
-      voyage_number: d.voyage_number + moment(d.voyage_eta_date, 'YYYY-MM-DD').format('MM-DD')
-    }
-
-    d.portinfo = {
-      loading: d.billlading_loading_port_id,
-      discharge: d.billlading_discharge_port_id
-    }
-
-    d.stuffing = {
-      place: d.billlading_stuffing_place,
-      date: d.billlading_stuffing_date,
-      requirement: d.billlading_stuffing_requirement
-    }
-
-    d.billlading_containers = []
-    let billlading_containers = await tb_billlading_container.findAll({
+    d.billlading_goods = []
+    let billlading_goods = await tb_billlading_goods.findAll({
       where: { billlading_id: d.billlading_id }
     })
-    for (let c of billlading_containers) {
-      d.billlading_containers.push(JSON.parse(JSON.stringify(c)))
+    for (let c of billlading_goods) {
+      d.billlading_goods.push(JSON.parse(JSON.stringify(c)))
     }
 
     d.files = []
@@ -186,20 +175,19 @@ exports.bookingAct = async req => {
     billlading_freight_currency: doc.billlading_freight_currency
   })
 
-  for (let c of doc.billlading_containers) {
-    await tb_billlading_container.create({
+  for (let c of doc.billlading_goods) {
+    await tb_billlading_goods.create({
       billlading_id: billlading.billlading_id,
-      billlading_container_number: c.billlading_container_number,
-      billlading_container_size: c.billlading_container_size,
-      billlading_container_type: c.billlading_container_type,
-      billlading_container_goods_description: c.billlading_container_goods_description,
-      billlading_container_package_number: c.billlading_container_package_number,
-      billlading_container_package_unit: c.billlading_container_package_unit,
-      billlading_container_gross_unit: c.billlading_container_gross_unit,
-      billlading_container_gross_volume: c.billlading_container_gross_volume,
-      billlading_container_gross_volume_unit: c.billlading_container_gross_volume_unit,
-      billlading_container_gross_weight: c.billlading_container_gross_weight,
-      billlading_container_gross_weight_unit: c.billlading_container_gross_weight_unit
+      billlading_goods_container_number: c.billlading_goods_container_number,
+      billlading_goods_container_size: c.billlading_goods_container_size,
+      billlading_goods_container_type: c.billlading_goods_container_type,
+      billlading_goods_description: c.billlading_goods_description,
+      billlading_goods_package_number: c.billlading_goods_package_number,
+      billlading_goods_package_unit: c.billlading_goods_package_unit,
+      billlading_goods_gross_weight: c.billlading_goods_gross_weight,
+      billlading_goods_gross_unit: c.billlading_goods_gross_unit,
+      billlading_goods_gross_volume: c.billlading_goods_gross_volume,
+      billlading_goods_gross_volume_unit: c.billlading_goods_gross_volume_unit
     })
   }
 
