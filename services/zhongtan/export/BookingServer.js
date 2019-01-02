@@ -6,6 +6,7 @@ const model = require('../../../app/model')
 
 const tb_billlading = model.zhongtan_billlading
 const tb_billlading_goods = model.zhongtan_billlading_goods
+const tb_container = model.zhongtan_container
 const tb_vessel = model.zhongtan_vessel
 const tb_voyage = model.zhongtan_voyage
 const tb_port = model.zhongtan_port
@@ -106,8 +107,16 @@ exports.searchAct = async req => {
     let billlading_goods = await tb_billlading_goods.findAll({
       where: { billlading_id: d.billlading_id }
     })
-    for (let c of billlading_goods) {
-      d.billlading_goods.push(JSON.parse(JSON.stringify(c)))
+    for (let g of billlading_goods) {
+      d.billlading_goods.push(JSON.parse(JSON.stringify(g)))
+    }
+
+    d.billlading_containers = []
+    let billlading_containers = await tb_container.findAll({
+      where: { billlading_id: d.billlading_id }
+    })
+    for (let c of billlading_containers) {
+      d.billlading_containers.push(JSON.parse(JSON.stringify(c)))
     }
 
     d.files = []
@@ -273,6 +282,26 @@ exports.modifyAct = async req => {
           }
         })
       }
+    }
+
+    for(let c of doc.new.billlading_containers) {
+      let mContainer = await tb_container.findOne({
+        where: {
+          container_id: c.container_id
+        }
+      })
+      mContainer.container_no = c.container_no
+      mContainer.container_iso = c.container_iso
+      mContainer.container_size = c.container_size
+      mContainer.container_type = c.container_type
+      mContainer.container_seal_no1 = c.container_seal_no1
+      mContainer.container_package_no = c.container_package_no
+      mContainer.container_package_unit = c.container_package_unit
+      mContainer.container_volume = c.container_volume
+      mContainer.container_volume_unit = c.container_volume_unit
+      mContainer.container_weight = c.container_weight
+      mContainer.container_weight_unit = c.container_weight_unit
+      await mContainer.save()
     }
 
     return common.success()

@@ -125,6 +125,14 @@ exports.searchAct = async req => {
       d.billlading_goods.push(JSON.parse(JSON.stringify(c)))
     }
 
+    d.billlading_containers = []
+    let billlading_containers = await tb_container.findAll({
+      where: { billlading_id: d.billlading_id }
+    })
+    for (let c of billlading_containers) {
+      d.billlading_containers.push(JSON.parse(JSON.stringify(c)))
+    }
+
     returnData.rows.push(d)
   }
 
@@ -212,6 +220,26 @@ exports.modifyAct = async req => {
           }
         })
       }
+    }
+
+    for (let c of doc.new.billlading_containers) {
+      let mContainer = await tb_container.findOne({
+        where: {
+          container_id: c.container_id
+        }
+      })
+      mContainer.container_no = c.container_no
+      mContainer.container_iso = c.container_iso
+      mContainer.container_size = c.container_size
+      mContainer.container_type = c.container_type
+      mContainer.container_seal_no1 = c.container_seal_no1
+      mContainer.container_package_no = c.container_package_no
+      mContainer.container_package_unit = c.container_package_unit
+      mContainer.container_volume = c.container_volume
+      mContainer.container_volume_unit = c.container_volume_unit
+      mContainer.container_weight = c.container_weight
+      mContainer.container_weight_unit = c.container_weight_unit
+      await mContainer.save()
     }
 
     logger.debug('modify success')

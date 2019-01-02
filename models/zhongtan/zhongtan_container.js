@@ -17,14 +17,6 @@ module.exports = db.defineModel('tbl_zhongtan_container', {
     defaultValue: '',
     allowNull: false
   },
-  billlading_vessel_id: {
-    type: db.IDNO,
-    allowNull: true
-  },
-  billlading_voyage_id: {
-    type: db.IDNO,
-    allowNull: true
-  },
   container_iso: {
     // 集装箱ISO 型号
     type: db.STRING(20),
