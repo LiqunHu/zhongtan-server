@@ -219,8 +219,64 @@ exports.modifyAct = async req => {
     modibilllading.billlading_stuffing_place = doc.new.billlading_stuffing_place
     modibilllading.billlading_stuffing_date = doc.new.billlading_stuffing_date
     modibilllading.billlading_stuffing_requirement = doc.new.billlading_stuffing_requirement
+    modibilllading.billlading_pay_date = doc.new.billlading_pay_date
+    modibilllading.billlading_freight_currency = doc.new.billlading_freight_currency
 
     await modibilllading.save()
+    let billlading_goods = await tb_billlading_goods.findAll({
+      where: { billlading_id: doc.new.billlading_id }
+    })
+    let oldGoods = []
+    for (let g of billlading_goods) {
+      oldGoods.push(g.billlading_goods_id)
+    }
+    let newGoods = []
+    for (let g of doc.new.billlading_goods) {
+      if (g.billlading_goods_id) {
+        let mgood = await tb_billlading_goods.findOne({
+          where: {
+            billlading_goods_id: g.billlading_goods_id
+          }
+        })
+        mgood.billlading_goods_container_number = g.billlading_goods_container_number
+        mgood.billlading_goods_container_size = g.billlading_goods_container_size
+        mgood.billlading_goods_container_type = g.billlading_goods_container_type
+        mgood.billlading_goods_description = g.billlading_goods_description
+        mgood.billlading_goods_package_number = g.billlading_goods_package_number
+        mgood.billlading_goods_package_unit = g.billlading_goods_package_unit
+        mgood.billlading_goods_gross_weight = g.billlading_goods_gross_weight
+        mgood.billlading_goods_gross_unit = g.billlading_goods_gross_unit
+        mgood.billlading_goods_gross_volume = g.billlading_goods_gross_volume
+        mgood.billlading_goods_gross_volume_unit = g.billlading_goods_gross_volume_unit
+        await mgood.save()
+        newGoods.push(g.billlading_goods_id)
+      } else {
+        await tb_billlading_goods.create({
+          billlading_id: modibilllading.billlading_id,
+          billlading_goods_container_number: g.billlading_goods_container_number,
+          billlading_goods_container_size: g.billlading_goods_container_size,
+          billlading_goods_container_type: g.billlading_goods_container_type,
+          billlading_goods_description: g.billlading_goods_description,
+          billlading_goods_package_number: g.billlading_goods_package_number,
+          billlading_goods_package_unit: g.billlading_goods_package_unit,
+          billlading_goods_gross_weight: g.billlading_goods_gross_weight,
+          billlading_goods_gross_unit: g.billlading_goods_gross_unit,
+          billlading_goods_gross_volume: g.billlading_goods_gross_volume,
+          billlading_goods_gross_volume_unit: g.billlading_goods_gross_volume_unit
+        })
+      }
+    }
+
+    for (let gid of oldGoods) {
+      if (newGoods.indexOf(gid) < 0) {
+        await tb_billlading_goods.destroy({
+          where: {
+            billlading_goods_id: gid
+          }
+        })
+      }
+    }
+
     return common.success()
   } else {
     return common.error('operator_03')
