@@ -172,6 +172,11 @@ const fileSave = async (req, bucket) => {
   }
 }
 
+function str2Money(str) {
+  let money = parseFloat(str)
+  return Math.round(money * 100)
+}
+
 module.exports = {
   docValidate: docValidate,
   reqTrans: reqTrans,
@@ -183,5 +188,6 @@ module.exports = {
   generateRandomAlphaNum: generateRandomAlphaNum,
   getApiName: getApiName,
   generateNonceString: generateNonceString,
-  fileSave: fileSave
+  fileSave: fileSave,
+  str2Money: str2Money
 }
