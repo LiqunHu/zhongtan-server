@@ -172,8 +172,8 @@ exports.deleteAct = async req => {
   if (deluser) {
     deluser.state = GLBConfig.DISABLE
     await deluser.save()
-    redisClient.removeItem(['REDISKEYAUTH', 'WEB', deluser.user_id].join('_'))
-    redisClient.removeItem(['REDISKEYAUTH', 'MOBILE', deluser.user_id].join('_'))
+    redisClient.del(['REDISKEYAUTH', 'WEB', deluser.user_id].join('_'))
+    redisClient.del(['REDISKEYAUTH', 'MOBILE', deluser.user_id].join('_'))
     return common.success()
   } else {
     return common.error('operator_03')

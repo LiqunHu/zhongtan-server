@@ -72,8 +72,8 @@ exports.signinBySmsAct = async req => {
     }
 
     let key = [config.redis.redisKey.SMS, user.user_phone].join('_')
-    let rdsData = await redisClient.getItem(key)
-    redisClient.removeItem(key)
+    let rdsData = await redisClient.get(key)
+    redisClient.del(key)
 
     if (_.isNull(rdsData)) {
       return common.error('auth_09')
@@ -142,7 +142,7 @@ exports.signoutAct = async req => {
 
     let type = tokensplit[0],
       uid = tokensplit[1]
-    let error = await redisClient.removeItem(config.redis.redisKey.AUTH + type + uid)
+    let error = await redisClient.del(config.redis.redisKey.AUTH + type + uid)
     if (error) {
       logger.error(error)
     }
@@ -166,7 +166,7 @@ exports.smsAct = async req => {
     let smsExpiredTime = parseInt(config.SMS_TOKEN_AGE / 1000)
     let key = [config.redis.redisKey.SMS, user.user_phone].join('_')
 
-    let liveTime = await redisClient.getLiveTime(key)
+    let liveTime = await redisClient.ttl(key)
     logger.debug(liveTime)
     logger.debug(code)
     if (liveTime > 0) {
@@ -179,7 +179,7 @@ exports.smsAct = async req => {
       code: code
     })
 
-    await redisClient.setItem(
+    await redisClient.set(
       key,
       {
         code: code
@@ -200,7 +200,7 @@ exports.captchaAct = async () => {
   })
 
   let key = config.redis.redisKey.CAPTCHA + uuid.v1().replace(/-/g, '')
-  await redisClient.setItem(
+  await redisClient.set(
     key,
     {
       code: captcha.text
@@ -287,7 +287,7 @@ const loginInit = async (user, session_token, type) => {
       } else {
         expired = parseInt(config.TOKEN_AGE / 1000)
       }
-      let error = await redisClient.setItem(
+      let error = await redisClient.set(
         [config.redis.redisKey.AUTH, type, user.user_id].join('_'),
         {
           session_token: session_token,

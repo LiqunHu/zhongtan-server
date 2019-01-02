@@ -206,66 +206,22 @@ exports.modifyAct = async req => {
     }
   })
   if (modibilllading) {
-    modibilllading.billlading_vessel_id = doc.new.shipline.vessel
-    modibilllading.billlading_voyage_id = doc.new.shipline.voyage
-    modibilllading.billlading_consignee_name = doc.new.billlading_consignee.name
-    modibilllading.billlading_consignee_address = doc.new.billlading_consignee.address
-    modibilllading.billlading_consignee_tel = doc.new.billlading_consignee.telephone
-    modibilllading.billlading_notify_name = doc.new.billlading_notify.name
-    modibilllading.billlading_notify_address = doc.new.billlading_notify.address
-    modibilllading.billlading_notify_tel = doc.new.billlading_notify.telephone
-    modibilllading.billlading_loading_port_id = doc.new.portinfo.loading
-    modibilllading.billlading_discharge_port_id = doc.new.portinfo.discharge
-    modibilllading.billlading_stuffing_place = doc.new.stuffing.place
-    modibilllading.billlading_stuffing_date = doc.new.stuffing.date
-    modibilllading.billlading_stuffing_requirement = doc.new.stuffing.requirement
+    modibilllading.billlading_vessel_id = doc.new.billlading_vessel_id
+    modibilllading.billlading_voyage_id = doc.new.billlading_voyage_id
+    modibilllading.billlading_consignee_name = doc.new.billlading_consignee_name
+    modibilllading.billlading_consignee_address = doc.new.billlading_consignee_address
+    modibilllading.billlading_consignee_tel = doc.new.billlading_consignee_tel
+    modibilllading.billlading_notify_name = doc.new.billlading_notify_name
+    modibilllading.billlading_notify_address = doc.new.billlading_notify_address
+    modibilllading.billlading_notify_tel = doc.new.billlading_notify_tel
+    modibilllading.billlading_loading_port_id = doc.new.billlading_loading_port_id
+    modibilllading.billlading_discharge_port_id = doc.new.billlading_discharge_port_id
+    modibilllading.billlading_stuffing_place = doc.new.billlading_stuffing_place
+    modibilllading.billlading_stuffing_date = doc.new.billlading_stuffing_date
+    modibilllading.billlading_stuffing_requirement = doc.new.billlading_stuffing_requirement
 
     await modibilllading.save()
-
-    let d = JSON.parse(JSON.stringify(modibilllading))
-    d.billlading_consignee = {
-      name: d.billlading_consignee_name,
-      address: d.billlading_consignee_address,
-      telephone: d.billlading_consignee_tel
-    }
-
-    d.billlading_notify = {
-      name: d.billlading_notify_name,
-      address: d.billlading_notify_address,
-      telephone: d.billlading_notify_tel
-    }
-
-    let vessel = await tb_vessel.findOne({
-      where: {
-        vessel_id: d.billlading_vessel_id
-      }
-    })
-
-    let voyage = await tb_voyage.findOne({
-      where: {
-        voyage_id: d.billlading_voyage_id
-      }
-    })
-
-    d.shipline = {
-      vessel: d.billlading_vessel_id,
-      voyage: d.billlading_voyage_id,
-      vessel_name: vessel.vessel_name,
-      voyage_number: voyage.voyage_number + moment(voyage.voyage_eta_date, 'YYYY-MM-DD').format('MM-DD')
-    }
-
-    d.portinfo = {
-      loading: d.billlading_loading_port_id,
-      discharge: d.billlading_discharge_port_id
-    }
-
-    d.stuffing = {
-      place: d.billlading_stuffing_place,
-      date: d.billlading_stuffing_date,
-      requirement: d.billlading_stuffing_requirement
-    }
-
-    return common.success(d)
+    return common.success()
   } else {
     return common.error('operator_03')
   }
