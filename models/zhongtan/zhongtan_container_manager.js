@@ -11,9 +11,8 @@ module.exports = db.defineModel('tbl_zhongtan_container_manager', {
     type: db.STRING(100),
     allowNull: false
   },
-  container_manager_code: {
-    // 航线编码
-    type: db.STRING(30),
+  container_manager_email: {
+    type: db.STRING(100),
     allowNull: false
-  }
+  },
 })

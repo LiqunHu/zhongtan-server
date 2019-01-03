@@ -19,8 +19,8 @@ module.exports = async (req, res) => {
       ret = await srv.searchVoyageAct(req)
     } else if (method === 'confirmBooking') {
       ret = await srv.confirmBookingAct(req)
-    } else if (method === 'putboxConfirm') {
-      ret = await srv.putboxConfirmAct(req)
+    } else if (method === 'confirmPickUp') {
+      ret = await srv.confirmPickUpAct(req)
     } else if (method === 'rejectLoading') {
       ret = await srv.rejectLoadingAct(req)
     } else if (method === 'declaration') {

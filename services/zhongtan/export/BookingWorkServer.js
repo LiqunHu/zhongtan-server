@@ -64,7 +64,7 @@ exports.initAct = async () => {
   for (let m of managers) {
     returnData.ContainerManagerINFO.push({
       id: m.container_manager_id,
-      text: m.container_manager_code + ' - ' + m.container_manager_name
+      text: m.container_manager_name
     })
   }
 
@@ -336,7 +336,7 @@ exports.confirmBookingAct = async req => {
   }
 }
 
-exports.putboxConfirmAct = async req => {
+exports.confirmPickUpAct = async req => {
   let doc = common.docValidate(req)
 
   let billlading = await tb_billlading.findOne({
