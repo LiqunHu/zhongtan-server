@@ -108,8 +108,8 @@ module.exports = {
   BLSTATUSINFO: [
     { id: 'PBK', text: 'Pre-Booking', style: 'label-default' },
     { id: 'BK', text: 'Booking', style: 'label-booking' },
-    { id: 'PA', text: 'Putbox Apply', style: 'label-putbox-apply' },
-    { id: 'PC', text: 'Putbox Confirm', style: 'label-putbox-confirm' },
+    { id: 'PA', text: 'Pick Up Empty', style: 'label-pickup-apply' },
+    { id: 'PC', text: 'Pick Up Confirm', style: 'label-pickup-confirm' },
     { id: 'SL', text: 'Submit Loading', style: 'label-submit-loading' },
     { id: 'RL', text: 'Reject Loading', style: 'label-reject-loading' },
     { id: 'DE', text: 'Declaration', style: 'label-declaration' },

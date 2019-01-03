@@ -284,7 +284,7 @@ exports.modifyAct = async req => {
       }
     }
 
-    for(let c of doc.new.billlading_containers) {
+    for (let c of doc.new.billlading_containers) {
       let mContainer = await tb_container.findOne({
         where: {
           container_id: c.container_id
@@ -354,7 +354,7 @@ exports.cancelAct = async req => {
   }
 }
 
-exports.putboxApplyAct = async req => {
+exports.pickUpEmptyAct = async req => {
   let doc = common.docValidate(req)
   let user = req.user
 
