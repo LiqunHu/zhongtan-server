@@ -26,6 +26,7 @@
     "cookie-parser": "^1.4.3",
     "cors": "^2.8.4",
     "ejs": "^2.6.1",
+    "ejsexcel": "^3.5.3",
     "log4js": "^3.0.6",
     "log4js-logstash-tcp": "^1.0.8",
     "moment": "^2.22.2",
