@@ -35,6 +35,18 @@ module.exports = db.defineModel('tbl_zhongtan_container', {
     defaultValue: '',
     allowNull: false
   },
+  container_goods_type: {
+    // 商品类别
+    type: db.STRING(20),
+    defaultValue: '',
+    allowNull: false
+  },
+  container_goods_description: {
+    // 商品描述
+    type: db.STRING(50),
+    defaultValue: '',
+    allowNull: false
+  },
   container_seal_no1: {
     // 封号1
     type: db.STRING(20),
@@ -56,12 +68,6 @@ module.exports = db.defineModel('tbl_zhongtan_container', {
   container_freight_indicator: {
     // 运费指示器
     type: db.STRING(20),
-    defaultValue: '',
-    allowNull: false
-  },
-  container_goods_description: {
-    // 运费指示器
-    type: db.STRING(50),
     defaultValue: '',
     allowNull: false
   },

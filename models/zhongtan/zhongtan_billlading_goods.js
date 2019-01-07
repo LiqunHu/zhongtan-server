@@ -30,6 +30,12 @@ module.exports = db.defineModel('tbl_zhongtan_billlading_goods', {
     defaultValue: '',
     allowNull: false
   },
+  billlading_goods_type: {
+    // 商品类别
+    type: db.STRING(20),
+    defaultValue: '',
+    allowNull: false
+  },
   billlading_goods_description: {
     // 商品描述
     type: db.STRING(50),

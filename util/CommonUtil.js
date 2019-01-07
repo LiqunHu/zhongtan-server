@@ -1,9 +1,11 @@
 const _ = require('lodash')
+const uuid = require('uuid')
 const path = require('path')
 const fs = require('fs')
 const Joi = require('joi')
 const fileUtil = require('server-utils').fileUtil
 const moment = require('moment')
+const ejsExcel = require('ejsexcel')
 
 const config = require('../app/config')
 const Error = require('./Error')
@@ -177,6 +179,15 @@ function str2Money(str) {
   return Math.round(money * 100)
 }
 
+const ejs2xlsx = async (templateFile, renderData) => {
+  let templateBuf = fs.readFileSync(path.join(process.cwd(), './excelTemplate/', templateFile))
+  let exlBuf = await ejsExcel.renderExcel(templateBuf, renderData)
+  let filePath = path.join(process.cwd(), './', config.fileSys.filesDir, uuid.v4().replace(/-/g, '') + '.xlsx')
+  fs.writeFileSync(filePath, exlBuf)
+  let fileInfo = await fileUtil.fileSaveMongoByLocalPath(filePath)
+  return fileInfo.url
+}
+
 module.exports = {
   docValidate: docValidate,
   reqTrans: reqTrans,
@@ -189,5 +200,6 @@ module.exports = {
   getApiName: getApiName,
   generateNonceString: generateNonceString,
   fileSave: fileSave,
-  str2Money: str2Money
+  str2Money: str2Money,
+  ejs2xlsx: ejs2xlsx
 }

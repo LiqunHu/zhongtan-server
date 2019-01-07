@@ -186,6 +186,7 @@ exports.modifyAct = async req => {
         mgood.billlading_goods_container_number = g.billlading_goods_container_number
         mgood.billlading_goods_container_size = g.billlading_goods_container_size
         mgood.billlading_goods_container_type = g.billlading_goods_container_type
+        mgood.billlading_goods_type = g.billlading_goods_type
         mgood.billlading_goods_description = g.billlading_goods_description
         mgood.billlading_goods_package_number = g.billlading_goods_package_number
         mgood.billlading_goods_package_unit = g.billlading_goods_package_unit
@@ -201,6 +202,7 @@ exports.modifyAct = async req => {
           billlading_goods_container_number: g.billlading_goods_container_number,
           billlading_goods_container_size: g.billlading_goods_container_size,
           billlading_goods_container_type: g.billlading_goods_container_type,
+          billlading_goods_type: g.billlading_goods_type,
           billlading_goods_description: g.billlading_goods_description,
           billlading_goods_package_number: g.billlading_goods_package_number,
           billlading_goods_package_unit: g.billlading_goods_package_unit,
@@ -232,6 +234,8 @@ exports.modifyAct = async req => {
       mContainer.container_iso = c.container_iso
       mContainer.container_size = c.container_size
       mContainer.container_type = c.container_type
+      mContainer.container_goods_type = c.container_goods_type
+      mContainer.container_goods_description = c.container_goods_description
       mContainer.container_seal_no1 = c.container_seal_no1
       mContainer.container_package_no = c.container_package_no
       mContainer.container_package_unit = c.container_package_unit
