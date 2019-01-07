@@ -320,6 +320,7 @@ exports.confirmBookingAct = async req => {
           billlading_voyage_id: billlading.billlading_voyage_id,
           container_size: g.billlading_goods_container_size,
           container_type: g.billlading_goods_container_type,
+          container_goods_type: g.billlading_goods_type,
           container_goods_description: g.billlading_goods_description,
           container_package_no: Math.ceil(g.billlading_goods_package_number / g.billlading_goods_container_number),
           container_package_unit: g.billlading_goods_package_unit,

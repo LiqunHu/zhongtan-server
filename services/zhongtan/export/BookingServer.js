@@ -402,7 +402,7 @@ exports.submitloadingAct = async req => {
         }
       })
       mContainer.container_no = c.container_no
-      mContainer.container_iso = c.container_iso
+      mContainer.container_iso = common.getContainerISO(c.container_size, c.container_type)
       mContainer.container_size = c.container_size
       mContainer.container_type = c.container_type
       mContainer.container_goods_type = c.container_goods_type
@@ -419,8 +419,40 @@ exports.submitloadingAct = async req => {
 
     billlading.billlading_state = GLBConfig.BLSTATUS_SUBMIT_LOADING
 
-    
     await billlading.save()
+
+    let containers = await tb_container.findAll({
+      where: {
+        billlading_id: doc.billlading_id
+      }
+    })
+
+    let renderData = []
+    let bl = JSON.parse(JSON.stringify(billlading))
+    let lp = await tb_port.findOne({
+      where: {
+        port_id: bl.billlading_loading_port_id
+      }
+    })
+    bl.loading_port_name = lp.port_name
+    let dp = await tb_port.findOne({
+      where: {
+        port_id: bl.billlading_discharge_port_id
+      }
+    })
+    bl.discharge_port_name = dp.port_name
+
+    renderData.push(containers)
+
+    let fileInfo = await common.ejs2xlsx('LoadingTemplate.xlsx', renderData)
+
+    await tb_uploadfile.create({
+      api_name: 'BOOKING-LOADINGLIST',
+      user_id: user.user_id,
+      uploadfile_index1: billlading.billlading_id,
+      uploadfile_name: fileInfo.name,
+      uploadfile_url: fileInfo.url
+    })
 
     return common.success()
   }
