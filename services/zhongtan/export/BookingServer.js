@@ -482,7 +482,7 @@ exports.submitloadingAct = async req => {
       renderData[1].push(row)
     }
 
-    let fileInfo = await common.ejs2xlsx('LoadingTemplate.xlsx', renderData)
+    let fileInfo = await common.ejs2xlsx('LoadingTemplateCustoms.xlsx', renderData)
 
     await tb_uploadfile.create({
       api_name: 'BOOKING-LOADINGLIST',
