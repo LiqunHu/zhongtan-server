@@ -109,17 +109,19 @@ module.exports = db.defineModel('tbl_zhongtan_container', {
   },
   container_minmum_temperature: {
     // 最低温度
-    type: db.INTEGER(20),
-    allowNull: true
+    type: db.STRING(20),
+    defaultValue: '',
+    allowNull: false
   },
   container_maxmum_temperature: {
     // 最高温度
-    type: db.INTEGER(20),
-    allowNull: true
+    type: db.STRING(20),
+    defaultValue: '',
+    allowNull: false
   },
   container_refer_plug: {
-    //
-    type: db.STRING(20),
+    // 是否需要插电
+    type: db.STRING(10),
     defaultValue: '',
     allowNull: false
   }

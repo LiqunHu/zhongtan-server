@@ -61,6 +61,16 @@ module.exports = {
       text: '否'
     }
   ],
+  YNINFO: [
+    {
+      id: 'Y',
+      text: 'Y'
+    },
+    {
+      id: 'N',
+      text: 'N否'
+    }
+  ],
   PackageUnitINFO: [
     {
       id: 'BAG',

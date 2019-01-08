@@ -22,6 +22,7 @@ exports.initAct = async () => {
     PayTypeINFO: GLBConfig.PayTypeINFO,
     PayCurrencyINFO: GLBConfig.PayCurrencyINFO,
     BLSTATUSINFO: GLBConfig.BLSTATUSINFO,
+    YNINFO: GLBConfig.YNINFO,
     VesselINFO: [],
     PortINFO: []
   }
@@ -195,7 +196,9 @@ exports.bookingAct = async req => {
       billlading_goods_gross_weight: c.billlading_goods_gross_weight,
       billlading_goods_gross_unit: c.billlading_goods_gross_unit,
       billlading_goods_gross_volume: c.billlading_goods_gross_volume,
-      billlading_goods_gross_volume_unit: c.billlading_goods_gross_volume_unit
+      billlading_goods_gross_volume_unit: c.billlading_goods_gross_volume_unit,
+      billlading_goods_net_weight: c.billlading_goods_net_weight,
+      billlading_goods_net_unit: c.billlading_goods_net_unit
     })
   }
 
@@ -257,6 +260,8 @@ exports.modifyAct = async req => {
         mgood.billlading_goods_gross_unit = g.billlading_goods_gross_unit
         mgood.billlading_goods_gross_volume = g.billlading_goods_gross_volume
         mgood.billlading_goods_gross_volume_unit = g.billlading_goods_gross_volume_unit
+        mgood.billlading_goods_net_weight = g.billlading_goods_net_weight
+        mgood.billlading_goods_net_unit = g.billlading_goods_net_unit
         await mgood.save()
         newGoods.push(g.billlading_goods_id)
       } else {
@@ -272,7 +277,9 @@ exports.modifyAct = async req => {
           billlading_goods_gross_weight: g.billlading_goods_gross_weight,
           billlading_goods_gross_unit: g.billlading_goods_gross_unit,
           billlading_goods_gross_volume: g.billlading_goods_gross_volume,
-          billlading_goods_gross_volume_unit: g.billlading_goods_gross_volume_unit
+          billlading_goods_gross_volume_unit: g.billlading_goods_gross_volume_unit,
+          billlading_goods_net_weight: g.billlading_goods_net_weight,
+          billlading_goods_net_unit: g.billlading_goods_net_unit
         })
       }
     }
@@ -300,12 +307,16 @@ exports.modifyAct = async req => {
       mContainer.container_goods_type = c.container_goods_type
       mContainer.container_goods_description = c.container_goods_description
       mContainer.container_seal_no1 = c.container_seal_no1
+      mContainer.container_freight_indicator = c.container_freight_indicator
       mContainer.container_package_no = c.container_package_no
       mContainer.container_package_unit = c.container_package_unit
       mContainer.container_volume = c.container_volume
       mContainer.container_volume_unit = c.container_volume_unit
       mContainer.container_weight = c.container_weight
       mContainer.container_weight_unit = c.container_weight_unit
+      mContainer.container_minmum_temperature = c.container_minmum_temperature
+      mContainer.container_maxmum_temperature = c.container_maxmum_temperature
+      mContainer.container_refer_plug = c.container_refer_plug
       await mContainer.save()
     }
 
@@ -421,12 +432,6 @@ exports.submitloadingAct = async req => {
 
     await billlading.save()
 
-    let containers = await tb_container.findAll({
-      where: {
-        billlading_id: doc.billlading_id
-      }
-    })
-
     let renderData = []
     let bl = JSON.parse(JSON.stringify(billlading))
     let lp = await tb_port.findOne({
@@ -441,10 +446,41 @@ exports.submitloadingAct = async req => {
       }
     })
     bl.discharge_port_name = dp.port_name
+    bl.discharge_port_country = dp.port_country
+    let goods = await tb_billlading_goods.findAll({
+      where: {
+        billlading_id: doc.billlading_id
+      }
+    })
 
-    renderData.push(bl)
-    renderData.push(containers)
+    renderData.push([])
+    for(let g of goods){
+      let row = JSON.parse(JSON.stringify(bl))
+      row.billlading_goods_container_number = g.billlading_goods_container_number
+      row.billlading_goods_description = g.billlading_goods_description
+      row.billlading_goods_package_number = g.billlading_goods_package_number
+      row.billlading_goods_package_unit = g.billlading_goods_package_unit
+      row.billlading_goods_gross_weight = g.billlading_goods_gross_weight
+      row.billlading_goods_gross_unit = g.billlading_goods_gross_unit
+      row.billlading_goods_gross_volume = g.billlading_goods_gross_volume
+      row.billlading_goods_gross_volume_unit = g.billlading_goods_gross_volume_unit
+      row.billlading_goods_net_weight = g.billlading_goods_net_weight
+      row.billlading_goods_net_unit = g.billlading_goods_net_unit
+      renderData[0].push(row)
+    }
     
+    renderData.push([])
+    let containers = await tb_container.findAll({
+      where: {
+        billlading_id: doc.billlading_id
+      }
+    })
+
+    for(let c of containers) {
+      let row = JSON.parse(JSON.stringify(c))
+      row.billlading_no = billlading.billlading_no
+      renderData[1].push(row)
+    }
 
     let fileInfo = await common.ejs2xlsx('LoadingTemplate.xlsx', renderData)
 
