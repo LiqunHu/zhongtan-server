@@ -68,7 +68,7 @@ module.exports = {
     },
     {
       id: 'N',
-      text: 'N否'
+      text: 'N'
     }
   ],
   PackageUnitINFO: [
