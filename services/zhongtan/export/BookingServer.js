@@ -442,7 +442,9 @@ exports.submitloadingAct = async req => {
     })
     bl.discharge_port_name = dp.port_name
 
+    renderData.push(bl)
     renderData.push(containers)
+    
 
     let fileInfo = await common.ejs2xlsx('LoadingTemplate.xlsx', renderData)
 

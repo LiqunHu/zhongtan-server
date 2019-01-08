@@ -77,5 +77,17 @@ module.exports = db.defineModel('tbl_zhongtan_billlading_goods', {
     type: db.STRING(50),
     defaultValue: '',
     allowNull: false
-  }
+  },
+  billlading_goods_net_weight: {
+    // 净重
+    type: db.INTEGER,
+    defaultValue: '0',
+    allowNull: false
+  },
+  billlading_goods_net_unit: {
+    // 净重单位
+    type: db.STRING(50),
+    defaultValue: '',
+    allowNull: false
+  },
 })
