@@ -134,6 +134,35 @@ exports.searchAct = async req => {
       d.billlading_containers.push(JSON.parse(JSON.stringify(c)))
     }
 
+    d.files = []
+    let files = await tb_uploadfile.findAll({
+      where: {
+        uploadfile_index1: d.billlading_id
+      },
+      order: [['created_at', 'DESC']]
+    })
+    for (let f of files) {
+      let filetype = ''
+      if (f.api_name === 'BOOKING-LOADINGLIST') {
+        filetype = 'Loading list'
+      } else if (f.api_name === 'BOOKING-DECLARATION') {
+        filetype = 'Permission'
+      } else if (f.api_name === 'BOOKING-INSTRUCTION') {
+        filetype = 'Instruction'
+      } else if (f.api_name === 'BOOKING-BILLLADING') {
+        filetype = 'Deaft bill of lading'
+      }
+
+      d.files.push({
+        filetype: filetype,
+        date: moment(f.created_at).format('YYYY-MM-DD'),
+        file_id: f.uploadfile_id,
+        url: f.uploadfile_url,
+        name: f.uploadfile_name,
+        remark: f.uploadfile_remark
+      })
+    }
+
     returnData.rows.push(d)
   }
 

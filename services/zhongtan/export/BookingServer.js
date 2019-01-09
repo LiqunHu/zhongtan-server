@@ -125,18 +125,18 @@ exports.searchAct = async req => {
       where: {
         uploadfile_index1: d.billlading_id
       },
-      order: [['api_name'], ['created_at', 'DESC']]
+      order: [['created_at', 'DESC']]
     })
     for (let f of files) {
       let filetype = ''
       if (f.api_name === 'BOOKING-LOADINGLIST') {
-        filetype = '4.Loading list'
+        filetype = 'Loading list'
       } else if (f.api_name === 'BOOKING-DECLARATION') {
-        filetype = '3.Permission'
+        filetype = 'Permission'
       } else if (f.api_name === 'BOOKING-INSTRUCTION') {
-        filetype = '2.Instruction'
+        filetype = 'Instruction'
       } else if (f.api_name === 'BOOKING-BILLLADING') {
-        filetype = '1.Deaft bill of lading'
+        filetype = 'Deaft bill of lading'
       }
 
       d.files.push({
