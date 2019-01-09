@@ -406,6 +406,12 @@ exports.submitloadingAct = async req => {
   if (billlading.billlading_state != GLBConfig.BLSTATUS_PUTBOX_CONFIRM && billlading.billlading_state != GLBConfig.BLSTATUS_REJECT_LOADING) {
     return common.error('billlading_01')
   } else {
+    billlading.billlading_bl_type = doc.billlading_bl_type
+    billlading.billlading_hbl_no = doc.billlading_hbl_no
+    billlading.billlading_reference_type = doc.billlading_reference_type
+    billlading.billlading_reference_no = doc.billlading_reference_no
+    await billlading.save()
+
     for (let c of doc.billlading_containers) {
       let mContainer = await tb_container.findOne({
         where: {
@@ -419,12 +425,16 @@ exports.submitloadingAct = async req => {
       mContainer.container_goods_type = c.container_goods_type
       mContainer.container_goods_description = c.container_goods_description
       mContainer.container_seal_no1 = c.container_seal_no1
+      mContainer.container_freight_indicator = c.container_freight_indicator
       mContainer.container_package_no = c.container_package_no
       mContainer.container_package_unit = c.container_package_unit
       mContainer.container_volume = c.container_volume
       mContainer.container_volume_unit = c.container_volume_unit
       mContainer.container_weight = c.container_weight
       mContainer.container_weight_unit = c.container_weight_unit
+      mContainer.container_minmum_temperature = c.container_minmum_temperature
+      mContainer.container_maxmum_temperature = c.container_maxmum_temperature
+      mContainer.container_refer_plug = c.container_refer_plug
       await mContainer.save()
     }
 

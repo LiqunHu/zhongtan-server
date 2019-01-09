@@ -217,5 +217,25 @@ module.exports = db.defineModel('tbl_zhongtan_billlading', {
     // 预计到达日期
     type: db.STRING(50),
     allowNull: true
+  },
+  billlading_hbl_no: {
+    type: db.STRING(20),
+    defaultValue: '',
+    allowNull: false
+  },
+  billlading_reference_type: {
+    type: db.STRING(10),
+    defaultValue: '',
+    allowNull: false
+  },
+  billlading_reference_no: {
+    type: db.STRING(50),
+    defaultValue: '',
+    allowNull: false
+  },
+  billlading_bl_type: {
+    type: db.STRING(10),
+    defaultValue: '',
+    allowNull: false
   }
 })
