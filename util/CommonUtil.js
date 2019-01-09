@@ -179,12 +179,12 @@ function str2Money(str) {
   return Math.round(money * 100)
 }
 
-const ejs2xlsx = async (templateFile, renderData) => {
+const ejs2xlsx = async (templateFile, renderData, bucket) => {
   let templateBuf = fs.readFileSync(path.join(process.cwd(), './excelTemplate/', templateFile))
   let exlBuf = await ejsExcel.renderExcel(templateBuf, renderData)
   let filePath = path.join(process.cwd(), config.fileSys.filesDir, uuid.v4().replace(/-/g, '') + '.xlsx')
   fs.writeFileSync(filePath, exlBuf)
-  let fileInfo = await fileUtil.fileSaveMongoByLocalPath(filePath)
+  let fileInfo = await fileUtil.fileSaveMongoByLocalPath(filePath, bucket, config.fileSys.bucket[bucket].baseUrl)
   return fileInfo
 }
 
