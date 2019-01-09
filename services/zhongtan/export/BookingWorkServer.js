@@ -430,6 +430,27 @@ exports.rejectLoadingAct = async req => {
   }
 }
 
+exports.submitCustomsAct  = async req => {
+  let doc = common.docValidate(req)
+
+  let billlading = await tb_billlading.findOne({
+    where: {
+      billlading_id: doc.billlading_id,
+      state: GLBConfig.ENABLE
+    }
+  })
+
+  if (billlading.billlading_state != GLBConfig.BLSTATUS_SUBMIT_LOADING) {
+    return common.error('billlading_01')
+  } else {
+
+    billlading.billlading_state = GLBConfig.BLSTATUS_SUBMIT_CUSTOMS
+    await billlading.save()
+
+    return common.success()
+  }
+}
+
 exports.declarationAct = async req => {
   let doc = common.docValidate(req)
   let user = req.user

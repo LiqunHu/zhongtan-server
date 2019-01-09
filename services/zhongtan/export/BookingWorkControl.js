@@ -23,6 +23,8 @@ module.exports = async (req, res) => {
       ret = await srv.confirmPickUpAct(req)
     } else if (method === 'rejectLoading') {
       ret = await srv.rejectLoadingAct(req)
+    } else if (method === 'submitCustoms') {
+      ret = await srv.submitCustomsAct(req)
     } else if (method === 'declaration') {
       ret = await srv.declarationAct(req)
     } else if (method === 'sendCDS') {
