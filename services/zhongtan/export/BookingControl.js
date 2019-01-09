@@ -23,6 +23,8 @@ module.exports = async (req, res) => {
       ret = await srv.pickUpEmptyAct(req)
     } else if (method === 'submitloading') {
       ret = await srv.submitloadingAct(req)
+    } else if (method === 'revertDeclareNumber') {
+      ret = await srv.revertDeclareNumberAct(req)
     } else if (method === 'confirmInstruction') {
       ret = await srv.confirmInstructionAct(req)
     } else if (method === 'upload') {
