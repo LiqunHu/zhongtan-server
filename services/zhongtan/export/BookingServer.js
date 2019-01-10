@@ -163,9 +163,15 @@ exports.bookingAct = async req => {
   let doc = common.docValidate(req)
   let user = req.user
 
+  let vessel = await tb_vessel.findOne({
+    where: {
+      vessel_id: doc.billlading_vessel_id
+    }
+  })
   let billlading = await tb_billlading.create({
     billlading_type: 'E',
     billlading_state: GLBConfig.BLSTATUS_PRE_BOOKING,
+    billlading_service_name: vessel.vessel_service_name,
     billlading_vessel_id: doc.billlading_vessel_id,
     billlading_voyage_id: doc.billlading_voyage_id,
     billlading_shipper_id: user.user_id,
@@ -221,6 +227,13 @@ exports.modifyAct = async req => {
     }
   })
   if (modibilllading) {
+    let vessel = await tb_vessel.findOne({
+      where: {
+        vessel_id: doc.new.billlading_vessel_id
+      }
+    })
+
+    modibilllading.billlading_service_name = vessel.vessel_service_name
     modibilllading.billlading_vessel_id = doc.new.billlading_vessel_id
     modibilllading.billlading_voyage_id = doc.new.billlading_voyage_id
     modibilllading.billlading_consignee_name = doc.new.billlading_consignee_name

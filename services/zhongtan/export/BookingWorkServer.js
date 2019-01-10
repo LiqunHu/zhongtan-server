@@ -74,11 +74,16 @@ exports.initAct = async () => {
 
 exports.searchAct = async req => {
   let doc = common.docValidate(req)
+  let user = req.user
   let returnData = {}
 
+  if (user.user_type != GLBConfig.TYPE_EMPLOYEE) {
+    return common.error('booking_02')
+  }
+
   let queryStr = `select * from tbl_zhongtan_billlading 
-                    where state = '1'`
-  let replacements = []
+                    where state = '1' and billlading_service_name = ?`
+  let replacements = [user.user_service_name]
 
   if (doc.start_date) {
     queryStr += ' and created_at >= ? and created_at <= ?'
@@ -181,6 +186,13 @@ exports.modifyAct = async req => {
     }
   })
   if (modibilllading) {
+    let vessel = await tb_vessel.findOne({
+      where: {
+        vessel_id: doc.new.billlading_vessel_id
+      }
+    })
+
+    modibilllading.billlading_service_name = vessel.vessel_service_name
     modibilllading.billlading_vessel_id = doc.new.billlading_vessel_id
     modibilllading.billlading_voyage_id = doc.new.billlading_voyage_id
     modibilllading.billlading_consignee_name = doc.new.billlading_consignee_name

@@ -42,5 +42,6 @@ module.exports = {
   auth_23: '验证码请求太频繁',
   billlading_01: 'billloading state error',
   customer_01: 'CUSTOMER Group Do not exist',
-  booking_01: 'Only Customer'
+  booking_01: 'Only Customer',
+  booking_02: 'Only Employee'
 }
