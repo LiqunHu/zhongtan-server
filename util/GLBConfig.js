@@ -113,6 +113,7 @@ module.exports = {
   BLSTATUS_REJECT_LOADING: 'RL',
   BLSTATUS_SUBMIT_CUSTOMS: 'SC',
   BLSTATUS_REVERT_DECLARE: 'RD',
+  BLSTATUS_LOADING_PERMISSION: 'LP',
   BLSTATUS_DECLARATION: 'DE',
   BLSTATUS_CONFIRM_INSTRUCTUON: 'CI',
   BLSTATUS_CDS_PROCESSING: 'CP',
@@ -126,7 +127,7 @@ module.exports = {
     { id: 'RL', text: 'Reject Loading', style: 'label-reject-loading' },
     { id: 'SC', text: 'Submit Customs', style: 'label-submit-customs' },
     { id: 'RD', text: 'Revert Declare', style: 'label-revert-declare' },
-    { id: 'DE', text: 'Declaration', style: 'label-declaration' },
+    { id: 'LP', text: 'Loading Permission', style: 'label-loading-permission' },
     { id: 'CI', text: 'Shipping Instruction', style: 'label-confirm-instruction' },
     { id: 'CP', text: 'CDS Processing', style: 'label-cds-processing' },
     { id: 'BL', text: 'Bill Lading', style: 'label-bill-lading' }

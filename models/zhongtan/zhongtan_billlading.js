@@ -237,5 +237,10 @@ module.exports = db.defineModel('tbl_zhongtan_billlading', {
     type: db.STRING(10),
     defaultValue: '',
     allowNull: false
+  },
+  billlading_declare_number: {
+    type: db.STRING(30),
+    defaultValue: '',
+    allowNull: false
   }
 })

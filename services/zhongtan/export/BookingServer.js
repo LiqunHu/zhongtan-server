@@ -131,7 +131,7 @@ exports.searchAct = async req => {
       let filetype = ''
       if (f.api_name === 'BOOKING-LOADINGLIST') {
         filetype = 'Loading list'
-      } else if (f.api_name === 'BOOKING-DECLARATION') {
+      } else if (f.api_name === 'BOOKING-LOADINGPERMISSION') {
         filetype = 'Permission'
       } else if (f.api_name === 'BOOKING-INSTRUCTION') {
         filetype = 'Instruction'

@@ -145,7 +145,7 @@ exports.searchAct = async req => {
       let filetype = ''
       if (f.api_name === 'BOOKING-LOADINGLIST') {
         filetype = 'Loading list'
-      } else if (f.api_name === 'BOOKING-DECLARATION') {
+      } else if (f.api_name === 'BOOKING-LOADINGPERMISSION') {
         filetype = 'Permission'
       } else if (f.api_name === 'BOOKING-INSTRUCTION') {
         filetype = 'Instruction'
@@ -451,7 +451,7 @@ exports.submitCustomsAct  = async req => {
   }
 }
 
-exports.declarationAct = async req => {
+exports.loadingPermissionAct = async req => {
   let doc = common.docValidate(req)
   let user = req.user
 
@@ -462,21 +462,20 @@ exports.declarationAct = async req => {
     }
   })
 
-  if (billlading.billlading_state != GLBConfig.BLSTATUS_SUBMIT_LOADING) {
+  if (billlading.billlading_state != GLBConfig.BLSTATUS_REVERT_DECLARE) {
     return common.error('billlading_01')
   } else {
     for (let f of doc.permission_files) {
       await tb_uploadfile.create({
-        api_name: 'BOOKING-DECLARATION',
+        api_name: 'BOOKING-LOADINGPERMISSION',
         user_id: user.user_id,
         uploadfile_index1: billlading.billlading_id,
         uploadfile_name: f.name,
-        uploadfile_url: f.url,
-        uploadfile_remark: 'Declare number: ' + doc.billlading_declare_number
+        uploadfile_url: f.url
       })
     }
 
-    billlading.billlading_state = GLBConfig.BLSTATUS_DECLARATION
+    billlading.billlading_state = GLBConfig.BLSTATUS_LOADING_PERMISSION
     await billlading.save()
 
     return common.success()
@@ -533,6 +532,7 @@ exports.sendBLAct = async req => {
   }
 }
 
-exports.uploadAct = async () => {
-  return common.success()
+exports.uploadAct = async req => {
+  let fileInfo = await common.fileSave(req, 'zhongtan')
+  return common.success(fileInfo)
 }
