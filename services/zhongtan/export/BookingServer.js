@@ -61,6 +61,10 @@ exports.searchAct = async req => {
   let user = req.user
   let returnData = {}
 
+  if (user.user_type != GLBConfig.TYPE_CUSTOMER) {
+    return common.error('booking_01')
+  }
+
   let queryStr = `select * from tbl_zhongtan_billlading
                     where state = '1'
                     and billlading_shipper_id = ?`
@@ -464,7 +468,7 @@ exports.submitloadingAct = async req => {
     })
 
     renderData.push([])
-    for(let g of goods){
+    for (let g of goods) {
       let row = JSON.parse(JSON.stringify(bl))
       row.billlading_goods_container_number = g.billlading_goods_container_number
       row.billlading_goods_description = g.billlading_goods_description
@@ -478,7 +482,7 @@ exports.submitloadingAct = async req => {
       row.billlading_goods_net_unit = g.billlading_goods_net_unit
       renderData[0].push(row)
     }
-    
+
     renderData.push([])
     let containers = await tb_container.findAll({
       where: {
@@ -486,7 +490,7 @@ exports.submitloadingAct = async req => {
       }
     })
 
-    for(let c of containers) {
+    for (let c of containers) {
       let row = JSON.parse(JSON.stringify(c))
       row.billlading_no = billlading.billlading_no
       renderData[1].push(row)
@@ -506,7 +510,7 @@ exports.submitloadingAct = async req => {
   }
 }
 
-exports.revertDeclareNumberAct =  async req => {
+exports.revertDeclareNumberAct = async req => {
   let doc = common.docValidate(req)
   let user = req.user
 

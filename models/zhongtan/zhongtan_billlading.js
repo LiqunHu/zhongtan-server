@@ -24,6 +24,11 @@ module.exports = db.defineModel('tbl_zhongtan_billlading', {
     defaultValue: '',
     allowNull: false
   },
+  billlading_service_name: {
+    type: db.STRING(20),
+    defaultValue: '',
+    allowNull: false
+  },
   billlading_vessel_id: {
     type: db.IDNO,
     allowNull: true
