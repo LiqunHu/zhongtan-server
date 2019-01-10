@@ -25,6 +25,8 @@ module.exports = {
   DOMAIN_ADMINISTRATOR: '0',
   TYPE_DEFAULT: '00',
   TYPE_ADMINISTRATOR: '01',
+  TYPE_EMPLOYEE: '02',
+  TYPE_CUSTOMER: '03',
   AUTH: '1',
   NOAUTH: '0',
   AUTHINFO: [

@@ -10,7 +10,6 @@ exports.initAct = async () => {
   let returnData = {
     VesselServiceINFO: GLBConfig.VesselServiceINFO
   }
-  logger.debug(returnData)
   return common.success(returnData)
 }
 
@@ -77,6 +76,7 @@ exports.modifyAct = async req => {
 
     await vessel.save()
 
+    logger.debug('modify success')
     return common.success(vessel)
   } else {
     return common.error('operator_03')

@@ -7,6 +7,8 @@ router.post('/configuration/PortConfig/:method', services.PortConfigControl)
 router.post('/configuration/VesselConfig/:method', services.VesselConfigControl)
 router.post('/configuration/VoyageConfig/:method', services.VoyageConfigControl)
 router.post('/configuration/ContainerManagerConfig/:method', services.ContainerManagerConfigControl)
+router.post('/configuration/Customer/:method', services.CustomerControl)
+router.post('/configuration/Employee/:method', services.EmployeeControl)
 router.post('/export/Booking/:method', services.BookingControl)
 router.post('/export/BookingWork/:method', services.BookingWorkControl)
 

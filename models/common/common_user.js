@@ -83,6 +83,11 @@ module.exports = db.defineModel('tbl_common_user', {
     defaultValue: '',
     allowNull: false
   },
+  user_service_name: {
+    type: db.STRING(20),
+    defaultValue: '',
+    allowNull: false
+  },
   user_remark: {
     type: db.STRING(200),
     defaultValue: '',

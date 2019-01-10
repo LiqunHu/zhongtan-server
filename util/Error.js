@@ -17,10 +17,6 @@ module.exports = {
   operator_02: '用户已经存在',
   operator_03: '用户不存在',
   operator_04: '用户下有未完成订单',
-  customer_01: '客户组不存在',
-  customer_02: '客户已经存在',
-  customer_03: '客户不存在',
-  customer_04: '手机号已存在',
   menu_01: '菜单已经存在',
   menu_02: '菜单不存在',
   menu_03: '菜单下有子项',
@@ -44,5 +40,6 @@ module.exports = {
   auth_21: '微信验证失败',
   auth_22: '用户不存在',
   auth_23: '验证码请求太频繁',
-  billlading_01: 'billloading state error'
+  billlading_01: 'billloading state error',
+  customer_01: 'CUSTOMER Group Do not exist'
 }
