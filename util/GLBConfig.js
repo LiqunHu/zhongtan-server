@@ -133,5 +133,10 @@ module.exports = {
     { id: 'CI', text: 'Shipping Instruction', style: 'label-confirm-instruction' },
     { id: 'CP', text: 'CDS Processing', style: 'label-cds-processing' },
     { id: 'BL', text: 'Bill Lading', style: 'label-bill-lading' }
+  ],
+  LB_BATCH_STATE: [
+    { id: '0', text: '未使用' },
+    { id: '1', text: '使用' },
+    { id: '2', text: '作废' }
   ]
 }
