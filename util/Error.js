@@ -41,7 +41,10 @@ module.exports = {
   auth_22: '用户不存在',
   auth_23: '验证码请求太频繁',
   billlading_01: 'billloading state error',
+  billlading_02: 'billloading No in no stock',
   customer_01: 'CUSTOMER Group Do not exist',
   booking_01: 'Only Customer',
-  booking_02: 'Only Employee'
+  booking_02: 'Only Employee',
+  blconfig_01: 'This Range been used',
+  blconfig_02: 'Batch do not exist'
 }

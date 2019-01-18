@@ -176,6 +176,7 @@ let exp = {
   IDNO: Sequelize.BIGINT,
   sequelize: sequelize,
   Op: Sequelize.Op,
+  literal: Sequelize.literal,
   defineModel: defineModel,
   sync: () => {
     // only allow create ddl in non-production environment:

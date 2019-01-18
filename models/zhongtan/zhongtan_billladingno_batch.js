@@ -13,7 +13,7 @@ module.exports = db.defineModel('tbl_zhongtan_billladingno_batch', {
     comment: '服务 VesselServiceINFO'
   },
   billladingno_batch_fix_string: {
-    type: db.IDNO,
+    type: db.STRING(20),
     allowNull: false,
     comment: '提单号固定字符'
   },

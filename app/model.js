@@ -111,3 +111,4 @@ module.exports.sync = () => {
 }
 
 module.exports.Op = db.Op
+module.exports.literal = db.literal

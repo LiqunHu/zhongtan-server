@@ -1,4 +1,3 @@
-const _ = require('lodash')
 const moment = require('moment')
 const common = require('../../../util/CommonUtil')
 const GLBConfig = require('../../../util/GLBConfig')
@@ -13,6 +12,8 @@ const tb_voyage = model.zhongtan_voyage
 const tb_port = model.zhongtan_port
 const tb_container_manager = model.zhongtan_container_manager
 const tb_uploadfile = model.zhongtan_uploadfile
+const tb_billladingno_batch = model.zhongtan_billladingno_batch
+const tb_billladingno_pool = model.zhongtan_billladingno_pool
 
 exports.initAct = async () => {
   let returnData = {
@@ -358,6 +359,20 @@ exports.confirmBookingAct = async req => {
   if (billlading.billlading_state != GLBConfig.BLSTATUS_PRE_BOOKING) {
     return common.error('billlading_01')
   } else {
+    let bl = await tb_billladingno_pool.findOne({
+      where: {
+        billladingno_pool_vessel_service: billlading.billlading_service_name,
+        billladingno_pool_state: '0'
+      },
+      order: [['billladingno_batch_id'], ['billladingno_pool_no']]
+    })
+  
+    if (!bl) {
+      return common.error('billlading_02')
+    }
+    bl.billladingno_pool_state = '1'
+    await bl.save()
+
     let goods = await tb_billlading_goods.findAll({
       where: { billlading_id: billlading.billlading_id }
     })
@@ -382,11 +397,22 @@ exports.confirmBookingAct = async req => {
       }
     }
 
-    billlading.billlading_no = _.random(0, 1000)
+    billlading.billlading_no = bl.billladingno_pool_no
     billlading.billlading_freight_charge = common.str2Money(doc.billlading_freight_charge)
     billlading.billlading_state = GLBConfig.BLSTATUS_BOOKING
 
     await billlading.save()
+
+    await tb_billladingno_batch.update(
+      {
+        billladingno_batch_use_count: model.literal('`billladingno_batch_use_count` +1')
+      },
+      {
+        where: {
+          billladingno_batch_id: bl.billladingno_batch_id
+        }
+      }
+    )
     return common.success()
   }
 }
@@ -442,7 +468,7 @@ exports.rejectLoadingAct = async req => {
   }
 }
 
-exports.submitCustomsAct  = async req => {
+exports.submitCustomsAct = async req => {
   let doc = common.docValidate(req)
 
   let billlading = await tb_billlading.findOne({
@@ -455,7 +481,6 @@ exports.submitCustomsAct  = async req => {
   if (billlading.billlading_state != GLBConfig.BLSTATUS_SUBMIT_LOADING) {
     return common.error('billlading_01')
   } else {
-
     billlading.billlading_state = GLBConfig.BLSTATUS_SUBMIT_CUSTOMS
     await billlading.save()
 
