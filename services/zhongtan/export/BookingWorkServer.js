@@ -205,7 +205,7 @@ exports.modifyAct = async req => {
     modibilllading.billlading_loading_port_id = doc.new.billlading_loading_port_id
     modibilllading.billlading_discharge_port_id = doc.new.billlading_discharge_port_id
     modibilllading.billlading_stuffing_place = doc.new.billlading_stuffing_place
-    modibilllading.billlading_stuffing_date = doc.new.billlading_stuffing_date
+    modibilllading.billlading_stuffing_date = doc.new.billlading_stuffing_date || null
     modibilllading.billlading_stuffing_requirement = doc.new.billlading_stuffing_requirement
     modibilllading.billlading_pay_date = doc.new.billlading_pay_date
     modibilllading.billlading_freight_currency = doc.new.billlading_freight_currency
