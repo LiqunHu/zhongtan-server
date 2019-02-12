@@ -196,18 +196,18 @@ exports.bookingAct = async req => {
   for (let c of doc.billlading_goods) {
     await tb_billlading_goods.create({
       billlading_id: billlading.billlading_id,
-      billlading_goods_container_number: c.billlading_goods_container_number,
+      billlading_goods_container_number: c.billlading_goods_container_number || 0,
       billlading_goods_container_size: c.billlading_goods_container_size,
       billlading_goods_container_type: c.billlading_goods_container_type,
       billlading_goods_type: c.billlading_goods_type,
-      billlading_goods_description: c.billlading_goods_description,
-      billlading_goods_package_number: c.billlading_goods_package_number,
+      billlading_goods_description: c.billlading_goods_description || '',
+      billlading_goods_package_number: c.billlading_goods_package_number || 0,
       billlading_goods_package_unit: c.billlading_goods_package_unit,
-      billlading_goods_gross_weight: c.billlading_goods_gross_weight,
+      billlading_goods_gross_weight: c.billlading_goods_gross_weight || 0,
       billlading_goods_gross_unit: c.billlading_goods_gross_unit,
-      billlading_goods_gross_volume: c.billlading_goods_gross_volume,
+      billlading_goods_gross_volume: c.billlading_goods_gross_volume || 0,
       billlading_goods_gross_volume_unit: c.billlading_goods_gross_volume_unit,
-      billlading_goods_net_weight: c.billlading_goods_net_weight,
+      billlading_goods_net_weight: c.billlading_goods_net_weight || 0,
       billlading_goods_net_unit: c.billlading_goods_net_unit
     })
   }
@@ -266,18 +266,18 @@ exports.modifyAct = async req => {
             billlading_goods_id: g.billlading_goods_id
           }
         })
-        mgood.billlading_goods_container_number = g.billlading_goods_container_number
+        mgood.billlading_goods_container_number = g.billlading_goods_container_number || 0
         mgood.billlading_goods_container_size = g.billlading_goods_container_size
         mgood.billlading_goods_container_type = g.billlading_goods_container_type
         mgood.billlading_goods_type = g.billlading_goods_type
         mgood.billlading_goods_description = g.billlading_goods_description
-        mgood.billlading_goods_package_number = g.billlading_goods_package_number
+        mgood.billlading_goods_package_number = g.billlading_goods_package_number || 0
         mgood.billlading_goods_package_unit = g.billlading_goods_package_unit
-        mgood.billlading_goods_gross_weight = g.billlading_goods_gross_weight
+        mgood.billlading_goods_gross_weight = g.billlading_goods_gross_weight || 0
         mgood.billlading_goods_gross_unit = g.billlading_goods_gross_unit
-        mgood.billlading_goods_gross_volume = g.billlading_goods_gross_volume
+        mgood.billlading_goods_gross_volume = g.billlading_goods_gross_volume || 0
         mgood.billlading_goods_gross_volume_unit = g.billlading_goods_gross_volume_unit
-        mgood.billlading_goods_net_weight = g.billlading_goods_net_weight
+        mgood.billlading_goods_net_weight = g.billlading_goods_net_weight || 0
         mgood.billlading_goods_net_unit = g.billlading_goods_net_unit
         await mgood.save()
         newGoods.push(g.billlading_goods_id)
