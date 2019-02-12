@@ -3,6 +3,7 @@ const common = require('../../../util/CommonUtil')
 const GLBConfig = require('../../../util/GLBConfig')
 const logger = require('../../../app/logger').createLogger(__filename)
 const model = require('../../../app/model')
+const mailer = require('../../../util/Mail')
 
 const tb_user = model.common_user
 const tb_billlading = model.zhongtan_billlading
@@ -380,7 +381,7 @@ exports.confirmBookingAct = async req => {
       },
       order: [['billladingno_batch_id'], ['billladingno_pool_no']]
     })
-  
+
     if (!bl) {
       return common.error('billlading_02')
     }
@@ -444,10 +445,58 @@ exports.confirmPickUpAct = async req => {
   if (billlading.billlading_state != GLBConfig.BLSTATUS_PUTBOX_APPLY) {
     return common.error('billlading_01')
   } else {
+    let manager = await tb_container_manager.findOne({
+      where: {
+        container_manager_id: doc.container_manager_id
+      }
+    })
+
+    let shipper = await tb_user.findOne({
+      where: {
+        user_id: billlading.billlading_shipper_id
+      }
+    })
+
+    let billlading_goods = await tb_billlading_goods.findAll({
+      where: { billlading_id: billlading.billlading_id }
+    })
+
+    let containers = ''
+    for (let g of billlading_goods) {
+      containers += g.billlading_goods_container_number + 'X' + g.billlading_goods_container_size + g.billlading_goods_container_type + ', '
+    }
+    containers = containers.slice(0, containers.length - 2)
+
+    let vessel = await tb_vessel.findOne({
+      where: {
+        vessel_id: billlading.billlading_vessel_id
+      }
+    })
+
+    let voyage = await tb_voyage.findOne({
+      where: {
+        voyage_id: billlading.billlading_voyage_id
+      }
+    })
+
+    let text = `
+    TO ${manager.container_manager_name}:
+    Please Release ${containers} empty containers in a good condition to ${shipper.user_name}
+    Place of stuffing at ${billlading.billlading_stuffing_place}
+    Let us know container number released for our record.
+    S/O: ${billlading.billlading_no} ${containers}
+    VESSEL: ${vessel.vessel_name} ${voyage.voyage_number}
+    `
+
+    await mailer.sendMail(manager.container_manager_email, 'Pick Up ' + billlading.billlading_no, text, text)
+    await mailer.sendMail(shipper.user_email, 'Pick Up ' + billlading.billlading_no, text, text)
+
+    // 更改订单状态
     billlading.container_manager_id = doc.container_manager_id
     billlading.billlading_state = GLBConfig.BLSTATUS_PUTBOX_CONFIRM
 
     await billlading.save()
+
     return common.success()
   }
 }

@@ -112,6 +112,16 @@ const config = {
       }
     }
   },
+  mailConfig: {
+    sender: 'huliquns@126.com',
+    host: 'smtp.126.com',
+    // port: 587,
+    secure: true, // true for 465, false for other ports
+    auth: {
+      user: 'huliquns', // generated ethereal user
+      pass: '55286668hlq' // generated ethereal password
+    }
+  },
   // SECRET_KEY
   SECRET_KEY: 'zc7#_66#g%u2n$j_)j$-r(swt74d(2l%wc2y=wqt_m8kpy%04*',
   TOKEN_AGE: 43200000, // 12 * 60 * 60 * 10000

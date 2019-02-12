@@ -139,6 +139,16 @@ const config = {
   //   filesDir: '../public/files/' /* 本地目录对于非本地存储是临时文件目录 */,
   //   urlBaseu: '/files/' /* 文件相对路径 */
   // },
+  mailConfig: {
+    sender: 'huliquns@126.com',
+    host: 'smtp.126.com',
+    // port: 587,
+    secure: true, // true for 465, false for other ports
+    auth: {
+      user: 'huliquns', // generated ethereal user
+      pass: '55296668hlq' // generated ethereal password
+    }
+  },
   // SECRET_KEY
   SECRET_KEY: 'zc7#_66#g%u2n$j_)j$-r(swt74d(2l%wc2y=wqt_m8kpy%04*',
   TOKEN_AGE: 43200000, // 12 * 60 * 60 * 10000
