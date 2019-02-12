@@ -480,15 +480,15 @@ exports.confirmPickUpAct = async req => {
     })
 
     let text = `
-    TO ${manager.container_manager_name}:
-    Please Release ${containers} empty containers in a good condition to ${shipper.user_name}
-    Place of stuffing at ${billlading.billlading_stuffing_place}
-    Let us know container number released for our record.
-    S/O: ${billlading.billlading_no} ${containers}
-    VESSEL: ${vessel.vessel_name} ${voyage.voyage_number}
+    TO ${manager.container_manager_name}:<br/>
+    Please Release ${containers} empty containers in a good condition to ${shipper.user_name}<br/>
+    Place of stuffing at ${billlading.billlading_stuffing_place}<br/>
+    Let us know container number released for our record.<br/>
+    S/O: ${billlading.billlading_no} ${containers}<br/>
+    VESSEL: ${vessel.vessel_name} ${voyage.voyage_number}<br/>
     `
 
-    await mailer.sendMail(manager.container_manager_email, 'Pick Up ' + billlading.billlading_no, text, text)
+    await mailer.sendMail(manager.container_manager_email, 'Pick Up ' + billlading.billlading_no, '', text)
     await mailer.sendMail(shipper.user_email, 'Pick Up ' + billlading.billlading_no, text, text)
 
     // 更改订单状态
