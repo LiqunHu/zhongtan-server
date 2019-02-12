@@ -4,6 +4,7 @@ const GLBConfig = require('../../../util/GLBConfig')
 const logger = require('../../../app/logger').createLogger(__filename)
 const model = require('../../../app/model')
 
+const tb_user = model.common_user
 const tb_billlading = model.zhongtan_billlading
 const tb_billlading_goods = model.zhongtan_billlading_goods
 const tb_container = model.zhongtan_container
@@ -104,6 +105,19 @@ exports.searchAct = async req => {
 
   for (let bl of result.data) {
     let d = JSON.parse(JSON.stringify(bl))
+
+    let shipper = await tb_user.findOne({
+      where: {
+        user_id: d.billlading_shipper_id
+      }
+    })
+
+    d.shipperINFO = {
+      name: shipper.user_name,
+      address: shipper.user_address,
+      email: shipper.user_email,
+      phone: shipper.user_phone
+    }
 
     d.VoyageINFO = []
 
