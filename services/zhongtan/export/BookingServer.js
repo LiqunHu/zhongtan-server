@@ -181,6 +181,7 @@ exports.bookingAct = async req => {
     billlading_notify_name: doc.billlading_notify_name,
     billlading_notify_tel: doc.billlading_notify_tel,
     billlading_notify_address: doc.billlading_notify_address,
+    billlading_cso: doc.billlading_cso,
     billlading_original_num: doc.billlading_original_num,
     billlading_copys_num: doc.billlading_copys_num,
     billlading_loading_port_id: doc.billlading_loading_port_id,
@@ -242,6 +243,9 @@ exports.modifyAct = async req => {
     modibilllading.billlading_notify_name = doc.new.billlading_notify_name
     modibilllading.billlading_notify_address = doc.new.billlading_notify_address
     modibilllading.billlading_notify_tel = doc.new.billlading_notify_tel
+    modibilllading.billlading_cso = doc.new.billlading_cso
+    modibilllading.billlading_original_num = doc.new.billlading_original_num
+    modibilllading.billlading_copys_num = doc.new.billlading_copys_num
     modibilllading.billlading_loading_port_id = doc.new.billlading_loading_port_id
     modibilllading.billlading_discharge_port_id = doc.new.billlading_discharge_port_id
     modibilllading.billlading_stuffing_place = doc.new.billlading_stuffing_place
