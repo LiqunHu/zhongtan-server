@@ -192,12 +192,10 @@ exports.searchAct = async req => {
 
 exports.modifyAct = async req => {
   let doc = common.docValidate(req)
-  let user = req.user
 
   let modibilllading = await tb_billlading.findOne({
     where: {
       billlading_id: doc.old.billlading_id,
-      billlading_shipper_id: user.user_id,
       state: GLBConfig.ENABLE
     }
   })
