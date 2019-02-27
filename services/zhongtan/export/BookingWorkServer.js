@@ -88,6 +88,11 @@ exports.searchAct = async req => {
                     where state = '1' and billlading_service_name = ?`
   let replacements = [user.user_service_name]
 
+  if (doc.shipper) {
+    queryStr += ' and billlading_shipper_id = ?'
+    replacements.push(doc.shipper)
+  }
+
   if (doc.start_date) {
     queryStr += ' and created_at >= ? and created_at <= ?'
     replacements.push(doc.start_date)
@@ -99,7 +104,7 @@ exports.searchAct = async req => {
   }
   queryStr += ' order by created_at desc'
 
-  let result = await model.queryWithCount(req, queryStr, replacements)
+  let result = await model.queryWithCount(doc, queryStr, replacements)
 
   returnData.total = result.count
   returnData.rows = []
@@ -335,6 +340,33 @@ exports.cancelAct = async req => {
   } else {
     billlading.state = GLBConfig.DISABLE
     await billlading.save()
+    return common.success()
+  }
+}
+
+exports.searchShipperAct = async req => {
+  let doc = common.docValidate(req)
+  if (doc.search_text) {
+    let returnData = {
+      shipperINFO: []
+    }
+    let queryStr = `select * from tbl_common_user 
+                where state = "1" and user_type = "${GLBConfig.TYPE_CUSTOMER}"  
+                and (user_username like ? or user_phone like ? or user_name like ?)`
+    let replacements = []
+    let search_text = '%' + doc.search_text + '%'
+    replacements.push(search_text)
+    replacements.push(search_text)
+    replacements.push(search_text)
+    let shippers = await model.simpleSelect(queryStr, replacements)
+    for (let s of shippers) {
+      returnData.shipperINFO.push({
+        id: s.user_id,
+        text: s.user_name
+      })
+    }
+    return common.success(returnData)
+  } else {
     return common.success()
   }
 }
