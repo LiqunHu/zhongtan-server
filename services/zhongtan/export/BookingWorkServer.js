@@ -93,6 +93,11 @@ exports.searchAct = async req => {
     replacements.push(doc.shipper)
   }
 
+  if (doc.vessel) {
+    queryStr += ' and billlading_vessel_id = ?'
+    replacements.push(doc.vessel)
+  }
+
   if (doc.start_date) {
     queryStr += ' and created_at >= ? and created_at <= ?'
     replacements.push(doc.start_date)
@@ -357,6 +362,34 @@ exports.searchShipperAct = async req => {
     let search_text = '%' + doc.search_text + '%'
     replacements.push(search_text)
     replacements.push(search_text)
+    replacements.push(search_text)
+    let shippers = await model.simpleSelect(queryStr, replacements)
+    for (let s of shippers) {
+      returnData.shipperINFO.push({
+        id: s.user_id,
+        text: s.user_name
+      })
+    }
+    return common.success(returnData)
+  } else {
+    return common.success()
+  }
+}
+
+exports.searchVesselAct = async req => {
+  let doc = common.docValidate(req)
+  let user = req.user
+
+  if (doc.search_text) {
+    let returnData = {
+      VesselINFO: []
+    }
+    let queryStr = `select * from tbl_zhongtan_vessel 
+                where state = "1"   
+                and vessel_service_name = ?
+                and vessel_name like ?`
+    let replacements = [user.user_service_name]
+    let search_text = '%' + doc.search_text + '%'
     replacements.push(search_text)
     let shippers = await model.simpleSelect(queryStr, replacements)
     for (let s of shippers) {

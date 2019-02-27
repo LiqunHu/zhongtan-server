@@ -17,6 +17,8 @@ module.exports = async (req, res) => {
       ret = await srv.cancelAct(req)
     } else if (method === 'searchShipper') {
       ret = await srv.searchShipperAct(req)
+    } else if (method === 'searchVessel') {
+      ret = await srv.searchVesselAct(req)
     } else if (method === 'searchVoyage') {
       ret = await srv.searchVoyageAct(req)
     } else if (method === 'confirmBooking') {

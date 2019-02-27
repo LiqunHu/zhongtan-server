@@ -81,7 +81,7 @@ exports.searchAct = async req => {
   }
   queryStr += ' order by created_at desc'
 
-  let result = await model.queryWithCount(req, queryStr, replacements)
+  let result = await model.queryWithCount(doc, queryStr, replacements)
 
   returnData.total = result.count
   returnData.rows = []
