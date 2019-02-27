@@ -391,11 +391,11 @@ exports.searchVesselAct = async req => {
     let replacements = [user.user_service_name]
     let search_text = '%' + doc.search_text + '%'
     replacements.push(search_text)
-    let shippers = await model.simpleSelect(queryStr, replacements)
-    for (let s of shippers) {
-      returnData.shipperINFO.push({
-        id: s.user_id,
-        text: s.user_name
+    let vessels = await model.simpleSelect(queryStr, replacements)
+    for (let v of vessels) {
+      returnData.VesselINFO.push({
+        id: v.vessel_id,
+        text: v.vessel_name
       })
     }
     return common.success(returnData)
