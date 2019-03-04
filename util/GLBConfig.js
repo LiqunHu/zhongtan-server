@@ -44,11 +44,11 @@ module.exports = {
   STATUSINFO: [
     {
       id: '1',
-      text: '有效'
+      text: 'valid'
     },
     {
       id: '0',
-      text: '无效'
+      text: 'invalid'
     }
   ],
   TRUE: '1',
