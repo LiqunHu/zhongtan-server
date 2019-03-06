@@ -89,7 +89,7 @@ exports.searchAct = async req => {
   let replacements = [user.user_service_name]
 
   if (doc.shipper) {
-    queryStr += ' and billlading_shipper_id = ?'
+    queryStr += ' and billlading_customer_id = ?'
     replacements.push(doc.shipper)
   }
 
@@ -117,17 +117,17 @@ exports.searchAct = async req => {
   for (let bl of result.data) {
     let d = JSON.parse(JSON.stringify(bl))
 
-    let shipper = await tb_user.findOne({
+    let customer = await tb_user.findOne({
       where: {
-        user_id: d.billlading_shipper_id
+        user_id: d.billlading_customer_id
       }
     })
 
-    d.shipperINFO = {
-      name: shipper.user_name,
-      address: shipper.user_address,
-      email: shipper.user_email,
-      phone: shipper.user_phone
+    d.customerINFO = {
+      name: customer.user_name,
+      address: customer.user_address,
+      email: customer.user_email,
+      phone: customer.user_phone
     }
 
     d.VoyageINFO = []
@@ -219,6 +219,9 @@ exports.modifyAct = async req => {
     modibilllading.billlading_service_name = vessel.vessel_service_name
     modibilllading.billlading_vessel_id = doc.new.billlading_vessel_id
     modibilllading.billlading_voyage_id = doc.new.billlading_voyage_id
+    modibilllading.billlading_shipper_name = doc.new.billlading_shipper_name
+    modibilllading.billlading_shipper_address = doc.new.billlading_shipper_address
+    modibilllading.billlading_shipper_tel = doc.new.billlading_shipper_tel
     modibilllading.billlading_consignee_name = doc.new.billlading_consignee_name
     modibilllading.billlading_consignee_address = doc.new.billlading_consignee_address
     modibilllading.billlading_consignee_tel = doc.new.billlading_consignee_tel
@@ -349,11 +352,11 @@ exports.cancelAct = async req => {
   }
 }
 
-exports.searchShipperAct = async req => {
+exports.searchCustomerAct = async req => {
   let doc = common.docValidate(req)
   if (doc.search_text) {
     let returnData = {
-      shipperINFO: []
+      customerINFO: []
     }
     let queryStr = `select * from tbl_common_user 
                 where state = "1" and user_type = "${GLBConfig.TYPE_CUSTOMER}"  
@@ -365,7 +368,7 @@ exports.searchShipperAct = async req => {
     replacements.push(search_text)
     let shippers = await model.simpleSelect(queryStr, replacements)
     for (let s of shippers) {
-      returnData.shipperINFO.push({
+      returnData.customerINFO.push({
         id: s.user_id,
         text: s.user_name
       })
@@ -521,7 +524,7 @@ exports.confirmPickUpAct = async req => {
 
     let shipper = await tb_user.findOne({
       where: {
-        user_id: billlading.billlading_shipper_id
+        user_id: billlading.billlading_customer_id
       }
     })
 

@@ -37,7 +37,7 @@ module.exports = db.defineModel('tbl_zhongtan_billlading', {
     type: db.IDNO,
     allowNull: true
   },
-  billlading_shipper_id: {
+  billlading_customer_id: {
     type: db.UUID,
     allowNull: true
   },
@@ -45,6 +45,24 @@ module.exports = db.defineModel('tbl_zhongtan_billlading', {
     // 箱管 id
     type: db.IDNO,
     allowNull: true
+  },
+  billlading_shipper_name: {
+    // 发货人姓名
+    type: db.STRING(50),
+    defaultValue: '',
+    allowNull: false
+  },
+  billlading_shipper_tel: {
+    // 发货人电话
+    type: db.STRING(50),
+    defaultValue: '',
+    allowNull: false
+  },
+  billlading_shipper_address: {
+    // 发货人地址
+    type: db.STRING(200),
+    defaultValue: '',
+    allowNull: false
   },
   billlading_consignee_name: {
     // 收货人姓名

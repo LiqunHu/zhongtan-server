@@ -67,7 +67,7 @@ exports.searchAct = async req => {
 
   let queryStr = `select * from tbl_zhongtan_billlading
                     where state = '1'
-                    and billlading_shipper_id = ?`
+                    and billlading_customer_id = ?`
   let replacements = [user.user_id]
 
   if (doc.start_date) {
@@ -174,7 +174,10 @@ exports.bookingAct = async req => {
     billlading_service_name: vessel.vessel_service_name,
     billlading_vessel_id: doc.billlading_vessel_id || null,
     billlading_voyage_id: doc.billlading_voyage_id || null,
-    billlading_shipper_id: user.user_id,
+    billlading_customer_id: user.user_id,
+    billlading_shipper_name: doc.billlading_shipper_name,
+    billlading_shipper_tel: doc.billlading_shipper_tel,
+    billlading_shipper_address: doc.billlading_shipper_address,
     billlading_consignee_name: doc.billlading_consignee_name,
     billlading_consignee_tel: doc.billlading_consignee_tel,
     billlading_consignee_address: doc.billlading_consignee_address,
@@ -223,7 +226,7 @@ exports.modifyAct = async req => {
   let modibilllading = await tb_billlading.findOne({
     where: {
       billlading_id: doc.old.billlading_id,
-      billlading_shipper_id: user.user_id,
+      billlading_customer_id: user.user_id,
       state: GLBConfig.ENABLE
     }
   })
@@ -237,6 +240,9 @@ exports.modifyAct = async req => {
     modibilllading.billlading_service_name = vessel.vessel_service_name
     modibilllading.billlading_vessel_id = doc.new.billlading_vessel_id
     modibilllading.billlading_voyage_id = doc.new.billlading_voyage_id
+    modibilllading.billlading_shipper_name = doc.new.billlading_shipper_name
+    modibilllading.billlading_shipper_address = doc.new.billlading_shipper_address
+    modibilllading.billlading_shipper_tel = doc.new.billlading_shipper_tel
     modibilllading.billlading_consignee_name = doc.new.billlading_consignee_name
     modibilllading.billlading_consignee_address = doc.new.billlading_consignee_address
     modibilllading.billlading_consignee_tel = doc.new.billlading_consignee_tel
@@ -377,7 +383,7 @@ exports.cancelAct = async req => {
   let billlading = await tb_billlading.findOne({
     where: {
       billlading_id: doc.billlading_id,
-      billlading_shipper_id: user.user_id,
+      billlading_customer_id: user.user_id,
       state: GLBConfig.ENABLE
     }
   })
@@ -398,7 +404,7 @@ exports.pickUpEmptyAct = async req => {
   let billlading = await tb_billlading.findOne({
     where: {
       billlading_id: doc.billlading_id,
-      billlading_shipper_id: user.user_id,
+      billlading_customer_id: user.user_id,
       state: GLBConfig.ENABLE
     }
   })
@@ -419,7 +425,7 @@ exports.submitloadingAct = async req => {
   let billlading = await tb_billlading.findOne({
     where: {
       billlading_id: doc.billlading_id,
-      billlading_shipper_id: user.user_id,
+      billlading_customer_id: user.user_id,
       state: GLBConfig.ENABLE
     }
   })
@@ -534,7 +540,7 @@ exports.revertDeclareNumberAct = async req => {
   let billlading = await tb_billlading.findOne({
     where: {
       billlading_id: doc.billlading_id,
-      billlading_shipper_id: user.user_id,
+      billlading_customer_id: user.user_id,
       state: GLBConfig.ENABLE
     }
   })
@@ -557,7 +563,7 @@ exports.confirmInstructionAct = async req => {
   let billlading = await tb_billlading.findOne({
     where: {
       billlading_id: doc.billlading_id,
-      billlading_shipper_id: user.user_id,
+      billlading_customer_id: user.user_id,
       state: GLBConfig.ENABLE
     }
   })
