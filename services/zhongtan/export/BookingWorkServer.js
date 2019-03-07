@@ -85,8 +85,18 @@ exports.searchAct = async req => {
   }
 
   let queryStr = `select * from tbl_zhongtan_billlading 
-                    where state = '1' and billlading_service_name = ?`
-  let replacements = [user.user_service_name]
+                    where state = '1'`
+  let replacements = []
+
+  if (user.user_service_name || user.user_service_name !== 'ALL') {
+    queryStr += ` and (billlading_service_name = ? or billlading_service_name = '')`
+    replacements.push(user.user_service_name)
+  }
+
+  if (doc.billlading_state) {
+    queryStr += ' and billlading_state = ?'
+    replacements.push(doc.billlading_state)
+  }
 
   if (doc.shipper) {
     queryStr += ' and billlading_customer_id = ?'
@@ -96,6 +106,12 @@ exports.searchAct = async req => {
   if (doc.vessel) {
     queryStr += ' and billlading_vessel_id = ?'
     replacements.push(doc.vessel)
+  }
+
+  if (doc.search_text) {
+    queryStr += ' and billlading_no like ?'
+    let search_text = '%' + doc.search_text + '%'
+    replacements.push(search_text)
   }
 
   if (doc.start_date) {

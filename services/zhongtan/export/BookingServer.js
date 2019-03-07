@@ -168,10 +168,15 @@ exports.bookingAct = async req => {
       vessel_id: doc.billlading_vessel_id
     }
   })
+  let billlading_service_name = ''
+  if (vessel) {
+    billlading_service_name = vessel.vessel_service_name
+  }
+
   let billlading = await tb_billlading.create({
     billlading_type: 'E',
     billlading_state: GLBConfig.BLSTATUS_PRE_BOOKING,
-    billlading_service_name: vessel.vessel_service_name,
+    billlading_service_name: billlading_service_name,
     billlading_vessel_id: doc.billlading_vessel_id || null,
     billlading_voyage_id: doc.billlading_voyage_id || null,
     billlading_customer_id: user.user_id,
