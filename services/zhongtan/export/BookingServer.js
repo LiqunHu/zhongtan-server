@@ -158,7 +158,7 @@ exports.searchAct = async req => {
     d.fees.billlading_feu_standard = common.money2Str(d.billlading_feu_standard)
     d.fees.billlading_feu_high_cube = common.money2Str(d.billlading_feu_high_cube)
     d.fees.sum_fee = common.money2Str(d.billlading_teu_standard + d.billlading_feu_standard + d.billlading_feu_high_cube)
-    
+
     returnData.rows.push(d)
   }
 
@@ -599,4 +599,17 @@ exports.confirmInstructionAct = async req => {
 exports.uploadAct = async req => {
   let fileInfo = await common.fileSave(req, 'zhongtan')
   return common.success(fileInfo)
+}
+
+exports.downloadBookingAct = async (req, res) => {
+  return common.ejs2Word(
+    'simple.docx',
+    {
+      first_name: 'Hipp',
+      last_name: 'Edgar',
+      phone: '0652455478',
+      description: 'New Website'
+    },
+    res
+  )
 }

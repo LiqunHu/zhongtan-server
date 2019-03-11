@@ -6,6 +6,8 @@ const Joi = require('joi')
 const fileUtil = require('server-utils').fileUtil
 const moment = require('moment')
 const ejsExcel = require('ejsexcel')
+const JSZip = require('jszip')
+const Docxtemplater = require('docxtemplater')
 
 const config = require('../app/config')
 const Error = require('./Error')
@@ -192,6 +194,21 @@ const ejs2xlsx = async (templateFile, renderData, bucket) => {
   return fileInfo
 }
 
+const ejs2Word = async (templateFile, renderData, res) => {
+  let content = fs.readFileSync(path.join(__dirname, '../docxTemplate/' + templateFile), 'binary')
+  let zip = new JSZip(content)
+  let doc = new Docxtemplater()
+  doc.loadZip(zip)
+  doc.setData(renderData)
+  doc.render()
+  let buf = doc.getZip().generate({ type: 'nodebuffer' })
+  res.type('docx')
+  res.set({
+    'Content-Disposition': 'attachment; filename=111.docx'
+  })
+  res.send(buf)
+}
+
 const getContainerISO = (cType, cSize) => {
   if (cType === 'AA' && cSize === 'BB') {
     return 'aaa'
@@ -215,5 +232,6 @@ module.exports = {
   str2Money: str2Money,
   money2Str: money2Str,
   ejs2xlsx: ejs2xlsx,
+  ejs2Word: ejs2Word,
   getContainerISO: getContainerISO
 }

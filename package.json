@@ -27,6 +27,8 @@
     "cors": "^2.8.4",
     "ejs": "^2.6.1",
     "ejsexcel": "^3.5.3",
+    "jszip": "^2.6.1",
+    "docxtemplater": "^3.9.9",
     "log4js": "^3.0.6",
     "log4js-logstash-tcp": "^1.0.8",
     "moment": "^2.22.2",

@@ -29,6 +29,8 @@ module.exports = async (req, res) => {
       ret = await srv.confirmInstructionAct(req)
     } else if (method === 'upload') {
       ret = await srv.uploadAct(req)
+    }else if (method === 'downloadBooking') {
+      return await srv.downloadBookingAct(req, res)
     }
     common.sendData(res, ret)
   } catch (error) {
