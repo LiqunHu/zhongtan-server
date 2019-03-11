@@ -210,6 +210,12 @@ exports.searchAct = async req => {
       })
     }
 
+    d.fees = {}
+    d.fees.billlading_teu_standard = common.money2Str(d.billlading_teu_standard)
+    d.fees.billlading_feu_standard = common.money2Str(d.billlading_feu_standard)
+    d.fees.billlading_feu_high_cube = common.money2Str(d.billlading_feu_high_cube)
+    d.fees.sum_fee = common.money2Str(d.billlading_teu_standard + d.billlading_feu_standard + d.billlading_feu_high_cube)
+
     returnData.rows.push(d)
   }
 

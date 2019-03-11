@@ -179,6 +179,10 @@ function str2Money(str) {
   return Math.round(money * 100)
 }
 
+function money2Str(money) {
+  return (money / 100).toFixed(2)
+}
+
 const ejs2xlsx = async (templateFile, renderData, bucket) => {
   let templateBuf = fs.readFileSync(path.join(process.cwd(), './excelTemplate/', templateFile))
   let exlBuf = await ejsExcel.renderExcel(templateBuf, renderData)
@@ -209,6 +213,7 @@ module.exports = {
   generateNonceString: generateNonceString,
   fileSave: fileSave,
   str2Money: str2Money,
+  money2Str: money2Str,
   ejs2xlsx: ejs2xlsx,
   getContainerISO: getContainerISO
 }
