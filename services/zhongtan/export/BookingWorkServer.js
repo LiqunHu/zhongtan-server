@@ -500,7 +500,10 @@ exports.confirmBookingAct = async req => {
     billlading.billlading_no = bl.billladingno_pool_no
     billlading.billlading_vessel_id = doc.billlading_vessel_id
     billlading.billlading_voyage_id = doc.billlading_voyage_id
-    billlading.billlading_freight_charge = common.str2Money(doc.billlading_freight_charge)
+    billlading.billlading_cso = doc.billlading_cso
+    billlading.billlading_teu_standard = common.str2Money(doc.billlading_teu_standard)
+    billlading.billlading_feu_standard = common.str2Money(doc.billlading_feu_standard)
+    billlading.billlading_feu_high_cube = common.str2Money(doc.billlading_feu_high_cube)
     billlading.billlading_state = GLBConfig.BLSTATUS_BOOKING
 
     await billlading.save()

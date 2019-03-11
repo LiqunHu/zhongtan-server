@@ -270,5 +270,17 @@ module.exports = db.defineModel('tbl_zhongtan_billlading', {
     type: db.STRING(50),
     defaultValue: '',
     allowNull: false
+  },
+  billlading_teu_standard: {
+    type: db.INTEGER,
+    allowNull: true
+  },
+  billlading_feu_standard: {
+    type: db.INTEGER,
+    allowNull: true
+  },
+  billlading_feu_high_cube: {
+    type: db.INTEGER,
+    allowNull: true
   }
 })
