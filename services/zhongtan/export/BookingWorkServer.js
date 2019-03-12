@@ -732,3 +732,64 @@ exports.uploadAct = async req => {
   let fileInfo = await common.fileSave(req, 'zhongtan')
   return common.success(fileInfo)
 }
+
+exports.downloadBookingAct = async (req, res) => {
+  let doc = common.docValidate(req)
+  let bl = await tb_billlading.findOne({
+    where: {
+      billlading_id: doc.billlading_id
+    }
+  })
+
+  let vessel = await tb_vessel.findOne({
+    where: {
+      vessel_id: bl.billlading_vessel_id
+    }
+  })
+
+  let voyage = await tb_voyage.findOne({
+    where: {
+      vessel_id: bl.billlading_voyage_id
+    }
+  })
+
+  let docData = JSON.parse(JSON.stringify(bl))
+  docData.booking_date = moment(bl.created_at).format('DD-MMM-YYYY')
+  if (bl.billlading_stuffing_date) {
+    docData.stuffing_date = moment(bl.billlading_stuffing_date).format('DD-MMM-YYYY')
+  } else {
+    docData.stuffing_date = ''
+  }
+  if (bl.billlading_pay_date) {
+    docData.pay_date = moment(bl.billlading_pay_date).format('DD-MMM-YYYY')
+  } else {
+    docData.pay_date = ''
+  }
+  
+  docData.vessel_name = vessel.vessel_name
+  docData.voyage_number = voyage.voyage_number
+
+  let lp = await tb_port.findOne({
+    where: {
+      port_id: bl.billlading_loading_port_id
+    }
+  })
+  docData.loading_port_name = lp.port_name
+  let dp = await tb_port.findOne({
+    where: {
+      port_id: bl.billlading_discharge_port_id
+    }
+  })
+  docData.discharge_port_name = dp.port_name
+  docData.discharge_port_country = dp.port_country
+
+  docData.billlading_goods = []
+  let billlading_goods = await tb_billlading_goods.findAll({
+    where: { billlading_id: bl.billlading_id }
+  })
+  for (let g of billlading_goods) {
+    docData.billlading_goods.push(JSON.parse(JSON.stringify(g)))
+  }
+
+  return common.ejs2Word('bookingTemplate.docx', docData, res)
+}

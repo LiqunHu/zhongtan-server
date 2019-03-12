@@ -154,7 +154,8 @@ module.exports = db.defineModel('tbl_zhongtan_billlading', {
   billlading_stuffing_requirement: {
     //装货特殊要求
     type: db.STRING(500),
-    allowNull: true
+    defaultValue: '',
+    allowNull: false
   },
   billlading_pay_date: {
     // 付款日期
