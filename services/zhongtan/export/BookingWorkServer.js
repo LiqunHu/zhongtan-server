@@ -261,6 +261,7 @@ exports.modifyAct = async req => {
     modibilllading.billlading_freight_currency = doc.new.billlading_freight_currency
 
     if (user.user_service_name === 'ALL') {
+      modibilllading.billlading_state = doc.new.fees.billlading_state
       modibilllading.billlading_teu_standard = common.str2Money(doc.new.fees.billlading_teu_standard)
       modibilllading.billlading_feu_standard = common.str2Money(doc.new.fees.billlading_feu_standard)
       modibilllading.billlading_feu_high_cube = common.str2Money(doc.new.fees.billlading_feu_high_cube)
