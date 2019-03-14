@@ -133,14 +133,12 @@ exports.searchAct = async req => {
     })
     for (let f of files) {
       let filetype = ''
-      if (f.api_name === 'BOOKING-LOADINGLIST') {
-        filetype = 'Loading list'
-      } else if (f.api_name === 'BOOKING-LOADINGPERMISSION') {
-        filetype = 'Permission'
-      } else if (f.api_name === 'BOOKING-INSTRUCTION') {
-        filetype = 'Instruction'
-      } else if (f.api_name === 'BOOKING-BILLLADING') {
-        filetype = 'Deaft bill of lading'
+      if (f.api_name === 'TICTS-LOADINGLIST') {
+        filetype = 'TICTS Loading list'
+      } else if (f.api_name === 'TPA-LOADINGLIST') {
+        filetype = 'TPA Loading list'
+      } else if (f.api_name === 'CUSTOMER-LOADINGLIST') {
+        filetype = 'CUSTOMER Loading list'
       }
 
       d.files.push({
@@ -478,65 +476,94 @@ exports.submitloadingAct = async req => {
 
     await billlading.save()
 
-    let renderData = []
-    let bl = JSON.parse(JSON.stringify(billlading))
-    let lp = await tb_port.findOne({
-      where: {
-        port_id: bl.billlading_loading_port_id
-      }
-    })
-    bl.loading_port_name = lp.port_name
-    let dp = await tb_port.findOne({
-      where: {
-        port_id: bl.billlading_discharge_port_id
-      }
-    })
-    bl.discharge_port_name = dp.port_name
-    bl.discharge_port_country = dp.port_country
-    let goods = await tb_billlading_goods.findAll({
-      where: {
-        billlading_id: doc.billlading_id
-      }
-    })
+    // let renderData = []
+    // let bl = JSON.parse(JSON.stringify(billlading))
+    // let lp = await tb_port.findOne({
+    //   where: {
+    //     port_id: bl.billlading_loading_port_id
+    //   }
+    // })
+    // bl.loading_port_name = lp.port_name
+    // let dp = await tb_port.findOne({
+    //   where: {
+    //     port_id: bl.billlading_discharge_port_id
+    //   }
+    // })
+    // bl.discharge_port_name = dp.port_name
+    // bl.discharge_port_country = dp.port_country
+    // let goods = await tb_billlading_goods.findAll({
+    //   where: {
+    //     billlading_id: doc.billlading_id
+    //   }
+    // })
 
-    renderData.push([])
-    for (let g of goods) {
-      let row = JSON.parse(JSON.stringify(bl))
-      row.billlading_goods_container_number = g.billlading_goods_container_number
-      row.billlading_goods_description = g.billlading_goods_description
-      row.billlading_goods_package_number = g.billlading_goods_package_number
-      row.billlading_goods_package_unit = g.billlading_goods_package_unit
-      row.billlading_goods_gross_weight = g.billlading_goods_gross_weight
-      row.billlading_goods_gross_unit = g.billlading_goods_gross_unit
-      row.billlading_goods_gross_volume = g.billlading_goods_gross_volume
-      row.billlading_goods_gross_volume_unit = g.billlading_goods_gross_volume_unit
-      row.billlading_goods_net_weight = g.billlading_goods_net_weight
-      row.billlading_goods_net_unit = g.billlading_goods_net_unit
-      renderData[0].push(row)
+    // renderData.push([])
+    // for (let g of goods) {
+    //   let row = JSON.parse(JSON.stringify(bl))
+    //   row.billlading_goods_container_number = g.billlading_goods_container_number
+    //   row.billlading_goods_description = g.billlading_goods_description
+    //   row.billlading_goods_package_number = g.billlading_goods_package_number
+    //   row.billlading_goods_package_unit = g.billlading_goods_package_unit
+    //   row.billlading_goods_gross_weight = g.billlading_goods_gross_weight
+    //   row.billlading_goods_gross_unit = g.billlading_goods_gross_unit
+    //   row.billlading_goods_gross_volume = g.billlading_goods_gross_volume
+    //   row.billlading_goods_gross_volume_unit = g.billlading_goods_gross_volume_unit
+    //   row.billlading_goods_net_weight = g.billlading_goods_net_weight
+    //   row.billlading_goods_net_unit = g.billlading_goods_net_unit
+    //   renderData[0].push(row)
+    // }
+
+    // renderData.push([])
+    // let containers = await tb_container.findAll({
+    //   where: {
+    //     billlading_id: doc.billlading_id
+    //   }
+    // })
+
+    // for (let c of containers) {
+    //   let row = JSON.parse(JSON.stringify(c))
+    //   row.billlading_no = billlading.billlading_no
+    //   renderData[1].push(row)
+    // }
+
+    // let fileInfo = await common.ejs2xlsx('LoadingTemplateCustoms.xlsx', renderData, 'zhongtan')
+
+    // await tb_uploadfile.create({
+    //   api_name: 'BOOKING-LOADINGLIST',
+    //   user_id: user.user_id,
+    //   uploadfile_index1: billlading.billlading_id,
+    //   uploadfile_name: fileInfo.name,
+    //   uploadfile_url: fileInfo.url
+    // })
+    if (doc.files.ticts.url) {
+      await tb_uploadfile.create({
+        api_name: 'TICTS-LOADINGLIST',
+        user_id: user.user_id,
+        uploadfile_index1: billlading.billlading_id,
+        uploadfile_name: doc.files.ticts.name,
+        uploadfile_url: doc.files.ticts.url
+      })
     }
 
-    renderData.push([])
-    let containers = await tb_container.findAll({
-      where: {
-        billlading_id: doc.billlading_id
-      }
-    })
-
-    for (let c of containers) {
-      let row = JSON.parse(JSON.stringify(c))
-      row.billlading_no = billlading.billlading_no
-      renderData[1].push(row)
+    if (doc.files.tpa.url) {
+      await tb_uploadfile.create({
+        api_name: 'TPA-LOADINGLIST',
+        user_id: user.user_id,
+        uploadfile_index1: billlading.billlading_id,
+        uploadfile_name: doc.files.tpa.name,
+        uploadfile_url: doc.files.tpa.url
+      })
     }
 
-    let fileInfo = await common.ejs2xlsx('LoadingTemplateCustoms.xlsx', renderData, 'zhongtan')
-
-    await tb_uploadfile.create({
-      api_name: 'BOOKING-LOADINGLIST',
-      user_id: user.user_id,
-      uploadfile_index1: billlading.billlading_id,
-      uploadfile_name: fileInfo.name,
-      uploadfile_url: fileInfo.url
-    })
+    if (doc.files.customer.url) {
+      await tb_uploadfile.create({
+        api_name: 'CUSTOMER-LOADINGLIST',
+        user_id: user.user_id,
+        uploadfile_index1: billlading.billlading_id,
+        uploadfile_name: doc.files.customer.name,
+        uploadfile_url: doc.files.customer.url
+      })
+    }
 
     return common.success()
   }
@@ -633,7 +660,7 @@ exports.downloadBookingAct = async (req, res) => {
   } else {
     docData.pay_date = ''
   }
-  
+
   docData.vessel_name = vessel.vessel_name
   docData.voyage_number = voyage.voyage_number
 
