@@ -221,6 +221,7 @@ const loginInit = async (user, session_token, type) => {
     returnData.phone = user.user_phone
     returnData.created_at = moment(user.created_at).format('MM[, ]YYYY')
     returnData.city = user.user_city
+    returnData.user_service_name = user.user_service_name
 
     let groups = await tb_user_groups.findAll({
       where: {

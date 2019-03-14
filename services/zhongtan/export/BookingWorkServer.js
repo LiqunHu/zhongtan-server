@@ -88,7 +88,7 @@ exports.searchAct = async req => {
                     where state = '1'`
   let replacements = []
 
-  if (user.user_service_name || user.user_service_name !== 'ALL') {
+  if (user.user_service_name && user.user_service_name !== 'ALL') {
     queryStr += ` and (billlading_service_name = ? or billlading_service_name = '')`
     replacements.push(user.user_service_name)
   }
@@ -261,9 +261,9 @@ exports.modifyAct = async req => {
     modibilllading.billlading_freight_currency = doc.new.billlading_freight_currency
 
     if (user.user_service_name === 'ALL') {
-      modibilllading.billlading_teu_standard = doc.new.billlading_teu_standard
-      modibilllading.billlading_feu_standard = doc.new.billlading_feu_standard
-      modibilllading.billlading_feu_high_cube = doc.new.billlading_feu_high_cube
+      modibilllading.billlading_teu_standard = common.str2Money(doc.new.fees.billlading_teu_standard)
+      modibilllading.billlading_feu_standard = common.str2Money(doc.new.fees.billlading_feu_standard)
+      modibilllading.billlading_feu_high_cube = common.str2Money(doc.new.fees.billlading_feu_high_cube)
     }
 
     await modibilllading.save()
