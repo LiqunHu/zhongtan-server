@@ -222,6 +222,7 @@ exports.searchAct = async req => {
 
 exports.modifyAct = async req => {
   let doc = common.docValidate(req)
+  let user = req.user
 
   let modibilllading = await tb_billlading.findOne({
     where: {
@@ -258,6 +259,12 @@ exports.modifyAct = async req => {
     modibilllading.billlading_stuffing_requirement = doc.new.billlading_stuffing_requirement
     modibilllading.billlading_pay_date = doc.new.billlading_pay_date || null
     modibilllading.billlading_freight_currency = doc.new.billlading_freight_currency
+
+    if (user.user_service_name === 'ALL') {
+      modibilllading.billlading_teu_standard = doc.new.billlading_teu_standard
+      modibilllading.billlading_feu_standard = doc.new.billlading_feu_standard
+      modibilllading.billlading_feu_high_cube = doc.new.billlading_feu_high_cube
+    }
 
     await modibilllading.save()
     let billlading_goods = await tb_billlading_goods.findAll({
@@ -763,7 +770,7 @@ exports.downloadBookingAct = async (req, res) => {
   } else {
     docData.pay_date = ''
   }
-  
+
   docData.vessel_name = vessel.vessel_name
   docData.voyage_number = voyage.voyage_number
 
