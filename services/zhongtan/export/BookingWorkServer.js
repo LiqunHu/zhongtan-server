@@ -212,6 +212,9 @@ exports.searchAct = async req => {
     d.fees.billlading_teu_standard = common.money2Str(d.billlading_teu_standard)
     d.fees.billlading_feu_standard = common.money2Str(d.billlading_feu_standard)
     d.fees.billlading_feu_high_cube = common.money2Str(d.billlading_feu_high_cube)
+    d.billlading_teu_standard_f = common.money2Str(d.billlading_teu_standard)
+    d.billlading_feu_standard_f = common.money2Str(d.billlading_feu_standard)
+    d.billlading_feu_high_cube_f = common.money2Str(d.billlading_feu_high_cube)
     d.fees.sum_fee = common.money2Str(d.billlading_teu_standard + d.billlading_feu_standard + d.billlading_feu_high_cube)
 
     returnData.rows.push(d)
@@ -261,10 +264,10 @@ exports.modifyAct = async req => {
     modibilllading.billlading_freight_currency = doc.new.billlading_freight_currency
 
     if (user.user_service_name === 'ALL') {
-      modibilllading.billlading_state = doc.new.fees.billlading_state
-      modibilllading.billlading_teu_standard = common.str2Money(doc.new.fees.billlading_teu_standard)
-      modibilllading.billlading_feu_standard = common.str2Money(doc.new.fees.billlading_feu_standard)
-      modibilllading.billlading_feu_high_cube = common.str2Money(doc.new.fees.billlading_feu_high_cube)
+      modibilllading.billlading_state = doc.new.billlading_state
+      modibilllading.billlading_teu_standard = common.str2Money(doc.new.billlading_teu_standard_f)
+      modibilllading.billlading_feu_standard = common.str2Money(doc.new.billlading_feu_standard_f)
+      modibilllading.billlading_feu_high_cube = common.str2Money(doc.new.billlading_feu_high_cube_f)
     }
 
     await modibilllading.save()
