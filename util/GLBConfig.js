@@ -135,8 +135,8 @@ module.exports = {
     { id: 'BL', text: 'Bill Lading', style: 'label-bill-lading' }
   ],
   LB_BATCH_STATE: [
-    { id: '0', text: '未使用' },
-    { id: '1', text: '使用' },
-    { id: '2', text: '作废' }
+    { id: '0', text: 'Unused' },
+    { id: '1', text: 'Used' },
+    { id: '2', text: 'Cancel' }
   ]
 }

@@ -137,8 +137,8 @@ exports.searchAct = async req => {
         filetype = 'TICTS Loading list'
       } else if (f.api_name === 'TPA-LOADINGLIST') {
         filetype = 'TPA Loading list'
-      } else if (f.api_name === 'CUSTOM-LOADINGLIST') {
-        filetype = 'CUSTOM Loading list'
+      } else if (f.api_name === 'CUSTOMS-LOADINGLIST') {
+        filetype = 'CUSTOMS Loading list'
       }
 
       d.files.push({
@@ -555,13 +555,13 @@ exports.submitloadingAct = async req => {
       })
     }
 
-    if (doc.files.custom.url) {
+    if (doc.files.customs.url) {
       await tb_uploadfile.create({
-        api_name: 'CUSTOM-LOADINGLIST',
+        api_name: 'CUSTOMS-LOADINGLIST',
         user_id: user.user_id,
         uploadfile_index1: billlading.billlading_id,
-        uploadfile_name: doc.files.custom.name,
-        uploadfile_url: doc.files.custom.url
+        uploadfile_name: doc.files.customs.name,
+        uploadfile_url: doc.files.customs.url
       })
     }
 

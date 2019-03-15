@@ -194,8 +194,8 @@ exports.searchAct = async req => {
         filetype = 'TICTS Loading list'
       } else if (f.api_name === 'TPA-LOADINGLIST') {
         filetype = 'TPA Loading list'
-      } else if (f.api_name === 'CUSTOM-LOADINGLIST') {
-        filetype = 'CUSTOM Loading list'
+      } else if (f.api_name === 'CUSTOMS-LOADINGLIST') {
+        filetype = 'CUSTOMS Loading list'
       }
 
       d.files.push({
