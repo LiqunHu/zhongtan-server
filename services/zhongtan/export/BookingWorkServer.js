@@ -190,12 +190,14 @@ exports.searchAct = async req => {
     })
     for (let f of files) {
       let filetype = ''
-      if (f.api_name === 'TICTS-LOADINGLIST') {
+      if (f.api_name === 'BOOKING-TICTS-LOADINGLIST') {
         filetype = 'TICTS Loading list'
-      } else if (f.api_name === 'TPA-LOADINGLIST') {
+      } else if (f.api_name === 'BOOKING-TPA-LOADINGLIST') {
         filetype = 'TPA Loading list'
-      } else if (f.api_name === 'CUSTOMS-LOADINGLIST') {
+      } else if (f.api_name === 'BOOKING-CUSTOMS-LOADINGLIST') {
         filetype = 'CUSTOMS Loading list'
+      } else if (f.api_name === 'BOOKING-LOADINGPERMISSION') {
+        filetype = 'Loading Permisssion'
       }
 
       d.files.push({

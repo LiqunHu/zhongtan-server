@@ -133,12 +133,14 @@ exports.searchAct = async req => {
     })
     for (let f of files) {
       let filetype = ''
-      if (f.api_name === 'TICTS-LOADINGLIST') {
+      if (f.api_name === 'BOOKING-TICTS-LOADINGLIST') {
         filetype = 'TICTS Loading list'
-      } else if (f.api_name === 'TPA-LOADINGLIST') {
+      } else if (f.api_name === 'BOOKING-TPA-LOADINGLIST') {
         filetype = 'TPA Loading list'
-      } else if (f.api_name === 'CUSTOMS-LOADINGLIST') {
+      } else if (f.api_name === 'BOOKING-CUSTOMS-LOADINGLIST') {
         filetype = 'CUSTOMS Loading list'
+      } else if (f.api_name === 'BOOKING-LOADINGPERMISSION') {
+        filetype = 'Loading Permisssion'
       }
 
       d.files.push({
@@ -537,7 +539,7 @@ exports.submitloadingAct = async req => {
     // })
     if (doc.files.ticts.url) {
       await tb_uploadfile.create({
-        api_name: 'TICTS-LOADINGLIST',
+        api_name: 'BOOKING-TICTS-LOADINGLIST',
         user_id: user.user_id,
         uploadfile_index1: billlading.billlading_id,
         uploadfile_name: doc.files.ticts.name,
@@ -547,7 +549,7 @@ exports.submitloadingAct = async req => {
 
     if (doc.files.tpa.url) {
       await tb_uploadfile.create({
-        api_name: 'TPA-LOADINGLIST',
+        api_name: 'BOOKING-TPA-LOADINGLIST',
         user_id: user.user_id,
         uploadfile_index1: billlading.billlading_id,
         uploadfile_name: doc.files.tpa.name,
@@ -557,7 +559,7 @@ exports.submitloadingAct = async req => {
 
     if (doc.files.customs.url) {
       await tb_uploadfile.create({
-        api_name: 'CUSTOMS-LOADINGLIST',
+        api_name: 'BOOKING-CUSTOMS-LOADINGLIST',
         user_id: user.user_id,
         uploadfile_index1: billlading.billlading_id,
         uploadfile_name: doc.files.customs.name,
