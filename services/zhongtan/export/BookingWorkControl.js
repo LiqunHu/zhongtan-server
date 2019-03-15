@@ -29,6 +29,8 @@ module.exports = async (req, res) => {
       ret = await srv.rejectLoadingAct(req)
     } else if (method === 'submitCustoms') {
       ret = await srv.submitCustomsAct(req)
+    } else if (method === 'revertDeclareNumber') {
+      ret = await srv.revertDeclareNumberAct(req)
     } else if (method === 'loadingPermission') {
       ret = await srv.loadingPermissionAct(req)
     } else if (method === 'sendCDS') {

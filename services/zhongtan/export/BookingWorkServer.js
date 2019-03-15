@@ -656,6 +656,27 @@ exports.submitCustomsAct = async req => {
   }
 }
 
+exports.revertDeclareNumberAct = async req => {
+  let doc = common.docValidate(req)
+
+  let billlading = await tb_billlading.findOne({
+    where: {
+      billlading_id: doc.billlading_id,
+      state: GLBConfig.ENABLE
+    }
+  })
+
+  if (billlading.billlading_state != GLBConfig.BLSTATUS_SUBMIT_CUSTOMS) {
+    return common.error('billlading_01')
+  } else {
+    billlading.billlading_declare_number = doc.billlading_declare_number
+    billlading.billlading_state = GLBConfig.BLSTATUS_REVERT_DECLARE
+    await billlading.save()
+
+    return common.success()
+  }
+}
+
 exports.loadingPermissionAct = async req => {
   let doc = common.docValidate(req)
   let user = req.user
