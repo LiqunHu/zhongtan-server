@@ -571,6 +571,28 @@ exports.submitloadingAct = async req => {
   }
 }
 
+exports.clearanceOfGoodsAct = async req => {
+  let doc = common.docValidate(req)
+  let user = req.user
+
+  let billlading = await tb_billlading.findOne({
+    where: {
+      billlading_id: doc.billlading_id,
+      billlading_customer_id: user.user_id,
+      state: GLBConfig.ENABLE
+    }
+  })
+
+  if (billlading.billlading_state != GLBConfig.BLSTATUS_REVERT_DECLARE) {
+    return common.error('billlading_01')
+  } else {
+    billlading.billlading_state = GLBConfig.BLSTATUS_CLEARANCE_GOODS
+    await billlading.save()
+
+    return common.success()
+  }
+}
+
 exports.confirmInstructionAct = async req => {
   let doc = common.docValidate(req)
   let user = req.user
