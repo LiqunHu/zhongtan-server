@@ -593,7 +593,7 @@ exports.clearanceOfGoodsAct = async req => {
   }
 }
 
-exports.confirmInstructionAct = async req => {
+exports.shippingInstructionAct = async req => {
   let doc = common.docValidate(req)
   let user = req.user
 
@@ -605,19 +605,19 @@ exports.confirmInstructionAct = async req => {
     }
   })
 
-  if (billlading.billlading_state != GLBConfig.BLSTATUS_DECLARATION) {
+  if (billlading.billlading_state != GLBConfig.BLSTATUS_LOADING_PERMISSION) {
     return common.error('billlading_01')
   } else {
     for (let f of doc.instruction_files) {
       await tb_uploadfile.create({
-        api_name: 'BOOKING-INSTRUCTION',
+        api_name: 'BOOKING-SHIPPINGINSTRUCTION',
         user_id: user.user_id,
         uploadfile_index1: billlading.billlading_id,
         uploadfile_name: f.name,
         uploadfile_url: f.url
       })
     }
-    billlading.billlading_state = GLBConfig.BLSTATUS_CONFIRM_INSTRUCTUON
+    billlading.billlading_state = GLBConfig.BLSTATUS_SHIPPING_INSTRUCTION
     await billlading.save()
 
     return common.success()

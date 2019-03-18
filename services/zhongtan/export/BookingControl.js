@@ -25,8 +25,8 @@ module.exports = async (req, res) => {
       ret = await srv.submitloadingAct(req)
     } else if (method === 'clearanceOfGoods') {
       ret = await srv.clearanceOfGoodsAct(req)
-    } else if (method === 'confirmInstruction') {
-      ret = await srv.confirmInstructionAct(req)
+    } else if (method === 'shippingInstruction') {
+      ret = await srv.shippingInstructionAct(req)
     } else if (method === 'upload') {
       ret = await srv.uploadAct(req)
     } else if (method === 'downloadBooking') {

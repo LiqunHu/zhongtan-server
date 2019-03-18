@@ -105,7 +105,7 @@ module.exports = {
   ],
   PayTypeINFO: [{ id: 'Prepaid', text: 'Prepaid' }, { id: 'Collect', text: 'Collect' }],
   PayCurrencyINFO: [{ id: 'CY', text: 'CY' }, { id: 'CFS', text: 'CFS' }],
-  VesselServiceINFO: [{ id: 'ALL', text: 'ALL' },{ id: 'EAX1', text: 'EAX1' }, { id: 'EAX2', text: 'EAX2' }, { id: 'EAX4', text: 'EAX4' }],
+  VesselServiceINFO: [{ id: 'ALL', text: 'ALL' }, { id: 'EAX1', text: 'EAX1' }, { id: 'EAX2', text: 'EAX2' }, { id: 'EAX4', text: 'EAX4' }],
   PortCountryINFO: [{ id: 'TZ', text: 'TZ' }, { id: 'CN', text: 'CN' }, { id: 'SIN', text: 'SIN' }],
   BLSTATUS_PRE_BOOKING: 'PBK',
   BLSTATUS_BOOKING: 'BK',
@@ -117,6 +117,7 @@ module.exports = {
   BLSTATUS_REVERT_DECLARE: 'RD',
   BLSTATUS_CLEARANCE_GOODS: 'CG',
   BLSTATUS_LOADING_PERMISSION: 'LP',
+  BLSTATUS_SHIPPING_INSTRUCTION: 'SI',
   BLSTATUS_DECLARATION: 'DE',
   BLSTATUS_CONFIRM_INSTRUCTUON: 'CI',
   BLSTATUS_CDS_PROCESSING: 'CP',
@@ -132,13 +133,9 @@ module.exports = {
     { id: 'RD', text: 'Revert Declare', style: 'label-revert-declare' },
     { id: 'CG', text: 'Clearance of Goods', style: 'label-clearance-goods' },
     { id: 'LP', text: 'Loading Permission', style: 'label-loading-permission' },
-    { id: 'CI', text: 'Shipping Instruction', style: 'label-confirm-instruction' },
+    { id: 'SI', text: 'Shipping Instruction', style: 'label-shipping-instruction' },
     { id: 'CP', text: 'CDS Processing', style: 'label-cds-processing' },
     { id: 'BL', text: 'Bill Lading', style: 'label-bill-lading' }
   ],
-  LB_BATCH_STATE: [
-    { id: '0', text: 'Unused' },
-    { id: '1', text: 'Used' },
-    { id: '2', text: 'Cancel' }
-  ]
+  LB_BATCH_STATE: [{ id: '0', text: 'Unused' }, { id: '1', text: 'Used' }, { id: '2', text: 'Cancel' }]
 }
