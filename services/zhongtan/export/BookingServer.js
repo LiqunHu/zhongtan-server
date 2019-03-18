@@ -571,7 +571,7 @@ exports.submitloadingAct = async req => {
   }
 }
 
-exports.clearanceOfGoodsAct = async req => {
+exports.clearanceApprovalAct = async req => {
   let doc = common.docValidate(req)
   let user = req.user
 
@@ -583,10 +583,10 @@ exports.clearanceOfGoodsAct = async req => {
     }
   })
 
-  if (billlading.billlading_state != GLBConfig.BLSTATUS_REVERT_DECLARE) {
+  if (billlading.billlading_state != GLBConfig.BLSTATUS_FEEDBACK_DECLARE) {
     return common.error('billlading_01')
   } else {
-    billlading.billlading_state = GLBConfig.BLSTATUS_CLEARANCE_GOODS
+    billlading.billlading_state = GLBConfig.BLSTATUS_CLEARANCE_APPROVAL
     await billlading.save()
 
     return common.success()

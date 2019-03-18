@@ -658,7 +658,7 @@ exports.submitCustomsAct = async req => {
   }
 }
 
-exports.revertDeclareNumberAct = async req => {
+exports.feedbackDeclareNumberAct = async req => {
   let doc = common.docValidate(req)
 
   let billlading = await tb_billlading.findOne({
@@ -672,7 +672,7 @@ exports.revertDeclareNumberAct = async req => {
     return common.error('billlading_01')
   } else {
     billlading.billlading_declare_number = doc.billlading_declare_number
-    billlading.billlading_state = GLBConfig.BLSTATUS_REVERT_DECLARE
+    billlading.billlading_state = GLBConfig.BLSTATUS_FEEDBACK_DECLARE
     await billlading.save()
 
     return common.success()
@@ -690,7 +690,7 @@ exports.loadingPermissionAct = async req => {
     }
   })
 
-  if (billlading.billlading_state != GLBConfig.BLSTATUS_REVERT_DECLARE) {
+  if (billlading.billlading_state != GLBConfig.BLSTATUS_CLEARANCE_APPROVAL) {
     return common.error('billlading_01')
   } else {
     for (let f of doc.permission_files) {
