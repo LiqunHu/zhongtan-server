@@ -722,7 +722,7 @@ exports.sendCDSAct = async req => {
     }
   })
 
-  if (billlading.billlading_state != GLBConfig.BLSTATUS_CONFIRM_INSTRUCTUON) {
+  if (billlading.billlading_state != GLBConfig.BLSTATUS_SHIPPING_INSTRUCTION) {
     return common.error('billlading_01')
   } else {
     billlading.billlading_state = GLBConfig.BLSTATUS_CDS_PROCESSING
