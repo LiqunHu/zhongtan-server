@@ -640,7 +640,7 @@ exports.submitBillladingAct = async req => {
     }
   })
 
-  if (billlading.billlading_state != GLBConfig.BLSTATUS_FEEDBACK_BLDRAFT) {
+  if (billlading.billlading_state != GLBConfig.BLSTATUS_FEEDBACK_BLDRAFT && billlading.billlading_state != GLBConfig.BLSTATUS_REJECT_BILLLADING ) {
     return common.error('billlading_01')
   } else {
     for (let f of doc.bl_files) {
