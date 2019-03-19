@@ -119,6 +119,7 @@ module.exports = {
   BLSTATUS_LOADING_PERMISSION: 'LP',
   BLSTATUS_SHIPPING_INSTRUCTION: 'SI',
   BLSTATUS_CDS_PROCESSING: 'CP',
+  BLSTATUS_FEEDBACK_BLDRAFT: 'FBD',
   BLSTATUS_DECLARATION: 'DE',
   BLSTATUS_CONFIRM_INSTRUCTUON: 'CI',
   BLSTATUS_BILL_LADING: 'BL',
@@ -135,6 +136,7 @@ module.exports = {
     { id: 'LP', text: 'Loading Permission', style: 'label-loading-permission' },
     { id: 'SI', text: 'Shipping Instruction', style: 'label-shipping-instruction' },
     { id: 'CP', text: 'CDS Processing', style: 'label-cds-processing' },
+    { id: 'FBD', text: 'Feedback BL Draft', style: 'label-feedback-bl-draft' },
     { id: 'BL', text: 'Bill Lading', style: 'label-bill-lading' }
   ],
   LB_BATCH_STATE: [{ id: '0', text: 'Unused' }, { id: '1', text: 'Used' }, { id: '2', text: 'Cancel' }]

@@ -200,6 +200,8 @@ exports.searchAct = async req => {
         filetype = 'Loading Permisssion'
       } else if (f.api_name === 'BOOKING-SHIPPINGINSTRUCTION') {
         filetype = 'Shipping Instruction'
+      } else if (f.api_name === 'BOOKING-BL-DRAFT') {
+        filetype = 'Billlading Draft'
       }
 
       d.files.push({
@@ -732,7 +734,7 @@ exports.sendCDSAct = async req => {
   }
 }
 
-exports.sendBLAct = async req => {
+exports.feedbackBLDraftAct = async req => {
   let doc = common.docValidate(req)
   let user = req.user
 
@@ -748,14 +750,14 @@ exports.sendBLAct = async req => {
   } else {
     for (let f of doc.bl_files) {
       await tb_uploadfile.create({
-        api_name: 'BOOKING-BILLLADING',
+        api_name: 'BOOKING-BL-DRAFT',
         user_id: user.user_id,
         uploadfile_index1: billlading.billlading_id,
         uploadfile_name: f.name,
         uploadfile_url: f.url
       })
     }
-    billlading.billlading_state = GLBConfig.BLSTATUS_BILL_LADING
+    billlading.billlading_state = GLBConfig.BLSTATUS_FEEDBACK_BLDRAFT
     await billlading.save()
 
     return common.success()

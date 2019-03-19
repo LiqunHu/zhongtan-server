@@ -143,6 +143,8 @@ exports.searchAct = async req => {
         filetype = 'Loading Permisssion'
       } else if (f.api_name === 'BOOKING-SHIPPINGINSTRUCTION') {
         filetype = 'Shipping Instruction'
+      } else if (f.api_name === 'BOOKING-BL-DRAFT') {
+        filetype = 'Billlading Draft'
       }
 
       d.files.push({
