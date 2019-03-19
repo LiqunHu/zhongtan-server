@@ -120,9 +120,9 @@ module.exports = {
   BLSTATUS_SHIPPING_INSTRUCTION: 'SI',
   BLSTATUS_CDS_PROCESSING: 'CP',
   BLSTATUS_FEEDBACK_BLDRAFT: 'FBD',
-  BLSTATUS_DECLARATION: 'DE',
-  BLSTATUS_CONFIRM_INSTRUCTUON: 'CI',
-  BLSTATUS_BILL_LADING: 'BL',
+  BLSTATUS_SUBMIT_BILLLADING: 'SBL',
+  BLSTATUS_REJECT_BILLLADING: 'RBL',
+  BLSTATUS_APPROVE_BILLLADING: 'ABL',
   BLSTATUSINFO: [
     { id: 'PBK', text: 'Pre-Booking', style: 'label-default' },
     { id: 'BK', text: 'Booking', style: 'label-booking' },
@@ -137,7 +137,9 @@ module.exports = {
     { id: 'SI', text: 'Shipping Instruction', style: 'label-shipping-instruction' },
     { id: 'CP', text: 'CDS Processing', style: 'label-cds-processing' },
     { id: 'FBD', text: 'Feedback BL Draft', style: 'label-feedback-bl-draft' },
-    { id: 'BL', text: 'Bill Lading', style: 'label-bill-lading' }
+    { id: 'SBL', text: 'Submit Bill Of Lading', style: 'label-submit-billlading' },
+    { id: 'RBL', text: 'Reject Bill Of Lading', style: 'label-reject-billlading' },
+    { id: 'ABL', text: 'Approve Bill Of Lading', style: 'label-approve-billlading' }
   ],
   LB_BATCH_STATE: [{ id: '0', text: 'Unused' }, { id: '1', text: 'Used' }, { id: '2', text: 'Cancel' }]
 }
