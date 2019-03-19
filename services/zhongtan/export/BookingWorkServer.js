@@ -795,6 +795,26 @@ exports.rejectBillladingAct = async req => {
   }
 }
 
+exports.approveBillladingAct = async req => {
+  let doc = common.docValidate(req)
+
+  let billlading = await tb_billlading.findOne({
+    where: {
+      billlading_id: doc.billlading_id,
+      state: GLBConfig.ENABLE
+    }
+  })
+
+  if (billlading.billlading_state != GLBConfig.BLSTATUS_SUBMIT_BILLLADING) {
+    return common.error('billlading_01')
+  } else {
+    billlading.billlading_state = GLBConfig.BLSTATUS_APPROVE_BILLLADING
+    await billlading.save()
+
+    return common.success()
+  }
+}
+
 exports.uploadAct = async req => {
   let fileInfo = await common.fileSave(req, 'zhongtan')
   return common.success(fileInfo)

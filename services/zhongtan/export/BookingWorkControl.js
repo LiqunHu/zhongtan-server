@@ -37,8 +37,10 @@ module.exports = async (req, res) => {
       ret = await srv.sendCDSAct(req)
     } else if (method === 'feedbackBLDraft') {
       ret = await srv.feedbackBLDraftAct(req)
-    }  else if (method === 'rejectBilllading') {
+    } else if (method === 'rejectBilllading') {
       ret = await srv.rejectBillladingAct(req)
+    } else if (method === 'approveBilllading') {
+      ret = await srv.approveBillladingAct(req)
     } else if (method === 'upload') {
       ret = await srv.uploadAct(req)
     } else if (method === 'downloadBooking') {
