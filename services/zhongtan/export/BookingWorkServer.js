@@ -745,7 +745,7 @@ exports.feedbackBLDraftAct = async req => {
     }
   })
 
-  if (billlading.billlading_state != GLBConfig.BLSTATUS_CDS_PROCESSING) {
+  if (billlading.billlading_state != GLBConfig.BLSTATUS_CDS_PROCESSING && billlading.billlading_state != GLBConfig.BLSTATUS_FEEDBACK_BLDRAFT) {
     return common.error('billlading_01')
   } else {
     for (let f of doc.bl_files) {
@@ -754,11 +754,14 @@ exports.feedbackBLDraftAct = async req => {
         user_id: user.user_id,
         uploadfile_index1: billlading.billlading_id,
         uploadfile_name: f.name,
-        uploadfile_url: f.url
+        uploadfile_url: f.url,
+        uploadfile_remark: doc.uploadfile_remark
       })
     }
-    billlading.billlading_state = GLBConfig.BLSTATUS_FEEDBACK_BLDRAFT
-    await billlading.save()
+    if(billlading.billlading_state === GLBConfig.BLSTATUS_CDS_PROCESSING) {
+      billlading.billlading_state = GLBConfig.BLSTATUS_FEEDBACK_BLDRAFT
+      await billlading.save()
+    }
 
     return common.success()
   }

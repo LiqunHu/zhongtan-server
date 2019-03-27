@@ -609,7 +609,12 @@ exports.shippingInstructionAct = async req => {
     }
   })
 
-  if (billlading.billlading_state != GLBConfig.BLSTATUS_LOADING_PERMISSION) {
+  if (
+    billlading.billlading_state != GLBConfig.BLSTATUS_LOADING_PERMISSION &&
+    billlading.billlading_state != GLBConfig.BLSTATUS_SHIPPING_INSTRUCTION &&
+    billlading.billlading_state != GLBConfig.BLSTATUS_CDS_PROCESSING &&
+    billlading.billlading_state != GLBConfig.BLSTATUS_FEEDBACK_BLDRAFT
+  ) {
     return common.error('billlading_01')
   } else {
     for (let f of doc.instruction_files) {
@@ -618,43 +623,14 @@ exports.shippingInstructionAct = async req => {
         user_id: user.user_id,
         uploadfile_index1: billlading.billlading_id,
         uploadfile_name: f.name,
-        uploadfile_url: f.url
-      })
-    }
-    billlading.billlading_state = GLBConfig.BLSTATUS_SHIPPING_INSTRUCTION
-    await billlading.save()
-
-    return common.success()
-  }
-}
-
-exports.submitBillladingAct = async req => {
-  let doc = common.docValidate(req)
-  let user = req.user
-
-  let billlading = await tb_billlading.findOne({
-    where: {
-      billlading_id: doc.billlading_id,
-      billlading_customer_id: user.user_id,
-      state: GLBConfig.ENABLE
-    }
-  })
-
-  if (billlading.billlading_state != GLBConfig.BLSTATUS_FEEDBACK_BLDRAFT && billlading.billlading_state != GLBConfig.BLSTATUS_REJECT_BILLLADING ) {
-    return common.error('billlading_01')
-  } else {
-    for (let f of doc.bl_files) {
-      await tb_uploadfile.create({
-        api_name: 'BOOKING-BILLLADING',
-        user_id: user.user_id,
-        uploadfile_index1: billlading.billlading_id,
-        uploadfile_name: f.name,
         uploadfile_url: f.url,
-        uploadfile_remark: doc.uploadfile_remark
+        remark: doc.uploadfile_remark
       })
     }
-    billlading.billlading_state = GLBConfig.BLSTATUS_SUBMIT_BILLLADING
-    await billlading.save()
+    if (billlading.billlading_state === GLBConfig.BLSTATUS_LOADING_PERMISSION) {
+      billlading.billlading_state = GLBConfig.BLSTATUS_SHIPPING_INSTRUCTION
+      await billlading.save()
+    }
 
     return common.success()
   }
