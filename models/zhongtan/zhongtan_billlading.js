@@ -283,5 +283,29 @@ module.exports = db.defineModel('tbl_zhongtan_billlading', {
   billlading_feu_high_cube: {
     type: db.INTEGER,
     allowNull: true
+  },
+  billlading_invoice_freight: {
+    type: db.INTEGER,
+    allowNull: true
+  },
+  billlading_invoice_blanding: {
+    type: db.INTEGER,
+    allowNull: true
+  },
+  billlading_invoice_tasac: {
+    type: db.INTEGER,
+    allowNull: true
+  },
+  billlading_invoice_ammendment: {
+    type: db.INTEGER,
+    allowNull: true
+  },
+  billlading_invoice_isp: {
+    type: db.INTEGER,
+    allowNull: true
+  },
+  billlading_invoice_surchage: {
+    type: db.INTEGER,
+    allowNull: true
   }
 })

@@ -21,5 +21,10 @@ module.exports = db.defineModel('tbl_zhongtan_voyage', {
     // 开始日期
     type: db.DATEONLY,
     allowNull: false
+  },
+  voyage_atd_date: {
+    // 开始日期
+    type: db.DATEONLY,
+    allowNull: false
   }
 })

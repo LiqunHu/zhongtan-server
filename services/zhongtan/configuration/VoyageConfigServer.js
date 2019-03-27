@@ -63,7 +63,8 @@ exports.addAct = async req => {
     let voyage = await tb_voyage.create({
       vessel_id: doc.vessel_id,
       voyage_number: doc.voyage_number,
-      voyage_eta_date: doc.voyage_eta_date
+      voyage_eta_date: doc.voyage_eta_date,
+      voyage_atd_date: doc.voyage_atd_date
     })
 
     return common.success(voyage)
@@ -83,6 +84,7 @@ exports.modifyAct = async req => {
     voyage.vessel_id = doc.new.vessel_id
     voyage.voyage_number = doc.new.voyage_number
     voyage.voyage_eta_date = doc.new.voyage_eta_date
+    voyage.voyage_atd_date = doc.voyage_atd_date
 
     await voyage.save()
 

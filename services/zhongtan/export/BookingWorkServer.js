@@ -767,55 +767,8 @@ exports.feedbackBLDraftAct = async req => {
   }
 }
 
-exports.rejectBillladingAct = async req => {
-  let doc = common.docValidate(req)
-
-  let billlading = await tb_billlading.findOne({
-    where: {
-      billlading_id: doc.billlading_id,
-      state: GLBConfig.ENABLE
-    }
-  })
-
-  if (billlading.billlading_state != GLBConfig.BLSTATUS_SUBMIT_BILLLADING) {
-    return common.error('billlading_01')
-  } else {
-    let bl = await tb_uploadfile.findOne({
-      where: {
-        api_name: 'BOOKING-BILLLADING',
-        uploadfile_index1: billlading.billlading_id
-      },
-      order: [['created_at', 'DESC']]
-    })
-
-    bl.uploadfile_remark += '\n' + doc.reject_reason
-    await bl.save()
-
-    billlading.billlading_state = GLBConfig.BLSTATUS_REJECT_BILLLADING
-    await billlading.save()
-
-    return common.success()
-  }
-}
-
-exports.approveBillladingAct = async req => {
-  let doc = common.docValidate(req)
-
-  let billlading = await tb_billlading.findOne({
-    where: {
-      billlading_id: doc.billlading_id,
-      state: GLBConfig.ENABLE
-    }
-  })
-
-  if (billlading.billlading_state != GLBConfig.BLSTATUS_SUBMIT_BILLLADING) {
-    return common.error('billlading_01')
-  } else {
-    billlading.billlading_state = GLBConfig.BLSTATUS_APPROVE_BILLLADING
-    await billlading.save()
-
-    return common.success()
-  }
+exports.generateInvoiceAct = async req => {
+  logger.info(req)
 }
 
 exports.uploadAct = async req => {
