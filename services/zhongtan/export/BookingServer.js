@@ -165,6 +165,13 @@ exports.searchAct = async req => {
     d.fees.billlading_feu_high_cube = common.money2Str(d.billlading_feu_high_cube)
     d.fees.sum_fee = common.money2Str(d.billlading_teu_standard + d.billlading_feu_standard + d.billlading_feu_high_cube)
 
+    d.billlading_invoice_freight = common.money2Str(d.billlading_invoice_freight)
+    d.billlading_invoice_blanding = common.money2Str(d.billlading_invoice_blanding)
+    d.billlading_invoice_tasac = common.money2Str(d.billlading_invoice_tasac)
+    d.billlading_invoice_ammendment = common.money2Str(d.billlading_invoice_ammendment)
+    d.billlading_invoice_isp = common.money2Str(d.billlading_invoice_isp)
+    d.billlading_invoice_surchage = common.money2Str(d.billlading_invoice_surchage)
+
     returnData.rows.push(d)
   }
 
