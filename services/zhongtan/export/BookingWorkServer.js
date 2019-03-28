@@ -202,6 +202,8 @@ exports.searchAct = async req => {
         filetype = 'Shipping Instruction'
       } else if (f.api_name === 'BOOKING-BL-DRAFT') {
         filetype = 'Billlading Draft'
+      } else if (f.api_name === 'BOOKING-INVOICE') {
+        filetype = 'Invoice'
       }
 
       d.files.push({
@@ -758,7 +760,7 @@ exports.feedbackBLDraftAct = async req => {
         uploadfile_remark: doc.uploadfile_remark
       })
     }
-    if(billlading.billlading_state === GLBConfig.BLSTATUS_CDS_PROCESSING) {
+    if (billlading.billlading_state === GLBConfig.BLSTATUS_CDS_PROCESSING) {
       billlading.billlading_state = GLBConfig.BLSTATUS_FEEDBACK_BLDRAFT
       await billlading.save()
     }
@@ -768,7 +770,95 @@ exports.feedbackBLDraftAct = async req => {
 }
 
 exports.generateInvoiceAct = async req => {
-  logger.info(req)
+  let doc = common.docValidate(req)
+  let user = req.user
+
+  let billlading = await tb_billlading.findOne({
+    where: {
+      billlading_id: doc.billlading_id,
+      state: GLBConfig.ENABLE
+    }
+  })
+
+  if (billlading.billlading_state != GLBConfig.BLSTATUS_FEEDBACK_BLDRAFT) {
+    return common.error('billlading_01')
+  } else {
+    billlading.billlading_invoice_freight = common.str2Money(doc.billlading_invoice_freight)
+    billlading.billlading_invoice_blanding = common.str2Money(doc.billlading_invoice_blanding)
+    billlading.billlading_invoice_tasac = common.str2Money(doc.billlading_invoice_tasac)
+    billlading.billlading_invoice_ammendment = common.str2Money(doc.billlading_invoice_ammendment)
+    billlading.billlading_invoice_isp = common.str2Money(doc.billlading_invoice_isp)
+    billlading.billlading_invoice_surchage = common.str2Money(doc.billlading_invoice_surchage)
+    billlading.billlading_state = GLBConfig.BLSTATUS_PENDING_SETTLEMENT
+    await billlading.save()
+
+    let renderData = JSON.parse(JSON.stringify(billlading))
+
+    let vessel = await tb_vessel.findOne({
+      where: {
+        vessel_id: billlading.billlading_vessel_id
+      }
+    })
+
+    let voyage = await tb_voyage.findOne({
+      where: {
+        vessel_id: billlading.billlading_voyage_id
+      }
+    })
+
+    renderData.invoice_no_head = `CTS/A/${voyage.voyage_number}/`
+    renderData.billlading_no_last = billlading.billlading_no.substr(-4)
+    renderData.invoice_date = moment().format('YYYY/MM/DD')
+    renderData.vessel_operator = vessel.vessel_operator
+    renderData.vessel_name = `${vessel.vessel_operator} ${vessel.vessel_name}`
+    renderData.voyage_number = voyage.voyage_number
+    renderData.voyage_atd_date = voyage.voyage_atd_date
+
+    let goods = await tb_billlading_goods.findAll({
+      where: {
+        billlading_id: billlading.billlading_id
+      }
+    })
+    renderData.goods = []
+    for (let g of goods) {
+      renderData.goods.push({
+        container_info: `${g.billlading_goods_container_number}X${g.billlading_goods_container_size} ${g.billlading_goods_container_type}`
+      })
+    }
+
+    for (let i = 0; i < 5 - goods.length; i++) {
+      renderData.goods.push({
+        container_info: ''
+      })
+    }
+
+    renderData.invoice_freight = common.money2Str(billlading.billlading_invoice_freight)
+    renderData.invoice_blanding = common.money2Str(billlading.billlading_invoice_blanding)
+    renderData.invoice_tasac = common.money2Str(billlading.billlading_invoice_tasac)
+    renderData.invoice_ammendment = common.money2Str(billlading.billlading_invoice_ammendment)
+    renderData.invoice_isp = common.money2Str(billlading.billlading_invoice_isp)
+    renderData.invoice_surchage = common.money2Str(billlading.billlading_invoice_surchage)
+    renderData.sum_fee = common.money2Str(
+      billlading.billlading_invoice_freight +
+        billlading.billlading_invoice_blanding +
+        billlading.billlading_invoice_tasac +
+        billlading.billlading_invoice_ammendment +
+        billlading.billlading_invoice_isp +
+        billlading.billlading_invoice_surchage
+    )
+
+    let fileInfo = await common.ejs2xlsx('INVOICETemplate.xlsx', renderData, 'zhongtan')
+
+    await tb_uploadfile.create({
+      api_name: 'BOOKING-INVOICE',
+      user_id: user.user_id,
+      uploadfile_index1: billlading.billlading_id,
+      uploadfile_name: fileInfo.name,
+      uploadfile_url: fileInfo.url
+    })
+
+    return common.success()
+  }
 }
 
 exports.uploadAct = async req => {
