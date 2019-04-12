@@ -307,5 +307,10 @@ module.exports = db.defineModel('tbl_zhongtan_billlading', {
   billlading_invoice_surchage: {
     type: db.INTEGER,
     allowNull: true
+  },
+  billlading_invoice_time: {
+    // 结算日期
+    type: db.DATEONLY,
+    allowNull: true
   }
 })

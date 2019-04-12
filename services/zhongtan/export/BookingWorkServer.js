@@ -98,9 +98,9 @@ exports.searchAct = async req => {
     replacements.push(doc.billlading_state)
   }
 
-  if (doc.shipper) {
+  if (doc.customer) {
     queryStr += ' and billlading_customer_id = ?'
-    replacements.push(doc.shipper)
+    replacements.push(doc.customer)
   }
 
   if (doc.vessel) {
