@@ -217,13 +217,26 @@ exports.searchAct = async req => {
     }
 
     d.fees = {}
-    d.fees.billlading_teu_standard = common.money2Str(d.billlading_teu_standard)
-    d.fees.billlading_feu_standard = common.money2Str(d.billlading_feu_standard)
-    d.fees.billlading_feu_high_cube = common.money2Str(d.billlading_feu_high_cube)
-    d.billlading_teu_standard_f = common.money2Str(d.billlading_teu_standard)
-    d.billlading_feu_standard_f = common.money2Str(d.billlading_feu_standard)
-    d.billlading_feu_high_cube_f = common.money2Str(d.billlading_feu_high_cube)
-    d.fees.sum_fee = common.money2Str(d.billlading_teu_standard + d.billlading_feu_standard + d.billlading_feu_high_cube)
+    d.fees.billlading_invoice_freight = common.money2Str(d.billlading_invoice_freight)
+    d.fees.billlading_invoice_blanding = common.money2Str(d.billlading_invoice_blanding)
+    d.fees.billlading_invoice_tasac = common.money2Str(d.billlading_invoice_tasac)
+    d.fees.billlading_invoice_ammendment = common.money2Str(d.billlading_invoice_ammendment)
+    d.fees.billlading_invoice_isp = common.money2Str(d.billlading_invoice_isp)
+    d.fees.billlading_invoice_surchage = common.money2Str(d.billlading_invoice_surchage)
+    d.fees.sum_fee = common.money2Str(
+      d.billlading_invoice_freight +
+        d.billlading_invoice_blanding +
+        d.billlading_invoice_tasac +
+        d.billlading_invoice_ammendment +
+        d.billlading_invoice_isp +
+        d.billlading_invoice_surchage
+    )
+    d.billlading_invoice_freight_f = common.money2Str(d.billlading_invoice_freight)
+    d.billlading_invoice_blanding_f = common.money2Str(d.billlading_invoice_blanding)
+    d.billlading_invoice_tasac_f = common.money2Str(d.billlading_invoice_tasac)
+    d.billlading_invoice_ammendment_f = common.money2Str(d.billlading_invoice_ammendment)
+    d.billlading_invoice_isp_f = common.money2Str(d.billlading_invoice_isp)
+    d.billlading_invoice_surchage_f = common.money2Str(d.billlading_invoice_surchage)
 
     d.billlading_invoice_freight = common.money2Str(d.billlading_invoice_freight)
     d.billlading_invoice_blanding = common.money2Str(d.billlading_invoice_blanding)
@@ -231,7 +244,7 @@ exports.searchAct = async req => {
     d.billlading_invoice_ammendment = common.money2Str(d.billlading_invoice_ammendment)
     d.billlading_invoice_isp = common.money2Str(d.billlading_invoice_isp)
     d.billlading_invoice_surchage = common.money2Str(d.billlading_invoice_surchage)
-    
+
     returnData.rows.push(d)
   }
 
@@ -280,9 +293,12 @@ exports.modifyAct = async req => {
 
     if (user.user_service_name === 'ALL') {
       modibilllading.billlading_state = doc.new.billlading_state
-      modibilllading.billlading_teu_standard = common.str2Money(doc.new.billlading_teu_standard_f)
-      modibilllading.billlading_feu_standard = common.str2Money(doc.new.billlading_feu_standard_f)
-      modibilllading.billlading_feu_high_cube = common.str2Money(doc.new.billlading_feu_high_cube_f)
+      modibilllading.billlading_invoice_freight = common.str2Money(doc.new.billlading_invoice_freight_f)
+      modibilllading.billlading_invoice_blanding = common.str2Money(doc.new.billlading_invoice_blanding_f)
+      modibilllading.billlading_invoice_tasac = common.str2Money(doc.new.billlading_invoice_tasac_f)
+      modibilllading.billlading_invoice_ammendment = common.str2Money(doc.new.billlading_invoice_ammendment_f)
+      modibilllading.billlading_invoice_isp = common.str2Money(doc.new.billlading_invoice_isp_f)
+      modibilllading.billlading_invoice_surchage = common.str2Money(doc.new.billlading_invoice_surchage_f)
     }
 
     await modibilllading.save()
@@ -531,9 +547,12 @@ exports.confirmBookingAct = async req => {
     billlading.billlading_vessel_id = doc.billlading_vessel_id
     billlading.billlading_voyage_id = doc.billlading_voyage_id
     billlading.billlading_cso = doc.billlading_cso
-    billlading.billlading_teu_standard = common.str2Money(doc.billlading_teu_standard)
-    billlading.billlading_feu_standard = common.str2Money(doc.billlading_feu_standard)
-    billlading.billlading_feu_high_cube = common.str2Money(doc.billlading_feu_high_cube)
+    billlading.billlading_invoice_freight = common.str2Money(doc.billlading_invoice_freight)
+    billlading.billlading_invoice_blanding = common.str2Money(doc.billlading_invoice_blanding)
+    billlading.billlading_invoice_tasac = common.str2Money(doc.billlading_invoice_tasac)
+    billlading.billlading_invoice_ammendment = common.str2Money(doc.billlading_invoice_ammendment)
+    billlading.billlading_invoice_isp = common.str2Money(doc.billlading_invoice_isp)
+    billlading.billlading_invoice_surchage = common.str2Money(doc.billlading_invoice_surchage)
     billlading.billlading_state = GLBConfig.BLSTATUS_BOOKING
 
     await billlading.save()
