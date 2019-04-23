@@ -192,6 +192,10 @@ exports.bookingAct = async req => {
   let doc = common.docValidate(req)
   let user = req.user
 
+  if (user.user_type != GLBConfig.TYPE_CUSTOMER) {
+    return common.error('booking_01')
+  }
+
   let vessel = await tb_vessel.findOne({
     where: {
       vessel_id: doc.billlading_vessel_id
