@@ -680,7 +680,7 @@ exports.downloadBookingAct = async (req, res) => {
 
   let voyage = await tb_voyage.findOne({
     where: {
-      vessel_id: bl.billlading_voyage_id
+      voyage_id: bl.billlading_voyage_id
     }
   })
 
@@ -691,11 +691,8 @@ exports.downloadBookingAct = async (req, res) => {
   } else {
     docData.stuffing_date = ''
   }
-  if (bl.billlading_pay_date) {
-    docData.pay_date = moment(bl.billlading_pay_date).format('DD-MMM-YYYY')
-  } else {
-    docData.pay_date = ''
-  }
+
+  docData.pay_date = bl.billlading_pay_date || ''
 
   docData.vessel_name = vessel.vessel_name
   docData.voyage_number = voyage.voyage_number
