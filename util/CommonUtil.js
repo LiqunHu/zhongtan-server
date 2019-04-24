@@ -3,11 +3,13 @@ const uuid = require('uuid')
 const path = require('path')
 const fs = require('fs')
 const Joi = require('joi')
+const ejs = require('ejs')
 const fileUtil = require('server-utils').fileUtil
 const moment = require('moment')
 const ejsExcel = require('ejsexcel')
 const JSZip = require('jszip')
 const Docxtemplater = require('docxtemplater')
+const puppeteer = require('puppeteer')
 
 const config = require('../app/config')
 const Error = require('./Error')
@@ -185,6 +187,25 @@ function money2Str(money) {
   return (money / 100).toFixed(2)
 }
 
+async function ejs2Pdf(templateFile, renderData, bucket) {
+  let data = JSON.parse(JSON.stringify(renderData))
+  if (!data) {
+    data = {}
+  }
+
+  data.basedir = path.join(__dirname, '../printTemplate')
+  let ejsFile = fs.readFileSync(path.join(__dirname, '../printTemplate/' + templateFile), 'utf8')
+  let html = ejs.render(ejsFile, { ejsData: data })
+  const browser = await puppeteer.launch()
+  const page = await browser.newPage()
+  await page.setContent(html)
+  let filePath = path.join(process.cwd(), config.fileSys.filesDir, uuid.v4().replace(/-/g, '') + '.pdf')
+  await page.pdf({ path: filePath, format: 'A4' })
+  await browser.close()
+  let fileInfo = await fileUtil.fileSaveMongoByLocalPath(filePath, bucket, config.fileSys.bucket[bucket].baseUrl)
+  return fileInfo
+}
+
 const ejs2xlsx = async (templateFile, renderData, bucket) => {
   let templateBuf = fs.readFileSync(path.join(process.cwd(), './excelTemplate/', templateFile))
   let exlBuf = await ejsExcel.renderExcel(templateBuf, renderData)
@@ -231,6 +252,7 @@ module.exports = {
   fileSave: fileSave,
   str2Money: str2Money,
   money2Str: money2Str,
+  ejs2Pdf: ejs2Pdf,
   ejs2xlsx: ejs2xlsx,
   ejs2Word: ejs2Word,
   getContainerISO: getContainerISO

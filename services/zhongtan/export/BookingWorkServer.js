@@ -828,7 +828,7 @@ exports.generateInvoiceAct = async req => {
 
     let voyage = await tb_voyage.findOne({
       where: {
-        vessel_id: billlading.billlading_voyage_id
+        voyage_id: billlading.billlading_voyage_id
       }
     })
 
@@ -873,7 +873,8 @@ exports.generateInvoiceAct = async req => {
         billlading.billlading_invoice_surchage
     )
 
-    let fileInfo = await common.ejs2xlsx('INVOICETemplate.xlsx', renderData, 'zhongtan')
+    // let fileInfo = await common.ejs2xlsx('INVOICETemplate.xlsx', renderData, 'zhongtan')
+    let fileInfo = await common.ejs2Pdf('invoice.ejs', renderData, 'zhongtan')
 
     await tb_uploadfile.create({
       api_name: 'BOOKING-INVOICE',

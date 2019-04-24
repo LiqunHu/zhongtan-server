@@ -54,7 +54,8 @@
     "markdown-it-sub": "^1.0.0",
     "markdown-it-sup": "^1.0.0",
     "markdown-it-task-lists": "^2.1.1",
-    "markdown-it-toc": "^1.1.0"
+    "markdown-it-toc": "^1.1.0",
+    "puppeteer": "1.14.0"
   },
   "devDependencies": {
     "rimraf": "^2.6.2",
