@@ -230,6 +230,7 @@ exports.bookingAct = async req => {
     billlading_stuffing_place: doc.billlading_stuffing_place,
     billlading_stuffing_date: doc.billlading_stuffing_date || null,
     billlading_stuffing_requirement: doc.billlading_stuffing_requirement,
+    billlading_forwarder_name: doc.billlading_forwarder_name,
     billlading_pay_date: doc.billlading_pay_date || null,
     billlading_freight_currency: doc.billlading_freight_currency
   })
@@ -294,6 +295,7 @@ exports.modifyAct = async req => {
     modibilllading.billlading_stuffing_date = doc.new.billlading_stuffing_date || null
     modibilllading.billlading_stuffing_requirement = doc.new.billlading_stuffing_requirement
     modibilllading.billlading_pay_date = doc.new.billlading_pay_date || null
+    modibilllading.billlading_forwarder_name = doc.new.billlading_forwarder_name
     modibilllading.billlading_freight_currency = doc.new.billlading_freight_currency
 
     await modibilllading.save()

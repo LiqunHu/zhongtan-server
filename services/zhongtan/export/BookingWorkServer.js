@@ -289,6 +289,7 @@ exports.modifyAct = async req => {
     modibilllading.billlading_stuffing_date = doc.new.billlading_stuffing_date || null
     modibilllading.billlading_stuffing_requirement = doc.new.billlading_stuffing_requirement
     modibilllading.billlading_pay_date = doc.new.billlading_pay_date || null
+    modibilllading.billlading_forwarder_name = doc.new.billlading_forwarder_name
     modibilllading.billlading_freight_currency = doc.new.billlading_freight_currency
 
     if (user.user_service_name === 'ALL') {
@@ -620,7 +621,7 @@ exports.confirmPickUpAct = async req => {
 
     let text = `
     TO ${manager.container_manager_name}:<br/>
-    Please Release ${containers} empty containers in a good condition to ${shipper.user_name}<br/>
+    Please Release ${containers} empty containers in a good condition to ${shipper.billlading_forwarder_name}<br/>
     Place of stuffing at ${billlading.billlading_stuffing_place}<br/>
     Let us know container number released for our record.<br/>
     S/O: ${billlading.billlading_no} ${containers}<br/>
