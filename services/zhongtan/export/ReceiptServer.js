@@ -51,6 +51,11 @@ exports.searchAct = async req => {
                     and (billlading_state = 'PS' OR billlading_state = 'IV')`
   let replacements = []
 
+  if (doc.billlading_state) {
+    queryStr += ' and billlading_state = ?'
+    replacements.push(doc.billlading_state)
+  }
+  
   if (doc.customer) {
     queryStr += ' and billlading_customer_id = ?'
     replacements.push(doc.customer)
