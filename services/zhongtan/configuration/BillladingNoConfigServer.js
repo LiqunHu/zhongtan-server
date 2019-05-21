@@ -1,3 +1,4 @@
+const _ = require('lodash')
 const common = require('../../../util/CommonUtil')
 const GLBConfig = require('../../../util/GLBConfig')
 const logger = require('../../../app/logger').createLogger(__filename)
@@ -9,7 +10,7 @@ const tb_billladingno_pool = model.zhongtan_billladingno_pool
 
 exports.initAct = async () => {
   let returnData = {
-    VesselServiceINFO: GLBConfig.VesselServiceINFO,
+    VesselServiceINFO: _.drop(GLBConfig.VesselServiceINFO),
     STATUSINFO: GLBConfig.STATUSINFO
   }
   return common.success(returnData)
@@ -19,7 +20,7 @@ exports.searchAct = async req => {
   let doc = common.docValidate(req)
   let returnData = {}
 
-  let queryStr = `select * from tbl_zhongtan_billladingno_batch where '1' = '1'`
+  let queryStr = `select * from tbl_zhongtan_billladingno_batch where '1' = '1' and state = '1'`
   let replacements = []
 
   if (doc.search_text) {

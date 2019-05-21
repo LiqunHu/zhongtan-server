@@ -1,3 +1,4 @@
+const _ = require('lodash')
 const common = require('../../../util/CommonUtil')
 const GLBConfig = require('../../../util/GLBConfig')
 const logger = require('../../../app/logger').createLogger(__filename)
@@ -8,7 +9,7 @@ const tb_vessel = model.zhongtan_vessel
 
 exports.initAct = async () => {
   let returnData = {
-    VesselServiceINFO: GLBConfig.VesselServiceINFO
+    VesselServiceINFO: _.drop(GLBConfig.VesselServiceINFO)
   }
   return common.success(returnData)
 }

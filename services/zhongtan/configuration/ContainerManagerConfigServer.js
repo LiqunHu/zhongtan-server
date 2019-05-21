@@ -68,7 +68,7 @@ exports.deleteAct = async req => {
 
   let container_manager = await tb_container_manager.findOne({
     where: {
-      container_manager_id: doc.old.container_manager_id,
+      container_manager_id: doc.container_manager_id,
       state: GLBConfig.ENABLE
     }
   })
