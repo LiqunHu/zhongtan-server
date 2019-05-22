@@ -23,8 +23,8 @@ module.exports = async (req, res) => {
       ret = await srv.pickUpEmptyAct(req)
     } else if (method === 'submitloading') {
       ret = await srv.submitloadingAct(req)
-    } else if (method === 'clearanceApproval') {
-      ret = await srv.clearanceApprovalAct(req)
+    } else if (method === 'declearanceApproval') {
+      ret = await srv.declearanceApprovalAct(req)
     } else if (method === 'shippingInstruction') {
       ret = await srv.shippingInstructionAct(req)
     } else if (method === 'upload') {
