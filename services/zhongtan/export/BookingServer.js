@@ -600,7 +600,7 @@ exports.submitloadingAct = async req => {
   }
 }
 
-exports.declearanceApprovalAct = async req => {
+exports.declaranceApprovalAct = async req => {
   let doc = common.docValidate(req)
   let user = req.user
 
