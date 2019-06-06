@@ -177,6 +177,11 @@ const fileSave = async (req, bucket) => {
     }
   }
 }
+const fileSaveTemp = async (req) => {
+  let tempDir = path.join(process.cwd(), config.fileSys.filesDir)
+  let fileInfo = await fileUtil.fileSaveLocal(req, tempDir, config.fileSys.tempUrl)
+  return fileInfo
+}
 
 function str2Money(str) {
   let money = parseFloat(str)
@@ -238,6 +243,10 @@ const getContainerISO = (cType, cSize) => {
   }
 }
 
+const df = strInput => {
+  return strInput ? strInput._text : ''
+}
+
 module.exports = {
   docValidate: docValidate,
   reqTrans: reqTrans,
@@ -250,10 +259,12 @@ module.exports = {
   getApiName: getApiName,
   generateNonceString: generateNonceString,
   fileSave: fileSave,
+  fileSaveTemp: fileSaveTemp,
   str2Money: str2Money,
   money2Str: money2Str,
   ejs2Pdf: ejs2Pdf,
   ejs2xlsx: ejs2xlsx,
   ejs2Word: ejs2Word,
-  getContainerISO: getContainerISO
+  getContainerISO: getContainerISO,
+  df: df
 }

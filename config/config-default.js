@@ -106,6 +106,7 @@ const config = {
   fileSys: {
     type: 'mongo' /* 可选 local qiniu mongo*/,
     filesDir: '../public/temp/' /* 本地目录对于非本地存储是临时文件目录 */,
+    tempUrl: '/temp/',
     bucket: {
       zhongtan: {
         baseUrl: '/filesys/zhongtan/'
