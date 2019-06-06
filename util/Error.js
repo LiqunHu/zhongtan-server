@@ -47,5 +47,6 @@ module.exports = {
   booking_02: 'Only Employee',
   blconfig_01: 'This Range been used',
   blconfig_02: 'Batch do not exist',
-  import_01: 'Has been loaded'
+  import_01: 'Has been loaded',
+  import_02: 'voyage is missing'
 }

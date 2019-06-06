@@ -1,4 +1,5 @@
 const _ = require('lodash')
+const moment = require('moment')
 const fs = require('fs')
 const convert = require('xml-js')
 const logger = require('../../../app/logger').createLogger(__filename)
@@ -20,8 +21,52 @@ exports.initAct = async () => {
 
 exports.searchAct = async req => {
   let doc = common.docValidate(req)
+  let returnData = {}
   logger.info(doc)
-  return common.success()
+
+  if (!doc.voyage) {
+    return common.error('import_02')
+  }
+
+  let queryStr = `select * from tbl_zhongtan_import_billlading 
+                    where state = '1'
+                    and import_billlading_voyage = ?`
+  let replacements = [doc.voyage]
+
+  if (doc.start_date) {
+    queryStr += ' and created_at >= ? and created_at <= ?'
+    replacements.push(doc.start_date)
+    replacements.push(
+      moment(doc.end_date, 'YYYY-MM-DD')
+        .add(1, 'days')
+        .format('YYYY-MM-DD')
+    )
+  }
+
+  queryStr += ' order by created_at desc'
+
+  let result = await model.queryWithCount(doc, queryStr, replacements)
+
+  returnData.total = result.count
+  returnData.rows = []
+
+  for (let bl of result.data) {
+    let d = JSON.parse(JSON.stringify(bl))
+
+    returnData.rows.push(d)
+  }
+
+  return common.success(returnData)
+}
+
+const formatInfo = (info, key) => {
+  let outary = []
+  if (_.isArray(info)) {
+    for (let i of info) outary.push(common.df(i[key]))
+  } else {
+    outary.push(common.df(info[key]))
+  }
+  return outary.join('<br/>')
 }
 
 exports.uploadImportAct = async req => {
@@ -51,11 +96,11 @@ exports.uploadImportAct = async req => {
 
     for (let a of xmldata.DATA_DS.G_DATA) {
       let blarray = []
-      if(_.isArray(a.G_DATAA.G_BL_NUMBER)) {
+      if (_.isArray(a.G_DATAA.G_BL_NUMBER)) {
         blarray = a.G_DATAA.G_BL_NUMBER
       } else {
         blarray.push(a.G_DATAA.G_BL_NUMBER)
-      } 
+      }
 
       for (let gbl of blarray) {
         let bl = await tb_billlading.create({
@@ -72,9 +117,9 @@ exports.uploadImportAct = async req => {
           import_billlading_no: gbl.BLNUMBER._text,
           import_billlading_cso_no: common.df(gbl.CSO_NO),
           import_billlading_cso_no1: common.df(gbl.CSO_NO1),
-          import_billlading_shipper: common.df(gbl.G_DETAILS.SHIPPER),
-          import_billlading_consignee: common.df(gbl.G_DETAILS.CONSIGNEE),
-          import_billlading_notify_party: common.df(gbl.G_DETAILS.NOTIFY_PARTY),
+          import_billlading_shipper: formatInfo(gbl.G_DETAILS.G_SHIPPER, 'SHIPPER'),
+          import_billlading_consignee: formatInfo(gbl.G_DETAILS.G_CONSIGNEE, 'CONSIGNEE'),
+          import_billlading_notify_party: formatInfo(gbl.G_DETAILS.G_NOTIFY_PARTY, 'NOTIFY_PARTY'),
           import_billlading_also_notify_party: common.df(gbl.G_DETAILS.ALSO_NOTIFY_PARTY),
           import_billlading_ocean_freight_rate: common.df(gbl.G_DETAILS.G_DATAC.V_RATE),
           import_billlading_ocean_freight_pc: common.df(gbl.G_DETAILS.G_DATAC.V_PC_INDICATOR),
