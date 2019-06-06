@@ -52,6 +52,49 @@ exports.searchAct = async req => {
 
   for (let bl of result.data) {
     let d = JSON.parse(JSON.stringify(bl))
+    let goods = await tb_billlading_goods.findAll({
+      where: {
+        import_billlading_id: d.import_billlading_id
+      }
+    })
+    if (goods) {
+      d.goods = JSON.parse(JSON.stringify(goods))
+    } else {
+      d.goods = []
+    }
+
+    let charges = await tb_billlading_charges.findAll({
+      where: {
+        import_billlading_id: d.import_billlading_id
+      }
+    })
+    if (charges) {
+      d.charges = JSON.parse(JSON.stringify(charges))
+    } else {
+      d.charges = []
+    }
+
+    let sumcharges = await tb_billlading_sumcharges.findAll({
+      where: {
+        import_billlading_id: d.import_billlading_id
+      }
+    })
+    if (sumcharges) {
+      d.sumcharges = JSON.parse(JSON.stringify(sumcharges))
+    } else {
+      d.sumcharges = []
+    }
+
+    let container = await tb_billlading_container.findAll({
+      where: {
+        import_billlading_id: d.import_billlading_id
+      }
+    })
+    if (container) {
+      d.container = JSON.parse(JSON.stringify(container))
+    } else {
+      d.container = []
+    }
 
     returnData.rows.push(d)
   }
@@ -144,7 +187,8 @@ exports.uploadImportAct = async req => {
               import_billlading_goods_gross_weight_kg: common.df(g.V_DBLMGROSSWT),
               import_billlading_goods_gross_weight_lb: common.df(g.V_DBLBGROSSWT),
               import_billlading_goods_volume_cbm: common.df(g.V_DBLMVOLUME),
-              import_billlading_goods_volume_cft: common.df(g.V_DBLBVOLUME)
+              import_billlading_goods_volume_cft: common.df(g.V_DBLBVOLUME),
+              import_billlading_goods_marks_num: common.df(g.MARKS_NUM)
             })
           }
         } else {
@@ -156,7 +200,8 @@ exports.uploadImportAct = async req => {
             import_billlading_goods_gross_weight_kg: common.df(gbl.G_DETAILS.G_DATAB.V_DBLMGROSSWT),
             import_billlading_goods_gross_weight_lb: common.df(gbl.G_DETAILS.G_DATAB.V_DBLBGROSSWT),
             import_billlading_goods_volume_cbm: common.df(gbl.G_DETAILS.G_DATAB.V_DBLMVOLUME),
-            import_billlading_goods_volume_cft: common.df(gbl.G_DETAILS.G_DATAB.V_DBLBVOLUME)
+            import_billlading_goods_volume_cft: common.df(gbl.G_DETAILS.G_DATAB.V_DBLBVOLUME),
+            import_billlading_goods_marks_num: common.df(gbl.G_DETAILS.G_DATAB.MARKS_NUM)
           })
         }
 
