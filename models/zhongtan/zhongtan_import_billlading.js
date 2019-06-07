@@ -168,5 +168,10 @@ module.exports = db.defineModel('tbl_zhongtan_import_billlading', {
     type: db.STRING(20),
     defaultValue: '',
     allowNull: false
+  },
+  import_billlading_remark: {
+    type: db.STRING(500),
+    defaultValue: '',
+    allowNull: false
   }
 })

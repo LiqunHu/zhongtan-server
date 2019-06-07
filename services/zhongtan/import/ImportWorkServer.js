@@ -174,7 +174,8 @@ exports.uploadImportAct = async req => {
           import_billlading_total_gross_weight_kg: common.df(gbl.G_DETAILS.G_DATAF.V_TXTMGROSSWT),
           import_billlading_total_gross_weight_lb: common.df(gbl.G_DETAILS.G_DATAF.V_TXTBGROSSWT),
           import_billlading_total_volume_cbm: common.df(gbl.G_DETAILS.G_DATAF.V_TXTMVOLUME),
-          import_billlading_total_volume_cft: common.df(gbl.G_DETAILS.G_DATAF.V_TXTBVOLUME)
+          import_billlading_total_volume_cft: common.df(gbl.G_DETAILS.G_DATAF.V_TXTBVOLUME),
+          import_billlading_remark: formatInfo(gbl.G_DETAILS.G_DATAH, 'BL_REMARKS')
         })
 
         if (_.isArray(gbl.G_DETAILS.G_DATAB)) {
