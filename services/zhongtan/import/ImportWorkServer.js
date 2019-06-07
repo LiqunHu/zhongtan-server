@@ -24,14 +24,24 @@ exports.searchAct = async req => {
   let returnData = {}
   logger.info(doc)
 
-  if (!doc.voyage) {
-    return common.error('import_02')
+  let queryStr = `select * from tbl_zhongtan_import_billlading 
+                    where state = '1'`
+  let replacements = []
+
+  if(doc.vessel) {
+    queryStr += ' and import_billlading_vessel_code = ?'
+    replacements.push(doc.vessel)
   }
 
-  let queryStr = `select * from tbl_zhongtan_import_billlading 
-                    where state = '1'
-                    and import_billlading_voyage = ?`
-  let replacements = [doc.voyage]
+  if(doc.voyage) {
+    queryStr += ' and import_billlading_voyage = ?'
+    replacements.push(doc.voyage)
+  }
+
+  if(doc.bl) {
+    queryStr += ' and import_billlading_no = ?'
+    replacements.push(doc.bl)
+  }
 
   if (doc.start_date) {
     queryStr += ' and created_at >= ? and created_at <= ?'
