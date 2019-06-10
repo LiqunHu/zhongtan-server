@@ -2,10 +2,12 @@ const _ = require('lodash')
 const moment = require('moment')
 const fs = require('fs')
 const convert = require('xml-js')
+const GLBConfig = require('../../../util/GLBConfig')
 const logger = require('../../../app/logger').createLogger(__filename)
 const common = require('../../../util/CommonUtil')
 const model = require('../../../app/model')
 
+const tb_user = model.common_user
 const tb_ship = model.zhongtan_import_ship
 const tb_billlading = model.zhongtan_import_billlading
 const tb_billlading_goods = model.zhongtan_import_billlading_goods
@@ -28,19 +30,24 @@ exports.searchAct = async req => {
                     where state = '1'`
   let replacements = []
 
-  if(doc.vessel) {
+  if (doc.vessel) {
     queryStr += ' and import_billlading_vessel_code = ?'
     replacements.push(doc.vessel)
   }
 
-  if(doc.voyage) {
+  if (doc.voyage) {
     queryStr += ' and import_billlading_voyage = ?'
     replacements.push(doc.voyage)
   }
 
-  if(doc.bl) {
+  if (doc.bl) {
     queryStr += ' and import_billlading_no = ?'
     replacements.push(doc.bl)
+  }
+
+  if (doc.customer) {
+    queryStr += ' and import_billlading_customer_id = ?'
+    replacements.push(doc.customer)
   }
 
   if (doc.start_date) {
@@ -62,6 +69,24 @@ exports.searchAct = async req => {
 
   for (let bl of result.data) {
     let d = JSON.parse(JSON.stringify(bl))
+
+    if (d.import_billlading_customer_id) {
+      let customer = await tb_user.findOne({
+        where: {
+          user_id: d.import_billlading_customer_id
+        }
+      })
+
+      d.customerINFO = {
+        name: customer.user_name,
+        address: customer.user_address,
+        email: customer.user_email,
+        phone: customer.user_phone
+      }
+    } else {
+      d.customerINFO = {}
+    }
+
     let goods = await tb_billlading_goods.findAll({
       where: {
         import_billlading_id: d.import_billlading_id
@@ -292,6 +317,48 @@ exports.uploadImportAct = async req => {
         }
       }
     }
+  }
+
+  return common.success()
+}
+
+exports.searchCustomerAct = async req => {
+  let doc = common.docValidate(req)
+  if (doc.search_text) {
+    let returnData = {
+      customerINFO: []
+    }
+    let queryStr = `select * from tbl_common_user 
+                where state = "1" and user_type = "${GLBConfig.TYPE_CUSTOMER}"  
+                and (user_username like ? or user_phone like ? or user_name like ?)`
+    let replacements = []
+    let search_text = '%' + doc.search_text + '%'
+    replacements.push(search_text)
+    replacements.push(search_text)
+    replacements.push(search_text)
+    let shippers = await model.simpleSelect(queryStr, replacements)
+    for (let s of shippers) {
+      returnData.customerINFO.push({
+        id: s.user_id,
+        text: s.user_name
+      })
+    }
+    return common.success(returnData)
+  } else {
+    return common.success()
+  }
+}
+
+exports.assignCustomerAct = async req => {
+  let doc = common.docValidate(req)
+
+  for (let bl of doc.bls) {
+    let b = await await tb_billlading.findOne({
+      import_billlading_id: bl
+    })
+
+    b.import_billlading_customer_id = doc.customer_id
+    await b.save()
   }
 
   return common.success()

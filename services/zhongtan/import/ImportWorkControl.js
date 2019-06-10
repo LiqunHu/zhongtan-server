@@ -13,6 +13,10 @@ module.exports = async (req, res) => {
       ret = await srv.searchAct(req)
     } else if (method === 'uploadImport') {
       ret = await srv.uploadImportAct(req)
+    } else if (method === 'searchCustomer') {
+      ret = await srv.searchCustomerAct(req)
+    } else if (method === 'assignCustomer') {
+      ret = await srv.assignCustomerAct(req)
     }
     
     common.sendData(res, ret)
