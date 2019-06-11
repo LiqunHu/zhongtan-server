@@ -495,3 +495,96 @@ exports.exportMBLAct = async (req, res) => {
   })
   res.send(csv)
 }
+
+exports.exportCBLAct = async (req, res) => {
+  let doc = common.docValidate(req)
+
+  let queryStr = `select * from tbl_zhongtan_import_billlading 
+                    where state = '1'`
+  let replacements = []
+
+  if (doc.vessel) {
+    queryStr += ' and import_billlading_vessel_code = ?'
+    replacements.push(doc.vessel)
+  }
+
+  if (doc.voyage) {
+    queryStr += ' and import_billlading_voyage = ?'
+    replacements.push(doc.voyage)
+  }
+
+  if (doc.bl) {
+    queryStr += ' and import_billlading_no = ?'
+    replacements.push(doc.bl)
+  }
+
+  if (doc.customer) {
+    queryStr += ' and import_billlading_customer_id = ?'
+    replacements.push(doc.customer)
+  }
+
+  if (doc.start_date) {
+    queryStr += ' and created_at >= ? and created_at <= ?'
+    replacements.push(doc.start_date)
+    replacements.push(
+      moment(doc.end_date, 'YYYY-MM-DD')
+        .add(1, 'days')
+        .format('YYYY-MM-DD')
+    )
+  }
+
+  queryStr += ' order by created_at desc'
+
+  let result = await model.simpleSelect(queryStr, replacements)
+
+  let jsData = []
+  for (let r of result) {
+    let container = await tb_billlading_container.findAll({
+      where: {
+        import_billlading_id: r.import_billlading_id
+      }
+    })
+    for(let c of container) {
+      let row = JSON.parse(JSON.stringify(c))
+      row.import_billlading_no = r.import_billlading_no
+      row.C = 'C'
+      jsData.push(row)
+      row.SB = ''
+      row.FUL = 'FUL'
+      row.PK = 'PK'
+      row.cmb_v = common.transCMB(row.import_billlading_container_type)
+      row.CBM = 'CBM'
+      row.KG = 'KG'
+      row.N = 'N'
+    }
+  }
+
+  const fields = [
+    'import_billlading_no',
+    'C',
+    'import_billlading_container_num',
+    'import_billlading_container_type',
+    'import_billlading_container_seal',
+    'SB',
+    'SB',
+    'FUL',
+    'import_billlading_container_package_cnt',
+    'PK',
+    'PK',
+    'cmb_v',
+    'CBM',
+    'import_billlading_container_weight',
+    'KG',
+    'N'
+  ]
+  const opts = { fields, header: false }
+
+  const parser = new Parser(opts)
+  const csv = parser.parse(jsData)
+
+  res.type('csv')
+  res.set({
+    'Content-Disposition': 'attachment; filename=MBL_UPLOAD.csv'
+  })
+  res.send(csv)
+}

@@ -177,7 +177,7 @@ const fileSave = async (req, bucket) => {
     }
   }
 }
-const fileSaveTemp = async (req) => {
+const fileSaveTemp = async req => {
   let tempDir = path.join(process.cwd(), config.fileSys.filesDir)
   let fileInfo = await fileUtil.fileSaveLocal(req, tempDir, config.fileSys.tempUrl)
   return fileInfo
@@ -247,6 +247,21 @@ const df = strInput => {
   return strInput ? strInput._text : ''
 }
 
+const transCMB = ctype => {
+  switch (ctype) {
+    case '20GP':
+      return '2.3'
+    case '40OT':
+      return '3.2'
+    case '40HQ':
+      return '4'
+    case '40RQ':
+      return '4.5'
+    default:
+      return ''
+  }
+}
+
 module.exports = {
   docValidate: docValidate,
   reqTrans: reqTrans,
@@ -266,5 +281,6 @@ module.exports = {
   ejs2xlsx: ejs2xlsx,
   ejs2Word: ejs2Word,
   getContainerISO: getContainerISO,
-  df: df
+  df: df,
+  transCMB: transCMB
 }
