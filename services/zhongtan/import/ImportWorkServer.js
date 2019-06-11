@@ -354,7 +354,9 @@ exports.assignCustomerAct = async req => {
 
   for (let bl of doc.bls) {
     let b = await await tb_billlading.findOne({
-      import_billlading_id: bl
+      where: {
+        import_billlading_id: bl
+      }
     })
 
     b.import_billlading_customer_id = doc.customer_id
