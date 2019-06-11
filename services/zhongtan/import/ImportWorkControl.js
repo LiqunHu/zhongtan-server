@@ -17,6 +17,8 @@ module.exports = async (req, res) => {
       ret = await srv.searchCustomerAct(req)
     } else if (method === 'assignCustomer') {
       ret = await srv.assignCustomerAct(req)
+    } else if (method === 'exportMBL') {
+      return await srv.exportMBLAct(req, res)
     }
     
     common.sendData(res, ret)

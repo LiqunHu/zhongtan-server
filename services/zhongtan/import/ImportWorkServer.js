@@ -2,6 +2,7 @@ const _ = require('lodash')
 const moment = require('moment')
 const fs = require('fs')
 const convert = require('xml-js')
+const { Parser } = require('json2csv')
 const GLBConfig = require('../../../util/GLBConfig')
 const logger = require('../../../app/logger').createLogger(__filename)
 const common = require('../../../util/CommonUtil')
@@ -364,4 +365,133 @@ exports.assignCustomerAct = async req => {
   }
 
   return common.success()
+}
+
+exports.exportMBLAct = async (req, res) => {
+  let doc = common.docValidate(req)
+
+  let queryStr = `select * from tbl_zhongtan_import_billlading 
+                    where state = '1'`
+  let replacements = []
+
+  if (doc.vessel) {
+    queryStr += ' and import_billlading_vessel_code = ?'
+    replacements.push(doc.vessel)
+  }
+
+  if (doc.voyage) {
+    queryStr += ' and import_billlading_voyage = ?'
+    replacements.push(doc.voyage)
+  }
+
+  if (doc.bl) {
+    queryStr += ' and import_billlading_no = ?'
+    replacements.push(doc.bl)
+  }
+
+  if (doc.customer) {
+    queryStr += ' and import_billlading_customer_id = ?'
+    replacements.push(doc.customer)
+  }
+
+  if (doc.start_date) {
+    queryStr += ' and created_at >= ? and created_at <= ?'
+    replacements.push(doc.start_date)
+    replacements.push(
+      moment(doc.end_date, 'YYYY-MM-DD')
+        .add(1, 'days')
+        .format('YYYY-MM-DD')
+    )
+  }
+
+  queryStr += ' order by created_at desc'
+
+  let result = await model.simpleSelect(queryStr, replacements)
+
+  let jsData = []
+  for (let r of result) {
+    let row = JSON.parse(JSON.stringify(r))
+    row.IM = 'IM'
+    row.S = 'S'
+    row.PK = 'PK'
+    row.KG = 'KG'
+    row.CBM = 'CBM'
+    row.SB = ''
+    let sary = row.import_billlading_shipper.split('<br/>')
+    row.sa0 = sary.length > 0 ? sary[0].replace(/\r\n/g, '') : ''
+    row.sa1 = sary.length > 1 ? _.takeRight(sary, sary.length - 1).join(' ').replace(/\r\n/g, '') : ''
+    let cary = row.import_billlading_consignee.split('<br/>')
+    row.ca0 = cary.length > 0 ? cary[0].replace(/\r\n/g, '') : ''
+    row.ca1 = cary.length > 1 ? _.takeRight(cary, cary.length - 1).join(' ').replace(/\r\n/g, '') : ''
+    let nary = row.import_billlading_notify_party.split('<br/>')
+    row.na0 = nary.length > 0 ? nary[0].replace(/\r\n/g, '') : ''
+    row.na1 = nary.length > 1 ? _.takeRight(nary, nary.length - 1).join(' ').replace(/\r\n/g, '') : ''
+    row.C = 'C'
+    row.P = row.import_billlading_remark.search(/PREPAID/i) > 0 ? 'PREPAID' : ''
+
+    let container = await tb_billlading_container.findAll({
+      where: {
+        import_billlading_id: row.import_billlading_id
+      }
+    })
+    row.CCOUNT = container.length
+
+    let goods = await tb_billlading_goods.findAll({
+      where: {
+        import_billlading_id: row.import_billlading_id
+      }
+    })
+
+    let dary = []
+    let rmary = []
+    for (let g of goods) {
+      dary.push(g.import_billlading_goods_description)
+      rmary.push(g.import_billlading_goods_marks_num)
+    }
+
+    row.GDESC = dary.join(' ').replace(/\r\n/g, '')
+    row.GRMARK = rmary.join(' ').replace(/\r\n/g, '')
+    jsData.push(row)
+  }
+
+  const fields = [
+    'import_billlading_no',
+    'IM',
+    'S',
+    'import_billlading_pod',
+    'import_billlading_fnd',
+    'import_billlading_fnd',
+    'import_billlading_pol',
+    'CCOUNT',
+    'GDESC',
+    'import_billlading_total_packno',
+    'PK',
+    'import_billlading_total_gross_weight_kg',
+    'KG',
+    'import_billlading_total_volume_cbm',
+    'CBM',
+    'SB',
+    'sa0',
+    'sa1',
+    'ca0',
+    'ca1',
+    'SB',
+    'na0',
+    'na1',
+    'SB',
+    'C',
+    'import_billlading_por',
+    'GRMARK',
+    'P'
+  ]
+  const opts = { fields, header: false }
+
+  const parser = new Parser(opts)
+  const csv = parser.parse(jsData)
+
+  res.type('csv')
+  res.set({
+    'Content-Disposition': 'attachment; filename=MBL_UPLOAD.csv'
+  })
+  res.send(csv)
 }
