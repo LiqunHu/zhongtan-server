@@ -552,7 +552,6 @@ exports.exportCBLAct = async (req, res) => {
       row.SB = ''
       row.FUL = 'FUL'
       row.PK = 'PK'
-      row.cmb_v = common.transCMB(row.import_billlading_container_type)
       row.CBM = 'CBM'
       row.KG = 'KG'
       row.N = 'N'
@@ -571,7 +570,7 @@ exports.exportCBLAct = async (req, res) => {
     'import_billlading_container_package_cnt',
     'PK',
     'PK',
-    'cmb_v',
+    'import_billlading_container_tare_weight',
     'CBM',
     'import_billlading_container_weight',
     'KG',
