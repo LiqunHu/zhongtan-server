@@ -13,7 +13,7 @@ module.exports = db.defineModel('tbl_zhongtan_import_billlading_goods', {
   },
   import_billlading_goods_description: {
     // description
-    type: db.STRING(3000),
+    type: db.STRING(5000),
     defaultValue: '',
     allowNull: false
   },
