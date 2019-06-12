@@ -15,9 +15,25 @@ const tb_billlading_goods = model.zhongtan_import_billlading_goods
 const tb_billlading_charges = model.zhongtan_import_billlading_charges
 const tb_billlading_sumcharges = model.zhongtan_import_billlading_sumcharges
 const tb_billlading_container = model.zhongtan_import_billlading_container
+const tb_shipinfo = model.zhongtan_import_shipinfo
 
 exports.initAct = async () => {
   let returnData = {}
+
+  let ships = await tb_shipinfo.findAll({
+    where: {
+      state: GLBConfig.ENABLE
+    }
+  })
+
+  returnData.SHIPSINFO = []
+  for (let s of ships) {
+    returnData.SHIPSINFO.push({
+      id: s.import_shipinfo_vessel_code,
+      text: s.import_shipinfo_vessel_name
+    })
+  }
+
 
   return common.success(returnData)
 }
@@ -164,6 +180,12 @@ exports.uploadImportAct = async req => {
     }
   })
 
+  let shipinfo = await tb_shipinfo.findOne({
+    where: {
+      import_shipinfo_vessel_code: xmldata.DATA_DS.P_VSL_MAIN._text
+    }
+  })
+
   if (ship) {
     return common.error('import_01')
   } else {
@@ -179,6 +201,13 @@ exports.uploadImportAct = async req => {
         blarray = a.G_DATAA.G_BL_NUMBER
       } else {
         blarray.push(a.G_DATAA.G_BL_NUMBER)
+      }
+
+      if (!shipinfo) {
+        shipinfo = await tb_shipinfo.create({
+          import_shipinfo_vessel_code: a.G_DATAA.VSL_CDE._text,
+          import_shipinfo_vessel_name: a.G_DATAA.VSL_NME._text
+        })
       }
 
       for (let gbl of blarray) {
@@ -419,13 +448,28 @@ exports.exportMBLAct = async (req, res) => {
     row.SB = ''
     let sary = row.import_billlading_shipper.split('<br/>')
     row.sa0 = sary.length > 0 ? sary[0].replace(/\r\n/g, '') : ''
-    row.sa1 = sary.length > 1 ? _.takeRight(sary, sary.length - 1).join(' ').replace(/\r\n/g, '') : ''
+    row.sa1 =
+      sary.length > 1
+        ? _.takeRight(sary, sary.length - 1)
+            .join(' ')
+            .replace(/\r\n/g, '')
+        : ''
     let cary = row.import_billlading_consignee.split('<br/>')
     row.ca0 = cary.length > 0 ? cary[0].replace(/\r\n/g, '') : ''
-    row.ca1 = cary.length > 1 ? _.takeRight(cary, cary.length - 1).join(' ').replace(/\r\n/g, '') : ''
+    row.ca1 =
+      cary.length > 1
+        ? _.takeRight(cary, cary.length - 1)
+            .join(' ')
+            .replace(/\r\n/g, '')
+        : ''
     let nary = row.import_billlading_notify_party.split('<br/>')
     row.na0 = nary.length > 0 ? nary[0].replace(/\r\n/g, '') : ''
-    row.na1 = nary.length > 1 ? _.takeRight(nary, nary.length - 1).join(' ').replace(/\r\n/g, '') : ''
+    row.na1 =
+      nary.length > 1
+        ? _.takeRight(nary, nary.length - 1)
+            .join(' ')
+            .replace(/\r\n/g, '')
+        : ''
     row.C = 'C'
     row.P = row.import_billlading_remark.search(/PREPAID/i) > 0 ? 'PREPAID' : ''
 
@@ -544,7 +588,7 @@ exports.exportCBLAct = async (req, res) => {
         import_billlading_id: r.import_billlading_id
       }
     })
-    for(let c of container) {
+    for (let c of container) {
       let row = JSON.parse(JSON.stringify(c))
       row.import_billlading_no = r.import_billlading_no
       row.C = 'C'
