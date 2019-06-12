@@ -150,7 +150,7 @@ module.exports = db.defineModel('tbl_zhongtan_import_billlading', {
     allowNull: false
   },
   import_billlading_total_unit: {
-    type: db.STRING(20),
+    type: db.STRING(100),
     defaultValue: '',
     allowNull: false
   },
@@ -175,7 +175,7 @@ module.exports = db.defineModel('tbl_zhongtan_import_billlading', {
     allowNull: false
   },
   import_billlading_remark: {
-    type: db.STRING(500),
+    type: db.STRING(3000),
     defaultValue: '',
     allowNull: false
   }

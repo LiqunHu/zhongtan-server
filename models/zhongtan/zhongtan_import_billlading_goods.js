@@ -25,7 +25,7 @@ module.exports = db.defineModel('tbl_zhongtan_import_billlading_goods', {
   },
   import_billlading_goods_package_unit: {
     // package unit
-    type: db.STRING(20),
+    type: db.STRING(100),
     defaultValue: '',
     allowNull: false
   },
