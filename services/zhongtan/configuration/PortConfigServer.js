@@ -7,7 +7,6 @@ const tb_port = model.zhongtan_port
 
 exports.initAct = async () => {
   let returnData = {
-    PortCountryINFO: GLBConfig.PortCountryINFO
   }
   logger.debug(returnData)
   return common.success(returnData)

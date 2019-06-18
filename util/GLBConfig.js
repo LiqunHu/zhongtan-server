@@ -106,7 +106,6 @@ module.exports = {
   PayTypeINFO: [{ id: 'Prepaid', text: 'Prepaid' }, { id: 'Collect', text: 'Collect' }],
   PayCurrencyINFO: [{ id: 'CY', text: 'CY' }, { id: 'CFS', text: 'CFS' }],
   VesselServiceINFO: [{ id: 'ALL', text: 'ALL' }, { id: 'EAX1', text: 'EAX1' }, { id: 'EAX2', text: 'EAX2' }, { id: 'EAX4', text: 'EAX4' }],
-  PortCountryINFO: [{ id: 'TZ', text: 'TZ' }, { id: 'CN', text: 'CN' }, { id: 'SIN', text: 'SIN' }],
   BLSTATUS_PRE_BOOKING: 'PBK',
   BLSTATUS_BOOKING: 'BK',
   BLSTATUS_PUTBOX_APPLY: 'PA',
