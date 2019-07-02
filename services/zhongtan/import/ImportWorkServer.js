@@ -147,6 +147,9 @@ exports.searchAct = async req => {
       d.container = []
     }
 
+    let cary = d.import_billlading_consignee.split('<br/>')
+    d.ca0 = cary.length > 0 ? cary[0].replace(/\r\n/g, '') : ''
+
     returnData.rows.push(d)
   }
 
