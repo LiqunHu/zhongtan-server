@@ -243,6 +243,14 @@ const getContainerISO = (cType, cSize) => {
   }
 }
 
+const getContainerCBM = (size) => {
+  if (size === '20GP') {
+    return '9.577'
+  } else {
+    return ''
+  }
+}
+
 const df = strInput => {
   return strInput ? strInput._text : ''
 }
@@ -266,5 +274,6 @@ module.exports = {
   ejs2xlsx: ejs2xlsx,
   ejs2Word: ejs2Word,
   getContainerISO: getContainerISO,
+  getContainerCBM: getContainerCBM,
   df: df
 }

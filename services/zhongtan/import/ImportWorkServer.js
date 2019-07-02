@@ -34,7 +34,6 @@ exports.initAct = async () => {
     })
   }
 
-
   return common.success(returnData)
 }
 
@@ -630,4 +629,38 @@ exports.exportCBLAct = async (req, res) => {
     'Content-Disposition': 'attachment; filename=MBL_UPLOAD.csv'
   })
   res.send(csv)
+}
+
+exports.downloadBLAct = async (req, res) => {
+  let doc = common.docValidate(req)
+  let bl = await tb_billlading.findOne({
+    where: {
+      import_billlading_id: doc.import_billlading_id
+    }
+  })
+
+  let container = await tb_billlading_container.findAll({
+    where: {
+      import_billlading_id: bl.import_billlading_id
+    }
+  })
+
+  let docData = JSON.parse(JSON.stringify(bl))
+
+  let cary = docData.import_billlading_consignee.split('<br/>')
+  docData.consignee_name = cary.length > 0 ? cary[0].replace(/\r\n/g, '') : ''
+  docData.consignee_address =
+    cary.length > 1
+      ? _.takeRight(cary, cary.length - 1)
+          .join(' ')
+          .replace(/\r\n/g, '')
+      : ''
+  // docData.booking_date = moment(bl.created_at).format('DD-MMM-YYYY')
+  docData.containers = JSON.parse(JSON.stringify(container))
+  docData.container_total = docData.containers.length + 'X' + docData.containers[0].import_billlading_container_type
+  for (let i = 0; i < docData.containers.length; i++) {
+    docData.containers[i].import_billlading_container_cmb = common.getContainerCBM(docData.containers[i].import_billlading_container_type)
+  }
+
+  return common.ejs2Word('importTemplate.docx', docData, res)
 }
