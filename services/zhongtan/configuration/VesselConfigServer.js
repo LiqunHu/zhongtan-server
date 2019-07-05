@@ -47,7 +47,7 @@ exports.addAct = async req => {
   })
 
   if (vessel) {
-    return common.error('common_02')
+    return common.error('common_04')
   } else {
     vessel = await tb_vessel.create({
       vessel_service_name: doc.vessel_service_name,
