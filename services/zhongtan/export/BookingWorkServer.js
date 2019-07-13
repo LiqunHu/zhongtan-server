@@ -627,8 +627,13 @@ exports.confirmPickUpAct = async req => {
     S/O: ${billlading.billlading_no} ${containers}<br/>
     VESSEL: ${vessel.vessel_name} ${voyage.voyage_number}<br/>
     `
-
-    await mailer.sendMail(manager.container_manager_email, 'Pick Up ' + billlading.billlading_no, '', text)
+    let cmails = manager.container_manager_email.split(',')
+    for(let m of cmails) {
+      if(m) {
+        await mailer.sendMail(m, 'Pick Up ' + billlading.billlading_no, '', text)
+      }
+    }
+    
     await mailer.sendMail(shipper.user_email, 'Pick Up ' + billlading.billlading_no, text, text)
 
     // 更改订单状态

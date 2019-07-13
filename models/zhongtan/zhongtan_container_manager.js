@@ -12,7 +12,7 @@ module.exports = db.defineModel('tbl_zhongtan_container_manager', {
     allowNull: false
   },
   container_manager_email: {
-    type: db.STRING(100),
+    type: db.STRING(1000),
     allowNull: false
   },
 })
