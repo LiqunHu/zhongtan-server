@@ -12,6 +12,10 @@ module.exports = db.defineModel('tbl_zhongtan_import_billlading', {
     defaultValue: '',
     allowNull: false
   },
+  import_billlading_arrive_date: {
+    type: db.DATEONLY,
+    allowNull: true
+  },
   import_billlading_srv_code: {
     // service code
     type: db.STRING(20),

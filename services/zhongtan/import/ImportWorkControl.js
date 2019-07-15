@@ -23,7 +23,9 @@ module.exports = async (req, res) => {
       return await srv.exportCBLAct(req, res)
     } else if (method === 'downloadBL') {
       return await srv.downloadBLAct(req, res)
-    }
+    } else if (method === 'upload') {
+      ret = await srv.uploadAct(req)
+    } 
     
     common.sendData(res, ret)
   } catch (error) {
