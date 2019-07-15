@@ -114,13 +114,13 @@ const config = {
     }
   },
   mailConfig: {
-    sender: 'huliquns@126.com',
-    host: 'smtp.126.com',
+    sender: 'system@sinotaship.com',
+    host: 'smtp.263.net',
     // port: 587,
     secure: true, // true for 465, false for other ports
     auth: {
-      user: 'huliquns', // generated ethereal user
-      pass: '55286668hlq' // generated ethereal password
+      user: 'system@sinotaship.com', // generated ethereal user
+      pass: 'kKqkZutAK2b0B6jX' // generated ethereal password
     }
   },
   // SECRET_KEY

@@ -77,6 +77,18 @@ module.exports = {
     {
       id: 'BAG',
       text: 'BAG'
+    },
+    {
+      id: 'BULK',
+      text: 'BULK'
+    },
+    {
+      id: 'PACKAGES',
+      text: 'PACKAGES'
+    },
+    {
+      id: 'DRUM',
+      text: 'DRUM'
     }
   ],
   VolumeUnitINFO: [
