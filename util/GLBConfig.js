@@ -75,20 +75,180 @@ module.exports = {
   ],
   PackageUnitINFO: [
     {
+      id: 'ANIMAL',
+      text: 'ANIMAL(LIVE)'
+    },
+    {
+      id: 'BARREL',
+      text: 'BARREL'
+    },
+    {
+      id: 'BUNDLE',
+      text: 'BUNDLE'
+    },
+    {
       id: 'BAG',
       text: 'BAG'
     },
     {
-      id: 'BULK',
-      text: 'BULK'
+      id: 'BALE',
+      text: 'BALE'
     },
     {
-      id: 'PACKAGES',
-      text: 'PACKAGES'
+      id: 'BAR',
+      text: 'BAR'
     },
     {
-      id: 'DRUM',
-      text: 'DRUM'
+      id: 'BOX',
+      text: 'BOX'
+    },
+    {
+      id: 'BARS',
+      text: 'BARS-IN A BUNDLE/BUNCH OR TEUSS'
+    },
+    {
+      id: 'COFFIN',
+      text: 'COFFIN'
+    },
+    {
+      id: 'COIL',
+      text: 'COIL'
+    },
+    {
+      id: 'CARTON',
+      text: 'CARTON'
+    },
+    {
+      id: 'COLLI',
+      text: 'COLLI'
+    },
+    {
+      id: 'CASE',
+      text: 'CASE'
+    },
+    {
+      id: 'CRATE',
+      text: 'CRATE'
+    },
+    {
+      id: 'CYLINDER',
+      text: 'CYLINDER'
+    },
+    {
+      id: 'DRUN',
+      text: 'DRUN'
+    },
+    {
+      id: 'ENVELOPE',
+      text: 'ENVELOPE'
+    },
+    {
+      id: 'FILMPACK',
+      text: 'FILMPACK'
+    },
+    {
+      id: 'GAS',
+      text: 'GAS BOTTLE'
+    },
+    {
+      id: 'INGOT',
+      text: 'INGOT'
+    },
+    {
+      id: 'LOG',
+      text: 'LOG'
+    },
+    {
+      id: 'UNPACKED',
+      text: 'UNPACKED OR UNPACKAGED'
+    },
+    {
+      id: 'PACKET',
+      text: 'PACKET'
+    },
+    {
+      id: 'PARCEL',
+      text: 'PARCEL'
+    },
+    {
+      id: 'PLATE',
+      text: 'PLATE'
+    },
+    {
+      id: 'PIECES',
+      text: 'PIECES'
+    },
+    {
+      id: 'PALLETS',
+      text: 'PALLETS'
+    },
+    {
+      id: 'PIPES-IN',
+      text: 'PIPES-IN A BUNDLE/BUNCH OR TRUSS'
+    },
+    {
+      id: 'PLATES-IN',
+      text: 'PLATES-IN A BUNDLE/BUNCH OR TRUSS'
+    },
+    {
+      id: 'PLANKS-IN',
+      text: 'PLANKS-IN A BUNDLE/BUNCH OR TRUSS'
+    },
+    {
+      id: 'ROD',
+      text: 'ROD'
+    },
+    {
+      id: 'REEL',
+      text: 'REEL'
+    },
+    {
+      id: 'RODS-IN',
+      text: 'RODS-IN A BUNDLE/BUNCH OR TRUSS'
+    },
+    {
+      id: 'SACK',
+      text: 'SACK'
+    },
+    {
+      id: 'SHEET',
+      text: 'SHEET'
+    },
+    {
+      id: 'SUITCASE',
+      text: 'SUITCASE'
+    },
+    {
+      id: 'SHEETS',
+      text: 'SHEETS(BULK)'
+    },
+    {
+      id: 'TIN',
+      text: 'TIN'
+    },
+    {
+      id: 'TUBE',
+      text: 'TUBE'
+    },
+    {
+      id: 'TUBES-IN',
+      text: 'TUBES-IN A BUNDLE/BUNCH OR TRUSS'
+    },
+    {
+      id: 'BULK-ELEMENT',
+      text: 'BULK-ELEMENT'
+    },
+    {
+      id: 'BULK-GAS',
+      text: 'BULK-GAS'
+    },
+    {
+      id: 'BULK-LIQUIDS',
+      text: 'BULK-LIQUIDS'
+    },
+    {
+      id: 'BULK-SOLIDS',
+      text: 'BULK-SOLIDS'
     }
   ],
   VolumeUnitINFO: [
