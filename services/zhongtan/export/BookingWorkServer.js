@@ -28,6 +28,7 @@ exports.initAct = async () => {
     PayCurrencyINFO: GLBConfig.PayCurrencyINFO,
     BLSTATUSINFO: GLBConfig.BLSTATUSINFO,
     YNINFO: GLBConfig.YNINFO,
+    VesselServiceINFO: GLBConfig.VesselServiceINFO,
     VesselINFO: [],
     PortINFO: [],
     ContainerManagerINFO: []
