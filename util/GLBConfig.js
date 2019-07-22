@@ -135,8 +135,8 @@ module.exports = {
       text: 'CYLINDER'
     },
     {
-      id: 'DRUN',
-      text: 'DRUN'
+      id: 'DRUM',
+      text: 'DRUM i/o DRUN'
     },
     {
       id: 'ENVELOPE',
