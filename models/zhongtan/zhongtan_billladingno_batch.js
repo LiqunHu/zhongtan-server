@@ -17,6 +17,12 @@ module.exports = db.defineModel('tbl_zhongtan_billladingno_batch', {
     allowNull: false,
     comment: '提单号固定字符'
   },
+  billladingno_batch_fix_string_end: {
+    type: db.STRING(20),
+    defaultValue: '',
+    allowNull: false,
+    comment: '提单号固定结尾字符'
+  },
   billladingno_batch_number_length: {
     type: db.INTEGER,
     defaultValue: '0',

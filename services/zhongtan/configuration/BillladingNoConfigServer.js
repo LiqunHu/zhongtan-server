@@ -41,11 +41,12 @@ exports.addAct = async req => {
   let doc = common.docValidate(req)
 
   let fixStr = doc.billladingno_batch_fix_string
+  let fixStrEnd = doc.billladingno_batch_fix_string_end || ''
   let numLen = parseInt(doc.billladingno_batch_number_length) * -1
   let numStart = parseInt(doc.billladingno_batch_number_start)
   let blCount = parseInt(doc.billladingno_batch_count)
-  let blStart = fixStr + ('0000000000000000000000000000000' + numStart).slice(numLen)
-  let blEnd = fixStr + ('0000000000000000000000000000000' + (numStart + blCount)).slice(numLen)
+  let blStart = fixStr + ('0000000000000000000000000000000' + numStart).slice(numLen) + fixStrEnd
+  let blEnd = fixStr + ('0000000000000000000000000000000' + (numStart + blCount)).slice(numLen) + fixStrEnd
 
   let blcount = await tb_billladingno_pool.count({
     where: {
@@ -63,6 +64,7 @@ exports.addAct = async req => {
   let blBatch = await tb_billladingno_batch.create({
     billladingno_batch_vessel_service: doc.billladingno_batch_vessel_service,
     billladingno_batch_fix_string: doc.billladingno_batch_fix_string,
+    billladingno_batch_fix_string_end: doc.billladingno_batch_fix_string_end || '',
     billladingno_batch_number_length: doc.billladingno_batch_number_length,
     billladingno_batch_number_start: doc.billladingno_batch_number_start,
     billladingno_batch_count: doc.billladingno_batch_count
@@ -70,7 +72,7 @@ exports.addAct = async req => {
   let currNum = numStart
   for (let i = 0; i < blCount; i++) {
     await tb_billladingno_pool.create({
-      billladingno_pool_no: fixStr + ('0000000000000000000000000000000' + currNum).slice(numLen),
+      billladingno_pool_no: fixStr + ('0000000000000000000000000000000' + currNum).slice(numLen) + fixStrEnd,
       billladingno_batch_id: blBatch.billladingno_batch_id,
       billladingno_pool_vessel_service: blBatch.billladingno_batch_vessel_service,
       billladingno_pool_state: '0'
@@ -87,6 +89,7 @@ exports.deleteAct = async req => {
   let blBatch = await tb_billladingno_batch.findOne({
     where: {
       billladingno_batch_id: doc.billladingno_batch_id,
+      billladingno_batch_use_count: 0,
       state: GLBConfig.ENABLE
     }
   })
