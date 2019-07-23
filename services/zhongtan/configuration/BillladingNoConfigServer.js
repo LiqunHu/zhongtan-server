@@ -100,7 +100,8 @@ exports.deleteAct = async req => {
       },
       {
         where: {
-          billladingno_batch_id: blBatch.billladingno_batch_id
+          billladingno_batch_id: blBatch.billladingno_batch_id,
+          billladingno_pool_state: '0'
         }
       }
     )
