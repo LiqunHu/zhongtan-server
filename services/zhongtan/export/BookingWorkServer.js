@@ -822,7 +822,9 @@ exports.generateInvoiceAct = async req => {
     billlading.billlading_invoice_ammendment = common.str2Money(doc.billlading_invoice_ammendment)
     billlading.billlading_invoice_isp = common.str2Money(doc.billlading_invoice_isp)
     billlading.billlading_invoice_surchage = common.str2Money(doc.billlading_invoice_surchage)
-    billlading.billlading_state = GLBConfig.BLSTATUS_PENDING_SETTLEMENT
+    billlading.billlading_state = GLBConfig.BLSTATUS_INVOICE
+    billlading.billlading_invoice_time = new Date()
+    billlading.billlading_invoice_operator = user.user_id
     await billlading.save()
 
     let renderData = JSON.parse(JSON.stringify(billlading))

@@ -312,5 +312,25 @@ module.exports = db.defineModel('tbl_zhongtan_billlading', {
     // 结算日期
     type: db.DATEONLY,
     allowNull: true
+  },
+  billlading_invoice_operator: {
+    // 结算人员
+    type: db.UUID,
+    allowNull: true
+  },
+  billlading_received: {
+    // 实收
+    type: db.STRING(20),
+    allowNull: true
+  },
+  billlading_receipt_time: {
+    // 收据日期
+    type: db.DATEONLY,
+    allowNull: true
+  },
+  billlading_receipt_operator: {
+    // 收据人员
+    type: db.UUID,
+    allowNull: true
   }
 })

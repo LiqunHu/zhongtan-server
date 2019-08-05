@@ -13,8 +13,8 @@ module.exports = async (req, res) => {
       ret = await srv.searchCustomerAct(req)
     } else if (method === 'search') {
       ret = await srv.searchAct(req)
-    } else if (method === 'invoice') {
-      ret = await srv.invoiceAct(req)
+    } else if (method === 'receipt') {
+      ret = await srv.receiptAct(req)
     } 
     
     common.sendData(res, ret)

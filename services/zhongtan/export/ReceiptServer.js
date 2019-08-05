@@ -9,7 +9,7 @@ const tb_billlading = model.zhongtan_billlading
 
 exports.initAct = async () => {
   let returnData = {
-    BLSTATUSINFO: [{ id: 'PS', text: 'Pending Settlement', style: 'label-pending-settlement' }, { id: 'IV', text: 'Invoice', style: 'label-invoice' }]
+    BLSTATUSINFO: [{ id: 'IV', text: 'Invoice', style: 'label-invoice' }, { id: 'RE', text: 'Receipt', style: 'label-receipt' }]
   }
 
   return common.success(returnData)
@@ -48,14 +48,14 @@ exports.searchAct = async req => {
 
   let queryStr = `select * from tbl_zhongtan_billlading 
                     where state = '1'
-                    and (billlading_state = 'PS' OR billlading_state = 'IV')`
+                    and (billlading_state = 'IV' OR billlading_state = 'RE')`
   let replacements = []
 
   if (doc.billlading_state) {
     queryStr += ' and billlading_state = ?'
     replacements.push(doc.billlading_state)
   }
-  
+
   if (doc.customer) {
     queryStr += ' and billlading_customer_id = ?'
     replacements.push(doc.customer)
@@ -133,7 +133,7 @@ exports.searchAct = async req => {
   return common.success(returnData)
 }
 
-exports.invoiceAct = async req => {
+exports.receiptAct = async req => {
   let doc = common.docValidate(req)
 
   let billlading = await tb_billlading.findOne({
@@ -143,10 +143,10 @@ exports.invoiceAct = async req => {
     }
   })
 
-  if (billlading.billlading_state != GLBConfig.BLSTATUS_PENDING_SETTLEMENT) {
+  if (billlading.billlading_state != GLBConfig.BLSTATUS_INVOICE) {
     return common.error('billlading_01')
   } else {
-    billlading.billlading_state = GLBConfig.BLSTATUS_INVOICE
+    billlading.billlading_state = GLBConfig.BLSTATUS_RECEIPT
     billlading.billlading_invoice_time = new Date()
     await billlading.save()
 

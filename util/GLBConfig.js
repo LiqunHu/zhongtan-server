@@ -291,8 +291,8 @@ module.exports = {
   BLSTATUS_SHIPPING_INSTRUCTION: 'SI',
   BLSTATUS_CDS_PROCESSING: 'CP',
   BLSTATUS_FEEDBACK_BLDRAFT: 'FBD',
-  BLSTATUS_PENDING_SETTLEMENT: 'PS',
   BLSTATUS_INVOICE: 'IV',
+  BLSTATUS_RECEIPT: 'RE',
   BLSTATUSINFO: [
     { id: 'PBK', text: 'Pre-Booking', style: 'label-default' },
     { id: 'BK', text: 'Booking', style: 'label-booking' },
@@ -307,8 +307,8 @@ module.exports = {
     { id: 'SI', text: 'Shipping Instruction', style: 'label-shipping-instruction' },
     { id: 'CP', text: 'CDS Processing', style: 'label-cds-processing' },
     { id: 'FBD', text: 'Feedback BL Draft', style: 'label-feedback-bl-draft' },
-    { id: 'PS', text: 'Pending Settlement', style: 'label-pending-settlement' },
-    { id: 'IV', text: 'Invoice', style: 'label-invoice' }
+    { id: 'IV', text: 'Invoice', style: 'label-invoice' },
+    { id: 'RE', text: 'Receipt', style: 'label-receipt' }
   ],
   LB_BATCH_STATE: [{ id: '0', text: 'Unused' }, { id: '1', text: 'Used' }, { id: '2', text: 'Cancel' }]
 }
