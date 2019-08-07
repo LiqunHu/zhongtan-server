@@ -6,6 +6,7 @@ const model = require('../../../app/model')
 
 const tb_user = model.common_user
 const tb_billlading = model.zhongtan_billlading
+const tb_uploadfile = model.zhongtan_uploadfile
 
 exports.initAct = async () => {
   let returnData = {
@@ -101,6 +102,38 @@ exports.searchAct = async req => {
 
     d.booking_date = moment(bl.created_at).format('YYYY-MM-DD')
 
+    d.files = []
+    let files = await tb_uploadfile.findAll({
+      where: {
+        uploadfile_index1: d.billlading_id
+      },
+      order: [['created_at', 'DESC']]
+    })
+    for (let f of files) {
+      let filetype = ''
+      if (f.api_name === 'BOOKING-INVOICE') {
+        filetype = 'Invoice'
+        d.files.push({
+          filetype: filetype,
+          date: moment(f.created_at).format('YYYY-MM-DD'),
+          file_id: f.uploadfile_id,
+          url: f.uploadfile_url,
+          name: f.uploadfile_name,
+          remark: f.uploadfile_remark
+        })
+      } else if (f.api_name === 'BOOKING-RECEIPT') {
+        filetype = 'Receipt'
+        d.files.push({
+          filetype: filetype,
+          date: moment(f.created_at).format('YYYY-MM-DD'),
+          file_id: f.uploadfile_id,
+          url: f.uploadfile_url,
+          name: f.uploadfile_name,
+          remark: f.uploadfile_remark
+        })
+      }
+    }
+
     // d.fees = {}
     // d.fees.billlading_teu_standard = common.money2Str(d.billlading_teu_standard)
     // d.fees.billlading_feu_standard = common.money2Str(d.billlading_feu_standard)
@@ -135,6 +168,7 @@ exports.searchAct = async req => {
 
 exports.receiptAct = async req => {
   let doc = common.docValidate(req)
+  let user = req.user
 
   let billlading = await tb_billlading.findOne({
     where: {
@@ -147,9 +181,24 @@ exports.receiptAct = async req => {
     return common.error('billlading_01')
   } else {
     billlading.billlading_state = GLBConfig.BLSTATUS_RECEIPT
-    billlading.billlading_invoice_time = new Date()
+    billlading.billlading_received_from = doc.billlading_received_from
+    billlading.billlading_received = doc.billlading_received
+    billlading.billlading_receipt_operator = user.user_id
+    billlading.billlading_receipt_time = new Date()
     await billlading.save()
 
-    return common.success()
+    let renderData = JSON.parse(JSON.stringify(billlading))
+
+    let fileInfo = await common.ejs2Pdf('receipt.ejs', renderData, 'zhongtan')
+
+    await tb_uploadfile.create({
+      api_name: 'BOOKING-RECEIPT',
+      user_id: user.user_id,
+      uploadfile_index1: billlading.billlading_id,
+      uploadfile_name: fileInfo.name,
+      uploadfile_url: fileInfo.url
+    })
+
+    return common.success({url: fileInfo.url})
   }
 }

@@ -318,6 +318,11 @@ module.exports = db.defineModel('tbl_zhongtan_billlading', {
     type: db.UUID,
     allowNull: true
   },
+  billlading_received_from: {
+    // 缴费者
+    type: db.STRING(100),
+    allowNull: true
+  },
   billlading_received: {
     // 实收
     type: db.STRING(20),

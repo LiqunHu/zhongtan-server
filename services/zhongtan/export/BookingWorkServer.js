@@ -205,6 +205,8 @@ exports.searchAct = async req => {
         filetype = 'Billlading Draft'
       } else if (f.api_name === 'BOOKING-INVOICE') {
         filetype = 'Invoice'
+      } else if (f.api_name === 'BOOKING-RECEIPT') {
+        filetype = 'Receipt'
       }
 
       d.files.push({
