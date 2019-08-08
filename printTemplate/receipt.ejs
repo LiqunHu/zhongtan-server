@@ -97,7 +97,7 @@
           P.O.BOX 696
         </td>
         <td class="tar">号码NO.</td>
-        <td><span class="border">045648</span></td>
+        <td><span class="border"><%=ejsData.receipt_no%></span></td>
       </tr>
       <tr>
         <td valign="middle" colspan="5" style="word-break: break-all;">
@@ -113,7 +113,7 @@
         </td>
 
         <td valign="middle" colspan="1">
-          <span class="border">Jun&emsp;21,&ensp;2019</span>
+          <span class="border"><%=ejsData.receipt_date%></span>
         </td>
       </tr>
       <tr>
@@ -131,7 +131,7 @@
           colspan="5"
           class="border"
         >
-          <span>METEPLAN INTERNATIONAL</span>
+          <span><%=ejsData.billlading_received_from%></span>
         </td>
       </tr>
       <tr>
@@ -142,7 +142,7 @@
           style="word-break: break-all;"
           class="border"
         >
-          <span>SAY THREE HUNDRED FIFTY TWO ONLY.</span>
+          <span><%=ejsData.sum_fee_str%></span>
         </td>
       </tr>
       <tr>
@@ -153,7 +153,7 @@
           style="word-break: break-all;"
           class="border"
         >
-          <span>COSU6189043430</span>
+          <span><%=ejsData.billlading_no%></span>
         </td>
         <td colspan="3"></td>
       </tr>
@@ -172,7 +172,7 @@
           style="word-break: break-all;"
           class="border"
         >
-          <span>0</span>
+          <span><%=ejsData.billlading_received%></span>
         </td>
         <td valign="bottom" colspan="2"></td>
         <td valign="bottom" style="word-break: break-all;" class="fstyle">
@@ -200,7 +200,7 @@
           style="word-break: break-all;"
           class="border"
         >
-          <span>352.00</span>
+          <span><%=ejsData.sum_fee%></span>
         </td>
         <td></td>
         <td

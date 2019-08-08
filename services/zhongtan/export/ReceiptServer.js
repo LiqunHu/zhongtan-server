@@ -1,4 +1,5 @@
 const moment = require('moment')
+const writtenNumber = require('written-number')
 const common = require('../../../util/CommonUtil')
 const GLBConfig = require('../../../util/GLBConfig')
 const logger = require('../../../app/logger').createLogger(__filename)
@@ -188,6 +189,19 @@ exports.receiptAct = async req => {
     await billlading.save()
 
     let renderData = JSON.parse(JSON.stringify(billlading))
+    renderData.receipt_no = ('000000000000000' + billlading.billlading_id).slice(-6)
+    renderData.receipt_date = moment().format('MMM DD, YYYY')
+
+    renderData.sum_fee = common.money2Str(
+      billlading.billlading_invoice_freight +
+        billlading.billlading_invoice_blanding +
+        billlading.billlading_invoice_tasac +
+        billlading.billlading_invoice_ammendment +
+        billlading.billlading_invoice_isp +
+        billlading.billlading_invoice_surchage
+    )
+
+    renderData.sum_fee_str = writtenNumber(renderData.sum_fee)
 
     let fileInfo = await common.ejs2Pdf('receipt.ejs', renderData, 'zhongtan')
 
@@ -199,6 +213,6 @@ exports.receiptAct = async req => {
       uploadfile_url: fileInfo.url
     })
 
-    return common.success({url: fileInfo.url})
+    return common.success({ url: fileInfo.url })
   }
 }
