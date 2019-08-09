@@ -185,6 +185,7 @@ exports.receiptAct = async req => {
     billlading.billlading_state = GLBConfig.BLSTATUS_RECEIPT
     billlading.billlading_received_from = doc.billlading_received_from
     billlading.billlading_received = doc.billlading_received
+    billlading.billlading_receipt_type = doc.billlading_receipt_type
     billlading.billlading_receipt_no = doc.billlading_receipt_type + moment().format('YYYYMMDD') + ('000000000000000' + billlading.billlading_id).slice(-6)
     billlading.billlading_receipt_operator = user.user_id
     billlading.billlading_receipt_time = new Date()
