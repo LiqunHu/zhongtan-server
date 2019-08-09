@@ -11,7 +11,8 @@ const tb_uploadfile = model.zhongtan_uploadfile
 
 exports.initAct = async () => {
   let returnData = {
-    BLSTATUSINFO: [{ id: 'IV', text: 'Invoice', style: 'label-invoice' }, { id: 'RE', text: 'Receipt', style: 'label-receipt' }]
+    BLSTATUSINFO: [{ id: 'IV', text: 'Invoice', style: 'label-invoice' }, { id: 'RE', text: 'Receipt', style: 'label-receipt' }],
+    RECEIPT_TYPE_INFO: GLBConfig.RECEIPT_TYPE_INFO
   }
 
   return common.success(returnData)
@@ -184,12 +185,12 @@ exports.receiptAct = async req => {
     billlading.billlading_state = GLBConfig.BLSTATUS_RECEIPT
     billlading.billlading_received_from = doc.billlading_received_from
     billlading.billlading_received = doc.billlading_received
+    billlading.billlading_receipt_no = doc.billlading_receipt_type + moment().format('YYYYMMDD') + ('000000000000000' + billlading.billlading_id).slice(-6)
     billlading.billlading_receipt_operator = user.user_id
     billlading.billlading_receipt_time = new Date()
     await billlading.save()
 
     let renderData = JSON.parse(JSON.stringify(billlading))
-    renderData.receipt_no = ('000000000000000' + billlading.billlading_id).slice(-6)
     renderData.receipt_date = moment().format('MMM DD, YYYY')
 
     renderData.sum_fee = common.money2Str(

@@ -310,5 +310,6 @@ module.exports = {
     { id: 'IV', text: 'Invoice', style: 'label-invoice' },
     { id: 'RE', text: 'Receipt', style: 'label-receipt' }
   ],
-  LB_BATCH_STATE: [{ id: '0', text: 'Unused' }, { id: '1', text: 'Used' }, { id: '2', text: 'Cancel' }]
+  LB_BATCH_STATE: [{ id: '0', text: 'Unused' }, { id: '1', text: 'Used' }, { id: '2', text: 'Cancel' }],
+  RECEIPT_TYPE_INFO: [{ id: 'COSCO', text: 'COSCO' }, { id: 'OOCL', text: 'OOCL' }]
 }

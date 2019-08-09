@@ -328,6 +328,11 @@ module.exports = db.defineModel('tbl_zhongtan_billlading', {
     type: db.STRING(20),
     allowNull: true
   },
+  billlading_receipt_no: {
+    // 收据号
+    type: db.STRING(50),
+    allowNull: true
+  },
   billlading_receipt_time: {
     // 收据日期
     type: db.DATEONLY,
