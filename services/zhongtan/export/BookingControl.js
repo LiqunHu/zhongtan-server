@@ -31,7 +31,15 @@ module.exports = async (req, res) => {
       ret = await srv.uploadAct(req)
     } else if (method === 'downloadBooking') {
       return await srv.downloadBookingAct(req, res)
-    }
+    } else if (method === 'searchTemplate') {
+      ret = await srv.searchTemplateAct(req)
+    } else if (method === 'addTemplate') {
+      ret = await srv.addTemplateAct(req)
+    } else if (method === 'deleteTemplate') {
+      ret = await srv.deleteTemplateAct(req)
+    } else if (method === 'useTemplate') {
+      ret = await srv.useTemplateAct(req)
+    } 
     
     common.sendData(res, ret)
   } catch (error) {

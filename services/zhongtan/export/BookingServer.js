@@ -6,6 +6,7 @@ const model = require('../../../app/model')
 
 const tb_billlading = model.zhongtan_billlading
 const tb_billlading_goods = model.zhongtan_billlading_goods
+const tb_bltemplate = model.zhongtan_billlading_template
 const tb_container = model.zhongtan_container
 const tb_vessel = model.zhongtan_vessel
 const tb_voyage = model.zhongtan_voyage
@@ -724,4 +725,120 @@ exports.downloadBookingAct = async (req, res) => {
   }
 
   return common.ejs2Word('bookingTemplate.docx', docData, res)
+}
+
+exports.searchTemplateAct = async req => {
+  // let doc = common.docValidate(req)
+  let user = req.user
+
+  let template = await tb_bltemplate.findAll({
+    where: {
+      billlading_customer_id: user.user_id
+    }
+  })
+
+  return common.success(template)
+}
+
+exports.addTemplateAct = async req => {
+  let doc = common.docValidate(req)
+  let user = req.user
+
+  let billlading = await tb_billlading.findOne({
+    where: {
+      billlading_customer_id: user.user_id,
+      billlading_no: doc.billlading_no
+    }
+  })
+
+  if (billlading) {
+    await tb_bltemplate.create({
+      billlading_customer_id: user.user_id,
+      billlading_id: billlading.billlading_id,
+      billlading_template_name: doc.billlading_template_name
+    })
+  } else {
+    return common.error('billlading_03')
+  }
+
+  return common.success()
+}
+
+exports.deleteTemplateAct = async req => {
+  let doc = common.docValidate(req)
+  let user = req.user
+
+  let template = await tb_bltemplate.findOne({
+    where: {
+      billlading_customer_id: user.user_id,
+      billlading_template_id: doc.billlading_template_id
+    }
+  })
+
+  if (template) {
+    await template.destroy()
+  } else {
+    return common.error('billlading_03')
+  }
+
+  return common.success()
+}
+
+exports.useTemplateAct = async req => {
+  let doc = common.docValidate(req),
+  returnData = {}
+
+  let billlading = await tb_billlading.findOne({
+    where: {
+      billlading_id: doc.billlading_id
+    }
+  })
+
+  returnData.billlading_vessel_id = billlading.billlading_vessel_id
+  returnData.billlading_voyage_id = billlading.billlading_voyage_id
+  returnData.billlading_shipper_name = billlading.billlading_shipper_name
+  returnData.billlading_shipper_tel = billlading.billlading_shipper_tel
+  returnData.billlading_shipper_address = billlading.billlading_shipper_address
+  returnData.billlading_consignee_name = billlading.billlading_consignee_name
+  returnData.billlading_consignee_tel = billlading.billlading_consignee_tel
+  returnData.billlading_consignee_address = billlading.billlading_consignee_address
+  returnData.billlading_notify_name = billlading.billlading_notify_name
+  returnData.billlading_notify_tel = billlading.billlading_notify_tel
+  returnData.billlading_notify_address = billlading.billlading_notify_address
+  returnData.billlading_original_num = billlading.billlading_original_num
+  returnData.billlading_copys_num = billlading.billlading_copys_num
+  returnData.billlading_loading_port_id = billlading.billlading_loading_port_id
+  returnData.billlading_discharge_port_id = billlading.billlading_discharge_port_id
+  returnData.billlading_delivery_place = billlading.billlading_delivery_place
+  returnData.billlading_stuffing_place = billlading.billlading_stuffing_place
+  returnData.billlading_stuffing_date = billlading.billlading_stuffing_date
+  returnData.billlading_stuffing_requirement = billlading.billlading_stuffing_requirement
+  returnData.billlading_forwarder_name = billlading.billlading_forwarder_name
+  returnData.billlading_freight_currency = billlading.billlading_freight_currency
+  
+  let goods = await tb_billlading_goods.findAll({
+    where: {
+      billlading_id: doc.billlading_id
+    }
+  })
+  returnData.billlading_goods = []
+  for(let c of goods) {
+    returnData.billlading_goods.push({
+      billlading_goods_container_number: c.billlading_goods_container_number,
+      billlading_goods_container_size: c.billlading_goods_container_size,
+      billlading_goods_container_type: c.billlading_goods_container_type,
+      billlading_goods_type: c.billlading_goods_type,
+      billlading_goods_description: c.billlading_goods_description,
+      billlading_goods_package_number: c.billlading_goods_package_number,
+      billlading_goods_package_unit: c.billlading_goods_package_unit,
+      billlading_goods_gross_weight: c.billlading_goods_gross_weight,
+      billlading_goods_gross_unit: c.billlading_goods_gross_unit,
+      billlading_goods_gross_volume: c.billlading_goods_gross_volume,
+      billlading_goods_gross_volume_unit: c.billlading_goods_gross_volume_unit,
+      billlading_goods_net_weight: c.billlading_goods_net_weight,
+      billlading_goods_net_unit: c.billlading_goods_net_unit
+    })
+  }
+
+  return common.success(returnData)
 }
