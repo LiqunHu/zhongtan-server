@@ -238,6 +238,13 @@ const loginInit = async (user, session_token, type) => {
 
       // prepare redis Cache
       let authApis = []
+      authApis.push({
+        api_name: '用户设置',
+        api_path: '/common/user/UserSetting',
+        api_function: 'USERSETTING',
+        auth_flag: '1',
+        show_flag: '1'
+      })
       if (user.user_type === GLBConfig.TYPE_ADMINISTRATOR) {
         authApis.push({
           api_name: '系统菜单维护',
