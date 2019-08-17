@@ -297,6 +297,7 @@ exports.modifyAct = async req => {
 
     if (user.user_service_name === 'ALL') {
       modibilllading.billlading_state = doc.new.billlading_state
+      modibilllading.billlading_no = doc.new.billlading_no
       modibilllading.billlading_invoice_freight = common.str2Money(doc.new.billlading_invoice_freight_f)
       modibilllading.billlading_invoice_blanding = common.str2Money(doc.new.billlading_invoice_blanding_f)
       modibilllading.billlading_invoice_tasac = common.str2Money(doc.new.billlading_invoice_tasac_f)
