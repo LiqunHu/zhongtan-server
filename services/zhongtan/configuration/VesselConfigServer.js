@@ -9,7 +9,8 @@ const tb_vessel = model.zhongtan_vessel
 
 exports.initAct = async () => {
   let returnData = {
-    VesselServiceINFO: _.drop(GLBConfig.VesselServiceINFO)
+    VesselServiceINFO: _.drop(GLBConfig.VesselServiceINFO),
+    STATUSINFO: GLBConfig.STATUSINFO
   }
   return common.success(returnData)
 }
@@ -18,7 +19,7 @@ exports.searchAct = async req => {
   let doc = common.docValidate(req)
   let returnData = {}
 
-  let queryStr = `select * from tbl_zhongtan_vessel where state = '1'`
+  let queryStr = `select * from tbl_zhongtan_vessel where 1 = 1`
   let replacements = []
 
   if (doc.search_text) {
@@ -65,8 +66,7 @@ exports.modifyAct = async req => {
 
   let vessel = await tb_vessel.findOne({
     where: {
-      vessel_id: doc.old.vessel_id,
-      state: GLBConfig.ENABLE
+      vessel_id: doc.old.vessel_id
     }
   })
   if (vessel) {
@@ -74,6 +74,7 @@ exports.modifyAct = async req => {
     vessel.vessel_name = doc.new.vessel_name
     vessel.vessel_operator = doc.new.vessel_operator
     vessel.vessel_code = doc.new.vessel_code
+    vessel.state = doc.new.state
 
     await vessel.save()
 

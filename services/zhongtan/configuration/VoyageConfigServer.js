@@ -8,7 +8,8 @@ const tb_voyage = model.zhongtan_voyage
 
 exports.initAct = async () => {
   let returnData = {
-    VesselINFO: []
+    VesselINFO: [],
+    STATUSINFO: GLBConfig.STATUSINFO
   }
 
   let Vessels = await tb_vessel.findAll({
@@ -31,7 +32,7 @@ exports.searchAct = async req => {
   let doc = common.docValidate(req)
   let returnData = {}
 
-  let queryStr = `select * from tbl_zhongtan_voyage where state = '1'`
+  let queryStr = `select * from tbl_zhongtan_voyage where 1 = 1`
   let replacements = []
 
   if (doc.search_text) {
@@ -76,15 +77,15 @@ exports.modifyAct = async req => {
 
   let voyage = await tb_voyage.findOne({
     where: {
-      voyage_id: doc.old.voyage_id,
-      state: GLBConfig.ENABLE
+      voyage_id: doc.old.voyage_id
     }
   })
   if (voyage) {
     voyage.vessel_id = doc.new.vessel_id
     voyage.voyage_number = doc.new.voyage_number
     voyage.voyage_eta_date = doc.new.voyage_eta_date
-    voyage.voyage_atd_date = doc.voyage_atd_date
+    voyage.voyage_atd_date = doc.new.voyage_atd_date
+    voyage.state = doc.new.state
 
     await voyage.save()
 
