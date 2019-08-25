@@ -216,8 +216,12 @@ const ejs2xlsx = async (templateFile, renderData, bucket) => {
   let exlBuf = await ejsExcel.renderExcel(templateBuf, renderData)
   let filePath = path.join(process.cwd(), config.fileSys.filesDir, uuid.v4().replace(/-/g, '') + '.xlsx')
   fs.writeFileSync(filePath, exlBuf)
-  let fileInfo = await fileUtil.fileSaveMongoByLocalPath(filePath, bucket, config.fileSys.bucket[bucket].baseUrl)
-  return fileInfo
+  if (bucket) {
+    let fileInfo = await fileUtil.fileSaveMongoByLocalPath(filePath, bucket, config.fileSys.bucket[bucket].baseUrl)
+    return fileInfo
+  } else {
+    return filePath
+  }
 }
 
 const ejs2Word = async (templateFile, renderData, res) => {
@@ -243,7 +247,7 @@ const getContainerISO = (cType, cSize) => {
   }
 }
 
-const getContainerCBM = (size) => {
+const getContainerCBM = size => {
   if (size === '20GP') {
     return '9.577'
   } else {

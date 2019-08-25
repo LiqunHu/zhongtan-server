@@ -12,7 +12,8 @@ const tb_uploadfile = model.zhongtan_uploadfile
 exports.initAct = async () => {
   let returnData = {
     BLSTATUSINFO: [{ id: 'IV', text: 'Invoice', style: 'label-invoice' }, { id: 'RE', text: 'Receipt', style: 'label-receipt' }],
-    RECEIPT_TYPE_INFO: GLBConfig.RECEIPT_TYPE_INFO
+    RECEIPT_TYPE_INFO: GLBConfig.RECEIPT_TYPE_INFO,
+    CASH_BANK_INFO: GLBConfig.CASH_BANK_INFO
   }
 
   return common.success(returnData)
@@ -184,9 +185,12 @@ exports.receiptAct = async req => {
   } else {
     billlading.billlading_state = GLBConfig.BLSTATUS_RECEIPT
     billlading.billlading_received_from = doc.billlading_received_from
+    billlading.billlading_cash_bank_flag = doc.billlading_cash_bank_flag
+    billlading.billlading_bank_detail = doc.billlading_bank_detail
     billlading.billlading_received = doc.billlading_received
     billlading.billlading_receipt_type = doc.billlading_receipt_type
-    billlading.billlading_receipt_no = doc.billlading_receipt_type + moment().format('YYYYMMDD') + ('000000000000000' + billlading.billlading_id).slice(-4)
+    billlading.billlading_receipt_no =
+      doc.billlading_receipt_type + moment().format('YYYYMMDD') + ('000000000000000' + billlading.billlading_id).slice(-4)
     billlading.billlading_receipt_operator = user.user_id
     billlading.billlading_receipt_time = new Date()
     await billlading.save()
@@ -217,4 +221,61 @@ exports.receiptAct = async req => {
 
     return common.success({ url: fileInfo.url })
   }
+}
+
+exports.downdReceiptReportAct = async(req, res) => {
+  let doc = common.docValidate(req)
+
+  let queryStr = `select * from tbl_zhongtan_billlading 
+                    where state = '1'
+                    and billlading_state = 'RE'`
+  let replacements = []
+
+  if (doc.customer) {
+    queryStr += ' and billlading_customer_id = ?'
+    replacements.push(doc.customer)
+  }
+
+  if (doc.start_date) {
+    queryStr += ' and created_at >= ? and created_at <= ?'
+    replacements.push(doc.start_date)
+    replacements.push(
+      moment(doc.end_date, 'YYYY-MM-DD')
+        .add(1, 'days')
+        .format('YYYY-MM-DD')
+    )
+  }
+  queryStr += ' order by created_at desc'
+
+  let result = await model.simpleSelect(queryStr, replacements)
+
+  let renderData = []
+
+  for (let r of result) {
+    let row = JSON.parse(JSON.stringify(r))
+    row.billlading_receipt_date = moment(r.billlading_receipt_time).format('YYYYMMDD')
+    row.sum_fee = common.money2Str(
+      r.billlading_invoice_freight +
+        r.billlading_invoice_blanding +
+        r.billlading_invoice_tasac +
+        r.billlading_invoice_ammendment +
+        r.billlading_invoice_isp +
+        r.billlading_invoice_surchage
+    )
+    if (r.billlading_cash_bank_flag === 'C') {
+      row.cash_bank = 'CASH'
+      row.cash = r.billlading_received
+      row.bank = '0.00'
+    } else if (r.billlading_cash_bank_flag === 'B') {
+      row.cash_bank = 'BANK'
+      row.cash = '0.00'
+      row.bank = r.billlading_received
+    }
+    row.imp_exp = 'exp'
+    renderData.push(row)
+  }
+
+  let filepath = await common.ejs2xlsx('ReceiptReportTemplate.xlsx', renderData)
+
+  res.sendFile(filepath)
 }

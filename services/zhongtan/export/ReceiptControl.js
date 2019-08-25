@@ -15,6 +15,8 @@ module.exports = async (req, res) => {
       ret = await srv.searchAct(req)
     } else if (method === 'receipt') {
       ret = await srv.receiptAct(req)
+    } else if (method === 'downdReceiptReport') {
+      return await srv.downdReceiptReportAct(req, res)
     } 
     
     common.sendData(res, ret)

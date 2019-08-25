@@ -311,5 +311,6 @@ module.exports = {
     { id: 'RE', text: 'Receipt', style: 'label-receipt' }
   ],
   LB_BATCH_STATE: [{ id: '0', text: 'Unused' }, { id: '1', text: 'Used' }, { id: '2', text: 'Cancel' }],
-  RECEIPT_TYPE_INFO: [{ id: 'COSCO', text: 'COSCO' }, { id: 'OOCL', text: 'OOCL' }]
+  RECEIPT_TYPE_INFO: [{ id: 'COSCO', text: 'COSCO' }, { id: 'OOCL', text: 'OOCL' }],
+  CASH_BANK_INFO: [{ id: 'C', text: 'CASH' }, { id: 'B', text: 'BANK' }]
 }

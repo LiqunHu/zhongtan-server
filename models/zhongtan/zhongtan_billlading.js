@@ -323,6 +323,16 @@ module.exports = db.defineModel('tbl_zhongtan_billlading', {
     type: db.STRING(100),
     allowNull: true
   },
+  billlading_cash_bank_flag: {
+    // 现金转账标示
+    type: db.STRING(5),
+    allowNull: true
+  },
+  billlading_bank_detail: {
+    // 银行详情
+    type: db.STRING(50),
+    allowNull: true
+  },
   billlading_received: {
     // 实收
     type: db.STRING(20),
