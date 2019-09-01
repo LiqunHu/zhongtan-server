@@ -43,6 +43,8 @@ module.exports = async (req, res) => {
       ret = await srv.uploadAct(req)
     } else if (method === 'downloadBooking') {
       return await srv.downloadBookingAct(req, res)
+    } else if (method === 'deleteContainer') {
+      ret = await srv.deleteContainerAct(req)
     }
 
     common.sendData(res, ret)

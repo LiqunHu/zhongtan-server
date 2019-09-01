@@ -119,7 +119,7 @@ exports.searchAct = async req => {
 
     d.billlading_containers = []
     let billlading_containers = await tb_container.findAll({
-      where: { billlading_id: d.billlading_id }
+      where: { billlading_id: d.billlading_id, state: GLBConfig.ENABLE }
     })
     for (let c of billlading_containers) {
       d.billlading_containers.push(JSON.parse(JSON.stringify(c)))
@@ -786,7 +786,7 @@ exports.deleteTemplateAct = async req => {
 
 exports.useTemplateAct = async req => {
   let doc = common.docValidate(req),
-  returnData = {}
+    returnData = {}
 
   let billlading = await tb_billlading.findOne({
     where: {
@@ -815,14 +815,14 @@ exports.useTemplateAct = async req => {
   returnData.billlading_stuffing_requirement = billlading.billlading_stuffing_requirement
   returnData.billlading_forwarder_name = billlading.billlading_forwarder_name
   returnData.billlading_freight_currency = billlading.billlading_freight_currency
-  
+
   let goods = await tb_billlading_goods.findAll({
     where: {
       billlading_id: doc.billlading_id
     }
   })
   returnData.billlading_goods = []
-  for(let c of goods) {
+  for (let c of goods) {
     returnData.billlading_goods.push({
       billlading_goods_container_number: c.billlading_goods_container_number,
       billlading_goods_container_size: c.billlading_goods_container_size,

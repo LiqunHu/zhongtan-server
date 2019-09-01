@@ -176,7 +176,7 @@ exports.searchAct = async req => {
 
     d.billlading_containers = []
     let billlading_containers = await tb_container.findAll({
-      where: { billlading_id: d.billlading_id }
+      where: { billlading_id: d.billlading_id, state: GLBConfig.ENABLE }
     })
     for (let c of billlading_containers) {
       d.billlading_containers.push(JSON.parse(JSON.stringify(c)))
@@ -401,7 +401,8 @@ exports.modifyAct = async req => {
 }
 
 exports.cancelAct = async req => {
-  let doc = common.docValidate(req), user = req.user
+  let doc = common.docValidate(req),
+    user = req.user
 
   let billlading = await tb_billlading.findOne({
     where: {
@@ -632,12 +633,12 @@ exports.confirmPickUpAct = async req => {
     VESSEL: ${vessel.vessel_name} ${voyage.voyage_number}<br/>
     `
     let cmails = manager.container_manager_email.split(',')
-    for(let m of cmails) {
-      if(m) {
+    for (let m of cmails) {
+      if (m) {
         await mailer.sendMail(m, 'Pick Up ' + billlading.billlading_no, '', text)
       }
     }
-    
+
     await mailer.sendMail(shipper.user_email, 'Pick Up ' + billlading.billlading_no, text, text)
 
     // 更改订单状态
@@ -961,4 +962,18 @@ exports.downloadBookingAct = async (req, res) => {
   }
 
   return common.ejs2Word('bookingTemplate.docx', docData, res)
+}
+
+exports.deleteContainerAct = async req => {
+  let doc = common.docValidate(req)
+
+  let mContainer = await tb_container.findOne({
+    where: {
+      container_id: doc.container_id
+    }
+  })
+
+  mContainer.state = GLBConfig.DISABLE
+  await mContainer.save()
+  return common.success()
 }
