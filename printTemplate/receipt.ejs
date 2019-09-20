@@ -9,7 +9,7 @@
       }
       .onepage {
         size: A4 portrait;
-        padding: 0px 60px;
+        padding: 0px 30px;
       }
       * {
         margin: 0 auto;
@@ -21,7 +21,7 @@
         table-layout: fixed;
       }
       body {
-        font-size: 18px;
+        font-size: 15px;
         font-family: 'arial narrow', '宋体';
         font-weight: bold;
       }
@@ -106,16 +106,16 @@
           </td>
         </tr>
         <tr>
-          <td valign="middle" colspan="4" style="word-break: break-all;">
+          <td valign="middle" colspan="3" style="word-break: break-all;">
             P.O.BOX 696
           </td>
           <td class="tar">NO.</td>
-          <td colspan="2">
+          <td colspan="3">
             <span class="border"><%=ejsData.billlading_receipt_no%></span>
           </td>
         </tr>
         <tr>
-          <td valign="middle" colspan="4" style="word-break: break-all;">
+          <td valign="middle" colspan="3" style="word-break: break-all;">
             DAR ES SALAAM
           </td>
           <td
@@ -127,7 +127,7 @@
             DATE:
           </td>
 
-          <td colspan="2" valign="middle" colspan="1">
+          <td colspan="3" valign="middle" colspan="1">
             <span class="border"><%=ejsData.receipt_date%></span>
           </td>
         </tr>
@@ -143,7 +143,7 @@
           <td
             valign="middle"
             style="word-break: break-all;"
-            colspan="5"
+            colspan="4"
             class="border"
           >
             <span><%=ejsData.billlading_received_from%></span>
@@ -153,7 +153,7 @@
           <td valign="middle" colspan="2">The sum of US Dollars</td>
           <td
             valign="middle"
-            colspan="5"
+            colspan="4"
             style="word-break: break-all;"
             class="border"
           >
@@ -170,7 +170,7 @@
           >
             <span><%=ejsData.billlading_no%></span>
           </td>
-          <td colspan="3"></td>
+          <td colspan="2"></td>
         </tr>
         <tr>
           <td
@@ -189,13 +189,12 @@
           >
             <span><%=ejsData.billlading_received%></span>
           </td>
-          <td valign="bottom" colspan="2"></td>
-          <td valign="bottom" style="word-break: break-all;" class="fstyle">
-            WITH&ensp;THANKS
+          <td valign="bottom" style="padding-left: 30px;" class="fstyle" colspan="2">
+            WITH THANKS
           </td>
         </tr>
         <tr>
-          <td valign="bottom" colspan="4" rowspan="1"></td>
+          <td valign="bottom" colspan="3" rowspan="1"></td>
           <td
             valign="bottom"
             colspan="2"
@@ -217,7 +216,6 @@
           >
             <span><%=ejsData.sum_fee%></span>
           </td>
-          <td></td>
           <td
             valign="bottom"
             colspan="2"
