@@ -1,3 +1,4 @@
+const _ = require('lodash')
 const moment = require('moment')
 const writtenNumber = require('written-number')
 const common = require('../../../util/CommonUtil')
@@ -207,7 +208,7 @@ exports.receiptAct = async req => {
         billlading.billlading_invoice_surchage
     )
 
-    renderData.sum_fee_str = writtenNumber(renderData.sum_fee)
+    renderData.sum_fee_str = _.capitalize(writtenNumber(renderData.sum_fee))
 
     let fileInfo = await common.ejs2Pdf('receipt.ejs', renderData, 'zhongtan')
 
