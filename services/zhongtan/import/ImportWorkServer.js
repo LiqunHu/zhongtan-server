@@ -18,7 +18,9 @@ const tb_billlading_container = model.zhongtan_import_billlading_container
 const tb_shipinfo = model.zhongtan_import_shipinfo
 
 exports.initAct = async () => {
-  let returnData = {}
+  let returnData = {
+    TFINFO: GLBConfig.TFINFO
+  }
 
   let ships = await tb_shipinfo.findAll({
     where: {
@@ -647,6 +649,20 @@ exports.downloadBLAct = async (req, res) => {
   await bl.save()
 
   return common.ejs2Word('importTemplate.docx', doc, res)
+}
+
+exports.releasedAct = async req => {
+  let doc = common.docValidate(req)
+  let bl = await tb_billlading.findOne({
+    where: {
+      import_billlading_id: doc.import_billlading_id
+    }
+  })
+  if (bl) {
+    bl.import_billlading_released_flag = '1'
+    await bl.save()
+  }
+  return common.success()
 }
 
 exports.uploadAct = async req => {

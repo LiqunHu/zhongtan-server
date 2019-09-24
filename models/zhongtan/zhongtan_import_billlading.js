@@ -7,6 +7,11 @@ module.exports = db.defineModel('tbl_zhongtan_import_billlading', {
     autoIncrement: true,
     primaryKey: true
   },
+  import_billlading_released_flag: {
+    type: db.STRING(5),
+    defaultValue: '0',
+    allowNull: false
+  },
   import_billlading_customer_id: {
     type: db.UUID,
     defaultValue: '',

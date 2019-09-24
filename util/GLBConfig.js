@@ -56,11 +56,11 @@ module.exports = {
   TFINFO: [
     {
       id: '1',
-      text: '是'
+      text: 'Yes'
     },
     {
       id: '0',
-      text: '否'
+      text: 'No'
     }
   ],
   YNINFO: [
