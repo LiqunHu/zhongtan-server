@@ -376,7 +376,10 @@ exports.searchCustomerAct = async req => {
     for (let s of shippers) {
       returnData.customerINFO.push({
         id: s.user_id,
-        text: s.user_name
+        text: s.user_name,
+        name: s.user_name,
+        address: s.user_address,
+        phone: s.user_phone
       })
     }
     return common.success(returnData)
@@ -645,6 +648,7 @@ exports.downloadBLAct = async (req, res) => {
       import_billlading_id: doc.import_billlading_id
     }
   })
+  bl.import_billlading_customer_id = doc.import_billlading_customer_id
   bl.import_billlading_bl_date = doc.bl_date
   await bl.save()
 
