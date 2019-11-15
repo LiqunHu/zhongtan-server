@@ -14,6 +14,7 @@ router.post('/export/Booking/:method', services.BookingControl)
 router.post('/export/BookingWork/:method', services.BookingWorkControl)
 router.post('/export/Receipt/:method', services.ReceiptControl)
 router.post('/import/ImportWork/:method', services.ImportWorkControl)
+router.post('/invoice/Invoice/:method', services.InvoiceControl)
 
 router.post('/web/SailSchedule/:method', services.SailScheduleControl)
 router.post('/web/WebConfig/:method', services.WebConfigControl)

@@ -58,7 +58,8 @@
     "markdown-it-task-lists": "^2.1.1",
     "markdown-it-toc": "^1.1.0",
     "puppeteer": "1.19.0",
-    "xml-js": "1.6.11"
+    "xml-js": "1.6.11",
+    "xlsx": "0.15.1"
   },
   "devDependencies": {
     "rimraf": "^2.6.2",
