@@ -7,44 +7,38 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_vessel', {
     autoIncrement: true,
     primaryKey: true
   },
-  invoice_vessel_mrn: {
-    // mrn
-    type: db.STRING(20),
-    defaultValue: '',
-    allowNull: false
-  },
   invoice_vessel_name: {
-    // vessel name
+    // VESSEL NAME
     type: db.STRING(100),
     defaultValue: '',
     allowNull: false
   },
-  invoice_vessel_call_sign: {
-    // call sign
+  invoice_vessel_code: {
+    // VESSEL CODE
     type: db.STRING(20),
     defaultValue: '',
     allowNull: false
   },
   invoice_vessel_voyage: {
-    // voyage
+    // VOYAGE NUM
     type: db.STRING(20),
     defaultValue: '',
     allowNull: false
   },
-  invoice_vessel_departure_date: {
-    // Departure Date
+  invoice_vessel_eta: {
+    // ETA
     type: db.STRING(20),
     defaultValue: '',
     allowNull: false
   },
-  invoice_vessel_arrival_date: {
-    // Arrival Date
+  invoice_vessel_ata: {
+    // ATA
     type: db.STRING(20),
     defaultValue: '',
     allowNull: false
   },
-  invoice_vessel_tpa_uid: {
-    // TPA UID
+  invoice_vessel_atd: {
+    // ATD
     type: db.STRING(20),
     defaultValue: '',
     allowNull: false

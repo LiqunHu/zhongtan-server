@@ -35,8 +35,8 @@ exports.uploadImportAct = async req => {
 
     let vessel = await tb_vessel.findOne({
       where: {
-        invoice_vessel_name: vesslInfoJS[0]['Vessel Name'],
-        invoice_vessel_voyage: vesslInfoJS[0]['Voyage']
+        invoice_vessel_name: vesslInfoJS[0]['VESSEL NAME'],
+        invoice_vessel_voyage: vesslInfoJS[0]['VOYAGE NUM']
       }
     })
 
@@ -44,13 +44,12 @@ exports.uploadImportAct = async req => {
       return common.error('import_01')
     } else {
       vessel = await tb_vessel.create({
-        invoice_vessel_mrn: vesslInfoJS[0]['MRN'],
-        invoice_vessel_name: vesslInfoJS[0]['Vessel Name'],
-        invoice_vessel_call_sign: vesslInfoJS[0]['Call Sign'],
-        invoice_vessel_voyage: vesslInfoJS[0]['Voyage'],
-        invoice_vessel_departure_date: vesslInfoJS[0]['Departure Date'],
-        invoice_vessel_arrival_date: vesslInfoJS[0]['Arrival Date'],
-        invoice_vessel_tpa_uid: vesslInfoJS[0]['TPA UID']
+        invoice_vessel_name: vesslInfoJS[0]['VESSEL NAME'],
+        invoice_vessel_code: vesslInfoJS[0]['VESSEL CODE'],
+        invoice_vessel_voyage: vesslInfoJS[0]['VOYAGE NUM'],
+        invoice_vessel_eta: vesslInfoJS[0]['ETA'],
+        invoice_vessel_ata: vesslInfoJS[0]['ATA'],
+        invoice_vessel_atd: vesslInfoJS[0]['ATD']
       })
 
       for (let m of masterBIJS) {
@@ -156,10 +155,10 @@ exports.searchVoyageAct = async req => {
 
 exports.getVoyageDetailAct = async req => {
   let doc = common.docValidate(req),
-  returnData = {
-    MasterBl: [],
-    Containers: []
-  }
+    returnData = {
+      MasterBl: [],
+      Containers: []
+    }
 
   let bl = await tb_bl.findAll({
     where: {
