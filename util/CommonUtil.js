@@ -255,6 +255,16 @@ const getContainerCBM = size => {
   }
 }
 
+const getContainerTare = size => {
+  if (size === '40HQ') {
+    return '4.0'
+  } else if (size === '45G1') {
+    return '4.0'
+  } else {
+    return ''
+  }
+}
+
 const df = strInput => {
   return strInput ? strInput._text : ''
 }
@@ -279,5 +289,6 @@ module.exports = {
   ejs2Word: ejs2Word,
   getContainerISO: getContainerISO,
   getContainerCBM: getContainerCBM,
-  df: df
+  df: df,
+  getContainerTare: getContainerTare
 }

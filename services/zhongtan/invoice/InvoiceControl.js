@@ -15,6 +15,8 @@ module.exports = async (req, res) => {
       ret = await srv.searchVoyageAct(req)
     } else if (method === 'getVoyageDetail') {
       ret = await srv.getVoyageDetailAct(req)
+    } else if (method === 'downloadDo') {
+      return await srv.downloadDoAct(req, res)
     }
 
     common.sendData(res, ret)

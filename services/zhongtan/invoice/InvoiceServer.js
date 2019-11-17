@@ -176,3 +176,48 @@ exports.getVoyageDetailAct = async req => {
 
   return common.success(returnData)
 }
+
+exports.downloadDoAct = async (req, res) => {
+  let doc = common.docValidate(req)
+  let bl = await tb_bl.findOne({
+    where: {
+      invoice_masterbi_id: doc.invoice_masterbi_id
+    }
+  })
+  bl.invoice_masterbi_delivery_to = doc.invoice_masterbi_delivery_to
+  bl.invoice_masterbi_do_date = moment().format('YYYY-MM-DD')
+  bl.invoice_masterbi_valid_to = doc.invoice_masterbi_valid_to
+  await bl.save()
+
+  let vessel = await tb_vessel.findOne({
+    where: {
+      invoice_vessel_id: bl.invoice_vessel_id
+    }
+  })
+
+  let continers = await tb_container.findAll({
+    where: {
+      invoice_vessel_id: bl.invoice_vessel_id,
+      invoice_containers_bl: bl.invoice_masterbi_bl
+    }
+  })
+
+  let renderData = JSON.parse(JSON.stringify(bl))
+  renderData.delivery_order_no = ('000000000000000' + bl.invoice_masterbi_id).slice(-8)
+  renderData.invoice_vessel_name = vessel.invoice_vessel_name
+  renderData.invoice_vessel_voyage = vessel.invoice_vessel_voyage
+  renderData.vessel_eta = moment(vessel.invoice_vessel_eta, 'DD-MM-YYYY').format('DD/MM/YYYY')
+  renderData.do_date = moment(bl.invoice_masterbi_do_date).format('DD/MM/YYYY')
+  renderData.valid_to = moment(bl.invoice_masterbi_valid_to).format('DD/MM/YYYY')
+  renderData.containers = JSON.parse(JSON.stringify(continers))
+  let cSize = []
+  for (let i = 0; i < renderData.containers.length; i++) {
+    renderData.containers[i].invoice_containers_tare = common.getContainerTare(renderData.containers[i].invoice_containers_size)
+    if (cSize.indexOf(renderData.containers[i].invoice_containers_size) < 0) {
+      cSize.push(renderData.containers[i].invoice_containers_size)
+    }
+  }
+  renderData.container_count = bl.invoice_masterbi_container_no + 'X' + cSize.join(' ')
+
+  return common.ejs2Word('doTemplate.docx', renderData, res)
+}
