@@ -11,6 +11,15 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_masterbl', {
     type: db.IDNO,
     allowNull: false
   },
+  invoice_vessel_release_state: {
+    type: db.STRING(10),
+    defaultValue: '0',
+    allowNull: false
+  },
+  invoice_vessel_release_date: {
+    type: db.DATE,
+    allowNull: true
+  },
   invoice_masterbi_bl: {
     // #M B/L No
     type: db.STRING(50),

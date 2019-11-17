@@ -1,12 +1,21 @@
 const X = require('xlsx')
 const moment = require('moment')
 // const logger = require('../../../app/logger').createLogger(__filename)
+const GLBConfig = require('../../../util/GLBConfig')
 const common = require('../../../util/CommonUtil')
 const model = require('../../../app/model')
 
 const tb_vessel = model.zhongtan_invoice_vessel
 const tb_bl = model.zhongtan_invoice_masterbl
 const tb_container = model.zhongtan_invoice_containers
+
+exports.initAct = async () => {
+  let returnData = {
+    TFINFO: GLBConfig.TFINFO
+  }
+
+  return common.success(returnData)
+}
 
 exports.uploadImportAct = async req => {
   let doc = common.docValidate(req)
@@ -220,4 +229,17 @@ exports.downloadDoAct = async (req, res) => {
   renderData.container_count = bl.invoice_masterbi_container_no + 'X' + cSize.join(' ')
 
   return common.ejs2Word('doTemplate.docx', renderData, res)
+}
+
+exports.doReleaseAct = async req => {
+  let doc = common.docValidate(req)
+  let bl = await tb_bl.findOne({
+    where: {
+      invoice_masterbi_id: doc.invoice_masterbi_id
+    }
+  })
+  bl.invoice_vessel_release_state = '1'
+  bl.invoice_vessel_release_date = new Date()
+  await bl.save()
+  return common.success()
 }
