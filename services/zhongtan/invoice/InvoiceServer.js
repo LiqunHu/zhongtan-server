@@ -42,6 +42,10 @@ exports.uploadImportAct = async req => {
     // const data = fs.readFileSync(f.response.info.path, 'utf8')
     // console.log(data)
 
+    if(!(vesslInfoJS[0]['VESSEL NAME'] && vesslInfoJS[0]['VOYAGE NUM'])) {
+      return common.error('import_03')
+    }
+
     let vessel = await tb_vessel.findOne({
       where: {
         invoice_vessel_name: vesslInfoJS[0]['VESSEL NAME'],
