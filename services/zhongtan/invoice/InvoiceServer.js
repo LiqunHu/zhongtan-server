@@ -141,7 +141,8 @@ exports.uploadAct = async req => {
 }
 
 exports.searchVoyageAct = async req => {
-  let doc = common.docValidate(req)
+  let doc = common.docValidate(req),
+    returnData = []
 
   let queryStr = `select * from tbl_zhongtan_invoice_vessel
                     where state = '1'`
@@ -159,7 +160,24 @@ exports.searchVoyageAct = async req => {
 
   let vessels = await model.simpleSelect(queryStr, replacements)
 
-  return common.success(vessels)
+  for (let v of vessels) {
+    let row = JSON.parse(JSON.stringify(v))
+    let rcount = await tb_bl.count({
+      where: {
+        invoice_vessel_id: v.invoice_vessel_id,
+        invoice_vessel_release_state: '1'
+      }
+    })
+    let acount = await tb_bl.count({
+      where: {
+        invoice_vessel_id: v.invoice_vessel_id
+      }
+    })
+    row.invoice_release = rcount + '/' + acount
+    returnData.push(row)
+  }
+
+  return common.success(returnData)
 }
 
 exports.getVoyageDetailAct = async req => {
@@ -193,10 +211,13 @@ exports.downloadDoAct = async (req, res) => {
       invoice_masterbi_id: doc.invoice_masterbi_id
     }
   })
-  bl.invoice_masterbi_delivery_to = doc.invoice_masterbi_delivery_to
-  bl.invoice_masterbi_do_date = moment().format('YYYY-MM-DD')
-  bl.invoice_masterbi_valid_to = doc.invoice_masterbi_valid_to
-  await bl.save()
+
+  if (bl.invoice_vessel_release_state === '0') {
+    bl.invoice_masterbi_delivery_to = doc.invoice_masterbi_delivery_to
+    bl.invoice_masterbi_do_date = moment().format('YYYY-MM-DD')
+    bl.invoice_masterbi_valid_to = doc.invoice_masterbi_valid_to
+    await bl.save()
+  }
 
   let vessel = await tb_vessel.findOne({
     where: {
