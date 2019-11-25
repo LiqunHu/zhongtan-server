@@ -281,5 +281,28 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_masterbl', {
     // Delivery To
     type: db.DATEONLY,
     allowNull: true
+  },
+  invoice_masterbi_customer: {
+    // Customer
+    type: db.STRING(200),
+    defaultValue: '',
+    allowNull: false
+  },
+  invoice_masterbi_carrier: {
+    // Carrier
+    type: db.STRING(50),
+    defaultValue: '',
+    allowNull: false
+  },
+  invoice_masterbi_deposit: {
+    // Deposit
+    type: db.STRING(50),
+    defaultValue: '',
+    allowNull: false
+  },
+  invoice_masterbi_deposit_date: {
+    // Deposit data
+    type: db.DATEONLY,
+    allowNull: true
   }
 })

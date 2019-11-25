@@ -8,10 +8,13 @@ const model = require('../../../app/model')
 const tb_vessel = model.zhongtan_invoice_vessel
 const tb_bl = model.zhongtan_invoice_masterbl
 const tb_container = model.zhongtan_invoice_containers
+const tb_customer = model.zhongtan_invoice_customer
+const tb_uploadfile = model.zhongtan_uploadfile
 
 exports.initAct = async () => {
   let returnData = {
-    TFINFO: GLBConfig.TFINFO
+    TFINFO: GLBConfig.TFINFO,
+    RECEIPT_TYPE_INFO: GLBConfig.RECEIPT_TYPE_INFO
   }
 
   return common.success(returnData)
@@ -42,7 +45,7 @@ exports.uploadImportAct = async req => {
     // const data = fs.readFileSync(f.response.info.path, 'utf8')
     // console.log(data)
 
-    if(!(vesslInfoJS[0]['VESSEL NAME'] && vesslInfoJS[0]['VOYAGE NUM'])) {
+    if (!(vesslInfoJS[0]['VESSEL NAME'] && vesslInfoJS[0]['VOYAGE NUM'])) {
       return common.error('import_03')
     }
 
@@ -202,7 +205,41 @@ exports.getVoyageDetailAct = async req => {
       invoice_vessel_id: doc.invoice_vessel_id
     }
   })
-  returnData.MasterBl = JSON.parse(JSON.stringify(bl))
+  for(let b of bl) {
+    let d = JSON.parse(JSON.stringify(b))
+    d.files = []
+    let files = await tb_uploadfile.findAll({
+      where: {
+        uploadfile_index1: b.invoice_masterbi_id
+      },
+      order: [['created_at', 'DESC']]
+    })
+    for (let f of files) {
+      let filetype = ''
+      if (f.api_name === 'RECEIPT-DEPOSIT') {
+        filetype = 'Deposit'
+        d.files.push({
+          filetype: filetype,
+          date: moment(f.created_at).format('YYYY-MM-DD'),
+          file_id: f.uploadfile_id,
+          url: f.uploadfile_url,
+          name: f.uploadfile_name,
+          remark: f.uploadfile_remark
+        })
+      } else if (f.api_name === 'BOOKING-RECEIPT') {
+        filetype = 'Receipt'
+        d.files.push({
+          filetype: filetype,
+          date: moment(f.created_at).format('YYYY-MM-DD'),
+          file_id: f.uploadfile_id,
+          url: f.uploadfile_url,
+          name: f.uploadfile_name,
+          remark: f.uploadfile_remark
+        })
+      }
+    }
+    returnData.MasterBl.push(d)
+  }
   returnData.Containers = JSON.parse(JSON.stringify(container))
 
   return common.success(returnData)
@@ -267,4 +304,78 @@ exports.doReleaseAct = async req => {
   bl.invoice_vessel_release_date = new Date()
   await bl.save()
   return common.success()
+}
+
+exports.searchCustomerAct = async req => {
+  let doc = common.docValidate(req),
+    returnData = []
+
+  let queryStr = `SELECT invoice_customer_name
+    FROM
+      tbl_zhongtan_invoice_customer
+    WHERE
+    invoice_customer_name like ?`
+  let replacements = ['%' + doc.search_text + '%']
+
+  let data = await model.simpleSelect(queryStr, replacements)
+  data.forEach(value => {
+    returnData.push(value.invoice_customer_name)
+  })
+  return common.success(returnData)
+}
+
+exports.depositDoAct = async req => {
+  let doc = common.docValidate(req),
+    user = req.user
+  let bl = await tb_bl.findOne({
+    where: {
+      invoice_masterbi_id: doc.invoice_masterbi_id
+    }
+  })
+
+  let vessel = await tb_vessel.findOne({
+    where: {
+      invoice_vessel_id: bl.invoice_vessel_id
+    }
+  })
+
+  let customer = await tb_customer.findOne({
+    where: {
+      invoice_customer_name: doc.invoice_masterbi_customer
+    }
+  })
+
+  if (!customer) {
+    await tb_customer.create({
+      invoice_customer_name: doc.invoice_masterbi_customer
+    })
+  }
+
+  if (doc.depositType === 'Container Deposit') {
+    bl.invoice_masterbi_customer = doc.invoice_masterbi_customer
+    bl.invoice_masterbi_carrier = doc.invoice_masterbi_carrier
+    bl.invoice_masterbi_deposit = doc.invoice_masterbi_deposit
+    bl.invoice_masterbi_deposit_date = new Date()
+    await bl.save()
+
+    let renderData = JSON.parse(JSON.stringify(bl))
+    renderData.deposit_date = moment(bl.invoice_masterbi_deposit_date).format('YYYY/MM/DD')
+    renderData.vessel_name = vessel.invoice_vessel_name
+    renderData.voyage_number = vessel.invoice_vessel_voyage
+    renderData.voyage_atd_date = vessel.invoice_vessel_atd
+
+    let fileInfo = await common.ejs2Pdf('deposit.ejs', renderData, 'zhongtan')
+
+    await tb_uploadfile.create({
+      api_name: 'RECEIPT-DEPOSIT',
+      user_id: user.user_id,
+      uploadfile_index1: bl.invoice_masterbi_id,
+      uploadfile_name: fileInfo.name,
+      uploadfile_url: fileInfo.url
+    })
+
+    return common.success({ url: fileInfo.url })
+  } else {
+    return common.success()
+  }
 }

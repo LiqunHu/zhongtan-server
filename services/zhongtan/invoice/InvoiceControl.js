@@ -21,6 +21,10 @@ module.exports = async (req, res) => {
       return await srv.downloadDoAct(req, res)
     } else if (method === 'doRelease') {
       ret = await srv.doReleaseAct(req)
+    } else if (method === 'searchCustomer') {
+      ret = await srv.searchCustomerAct(req)
+    } else if (method === 'depositDo') {
+      ret = await srv.depositDoAct(req)
     }
 
     common.sendData(res, ret)
