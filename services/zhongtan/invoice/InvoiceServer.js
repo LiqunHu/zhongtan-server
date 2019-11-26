@@ -205,7 +205,7 @@ exports.getVoyageDetailAct = async req => {
       invoice_vessel_id: doc.invoice_vessel_id
     }
   })
-  for(let b of bl) {
+  for (let b of bl) {
     let d = JSON.parse(JSON.stringify(b))
     d.files = []
     let files = await tb_uploadfile.findAll({
@@ -226,8 +226,8 @@ exports.getVoyageDetailAct = async req => {
           name: f.uploadfile_name,
           remark: f.uploadfile_remark
         })
-      } else if (f.api_name === 'BOOKING-RECEIPT') {
-        filetype = 'Receipt'
+      } else if (f.api_name === 'RECEIPT-FEE') {
+        filetype = 'Fee'
         d.files.push({
           filetype: filetype,
           date: moment(f.created_at).format('YYYY-MM-DD'),
@@ -375,7 +375,61 @@ exports.depositDoAct = async req => {
     })
 
     return common.success({ url: fileInfo.url })
-  } else {
-    return common.success()
+  } else if (doc.depositType === 'Invoice Fee') {
+    bl.invoice_masterbi_transfer = doc.invoice_masterbi_transfer
+    bl.invoice_masterbi_lolf = doc.invoice_masterbi_lolf
+    bl.invoice_masterbi_lcl = doc.invoice_masterbi_lcl
+    bl.invoice_masterbi_amendment = doc.invoice_masterbi_amendment
+    bl.invoice_masterbi_tasac = doc.invoice_masterbi_tasac
+    bl.invoice_masterbi_printing = doc.invoice_masterbi_printing
+    bl.invoice_masterbi_fee_date = new Date()
+    await bl.save()
+
+    let renderData = JSON.parse(JSON.stringify(bl))
+
+    renderData.fee_date = moment(bl.invoice_masterbi_fee_date).format('YYYY/MM/DD')
+    renderData.vessel_name = vessel.invoice_vessel_name
+    renderData.voyage_number = vessel.invoice_vessel_voyage
+    renderData.voyage_atd_date = vessel.invoice_vessel_atd
+
+    renderData.fee = []
+    renderData.sum_fee = 0
+    if (bl.invoice_masterbi_transfer) {
+      renderData.fee.push({ type: 'TRANSFER', amount: bl.invoice_masterbi_transfer })
+      renderData.sum_fee += parseFloat(bl.invoice_masterbi_transfer)
+    }
+    if (bl.invoice_masterbi_lolf) {
+      renderData.fee.push({ type: 'LOLF', amount: bl.invoice_masterbi_lolf })
+      renderData.sum_fee += parseFloat(bl.invoice_masterbi_lolf)
+    }
+    if (bl.invoice_masterbi_lcl) {
+      renderData.fee.push({ type: 'LCL', amount: bl.invoice_masterbi_lcl })
+      renderData.sum_fee += parseFloat(bl.invoice_masterbi_lcl)
+    }
+    if (bl.invoice_masterbi_amendment) {
+      renderData.fee.push({ type: 'AMENDMENT', amount: bl.invoice_masterbi_amendment })
+      renderData.sum_fee += parseFloat(bl.invoice_masterbi_amendment)
+    }
+    if (bl.invoice_masterbi_tasac) {
+      renderData.fee.push({ type: 'TASAC', amount: bl.invoice_masterbi_tasac })
+      renderData.sum_fee += parseFloat(bl.invoice_masterbi_tasac)
+    }
+    if (bl.invoice_masterbi_printing) {
+      renderData.fee.push({ type: 'PTINTING', amount: bl.invoice_masterbi_printing })
+      renderData.sum_fee += parseFloat(bl.invoice_masterbi_printing)
+    }
+
+    let fileInfo = await common.ejs2Pdf('fee.ejs', renderData, 'zhongtan')
+
+    await tb_uploadfile.create({
+      api_name: 'RECEIPT-FEE',
+      user_id: user.user_id,
+      uploadfile_index1: bl.invoice_masterbi_id,
+      uploadfile_name: fileInfo.name,
+      uploadfile_url: fileInfo.url
+    })
+
+    return common.success({ url: fileInfo.url })
   }
+  return common.success()
 }

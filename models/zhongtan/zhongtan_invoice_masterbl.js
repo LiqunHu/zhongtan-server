@@ -304,5 +304,46 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_masterbl', {
     // Deposit data
     type: db.DATEONLY,
     allowNull: true
+  },
+  invoice_masterbi_fee_date: {
+    // Deposit data
+    type: db.DATEONLY,
+    allowNull: true
+  },
+  invoice_masterbi_transfer: {
+    // CONTAINER TRANSFER
+    type: db.STRING(50),
+    defaultValue: '',
+    allowNull: false
+  },
+  invoice_masterbi_lolf: {
+    // LIFT ON LIFT OFF
+    type: db.STRING(50),
+    defaultValue: '',
+    allowNull: false
+  },
+  invoice_masterbi_lcl: {
+    // LCL FEE
+    type: db.STRING(50),
+    defaultValue: '',
+    allowNull: false
+  },
+  invoice_masterbi_amendment: {
+    // AMENDMENT FEE
+    type: db.STRING(50),
+    defaultValue: '',
+    allowNull: false
+  },
+  invoice_masterbi_tasac: {
+    // TASAC
+    type: db.STRING(50),
+    defaultValue: '',
+    allowNull: false
+  },
+  invoice_masterbi_printing: {
+    // BILL PRINGTING FEE
+    type: db.STRING(50),
+    defaultValue: '',
+    allowNull: false
   }
 })
