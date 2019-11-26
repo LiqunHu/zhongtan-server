@@ -282,11 +282,9 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_masterbl', {
     type: db.DATEONLY,
     allowNull: true
   },
-  invoice_masterbi_customer: {
-    // Customer
-    type: db.STRING(200),
-    defaultValue: '',
-    allowNull: false
+  invoice_masterbi_customer_id: {
+    type: db.UUID,
+    allowNull: true
   },
   invoice_masterbi_carrier: {
     // Carrier

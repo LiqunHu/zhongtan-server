@@ -4,11 +4,12 @@ const moment = require('moment')
 const GLBConfig = require('../../../util/GLBConfig')
 const common = require('../../../util/CommonUtil')
 const model = require('../../../app/model')
+const seq = require('../../../util/Sequence')
 
+const tb_user = model.common_user
 const tb_vessel = model.zhongtan_invoice_vessel
 const tb_bl = model.zhongtan_invoice_masterbl
 const tb_container = model.zhongtan_invoice_containers
-const tb_customer = model.zhongtan_invoice_customer
 const tb_uploadfile = model.zhongtan_uploadfile
 
 exports.initAct = async () => {
@@ -194,11 +195,15 @@ exports.getVoyageDetailAct = async req => {
       Containers: []
     }
 
-  let bl = await tb_bl.findAll({
-    where: {
-      invoice_vessel_id: doc.invoice_vessel_id
-    }
-  })
+  let queryStr = `SELECT
+      a.*, b.user_name
+    FROM
+      tbl_zhongtan_invoice_masterbl a
+    LEFT JOIN tbl_common_user b ON b.user_id = a.invoice_masterbi_customer_id
+    WHERE
+      a.invoice_vessel_id = ?`
+  let replacements = [doc.invoice_vessel_id]
+  let bl = await model.simpleSelect(queryStr, replacements)
 
   let container = await tb_container.findAll({
     where: {
@@ -207,6 +212,12 @@ exports.getVoyageDetailAct = async req => {
   })
   for (let b of bl) {
     let d = JSON.parse(JSON.stringify(b))
+    d.customerINFO = [
+      {
+        id: d.invoice_masterbi_customer_id,
+        text: d.user_name
+      }
+    ]
     d.files = []
     let files = await tb_uploadfile.findAll({
       where: {
@@ -307,21 +318,30 @@ exports.doReleaseAct = async req => {
 }
 
 exports.searchCustomerAct = async req => {
-  let doc = common.docValidate(req),
-    returnData = []
-
-  let queryStr = `SELECT invoice_customer_name
-    FROM
-      tbl_zhongtan_invoice_customer
-    WHERE
-    invoice_customer_name like ?`
-  let replacements = ['%' + doc.search_text + '%']
-
-  let data = await model.simpleSelect(queryStr, replacements)
-  data.forEach(value => {
-    returnData.push(value.invoice_customer_name)
-  })
-  return common.success(returnData)
+  let doc = common.docValidate(req)
+  if (doc.search_text) {
+    let returnData = {
+      customerINFO: []
+    }
+    let queryStr = `select * from tbl_common_user 
+                where state = "1" and user_type = "${GLBConfig.TYPE_CUSTOMER}"  
+                and (user_username like ? or user_phone like ? or user_name like ?)`
+    let replacements = []
+    let search_text = '%' + doc.search_text + '%'
+    replacements.push(search_text)
+    replacements.push(search_text)
+    replacements.push(search_text)
+    let shippers = await model.simpleSelect(queryStr, replacements)
+    for (let s of shippers) {
+      returnData.customerINFO.push({
+        id: s.user_id,
+        text: s.user_name
+      })
+    }
+    return common.success(returnData)
+  } else {
+    return common.success()
+  }
 }
 
 exports.depositDoAct = async req => {
@@ -339,20 +359,14 @@ exports.depositDoAct = async req => {
     }
   })
 
-  let customer = await tb_customer.findOne({
+  let customer = await tb_user.findOne({
     where: {
-      invoice_customer_name: doc.invoice_masterbi_customer
+      user_id: bl.invoice_masterbi_customer_id
     }
   })
 
-  if (!customer) {
-    await tb_customer.create({
-      invoice_customer_name: doc.invoice_masterbi_customer
-    })
-  }
-
   if (doc.depositType === 'Container Deposit') {
-    bl.invoice_masterbi_customer = doc.invoice_masterbi_customer
+    bl.invoice_masterbi_customer_id = doc.invoice_masterbi_customer_id
     bl.invoice_masterbi_carrier = doc.invoice_masterbi_carrier
     bl.invoice_masterbi_deposit = doc.invoice_masterbi_deposit
     bl.invoice_masterbi_deposit_date = new Date()
@@ -360,6 +374,8 @@ exports.depositDoAct = async req => {
 
     let renderData = JSON.parse(JSON.stringify(bl))
     renderData.deposit_date = moment(bl.invoice_masterbi_deposit_date).format('YYYY/MM/DD')
+    renderData.receipt_no = await seq.genReceiptNo()
+    renderData.customer_name = customer.user_name
     renderData.vessel_name = vessel.invoice_vessel_name
     renderData.voyage_number = vessel.invoice_vessel_voyage
     renderData.voyage_atd_date = vessel.invoice_vessel_atd
@@ -376,6 +392,7 @@ exports.depositDoAct = async req => {
 
     return common.success({ url: fileInfo.url })
   } else if (doc.depositType === 'Invoice Fee') {
+    bl.invoice_masterbi_customer_id = doc.invoice_masterbi_customer_id
     bl.invoice_masterbi_transfer = doc.invoice_masterbi_transfer
     bl.invoice_masterbi_lolf = doc.invoice_masterbi_lolf
     bl.invoice_masterbi_lcl = doc.invoice_masterbi_lcl
@@ -388,6 +405,8 @@ exports.depositDoAct = async req => {
     let renderData = JSON.parse(JSON.stringify(bl))
 
     renderData.fee_date = moment(bl.invoice_masterbi_fee_date).format('YYYY/MM/DD')
+    renderData.customer_name = customer.user_name
+    renderData.receipt_no = await seq.genReceiptNo()
     renderData.vessel_name = vessel.invoice_vessel_name
     renderData.voyage_number = vessel.invoice_vessel_voyage
     renderData.voyage_atd_date = vessel.invoice_vessel_atd
