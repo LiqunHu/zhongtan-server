@@ -361,7 +361,7 @@ exports.depositDoAct = async req => {
 
   let customer = await tb_user.findOne({
     where: {
-      user_id: bl.invoice_masterbi_customer_id
+      user_id: doc.invoice_masterbi_customer_id
     }
   })
 
