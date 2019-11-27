@@ -71,6 +71,8 @@ exports.addAct = async req => {
       user_name: doc.user_name,
       user_gender: doc.user_gender,
       user_address: doc.user_address,
+      user_address1: doc.user_address1,
+      user_address2: doc.user_address2,
       user_zipcode: doc.user_zipcode
     })
 
@@ -104,6 +106,8 @@ exports.modifyAct = async req => {
     modiuser.user_gender = doc.new.user_gender
     modiuser.user_avatar = doc.new.user_avatar
     modiuser.user_address = doc.new.user_address
+    modiuser.user_address1 = doc.new.user_address1
+    modiuser.user_address2 = doc.new.user_address2
     modiuser.user_state = doc.new.user_state
     modiuser.user_zipcode = doc.new.user_zipcode
     await modiuser.save()

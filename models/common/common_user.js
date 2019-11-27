@@ -78,6 +78,16 @@ module.exports = db.defineModel('tbl_common_user', {
     defaultValue: '',
     allowNull: false
   },
+  user_address1: {
+    type: db.STRING(100),
+    defaultValue: '',
+    allowNull: false
+  },
+  user_address2: {
+    type: db.STRING(100),
+    defaultValue: '',
+    allowNull: false
+  },
   user_zipcode: {
     type: db.STRING(32),
     defaultValue: '',

@@ -376,6 +376,11 @@ exports.depositDoAct = async req => {
     renderData.deposit_date = moment(bl.invoice_masterbi_deposit_date).format('YYYY/MM/DD')
     renderData.receipt_no = await seq.genReceiptNo()
     renderData.customer_name = customer.user_name
+    renderData.address = customer.user_address
+    renderData.address1 = customer.user_address1
+    renderData.address2 = customer.user_address2
+    renderData.user_name = user.user_name
+    renderData.user_email = user.user_email
     renderData.vessel_name = vessel.invoice_vessel_name
     renderData.voyage_number = vessel.invoice_vessel_voyage
     renderData.voyage_atd_date = vessel.invoice_vessel_atd
@@ -406,6 +411,11 @@ exports.depositDoAct = async req => {
 
     renderData.fee_date = moment(bl.invoice_masterbi_fee_date).format('YYYY/MM/DD')
     renderData.customer_name = customer.user_name
+    renderData.address = customer.user_address
+    renderData.address1 = customer.user_address1
+    renderData.address2 = customer.user_address2
+    renderData.user_name = user.user_name
+    renderData.user_email = user.user_email
     renderData.receipt_no = await seq.genReceiptNo()
     renderData.vessel_name = vessel.invoice_vessel_name
     renderData.voyage_number = vessel.invoice_vessel_voyage
