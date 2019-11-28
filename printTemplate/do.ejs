@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title></title>
+  </head>
+  <body>
+    <div style="size: A4 portrait; padding: 0px 30px; page-break-before: always">
+      <h3 style="text-align:center">CHINESE – TANZANIAN JOINT SHIPPING COMPANY (SINOTASHIP)</h3>
+      <table width="100%" style="border-collapse:collapse; table-layout: fixed;">
+        <tbody>
+            <tr class="b_left b_right b_top b_bottom" style="height: 50px; font-size: 20px;" valign="top">
+                <td>Page    1   of   1</td>
+                <td>DELIVERY ORDER</td>
+                <td>SINOTASHIP</td>
+            </tr>
+            <tr style="font-size: 20px;" valign="top">
+                <td class="b_left b_right b_bottom" rowspan="2" colspan="2"><b>PLEASE DELIVER TO:</b><%=ejsData.invoice_masterbi_delivery_to%></td>
+                <td class="b_left b_right"><b>DATE:</b><%=ejsData.do_date%></td>
+            </tr>
+            <tr style="font-size: 20px;">
+                <td class="b_left b_right b_bottom"><b>VALID TO:</b><%=ejsData.valid_to%></td>
+            </tr>
+            <tr style="font-size: 10px;" valign="top">
+                <td class="b_left b_right" colspan="2"><b>CONSIGNEE NAME:</b><%=ejsData.invoice_masterbi_consignee_name%></td>
+                <td class="b_left b_right"><b>DELIVERY ORDER NO.:</b><%=ejsData.delivery_order_no%></td>
+            </tr>
+            <tr style="font-size: 10px;" valign="top">
+                <td class="b_left b_right b_bottom" rowspan="3"  colspan="2"><b>ADDRESS:</b><%=ejsData.invoice_masterbi_consignee_address%></td>
+                <td class="b_left b_right"><b>B/L NO.:</b><%=ejsData.invoice_masterbi_bl%></td>
+            </tr>
+            <tr style="font-size: 10px;" valign="top">
+                <td class="b_left b_right"><b>VESSEL:</b><%=ejsData.invoice_vessel_name%></td>
+            </tr>
+            <tr style="font-size: 10px;" valign="top">
+                <td class="b_left b_right b_bottom"><b>VOYAGE NO.:</b><%=ejsData.invoice_vessel_voyage%></td>
+            </tr>
+            <tr style="font-size: 10px;" valign="top">
+                <td class="b_left b_right" colspan="3"><b>POL/ETD:</b></td>
+            </tr>
+            <tr style="font-size: 10px;" valign="top">
+                <td class="b_left b_right" colspan="3"><b>POD/ETA:</b><%=ejsData.vessel_eta%></td>
+            </tr>
+            <tr style="font-size: 10px;" valign="top">
+                <td class="b_left b_right b_bottom" colspan="3"><b>ICD/TERMINAL:</b></td>
+            </tr>
+            <tr>
+                <td colspan="3" class="b_left b_right b_bottom">
+                    <table width="100%" style="border-collapse:collapse; font-size: 10px; text-align: center;">
+                        <thead class="b_bottom">
+                            <tr>
+                                <th>CONTAINER<br/>NO</th>
+                                <th>SEAL<br/>NO</th>
+                                <th>SIZE</th>
+                                <th>TARE</th>
+                                <th>MARKS&<br/>NUMBERS</th>
+                                <th>PCS/QTY</th>
+                                <th>COMMODITY</th>
+                                <th>NET WT<br/>KGM/</th>
+                                <th>MEASUREMENT<br/>CBM</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <%for (var i = 0; i < ejsData.containers.length; i++) {%>
+                            <tr>
+                                <td><%= ejsData.containers[i].invoice_containers_no %></td>
+                                <td><%= ejsData.containers[i].invoice_containers_seal1 %></td>
+                                <td><%= ejsData.containers[i].invoice_containers_size %></td>
+                                <td><%= ejsData.containers[i].invoice_containers_tare %></td>
+                                <td colspan="3"><%= ejsData.containers[i].invoice_containers_package_no %><%= ejsData.containers[i].invoice_containers_package_unit %></td>
+                                <td><%= ejsData.containers[i].invoice_containers_weight %><%= ejsData.containers[i].invoice_containers_weight_unit %></td>
+                                <td><%= ejsData.containers[i].invoice_containers_volumn %><%= ejsData.containers[i].invoice_containers_volumn_unit %></td>
+                            </tr>
+                            <%}-%>
+                            <tr>
+                                <td colspan="5"></td>
+                                <td colspan="3"><%= ejsData.invoice_masterbi_goods_description %></td>
+                                <td></td>
+                            </tr>
+                            <tr style="text-align: left;">
+                                <td colspan="5"><b>Released comment</b></td>
+                                <td rowspan="3" colspan="4"><b>TOTAL:<%= ejsData.invoice_masterbi_gross_volume %><%= ejsData.invoice_masterbi_gross_volume_unit %></b></td>
+                            </tr>
+                            <tr style="text-align: left;">
+                                <td colspan="5"><%= ejsData.container_count %> CONTAINERS</td>
+                            </tr>
+                            <tr style="text-align: left;">
+                                <td colspan="5"><%= ejsData.invoice_masterbi_net_weight %><%= ejsData.invoice_masterbi_net_weight_unit %></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </td>
+            </tr>
+            <tr style="font-size: 10px;" valign="top">
+                <td class="b_left b_right b_bottom" colspan="2" style="font-size: 15px;"><b>FCL/FCL<br/>
+                    EMPTY RETURN ADDRESS     CONTAINERS   Term-in-Ref    D&D Invoice   Deposit Invoice       Freight Invoice
+                </b>
+                </td>
+                <td class="b_left b_right b_bottom">FOR FURTHER INFORMATION CONTACT SINOTASHIP<br/>
+                        31, KISUTU ROAD P.O. BOX 696, DAR ES ALAAM<br/>
+                        Mr.Rukonge    E-mail:  rukonge@sinotaship.com<br/>
+                        Mr. Habibu,     E-mail:  habibu@sinotaship.com<br/>
+                        TEL: +255 713 832716 +255 717 008 506<br/>
+                        For advice or complaint,  email to admin@sinotaship.com </td>
+            </tr>
+        </tbody>
+      </table>
+    </div>
+  </body>
+  <style>
+    @page {
+        size: A4 portrait;
+    }
+    .onepage {
+        size: A4 portrait;
+        padding: 0px 30px;
+    }
+    .b_left {
+        border-left: 1px solid black;
+    }
+
+    .b_right {
+        border-right: 1px solid black;
+    }
+
+    .b_top {
+        border-top: 1px solid black;
+    }
+
+    .b_bottom {
+        border-bottom: 1px solid black;
+    }
+  </style>
+</html>

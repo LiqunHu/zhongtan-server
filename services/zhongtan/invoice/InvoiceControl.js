@@ -18,7 +18,7 @@ module.exports = async (req, res) => {
     } else if (method === 'getVoyageDetail') {
       ret = await srv.getVoyageDetailAct(req)
     } else if (method === 'downloadDo') {
-      return await srv.downloadDoAct(req, res)
+      ret = await srv.downloadDoAct(req)
     } else if (method === 'doRelease') {
       ret = await srv.doReleaseAct(req)
     } else if (method === 'searchCustomer') {

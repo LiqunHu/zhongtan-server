@@ -247,6 +247,16 @@ exports.getVoyageDetailAct = async req => {
           name: f.uploadfile_name,
           remark: f.uploadfile_remark
         })
+      } else if (f.api_name === 'RECEIPT-DO') {
+        filetype = 'DO'
+        d.files.push({
+          filetype: filetype,
+          date: moment(f.created_at).format('YYYY-MM-DD'),
+          file_id: f.uploadfile_id,
+          url: f.uploadfile_url,
+          name: f.uploadfile_name,
+          remark: f.uploadfile_remark
+        })
       }
     }
     returnData.MasterBl.push(d)
@@ -256,8 +266,9 @@ exports.getVoyageDetailAct = async req => {
   return common.success(returnData)
 }
 
-exports.downloadDoAct = async (req, res) => {
-  let doc = common.docValidate(req)
+exports.downloadDoAct = async req => {
+  let doc = common.docValidate(req),
+    user = req.user
   let bl = await tb_bl.findOne({
     where: {
       invoice_masterbi_id: doc.invoice_masterbi_id
@@ -301,7 +312,17 @@ exports.downloadDoAct = async (req, res) => {
   }
   renderData.container_count = bl.invoice_masterbi_container_no + 'X' + cSize.join(' ')
 
-  return common.ejs2Word('doTemplate.docx', renderData, res)
+  let fileInfo = await common.ejs2Pdf('do.ejs', renderData, 'zhongtan')
+
+  await tb_uploadfile.create({
+    api_name: 'RECEIPT-DO',
+    user_id: user.user_id,
+    uploadfile_index1: bl.invoice_masterbi_id,
+    uploadfile_name: fileInfo.name,
+    uploadfile_url: fileInfo.url
+  })
+
+  return common.success({ url: fileInfo.url })
 }
 
 exports.doReleaseAct = async req => {
