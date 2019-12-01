@@ -32,6 +32,14 @@ module.exports = db.defineModel('tbl_zhongtan_uploadfile', {
     defaultValue: '',
     allowNull: true
   },
+  uploadfil_release_date: {
+    type: db.DATE,
+    allowNull: true
+  },
+  uploadfil_release_user_id: {
+    type: db.UUID,
+    allowNull: true
+  },
   uploadfile_url: {
     type: db.STRING(500),
     defaultValue: '',

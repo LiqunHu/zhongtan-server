@@ -5,6 +5,7 @@ const GLBConfig = require('../../../util/GLBConfig')
 const common = require('../../../util/CommonUtil')
 const model = require('../../../app/model')
 const seq = require('../../../util/Sequence')
+const Op = model.Op
 
 const tb_user = model.common_user
 const tb_vessel = model.zhongtan_invoice_vessel
@@ -173,7 +174,9 @@ exports.searchVoyageAct = async req => {
     let rcount = await tb_bl.count({
       where: {
         invoice_vessel_id: v.invoice_vessel_id,
-        invoice_vessel_release_state: '1'
+        invoice_masterbi_do_release_date: {
+          [Op.ne]: null
+        }
       }
     })
     let acount = await tb_bl.count({
@@ -181,7 +184,18 @@ exports.searchVoyageAct = async req => {
         invoice_vessel_id: v.invoice_vessel_id
       }
     })
-    row.invoice_release = rcount + '/' + acount
+    row.invoice_do_release_rcount = rcount
+    row.invoice_acount = acount
+
+    let ircount = await tb_bl.count({
+      where: {
+        invoice_vessel_id: v.invoice_vessel_id,
+        invoice_masterbi_invoice_release_date: {
+          [Op.ne]: null
+        }
+      }
+    })
+    row.invoice_invoice_release_rcount = ircount
     returnData.push(row)
   }
 
@@ -225,37 +239,39 @@ exports.getVoyageDetailAct = async req => {
       },
       order: [['created_at', 'DESC']]
     })
+    d.invoice_masterbi_do_release_date_fmt = moment(d.invoice_masterbi_do_release_date).format('DD/MM/YYYY hh:mm')
+    d.invoice_masterbi_invoice_release_date_fmt = moment(d.invoice_masterbi_invoice_release_date).format('DD/MM/YYYY hh:mm')
     for (let f of files) {
       let filetype = ''
       if (f.api_name === 'RECEIPT-DEPOSIT') {
         filetype = 'Deposit'
         d.files.push({
+          invoice_masterbi_id: b.invoice_masterbi_id,
           filetype: filetype,
           date: moment(f.created_at).format('YYYY-MM-DD'),
           file_id: f.uploadfile_id,
           url: f.uploadfile_url,
-          name: f.uploadfile_name,
-          remark: f.uploadfile_remark
+          release_date: f.uploadfil_release_date
         })
       } else if (f.api_name === 'RECEIPT-FEE') {
         filetype = 'Fee'
         d.files.push({
+          invoice_masterbi_id: b.invoice_masterbi_id,
           filetype: filetype,
           date: moment(f.created_at).format('YYYY-MM-DD'),
           file_id: f.uploadfile_id,
           url: f.uploadfile_url,
-          name: f.uploadfile_name,
-          remark: f.uploadfile_remark
+          release_date: f.uploadfil_release_date
         })
       } else if (f.api_name === 'RECEIPT-DO') {
         filetype = 'DO'
         d.files.push({
+          invoice_masterbi_id: b.invoice_masterbi_id,
           filetype: filetype,
           date: moment(f.created_at).format('YYYY-MM-DD'),
           file_id: f.uploadfile_id,
           url: f.uploadfile_url,
-          name: f.uploadfile_name,
-          remark: f.uploadfile_remark
+          release_date: f.uploadfil_release_date
         })
       }
     }
@@ -275,7 +291,7 @@ exports.downloadDoAct = async req => {
     }
   })
 
-  if (bl.invoice_vessel_release_state === '0') {
+  if (!bl.invoice_masterbi_do_release_date) {
     bl.invoice_masterbi_delivery_to = doc.invoice_masterbi_delivery_to
     bl.invoice_masterbi_do_date = moment().format('YYYY-MM-DD')
     bl.invoice_masterbi_valid_to = doc.invoice_masterbi_valid_to
@@ -326,15 +342,33 @@ exports.downloadDoAct = async req => {
 }
 
 exports.doReleaseAct = async req => {
-  let doc = common.docValidate(req)
-  let bl = await tb_bl.findOne({
+  let doc = common.docValidate(req),
+    user = req.user
+  let file = await tb_uploadfile.findOne({
     where: {
-      invoice_masterbi_id: doc.invoice_masterbi_id
+      uploadfile_id: doc.file_id
     }
   })
-  bl.invoice_vessel_release_state = '1'
-  bl.invoice_vessel_release_date = new Date()
+  file.uploadfil_release_date = new Date()
+  file.uploadfil_release_user_id = user.user_id
+
+  let bl = await tb_bl.findOne({
+    where: {
+      invoice_masterbi_id: file.uploadfile_index1
+    }
+  })
+
+  if(file.api_name === 'RECEIPT-DO') {
+    bl.invoice_masterbi_do_release_date = file.uploadfil_release_date
+  }
+
+  if(file.api_name === 'RECEIPT-DEPOSIT' || file.api_name === 'RECEIPT-FEE') {
+    bl.invoice_masterbi_invoice_release_date = file.uploadfil_release_date
+  }
+
+  await file.save()
   await bl.save()
+
   return common.success()
 }
 
