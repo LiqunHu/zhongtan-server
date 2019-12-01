@@ -19,6 +19,10 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_masterbl', {
     type: db.DATE,
     allowNull: true
   },
+  invoice_masterbi_receipt_release_date: {
+    type: db.DATE,
+    allowNull: true
+  },
   invoice_masterbi_bl: {
     // #M B/L No
     type: db.STRING(50),
@@ -342,5 +346,21 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_masterbl', {
     type: db.STRING(50),
     defaultValue: '',
     allowNull: false
+  },
+  invoice_masterbi_receipt_received: {
+    // receipt received
+    type: db.STRING(50),
+    defaultValue: '',
+    allowNull: false
+  },
+  invoice_masterbi_receipt_no: {
+    // 收据号
+    type: db.STRING(50),
+    allowNull: true
+  },
+  invoice_masterbi_received_from: {
+    // 缴费者
+    type: db.STRING(100),
+    allowNull: true
   }
 })

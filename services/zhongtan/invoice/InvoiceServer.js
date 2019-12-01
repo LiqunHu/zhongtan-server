@@ -1,5 +1,6 @@
 const X = require('xlsx')
 const moment = require('moment')
+const numberToText = require('number2text')
 // const logger = require('../../../app/logger').createLogger(__filename)
 const GLBConfig = require('../../../util/GLBConfig')
 const common = require('../../../util/CommonUtil')
@@ -196,6 +197,16 @@ exports.searchVoyageAct = async req => {
       }
     })
     row.invoice_invoice_release_rcount = ircount
+
+    let rrcount = await tb_bl.count({
+      where: {
+        invoice_vessel_id: v.invoice_vessel_id,
+        invoice_masterbi_receipt_release_date: {
+          [Op.ne]: null
+        }
+      }
+    })
+    row.invoice_receipt_release_rcount = rrcount
     returnData.push(row)
   }
 
@@ -273,6 +284,16 @@ exports.getVoyageDetailAct = async req => {
           url: f.uploadfile_url,
           release_date: f.uploadfil_release_date
         })
+      } else if (f.api_name === 'RECEIPT-RECEIPT') {
+        filetype = 'Receipt'
+        d.files.push({
+          invoice_masterbi_id: b.invoice_masterbi_id,
+          filetype: filetype,
+          date: moment(f.created_at).format('YYYY-MM-DD'),
+          file_id: f.uploadfile_id,
+          url: f.uploadfile_url,
+          release_date: f.uploadfil_release_date
+        })
       }
     }
     returnData.MasterBl.push(d)
@@ -341,6 +362,50 @@ exports.downloadDoAct = async req => {
   return common.success({ url: fileInfo.url })
 }
 
+exports.downloadReceiptAct = async req => {
+  let doc = common.docValidate(req),
+    user = req.user
+  let bl = await tb_bl.findOne({
+    where: {
+      invoice_masterbi_id: doc.invoice_masterbi_id
+    }
+  })
+
+  if (!bl.invoice_masterbi_receipt_release_date) {
+    bl.invoice_masterbi_receipt_received = doc.invoice_masterbi_receipt_received
+    bl.invoice_masterbi_received_from = doc.invoice_masterbi_received_from
+    bl.invoice_masterbi_receipt_no = bl.invoice_masterbi_carrier + moment().format('YYYYMMDD') + ('000000000000000' + bl.invoice_masterbi_bl).slice(-4)
+    await bl.save()
+  }
+
+  let renderData = JSON.parse(JSON.stringify(bl))
+  renderData.receipt_date = moment().format('MMM DD, YYYY')
+
+  renderData.sum_fee = common.money2Str(
+    parseFloat(bl.invoice_masterbi_deposit||0) +
+    parseFloat(bl.invoice_masterbi_transfer||0) +
+    parseFloat(bl.invoice_masterbi_lolf||0) +
+    parseFloat(bl.invoice_masterbi_lcl||0) +
+    parseFloat(bl.invoice_masterbi_amendment||0) +
+    parseFloat(bl.invoice_masterbi_tasac||0) +
+    parseFloat(bl.invoice_masterbi_printing||0)
+  )
+
+  renderData.sum_fee_str = numberToText(renderData.sum_fee)
+
+  let fileInfo = await common.ejs2Pdf('receipta.ejs', renderData, 'zhongtan')
+
+  await tb_uploadfile.create({
+    api_name: 'RECEIPT-RECEIPT',
+    user_id: user.user_id,
+    uploadfile_index1: bl.invoice_masterbi_id,
+    uploadfile_name: fileInfo.name,
+    uploadfile_url: fileInfo.url
+  })
+
+  return common.success({ url: fileInfo.url })
+}
+
 exports.doReleaseAct = async req => {
   let doc = common.docValidate(req),
     user = req.user
@@ -364,6 +429,10 @@ exports.doReleaseAct = async req => {
 
   if(file.api_name === 'RECEIPT-DEPOSIT' || file.api_name === 'RECEIPT-FEE') {
     bl.invoice_masterbi_invoice_release_date = file.uploadfil_release_date
+  }
+
+  if(file.api_name === 'RECEIPT-RECEIPT') {
+    bl.invoice_masterbi_receipt_release_date = file.uploadfil_release_date
   }
 
   await file.save()
