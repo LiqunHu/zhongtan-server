@@ -66,9 +66,9 @@ exports.uploadImportAct = async req => {
         invoice_vessel_name: vesslInfoJS[0]['VESSEL NAME'],
         invoice_vessel_code: vesslInfoJS[0]['VESSEL CODE'],
         invoice_vessel_voyage: vesslInfoJS[0]['VOYAGE NUM'],
-        invoice_vessel_eta: vesslInfoJS[0]['ETA'],
-        invoice_vessel_ata: vesslInfoJS[0]['ATA'],
-        invoice_vessel_atd: vesslInfoJS[0]['ATD']
+        invoice_vessel_eta: typeof vesslInfoJS[0]['ETA'] === 'object' ? vesslInfoJS[0]['ETA'].Format('dd/MM/yyyy') : vesslInfoJS[0]['ETA'],
+        invoice_vessel_ata: typeof vesslInfoJS[0]['ATA'] === 'object' ? vesslInfoJS[0]['ATA'].Format('dd/MM/yyyy') : vesslInfoJS[0]['ATA'],
+        invoice_vessel_atd: typeof vesslInfoJS[0]['ATD'] === 'object' ? vesslInfoJS[0]['ATD'].Format('dd/MM/yyyy') : vesslInfoJS[0]['ATD']
       })
 
       for (let m of masterBIJS) {
@@ -374,7 +374,8 @@ exports.downloadReceiptAct = async req => {
   if (!bl.invoice_masterbi_receipt_release_date) {
     bl.invoice_masterbi_receipt_received = doc.invoice_masterbi_receipt_received
     bl.invoice_masterbi_received_from = doc.invoice_masterbi_received_from
-    bl.invoice_masterbi_receipt_no = bl.invoice_masterbi_carrier + moment().format('YYYYMMDD') + ('000000000000000' + bl.invoice_masterbi_bl).slice(-4)
+    bl.invoice_masterbi_receipt_no =
+      bl.invoice_masterbi_carrier + moment().format('YYYYMMDD') + ('000000000000000' + bl.invoice_masterbi_bl).slice(-4)
     await bl.save()
   }
 
@@ -382,13 +383,13 @@ exports.downloadReceiptAct = async req => {
   renderData.receipt_date = moment().format('MMM DD, YYYY')
 
   renderData.sum_fee = common.money2Str(
-    parseFloat(bl.invoice_masterbi_deposit||0) +
-    parseFloat(bl.invoice_masterbi_transfer||0) +
-    parseFloat(bl.invoice_masterbi_lolf||0) +
-    parseFloat(bl.invoice_masterbi_lcl||0) +
-    parseFloat(bl.invoice_masterbi_amendment||0) +
-    parseFloat(bl.invoice_masterbi_tasac||0) +
-    parseFloat(bl.invoice_masterbi_printing||0)
+    parseFloat(bl.invoice_masterbi_deposit || 0) +
+      parseFloat(bl.invoice_masterbi_transfer || 0) +
+      parseFloat(bl.invoice_masterbi_lolf || 0) +
+      parseFloat(bl.invoice_masterbi_lcl || 0) +
+      parseFloat(bl.invoice_masterbi_amendment || 0) +
+      parseFloat(bl.invoice_masterbi_tasac || 0) +
+      parseFloat(bl.invoice_masterbi_printing || 0)
   )
 
   renderData.sum_fee_str = numberToText(renderData.sum_fee)
@@ -423,15 +424,15 @@ exports.doReleaseAct = async req => {
     }
   })
 
-  if(file.api_name === 'RECEIPT-DO') {
+  if (file.api_name === 'RECEIPT-DO') {
     bl.invoice_masterbi_do_release_date = file.uploadfil_release_date
   }
 
-  if(file.api_name === 'RECEIPT-DEPOSIT' || file.api_name === 'RECEIPT-FEE') {
+  if (file.api_name === 'RECEIPT-DEPOSIT' || file.api_name === 'RECEIPT-FEE') {
     bl.invoice_masterbi_invoice_release_date = file.uploadfil_release_date
   }
 
-  if(file.api_name === 'RECEIPT-RECEIPT') {
+  if (file.api_name === 'RECEIPT-RECEIPT') {
     bl.invoice_masterbi_receipt_release_date = file.uploadfil_release_date
   }
 
