@@ -350,6 +350,7 @@ exports.downloadDoAct = async req => {
   renderData.do_date = moment(bl.invoice_masterbi_do_date).format('DD/MM/YYYY')
   renderData.valid_to = moment(bl.invoice_masterbi_valid_to).format('DD/MM/YYYY')
   renderData.delivery_to = common.getDelivery(bl.invoice_masterbi_delivery)
+  renderData.prepared = user.user_name
   renderData.containers = JSON.parse(JSON.stringify(continers))
   let cSize = []
   for (let i = 0; i < renderData.containers.length; i++) {
