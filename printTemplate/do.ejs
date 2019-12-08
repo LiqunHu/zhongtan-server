@@ -71,7 +71,7 @@
                       <%= ejsData.containers[i].invoice_containers_package_no %><%= ejsData.containers[i].invoice_containers_package_unit %>
                     </td>
                     <td><%= ejsData.containers[i].invoice_containers_weight %><%= ejsData.containers[i].invoice_containers_weight_unit %></td>
-                    <td><%= ejsData.containers[i].invoice_masterbi_gross_volume %><%= ejsData.containers[i].invoice_containers_volumn_unit %></td>
+                    <td><%= ejsData.containers[i].invoice_containers_volumn %><%= ejsData.containers[i].invoice_containers_volumn_unit %></td>
                   </tr>
                   <%}-%>
                   <tr>
@@ -80,16 +80,16 @@
                     <td></td>
                   </tr>
                   <tr style="text-align: left;">
-                    <td colspan="5"><b>Released comment</b></td>
-                    <td rowspan="3" colspan="4">
-                      <b>TOTAL:<%= ejsData.invoice_masterbi_gross_volume %><%= ejsData.invoice_masterbi_gross_volume_unit %></b>
+                    <td colspan="9"><b>Released comment</b></td>
+                  </tr>
+                  <tr style="text-align: left;">
+                    <td colspan="7"><%= ejsData.container_count %> CONTAINERS</td>
+                    <td style="text-align: center;">
+                      <%= ejsData.invoice_masterbi_net_weight %><%= ejsData.invoice_masterbi_net_weight_unit %>
                     </td>
-                  </tr>
-                  <tr style="text-align: left;">
-                    <td colspan="5"><%= ejsData.container_count %> CONTAINERS</td>
-                  </tr>
-                  <tr style="text-align: left;">
-                    <td colspan="5"><%= ejsData.invoice_masterbi_net_weight %><%= ejsData.invoice_masterbi_net_weight_unit %></td>
+                    <td style="text-align: center;">
+                      <%= ejsData.invoice_masterbi_gross_volume %><%= ejsData.invoice_masterbi_gross_volume_unit %>
+                    </td>
                   </tr>
                 </tbody>
               </table>
