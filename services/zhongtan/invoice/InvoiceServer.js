@@ -521,7 +521,7 @@ exports.depositDoAct = async req => {
     renderData.user_email = user.user_email
     renderData.vessel_name = vessel.invoice_vessel_name
     renderData.voyage_number = vessel.invoice_vessel_voyage
-    renderData.voyage_atd_date = vessel.invoice_vessel_atd
+    renderData.voyage_ata_date = vessel.invoice_vessel_ata
 
     let fileInfo = await common.ejs2Pdf('deposit.ejs', renderData, 'zhongtan')
 
@@ -557,7 +557,7 @@ exports.depositDoAct = async req => {
     renderData.receipt_no = await seq.genReceiptNo()
     renderData.vessel_name = vessel.invoice_vessel_name
     renderData.voyage_number = vessel.invoice_vessel_voyage
-    renderData.voyage_atd_date = vessel.invoice_vessel_atd
+    renderData.voyage_ata_date = vessel.invoice_vessel_ata
 
     renderData.fee = []
     renderData.sum_fee = 0
