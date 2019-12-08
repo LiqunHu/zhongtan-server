@@ -15,23 +15,21 @@ const config = require('../app/config')
 const Error = require('./Error')
 const logger = require('../app/logger').createLogger(__filename)
 
-Date.prototype.Format = function(fmt)   
-{ //author: meizz   
-  var o = {   
-    "M+" : this.getMonth()+1,                 //月份   
-    "d+" : this.getDate(),                    //日   
-    "h+" : this.getHours(),                   //小时   
-    "m+" : this.getMinutes(),                 //分   
-    "s+" : this.getSeconds(),                 //秒   
-    "q+" : Math.floor((this.getMonth()+3)/3), //季度   
-    "S"  : this.getMilliseconds()             //毫秒   
-  };   
-  if(/(y+)/.test(fmt))   
-    fmt=fmt.replace(RegExp.$1, (this.getFullYear()+"").substr(4 - RegExp.$1.length));   
-  for(var k in o)   
-    if(new RegExp("("+ k +")").test(fmt))   
-  fmt = fmt.replace(RegExp.$1, (RegExp.$1.length==1) ? (o[k]) : (("00"+ o[k]).substr((""+ o[k]).length)));   
-  return fmt;   
+Date.prototype.Format = function(fmt) {
+  //author: meizz
+  var o = {
+    'M+': this.getMonth() + 1, //月份
+    'd+': this.getDate(), //日
+    'h+': this.getHours(), //小时
+    'm+': this.getMinutes(), //分
+    's+': this.getSeconds(), //秒
+    'q+': Math.floor((this.getMonth() + 3) / 3), //季度
+    S: this.getMilliseconds() //毫秒
+  }
+  if (/(y+)/.test(fmt)) fmt = fmt.replace(RegExp.$1, (this.getFullYear() + '').substr(4 - RegExp.$1.length))
+  for (var k in o)
+    if (new RegExp('(' + k + ')').test(fmt)) fmt = fmt.replace(RegExp.$1, RegExp.$1.length == 1 ? o[k] : ('00' + o[k]).substr(('' + o[k]).length))
+  return fmt
 }
 
 // common response
@@ -288,6 +286,56 @@ const df = strInput => {
   return strInput ? strInput._text : ''
 }
 
+const getDelivery = strInput => {
+  if (strInput === 'WITZDL008') {
+    return 'KICD'
+  } else if (strInput === 'WITZDL012') {
+    return 'AFICD'
+  } else if (strInput === 'WITZDL018') {
+    return 'ETC CARGO'
+  } else if (strInput === 'WITZDL020') {
+    return 'HESU'
+  } else if (strInput === 'WITZW025') {
+    return 'GALCO'
+  } else if (strInput === 'WITZDL028') {
+    return 'AZAM ICD'
+  } else if (strInput === 'WITZDL029') {
+    return 'MAS HOLDING'
+  } else if (strInput === 'WITZDL030') {
+    return 'TRANS AFRICAN LOGISTICS'
+  } else if (strInput === 'WITZDL031') {
+    return 'SILVER INTERTRADE LTD'
+  } else if (strInput === 'WITZDL032') {
+    return 'AMI TANZANIA LTD'
+  } else if (strInput === 'WITZDL033') {
+    return 'TRH'
+  } else if (strInput === 'WITZDL034') {
+    return 'PMM'
+  } else if (strInput === 'WITZDL035') {
+    return 'DICD'
+  } else if (strInput === 'WITZDL036') {
+    return 'EAST COST LIQUIDS'
+  } else if (strInput === 'WITZDL037') {
+    return 'TANZANIA LIQUIDS '
+  } else if (strInput === 'WITZDL038') {
+    return 'VOT TANZANIA LTD'
+  } else if (strInput === 'WITZDL039') {
+    return 'MOFED TANZANIA'
+  } else if (strInput === 'WITZDL040') {
+    return 'AL-HUSHOOM INVESTMENT'
+  } else if (strInput === 'WITZDL041') {
+    return 'FARION TRADING LTD'
+  } else if (strInput === 'WITZDL042') {
+    return 'MCC LTD'
+  } else if (strInput === 'WITZDL098') {
+    return 'JEFAG'
+  } else if (strInput === 'WITZDL099') {
+    return 'UBONGO (TICTS)'
+  } else {
+    return ''
+  }
+}
+
 module.exports = {
   docValidate: docValidate,
   reqTrans: reqTrans,
@@ -309,5 +357,6 @@ module.exports = {
   getContainerISO: getContainerISO,
   getContainerCBM: getContainerCBM,
   df: df,
-  getContainerTare: getContainerTare
+  getContainerTare: getContainerTare,
+  getDelivery: getDelivery
 }

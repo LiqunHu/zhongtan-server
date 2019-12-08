@@ -303,6 +303,106 @@ exports.getVoyageDetailAct = async req => {
   return common.success(returnData)
 }
 
+exports.getMasterbiDataAct = async req => {
+  let doc = common.docValidate(req),
+    returnData = {}
+
+  let queryStr = `select
+    a.*, b.user_name
+  from
+    tbl_zhongtan_invoice_masterbl a
+  LEFT JOIN tbl_common_user b ON b.user_id = a.invoice_masterbi_customer_id
+  WHERE
+    a.invoice_vessel_id = ?`
+  let replacements = [doc.invoice_vessel_id]
+  let result = await model.queryWithCount(doc, queryStr, replacements)
+  returnData.total = result.count
+  returnData.rows = []
+
+  for (let b of result.data) {
+    let d = JSON.parse(JSON.stringify(b))
+    d.customerINFO = [
+      {
+        id: d.invoice_masterbi_customer_id,
+        text: d.user_name
+      }
+    ]
+    d.files = []
+    let files = await tb_uploadfile.findAll({
+      where: {
+        uploadfile_index1: b.invoice_masterbi_id
+      },
+      order: [['created_at', 'DESC']]
+    })
+    d.invoice_masterbi_do_release_date_fmt = moment(d.invoice_masterbi_do_release_date).format('DD/MM/YYYY hh:mm')
+    d.invoice_masterbi_invoice_release_date_fmt = moment(d.invoice_masterbi_invoice_release_date).format('DD/MM/YYYY hh:mm')
+    for (let f of files) {
+      let filetype = ''
+      if (f.api_name === 'RECEIPT-DEPOSIT') {
+        filetype = 'Deposit'
+        d.files.push({
+          invoice_masterbi_id: b.invoice_masterbi_id,
+          filetype: filetype,
+          date: moment(f.created_at).format('YYYY-MM-DD'),
+          file_id: f.uploadfile_id,
+          url: f.uploadfile_url,
+          release_date: f.uploadfil_release_date
+        })
+      } else if (f.api_name === 'RECEIPT-FEE') {
+        filetype = 'Fee'
+        d.files.push({
+          invoice_masterbi_id: b.invoice_masterbi_id,
+          filetype: filetype,
+          date: moment(f.created_at).format('YYYY-MM-DD'),
+          file_id: f.uploadfile_id,
+          url: f.uploadfile_url,
+          release_date: f.uploadfil_release_date
+        })
+      } else if (f.api_name === 'RECEIPT-DO') {
+        filetype = 'DO'
+        d.files.push({
+          invoice_masterbi_id: b.invoice_masterbi_id,
+          filetype: filetype,
+          date: moment(f.created_at).format('YYYY-MM-DD'),
+          file_id: f.uploadfile_id,
+          url: f.uploadfile_url,
+          release_date: f.uploadfil_release_date
+        })
+      } else if (f.api_name === 'RECEIPT-RECEIPT') {
+        filetype = 'Receipt'
+        d.files.push({
+          invoice_masterbi_id: b.invoice_masterbi_id,
+          filetype: filetype,
+          date: moment(f.created_at).format('YYYY-MM-DD'),
+          file_id: f.uploadfile_id,
+          url: f.uploadfile_url,
+          release_date: f.uploadfil_release_date
+        })
+      }
+    }
+    returnData.rows.push(d)
+  }
+
+  return common.success(returnData)
+}
+
+exports.getContainersDataAct = async req => {
+  let doc = common.docValidate(req),
+    returnData = {}
+
+  let queryStr = `select *
+  from
+  tbl_zhongtan_invoice_containers
+  WHERE
+    invoice_vessel_id = ?`
+  let replacements = [doc.invoice_vessel_id]
+  let result = await model.queryWithCount(doc, queryStr, replacements)
+  returnData.total = result.count
+  returnData.rows = result.data
+
+  return common.success(returnData)
+}
+
 exports.downloadDoAct = async req => {
   let doc = common.docValidate(req),
     user = req.user
@@ -339,6 +439,7 @@ exports.downloadDoAct = async req => {
   renderData.vessel_eta = moment(vessel.invoice_vessel_eta, 'DD-MM-YYYY').format('DD/MM/YYYY')
   renderData.do_date = moment(bl.invoice_masterbi_do_date).format('DD/MM/YYYY')
   renderData.valid_to = moment(bl.invoice_masterbi_valid_to).format('DD/MM/YYYY')
+  renderData.delivery_to = common.getDelivery(bl.invoice_masterbi_delivery)
   renderData.containers = JSON.parse(JSON.stringify(continers))
   let cSize = []
   for (let i = 0; i < renderData.containers.length; i++) {

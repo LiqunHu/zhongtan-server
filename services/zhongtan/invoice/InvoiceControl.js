@@ -17,6 +17,10 @@ module.exports = async (req, res) => {
       ret = await srv.searchVoyageAct(req)
     } else if (method === 'getVoyageDetail') {
       ret = await srv.getVoyageDetailAct(req)
+    } else if (method === 'getMasterbiData') {
+      ret = await srv.getMasterbiDataAct(req)
+    } else if (method === 'getContainersData') {
+      ret = await srv.getContainersDataAct(req)
     } else if (method === 'downloadDo') {
       ret = await srv.downloadDoAct(req)
     } else if (method === 'downloadReceipt') {
