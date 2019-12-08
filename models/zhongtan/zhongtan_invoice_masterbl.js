@@ -347,8 +347,20 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_masterbl', {
     defaultValue: '',
     allowNull: false
   },
-  invoice_masterbi_receipt_received: {
-    // receipt received
+  invoice_masterbi_receipt_amount: {
+    // receipt amount
+    type: db.STRING(50),
+    defaultValue: '',
+    allowNull: false
+  },
+  invoice_masterbi_check_cash: {
+    // check cash flag
+    type: db.STRING(20),
+    defaultValue: '',
+    allowNull: false
+  },
+  invoice_masterbi_check_no: {
+    // check no
     type: db.STRING(50),
     defaultValue: '',
     allowNull: false

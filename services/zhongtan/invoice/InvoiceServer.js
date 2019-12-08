@@ -17,7 +17,8 @@ const tb_uploadfile = model.zhongtan_uploadfile
 exports.initAct = async () => {
   let returnData = {
     TFINFO: GLBConfig.TFINFO,
-    RECEIPT_TYPE_INFO: GLBConfig.RECEIPT_TYPE_INFO
+    RECEIPT_TYPE_INFO: GLBConfig.RECEIPT_TYPE_INFO,
+    CASH_BANK_INFO: GLBConfig.CASH_BANK_INFO
   }
 
   return common.success(returnData)
@@ -385,7 +386,9 @@ exports.downloadReceiptAct = async req => {
   })
 
   if (!bl.invoice_masterbi_receipt_release_date) {
-    bl.invoice_masterbi_receipt_received = doc.invoice_masterbi_receipt_received
+    bl.invoice_masterbi_receipt_amount = doc.invoice_masterbi_receipt_amount
+    bl.invoice_masterbi_check_cash = doc.invoice_masterbi_check_cash
+    bl.invoice_masterbi_check_no = doc.invoice_masterbi_check_no
     bl.invoice_masterbi_received_from = doc.invoice_masterbi_received_from
     bl.invoice_masterbi_receipt_no =
       bl.invoice_masterbi_carrier + moment().format('YYYYMMDD') + ('000000000000000' + bl.invoice_masterbi_bl).slice(-4)
@@ -395,15 +398,13 @@ exports.downloadReceiptAct = async req => {
   let renderData = JSON.parse(JSON.stringify(bl))
   renderData.receipt_date = moment().format('MMM DD, YYYY')
 
-  renderData.sum_fee = common.money2Str(
-    parseFloat(bl.invoice_masterbi_deposit || 0) +
-      parseFloat(bl.invoice_masterbi_transfer || 0) +
-      parseFloat(bl.invoice_masterbi_lolf || 0) +
-      parseFloat(bl.invoice_masterbi_lcl || 0) +
-      parseFloat(bl.invoice_masterbi_amendment || 0) +
-      parseFloat(bl.invoice_masterbi_tasac || 0) +
-      parseFloat(bl.invoice_masterbi_printing || 0)
-  )
+  if (bl.invoice_masterbi_check_cash === 'CASH') {
+    renderData.check_cash = 'Cash'
+  } else {
+    renderData.check_cash = bl.invoice_masterbi_check_no
+  }
+
+  renderData.sum_fee = parseFloat(bl.invoice_masterbi_receipt_amount || 0)
 
   renderData.sum_fee_str = numberToText(renderData.sum_fee)
 

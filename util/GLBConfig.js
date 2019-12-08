@@ -312,5 +312,5 @@ module.exports = {
   ],
   LB_BATCH_STATE: [{ id: '0', text: 'Unused' }, { id: '1', text: 'Used' }, { id: '2', text: 'Cancel' }],
   RECEIPT_TYPE_INFO: [{ id: 'COSCO', text: 'COSCO' }, { id: 'OOCL', text: 'OOCL' }],
-  CASH_BANK_INFO: [{ id: 'C', text: 'CASH' }, { id: 'B', text: 'BANK' }]
+  CASH_BANK_INFO: [{ id: 'CASH', text: 'Cash' }, { id: 'CHEQUE', text: 'Cheque' }]
 }
