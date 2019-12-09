@@ -21,8 +21,6 @@ module.exports = async (req, res) => {
       ret = await srv.getContainersDataAct(req)
     } else if (method === 'downloadDo') {
       ret = await srv.downloadDoAct(req)
-    } else if (method === 'downloadReceipt') {
-      ret = await srv.downloadReceiptAct(req)
     } else if (method === 'doRelease') {
       ret = await srv.doReleaseAct(req)
     } else if (method === 'searchCustomer') {

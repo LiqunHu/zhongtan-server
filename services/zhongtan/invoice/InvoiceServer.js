@@ -1,6 +1,5 @@
 const X = require('xlsx')
 const moment = require('moment')
-const numberToText = require('number2text')
 // const logger = require('../../../app/logger').createLogger(__filename)
 const GLBConfig = require('../../../util/GLBConfig')
 const common = require('../../../util/CommonUtil')
@@ -367,51 +366,6 @@ exports.downloadDoAct = async req => {
 
   await tb_uploadfile.create({
     api_name: 'RECEIPT-DO',
-    user_id: user.user_id,
-    uploadfile_index1: bl.invoice_masterbi_id,
-    uploadfile_name: fileInfo.name,
-    uploadfile_url: fileInfo.url
-  })
-
-  return common.success({ url: fileInfo.url })
-}
-
-exports.downloadReceiptAct = async req => {
-  let doc = common.docValidate(req),
-    user = req.user
-  let bl = await tb_bl.findOne({
-    where: {
-      invoice_masterbi_id: doc.invoice_masterbi_id
-    }
-  })
-
-  if (!bl.invoice_masterbi_receipt_release_date) {
-    bl.invoice_masterbi_receipt_amount = doc.invoice_masterbi_receipt_amount
-    bl.invoice_masterbi_check_cash = doc.invoice_masterbi_check_cash
-    bl.invoice_masterbi_check_no = doc.invoice_masterbi_check_no
-    bl.invoice_masterbi_received_from = doc.invoice_masterbi_received_from
-    bl.invoice_masterbi_receipt_no =
-      bl.invoice_masterbi_carrier + moment().format('YYYYMMDD') + ('000000000000000' + bl.invoice_masterbi_bl).slice(-4)
-    await bl.save()
-  }
-
-  let renderData = JSON.parse(JSON.stringify(bl))
-  renderData.receipt_date = moment().format('MMM DD, YYYY')
-
-  if (bl.invoice_masterbi_check_cash === 'CASH') {
-    renderData.check_cash = 'Cash'
-  } else {
-    renderData.check_cash = bl.invoice_masterbi_check_no
-  }
-
-  renderData.sum_fee = parseFloat(bl.invoice_masterbi_receipt_amount || 0)
-
-  renderData.sum_fee_str = numberToText(renderData.sum_fee)
-
-  let fileInfo = await common.ejs2Pdf('receipta.ejs', renderData, 'zhongtan')
-
-  await tb_uploadfile.create({
-    api_name: 'RECEIPT-RECEIPT',
     user_id: user.user_id,
     uploadfile_index1: bl.invoice_masterbi_id,
     uploadfile_name: fileInfo.name,
