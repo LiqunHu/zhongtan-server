@@ -517,29 +517,30 @@ exports.depositDoAct = async req => {
     renderData.fee = []
     renderData.sum_fee = 0
     if (bl.invoice_masterbi_transfer) {
-      renderData.fee.push({ type: 'TRANSFER', amount: bl.invoice_masterbi_transfer })
+      renderData.fee.push({ type: 'CONTAINER TRANSFER', amount: formatCurrency(bl.invoice_masterbi_transfer) })
       renderData.sum_fee += parseFloat(bl.invoice_masterbi_transfer)
     }
     if (bl.invoice_masterbi_lolf) {
-      renderData.fee.push({ type: 'LOLF', amount: bl.invoice_masterbi_lolf })
+      renderData.fee.push({ type: 'LIFT ON LIFT OFF', amount: formatCurrency(bl.invoice_masterbi_lolf) })
       renderData.sum_fee += parseFloat(bl.invoice_masterbi_lolf)
     }
     if (bl.invoice_masterbi_lcl) {
-      renderData.fee.push({ type: 'LCL', amount: bl.invoice_masterbi_lcl })
+      renderData.fee.push({ type: 'LCL FEE', amount: formatCurrency(bl.invoice_masterbi_lcl) })
       renderData.sum_fee += parseFloat(bl.invoice_masterbi_lcl)
     }
     if (bl.invoice_masterbi_amendment) {
-      renderData.fee.push({ type: 'AMENDMENT', amount: bl.invoice_masterbi_amendment })
+      renderData.fee.push({ type: 'AMENDMENT FEE', amount: formatCurrency(bl.invoice_masterbi_amendment) })
       renderData.sum_fee += parseFloat(bl.invoice_masterbi_amendment)
     }
     if (bl.invoice_masterbi_tasac) {
-      renderData.fee.push({ type: 'TASAC', amount: bl.invoice_masterbi_tasac })
+      renderData.fee.push({ type: 'TASAC FEE', amount: formatCurrency(bl.invoice_masterbi_tasac) })
       renderData.sum_fee += parseFloat(bl.invoice_masterbi_tasac)
     }
     if (bl.invoice_masterbi_printing) {
-      renderData.fee.push({ type: 'PTINTING', amount: bl.invoice_masterbi_printing })
+      renderData.fee.push({ type: 'BILL PTINTING FEE', amount: formatCurrency(bl.invoice_masterbi_printing) })
       renderData.sum_fee += parseFloat(bl.invoice_masterbi_printing)
     }
+    renderData.sum_fee = formatCurrency(renderData.sum_fee)
 
     let fileInfo = await common.ejs2Pdf('fee.ejs', renderData, 'zhongtan')
 
@@ -554,4 +555,20 @@ exports.depositDoAct = async req => {
     return common.success({ url: fileInfo.url })
   }
   return common.success()
+}
+
+function formatCurrency(num) {
+  num = num.toString().replace(/[^\d.-]/g, '') //转成字符串并去掉其中除数字, . 和 - 之外的其它字符。
+  if (isNaN(num)) num = '0' //是否非数字值
+  let sign = num == (num = Math.abs(num))
+  num = Math.floor(num * 100 + 0.50000000001) //下舍入
+  let cents = num % 100 //求余 余数 = 被除数 - 除数 * 商
+  cents = cents < 10 ? '0' + cents : cents //小于2位数就补齐
+  num = Math.floor(num / 100).toString()
+  for (let i = 0; i < Math.floor((num.length - (1 + i)) / 3); i++) {
+    //每隔三位小数分始开隔
+    //4 ==> 三位小数加一个分隔符，
+    num = num.substring(0, num.length - (4 * i + 3)) + ',' + num.substring(num.length - (4 * i + 3))
+  }
+  return (sign ? '' : '-') + num + '.' + cents
 }
