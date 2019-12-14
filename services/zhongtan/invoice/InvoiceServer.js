@@ -537,7 +537,7 @@ exports.depositDoAct = async req => {
       renderData.sum_fee += parseFloat(bl.invoice_masterbi_tasac)
     }
     if (bl.invoice_masterbi_printing) {
-      renderData.fee.push({ type: 'BILL PTINTING FEE', amount: formatCurrency(bl.invoice_masterbi_printing) })
+      renderData.fee.push({ type: 'B/L PTINTING FEE', amount: formatCurrency(bl.invoice_masterbi_printing) })
       renderData.sum_fee += parseFloat(bl.invoice_masterbi_printing)
     }
     renderData.sum_fee = formatCurrency(renderData.sum_fee)
