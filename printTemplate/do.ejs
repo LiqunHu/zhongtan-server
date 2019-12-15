@@ -5,7 +5,7 @@
     <title></title>
   </head>
   <body>
-    <div style="size: A4 portrait; padding: 0px 30px; page-break-before: always">
+    <div style="size: A4 landscape; padding: 0px 30px; page-break-before: always">
       <h3 style="text-align:center">CHINESE – TANZANIAN JOINT SHIPPING COMPANY (SINOTASHIP)</h3>
       <table width="100%" style="border-collapse:collapse; table-layout: fixed;">
         <tbody>
@@ -115,18 +115,17 @@
       </table>
       <div style="padding-top: 15px; padding-left: 10px;">
         Prepared By: </br>
-        <%= ejsData.user_name %></br>
-        <a href="<%=ejsData.user_email%>"><%=ejsData.user_email%></a>
+        <div style="padding-top:100px;">
+          <%= ejsData.user_name %></br>
+          <a href="<%=ejsData.user_email%>"><%=ejsData.user_email%></a>
+        </div>
       </div>
     </div>
   </body>
   <style>
     @page {
-      size: A4 portrait;
-    }
-    .onepage {
-      size: A4 portrait;
-      padding: 0px 30px;
+      size: A4 landscape;
+      margin: 0;
     }
     .b_left {
       border-left: 1px solid black;

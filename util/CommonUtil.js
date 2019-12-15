@@ -222,7 +222,7 @@ async function ejs2Pdf(templateFile, renderData, bucket) {
   const page = await browser.newPage()
   await page.setContent(html)
   let filePath = path.join(process.cwd(), config.fileSys.filesDir, uuid.v4().replace(/-/g, '') + '.pdf')
-  await page.pdf({ path: filePath, format: 'A4' })
+  await page.pdf({ path: filePath, format: 'A4', landscape: true })
   await browser.close()
   let fileInfo = await fileUtil.fileSaveMongoByLocalPath(filePath, bucket, config.fileSys.bucket[bucket].baseUrl)
   return fileInfo
@@ -331,8 +331,12 @@ const getDelivery = strInput => {
     return 'JEFAG'
   } else if (strInput === 'WITZDL099') {
     return 'UBONGO (TICTS)'
+  } else if (strInput === 'WTTZDL001') {
+    return 'TPA TERMINAL'
+  } else if (strInput === 'WTTZDL002') {
+    return 'TICTS TERMINAL'
   } else {
-    return ''
+    return strInput
   }
 }
 
