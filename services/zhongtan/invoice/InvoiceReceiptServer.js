@@ -7,6 +7,7 @@ const model = require('../../../app/model')
 const Op = model.Op
 
 const tb_bl = model.zhongtan_invoice_masterbl
+const tb_vessel = model.zhongtan_invoice_vessel
 const tb_uploadfile = model.zhongtan_uploadfile
 
 exports.initAct = async () => {
@@ -21,23 +22,116 @@ exports.initAct = async () => {
 
 exports.searchVoyageAct = async req => {
   let doc = common.docValidate(req),
-    returnData = []
+    returnData = { masterbl: {}, vessels: [] },
+    queryStr = '',
+    replacements = [],
+    vessels = []
 
-  let queryStr = `select * from tbl_zhongtan_invoice_vessel
+  if (doc.bl) {
+    queryStr = `select
+      a.*, b.user_name
+    from
+      tbl_zhongtan_invoice_masterbl a
+    LEFT JOIN tbl_common_user b ON b.user_id = a.invoice_masterbi_customer_id
+    WHERE
+      a.invoice_masterbi_bl = ?`
+    replacements = [doc.bl]
+    let result = await model.queryWithCount(doc, queryStr, replacements)
+    returnData.masterbl.total = result.count
+    returnData.masterbl.rows = []
+
+    for (let b of result.data) {
+      let d = JSON.parse(JSON.stringify(b))
+      d.customerINFO = [
+        {
+          id: d.invoice_masterbi_customer_id,
+          text: d.user_name
+        }
+      ]
+      d.files = []
+      let files = await tb_uploadfile.findAll({
+        where: {
+          uploadfile_index1: b.invoice_masterbi_id
+        },
+        order: [['created_at', 'DESC']]
+      })
+      d.invoice_masterbi_do_release_date_fmt = moment(d.invoice_masterbi_do_release_date).format('DD/MM/YYYY hh:mm')
+      d.invoice_masterbi_invoice_release_date_fmt = moment(d.invoice_masterbi_invoice_release_date).format('DD/MM/YYYY hh:mm')
+      for (let f of files) {
+        let filetype = ''
+        if (f.api_name === 'RECEIPT-DEPOSIT') {
+          filetype = 'Deposit'
+          d.files.push({
+            invoice_masterbi_id: b.invoice_masterbi_id,
+            filetype: filetype,
+            date: moment(f.created_at).format('YYYY-MM-DD'),
+            file_id: f.uploadfile_id,
+            url: f.uploadfile_url,
+            release_date: f.uploadfil_release_date
+          })
+        } else if (f.api_name === 'RECEIPT-FEE') {
+          filetype = 'Fee'
+          d.files.push({
+            invoice_masterbi_id: b.invoice_masterbi_id,
+            filetype: filetype,
+            date: moment(f.created_at).format('YYYY-MM-DD'),
+            file_id: f.uploadfile_id,
+            url: f.uploadfile_url,
+            release_date: f.uploadfil_release_date
+          })
+        } else if (f.api_name === 'RECEIPT-DO') {
+          filetype = 'DO'
+          d.files.push({
+            invoice_masterbi_id: b.invoice_masterbi_id,
+            filetype: filetype,
+            date: moment(f.created_at).format('YYYY-MM-DD'),
+            file_id: f.uploadfile_id,
+            url: f.uploadfile_url,
+            release_date: f.uploadfil_release_date
+          })
+        } else if (f.api_name === 'RECEIPT-RECEIPT') {
+          filetype = 'Receipt'
+          d.files.push({
+            invoice_masterbi_id: b.invoice_masterbi_id,
+            filetype: filetype,
+            date: moment(f.created_at).format('YYYY-MM-DD'),
+            file_id: f.uploadfile_id,
+            url: f.uploadfile_url,
+            release_date: f.uploadfil_release_date
+          })
+        }
+      }
+      returnData.masterbl.rows.push(d)
+    }
+
+    if (result.data.length > 0) {
+      vessels = await tb_vessel.findAll({
+        where: {
+          invoice_vessel_id: result.data[0].invoice_vessel_id
+        }
+      })
+    }
+  } else {
+    queryStr = `select * from tbl_zhongtan_invoice_vessel
                     where state = '1'`
-  let replacements = []
 
-  if (doc.start_date) {
-    queryStr += ' and created_at >= ? and created_at <= ?'
-    replacements.push(doc.start_date)
-    replacements.push(
-      moment(doc.end_date, 'YYYY-MM-DD')
-        .add(1, 'days')
-        .format('YYYY-MM-DD')
-    )
+    if (doc.start_date) {
+      queryStr += ' and created_at >= ? and created_at <= ?'
+      replacements.push(doc.start_date)
+      replacements.push(
+        moment(doc.end_date, 'YYYY-MM-DD')
+          .add(1, 'days')
+          .format('YYYY-MM-DD')
+      )
+    }
+
+    if (doc.vesselName) {
+      queryStr += ' and invoice_vessel_name like ? '
+      replacements.push('%' + doc.vesselName + '%')
+    }
+
+    vessels = await model.simpleSelect(queryStr, replacements)
   }
-
-  let vessels = await model.simpleSelect(queryStr, replacements)
 
   for (let v of vessels) {
     let row = JSON.parse(JSON.stringify(v))
@@ -76,7 +170,7 @@ exports.searchVoyageAct = async req => {
       }
     })
     row.invoice_receipt_release_rcount = rrcount
-    returnData.push(row)
+    returnData.vessels.push(row)
   }
 
   return common.success(returnData)
