@@ -226,13 +226,17 @@ exports.searchAct = async req => {
     d.fees.billlading_invoice_ammendment = common.money2Str(d.billlading_invoice_ammendment)
     d.fees.billlading_invoice_isp = common.money2Str(d.billlading_invoice_isp)
     d.fees.billlading_invoice_surchage = common.money2Str(d.billlading_invoice_surchage)
+    d.fees.billlading_invoice_of = common.money2Str(d.billlading_invoice_of)
+    d.fees.billlading_invoice_others = common.money2Str(d.billlading_invoice_others)
     d.fees.sum_fee = common.money2Str(
       d.billlading_invoice_freight +
         d.billlading_invoice_blanding +
         d.billlading_invoice_tasac +
         d.billlading_invoice_ammendment +
         d.billlading_invoice_isp +
-        d.billlading_invoice_surchage
+        d.billlading_invoice_surchage +
+        d.billlading_invoice_of +
+        d.billlading_invoice_others
     )
     d.billlading_invoice_freight_f = common.money2Str(d.billlading_invoice_freight)
     d.billlading_invoice_blanding_f = common.money2Str(d.billlading_invoice_blanding)
@@ -240,6 +244,8 @@ exports.searchAct = async req => {
     d.billlading_invoice_ammendment_f = common.money2Str(d.billlading_invoice_ammendment)
     d.billlading_invoice_isp_f = common.money2Str(d.billlading_invoice_isp)
     d.billlading_invoice_surchage_f = common.money2Str(d.billlading_invoice_surchage)
+    d.billlading_invoice_of_f = common.money2Str(d.billlading_invoice_of)
+    d.billlading_invoice_others_f = common.money2Str(d.billlading_invoice_others)
 
     d.billlading_invoice_freight = common.money2Str(d.billlading_invoice_freight)
     d.billlading_invoice_blanding = common.money2Str(d.billlading_invoice_blanding)
@@ -247,6 +253,8 @@ exports.searchAct = async req => {
     d.billlading_invoice_ammendment = common.money2Str(d.billlading_invoice_ammendment)
     d.billlading_invoice_isp = common.money2Str(d.billlading_invoice_isp)
     d.billlading_invoice_surchage = common.money2Str(d.billlading_invoice_surchage)
+    d.billlading_invoice_of = common.money2Str(d.billlading_invoice_of)
+    d.billlading_invoice_others = common.money2Str(d.billlading_invoice_others)
 
     returnData.rows.push(d)
   }
@@ -304,6 +312,8 @@ exports.modifyAct = async req => {
       modibilllading.billlading_invoice_ammendment = common.str2Money(doc.new.billlading_invoice_ammendment_f)
       modibilllading.billlading_invoice_isp = common.str2Money(doc.new.billlading_invoice_isp_f)
       modibilllading.billlading_invoice_surchage = common.str2Money(doc.new.billlading_invoice_surchage_f)
+      modibilllading.billlading_invoice_of = common.str2Money(doc.new.billlading_invoice_of_f)
+      modibilllading.billlading_invoice_others = common.str2Money(doc.new.billlading_invoice_others_f)
     }
 
     await modibilllading.save()
@@ -559,6 +569,8 @@ exports.confirmBookingAct = async req => {
     billlading.billlading_invoice_ammendment = common.str2Money(doc.billlading_invoice_ammendment)
     billlading.billlading_invoice_isp = common.str2Money(doc.billlading_invoice_isp)
     billlading.billlading_invoice_surchage = common.str2Money(doc.billlading_invoice_surchage)
+    billlading.billlading_invoice_of = common.str2Money(doc.billlading_invoice_of)
+    billlading.billlading_invoice_others = common.str2Money(doc.billlading_invoice_others)
     billlading.billlading_state = GLBConfig.BLSTATUS_BOOKING
 
     await billlading.save()
@@ -826,6 +838,8 @@ exports.generateInvoiceAct = async req => {
     billlading.billlading_invoice_ammendment = common.str2Money(doc.billlading_invoice_ammendment)
     billlading.billlading_invoice_isp = common.str2Money(doc.billlading_invoice_isp)
     billlading.billlading_invoice_surchage = common.str2Money(doc.billlading_invoice_surchage)
+    billlading.billlading_invoice_of = common.str2Money(doc.billlading_invoice_of)
+    billlading.billlading_invoice_others = common.str2Money(doc.billlading_invoice_others)
     billlading.billlading_state = GLBConfig.BLSTATUS_INVOICE
     billlading.billlading_invoice_time = new Date()
     billlading.billlading_invoice_operator = user.user_id
@@ -877,13 +891,17 @@ exports.generateInvoiceAct = async req => {
     renderData.invoice_ammendment = common.money2Str(billlading.billlading_invoice_ammendment)
     renderData.invoice_isp = common.money2Str(billlading.billlading_invoice_isp)
     renderData.invoice_surchage = common.money2Str(billlading.billlading_invoice_surchage)
+    renderData.invoice_of = common.money2Str(billlading.billlading_invoice_of)
+    renderData.invoice_others = common.money2Str(billlading.billlading_invoice_others)
     renderData.sum_fee = common.money2Str(
       billlading.billlading_invoice_freight +
         billlading.billlading_invoice_blanding +
         billlading.billlading_invoice_tasac +
         billlading.billlading_invoice_ammendment +
         billlading.billlading_invoice_isp +
-        billlading.billlading_invoice_surchage
+        billlading.billlading_invoice_surchage +
+        billlading.billlading_invoice_of +
+        billlading.billlading_invoice_others
     )
 
     // let fileInfo = await common.ejs2xlsx('INVOICETemplate.xlsx', renderData, 'zhongtan')

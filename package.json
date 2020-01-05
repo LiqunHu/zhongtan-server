@@ -60,7 +60,7 @@
     "markdown-it-toc": "^1.1.0",
     "puppeteer": "1.19.0",
     "xml-js": "1.6.11",
-    "xlsx": "0.15.1"
+    "xlsx": "^0.15.4"
   },
   "devDependencies": {
     "rimraf": "^2.6.2",

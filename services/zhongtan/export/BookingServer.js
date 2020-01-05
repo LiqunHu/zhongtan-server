@@ -169,13 +169,17 @@ exports.searchAct = async req => {
     d.fees.billlading_invoice_ammendment = common.money2Str(d.billlading_invoice_ammendment)
     d.fees.billlading_invoice_isp = common.money2Str(d.billlading_invoice_isp)
     d.fees.billlading_invoice_surchage = common.money2Str(d.billlading_invoice_surchage)
+    d.fees.billlading_invoice_of = common.money2Str(d.billlading_invoice_of)
+    d.fees.billlading_invoice_others = common.money2Str(d.billlading_invoice_others)
     d.fees.sum_fee = common.money2Str(
       d.billlading_invoice_freight +
         d.billlading_invoice_blanding +
         d.billlading_invoice_tasac +
         d.billlading_invoice_ammendment +
         d.billlading_invoice_isp +
-        d.billlading_invoice_surchage
+        d.billlading_invoice_surchage +
+        d.billlading_invoice_of +
+        d.billlading_invoice_others
     )
 
     d.billlading_invoice_freight = common.money2Str(d.billlading_invoice_freight)
@@ -184,6 +188,8 @@ exports.searchAct = async req => {
     d.billlading_invoice_ammendment = common.money2Str(d.billlading_invoice_ammendment)
     d.billlading_invoice_isp = common.money2Str(d.billlading_invoice_isp)
     d.billlading_invoice_surchage = common.money2Str(d.billlading_invoice_surchage)
+    d.billlading_invoice_of = common.money2Str(d.billlading_invoice_of)
+    d.billlading_invoice_others = common.money2Str(d.billlading_invoice_others)
 
     returnData.rows.push(d)
   }

@@ -308,6 +308,14 @@ module.exports = db.defineModel('tbl_zhongtan_billlading', {
     type: db.INTEGER,
     allowNull: true
   },
+  billlading_invoice_of: {
+    type: db.INTEGER,
+    allowNull: true
+  },
+  billlading_invoice_others: {
+    type: db.INTEGER,
+    allowNull: true
+  },
   billlading_invoice_time: {
     // 结算日期
     type: db.DATEONLY,
