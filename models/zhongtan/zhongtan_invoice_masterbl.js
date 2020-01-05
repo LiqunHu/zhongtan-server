@@ -347,6 +347,18 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_masterbl', {
     defaultValue: '',
     allowNull: false
   },
+  invoice_masterbi_of: {
+    // OCEAN FREIGHT
+    type: db.STRING(50),
+    defaultValue: '',
+    allowNull: false
+  },
+  invoice_masterbi_others: {
+    // OTHERS
+    type: db.STRING(50),
+    defaultValue: '',
+    allowNull: false
+  },
   invoice_masterbi_receipt_amount: {
     // receipt amount
     type: db.STRING(50),

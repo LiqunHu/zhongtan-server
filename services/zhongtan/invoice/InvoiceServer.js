@@ -590,6 +590,8 @@ exports.depositDoAct = async req => {
     bl.invoice_masterbi_amendment = doc.invoice_masterbi_amendment
     bl.invoice_masterbi_tasac = doc.invoice_masterbi_tasac
     bl.invoice_masterbi_printing = doc.invoice_masterbi_printing
+    bl.invoice_masterbi_of = doc.invoice_masterbi_of
+    bl.invoice_masterbi_others = doc.invoice_masterbi_others
     bl.invoice_masterbi_fee_date = new Date()
     await bl.save()
 
@@ -632,6 +634,14 @@ exports.depositDoAct = async req => {
     if (bl.invoice_masterbi_printing) {
       renderData.fee.push({ type: 'B/L PTINTING FEE', amount: formatCurrency(bl.invoice_masterbi_printing) })
       renderData.sum_fee += parseFloat(bl.invoice_masterbi_printing)
+    }
+    if (bl.invoice_masterbi_of) {
+      renderData.fee.push({ type: 'OCEAN FREIGHT', amount: formatCurrency(bl.invoice_masterbi_of) })
+      renderData.sum_fee += parseFloat(bl.invoice_masterbi_of)
+    }
+    if (bl.invoice_masterbi_others) {
+      renderData.fee.push({ type: 'OTHERS', amount: formatCurrency(bl.invoice_masterbi_others) })
+      renderData.sum_fee += parseFloat(bl.invoice_masterbi_others)
     }
     renderData.sum_fee = formatCurrency(renderData.sum_fee)
 
