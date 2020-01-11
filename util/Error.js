@@ -50,5 +50,6 @@ module.exports = {
   blconfig_02: 'Batch do not exist',
   import_01: 'Has been loaded',
   import_02: 'voyage is missing',
-  import_03: 'VesselInformation sheet data incorrect'
+  import_03: 'VesselInformation sheet data incorrect',
+  import_04: 'Please choose customer'
 }

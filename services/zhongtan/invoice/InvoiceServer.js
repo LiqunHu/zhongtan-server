@@ -551,6 +551,10 @@ exports.depositDoAct = async req => {
     }
   })
 
+  if (!customer) {
+    return common.error('import_04')
+  }
+
   if (doc.depositType === 'Container Deposit') {
     bl.invoice_masterbi_customer_id = doc.invoice_masterbi_customer_id
     bl.invoice_masterbi_carrier = doc.invoice_masterbi_carrier
@@ -595,6 +599,12 @@ exports.depositDoAct = async req => {
     bl.invoice_masterbi_fee_date = new Date()
     await bl.save()
 
+    bl = await tb_bl.findOne({
+      where: {
+        invoice_masterbi_id: doc.invoice_masterbi_id
+      }
+    })
+
     let renderData = JSON.parse(JSON.stringify(bl))
 
     renderData.fee_date = moment(bl.invoice_masterbi_fee_date).format('YYYY/MM/DD')
@@ -632,7 +642,7 @@ exports.depositDoAct = async req => {
       renderData.sum_fee += parseFloat(bl.invoice_masterbi_tasac)
     }
     if (bl.invoice_masterbi_printing) {
-      renderData.fee.push({ type: 'B/L PTINTING FEE', amount: formatCurrency(bl.invoice_masterbi_printing) })
+      renderData.fee.push({ type: 'B/L PRINTING FEE', amount: formatCurrency(bl.invoice_masterbi_printing) })
       renderData.sum_fee += parseFloat(bl.invoice_masterbi_printing)
     }
     if (bl.invoice_masterbi_of) {
