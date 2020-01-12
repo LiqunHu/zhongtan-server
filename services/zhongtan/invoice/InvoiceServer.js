@@ -317,8 +317,17 @@ exports.getMasterbiDataAct = async req => {
     tbl_zhongtan_invoice_masterbl a
   LEFT JOIN tbl_common_user b ON b.user_id = a.invoice_masterbi_customer_id
   WHERE
-    a.invoice_vessel_id = ?`
+    a.invoice_vessel_id = ? `
   let replacements = [doc.invoice_vessel_id]
+
+  if (doc.collect) {
+    if (doc.collect === 'P') {
+      queryStr += 'AND a.invoice_masterbi_collect_flag = "P" '
+    } else {
+      queryStr += 'AND a.invoice_masterbi_collect_flag != "P" OR a.invoice_masterbi_collect_flag IS NULL'
+    }
+  }
+
   let result = await model.queryWithCount(doc, queryStr, replacements)
   returnData.total = result.count
   returnData.rows = []
@@ -698,7 +707,7 @@ exports.changeCollectAct = async req => {
       invoice_masterbi_id: doc.invoice_masterbi_id
     }
   })
-  
+
   bl.invoice_masterbi_collect_flag = doc.act
   await bl.save()
   return common.success()
