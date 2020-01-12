@@ -321,10 +321,10 @@ exports.getMasterbiDataAct = async req => {
   let replacements = [doc.invoice_vessel_id]
 
   if (doc.collect) {
-    if (doc.collect === 'P') {
-      queryStr += 'AND a.invoice_masterbi_collect_flag = "P" '
+    if (doc.collect === 'C') {
+      queryStr += 'AND a.invoice_masterbi_collect_flag = "C" '
     } else {
-      queryStr += 'AND a.invoice_masterbi_collect_flag != "P" OR a.invoice_masterbi_collect_flag IS NULL'
+      queryStr += 'AND a.invoice_masterbi_collect_flag != "C" OR a.invoice_masterbi_collect_flag IS NULL'
     }
   }
 
