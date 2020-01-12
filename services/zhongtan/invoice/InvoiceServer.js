@@ -17,7 +17,8 @@ exports.initAct = async () => {
   let returnData = {
     TFINFO: GLBConfig.TFINFO,
     RECEIPT_TYPE_INFO: GLBConfig.RECEIPT_TYPE_INFO,
-    CASH_BANK_INFO: GLBConfig.CASH_BANK_INFO
+    CASH_BANK_INFO: GLBConfig.CASH_BANK_INFO,
+    COLLECT_FLAG: GLBConfig.COLLECT_FLAG
   }
 
   return common.success(returnData)
@@ -688,4 +689,17 @@ function formatCurrency(num) {
     num = num.substring(0, num.length - (4 * i + 3)) + ',' + num.substring(num.length - (4 * i + 3))
   }
   return (sign ? '' : '-') + num + '.' + cents
+}
+
+exports.changeCollectAct = async req => {
+  let doc = common.docValidate(req)
+  let bl = await tb_bl.findOne({
+    where: {
+      invoice_masterbi_id: doc.invoice_masterbi_id
+    }
+  })
+  
+  bl.invoice_masterbi_collect_flag = doc.act
+  await bl.save()
+  return common.success()
 }

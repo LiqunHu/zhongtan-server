@@ -27,6 +27,8 @@ module.exports = async (req, res) => {
       ret = await srv.searchCustomerAct(req)
     } else if (method === 'depositDo') {
       ret = await srv.depositDoAct(req)
+    } else if (method === 'changeCollect') {
+      ret = await srv.changeCollectAct(req)
     }
 
     common.sendData(res, ret)

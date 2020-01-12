@@ -386,5 +386,10 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_masterbl', {
     // 缴费者
     type: db.STRING(100),
     allowNull: true
+  },
+  invoice_masterbi_collect_flag: {
+    // prepaid flag
+    type: db.STRING(5),
+    allowNull: true
   }
 })
