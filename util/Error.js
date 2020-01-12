@@ -51,5 +51,6 @@ module.exports = {
   import_01: 'Has been loaded',
   import_02: 'voyage is missing',
   import_03: 'VesselInformation sheet data incorrect',
-  import_04: 'Please choose customer'
+  import_04: 'Please choose customer',
+  import_05: 'Please choose carrier',
 }

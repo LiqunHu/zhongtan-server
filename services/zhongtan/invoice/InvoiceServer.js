@@ -555,6 +555,10 @@ exports.depositDoAct = async req => {
     return common.error('import_04')
   }
 
+  if (!doc.invoice_masterbi_carrier) {
+    return common.error('import_05')
+  }
+
   if (doc.depositType === 'Container Deposit') {
     bl.invoice_masterbi_customer_id = doc.invoice_masterbi_customer_id
     bl.invoice_masterbi_carrier = doc.invoice_masterbi_carrier
