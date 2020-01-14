@@ -80,7 +80,7 @@ exports.uploadImportAct = async req => {
           invoice_masterbi_bl_type: m['*B/L Type'],
           invoice_masterbi_destination: m['Place of Destination'],
           invoice_masterbi_delivery: m['Place of Delivery'],
-          invoice_masterbi_oil_type: m['Oil Type'] || '',
+          invoice_masterbi_freight: m['Freight'] || '',
           invoice_masterbi_loading: m['Port of Loading'],
           invoice_masterbi_container_no: m['Number of Containers'],
           invoice_masterbi_goods_description: m['Description of Goods'],
@@ -321,10 +321,10 @@ exports.getMasterbiDataAct = async req => {
   let replacements = [doc.invoice_vessel_id]
 
   if (doc.collect) {
-    if (doc.collect === 'C') {
-      queryStr += 'AND a.invoice_masterbi_collect_flag = "C" '
+    if (doc.collect === 'COLLECT') {
+      queryStr += 'AND a.invoice_masterbi_freight = "COLLECT" '
     } else {
-      queryStr += 'AND a.invoice_masterbi_collect_flag != "C" OR a.invoice_masterbi_collect_flag IS NULL'
+      queryStr += 'AND a.invoice_masterbi_freight != "COLLECT" OR a.invoice_masterbi_freight IS NULL OR a.invoice_masterbi_freight = ""'
     }
   }
 
@@ -708,7 +708,7 @@ exports.changeCollectAct = async req => {
     }
   })
 
-  bl.invoice_masterbi_collect_flag = doc.act
+  bl.invoice_masterbi_freight = doc.act
   await bl.save()
   return common.success()
 }

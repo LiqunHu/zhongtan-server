@@ -53,8 +53,8 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_masterbl', {
     defaultValue: '',
     allowNull: false
   },
-  invoice_masterbi_oil_type: {
-    // Oil Type
+  invoice_masterbi_freight: {
+    // Freight
     type: db.STRING(10),
     defaultValue: '',
     allowNull: false
@@ -385,11 +385,6 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_masterbl', {
   invoice_masterbi_received_from: {
     // 缴费者
     type: db.STRING(100),
-    allowNull: true
-  },
-  invoice_masterbi_collect_flag: {
-    // prepaid flag
-    type: db.STRING(5),
     allowNull: true
   }
 })
