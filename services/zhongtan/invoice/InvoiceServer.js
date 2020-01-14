@@ -712,3 +712,59 @@ exports.changeCollectAct = async req => {
   await bl.save()
   return common.success()
 }
+
+exports.changeblAct = async req => {
+  let doc = common.docValidate(req)
+
+  for(let b of doc.changedbl) {
+    let bl = await tb_bl.findOne({
+      where: {
+        invoice_masterbi_id: b.invoice_masterbi_id
+      }
+    })
+  
+    bl.invoice_masterbi_cargo_type = b.invoice_masterbi_cargo_type
+    bl.invoice_masterbi_bl_type = b.invoice_masterbi_bl_type
+    bl.invoice_masterbi_destination=b.invoice_masterbi_destination
+    bl.invoice_masterbi_delivery = b.invoice_masterbi_delivery
+    bl.invoice_masterbi_loading = b.invoice_masterbi_loading
+    bl.invoice_masterbi_container_no = b.invoice_masterbi_container_no
+    bl.invoice_masterbi_goods_description = b.invoice_masterbi_goods_description
+    bl.invoice_masterbi_package_no = b.invoice_masterbi_package_no
+    bl.invoice_masterbi_package_unit = b.invoice_masterbi_package_unit
+    bl.invoice_masterbi_gross_weight = b.invoice_masterbi_gross_weight
+    bl.invoice_masterbi_gross_weight_unit = b.invoice_masterbi_gross_weight_unit
+    bl.invoice_masterbi_gross_volume = b.invoice_masterbi_gross_volume
+    bl.invoice_masterbi_gross_volume_unit = b.invoice_masterbi_gross_volume_unit
+    bl.invoice_masterbi_invoice_value = b.invoice_masterbi_invoice_value
+    bl.invoice_masterbi_invoice_currency = b.invoice_masterbi_invoice_currency
+    bl.invoice_masterbi_freight_charge = b.invoice_masterbi_freight_charge
+    bl.invoice_masterbi_freight_currency = b.invoice_masterbi_freight_currency
+    bl.invoice_masterbi_imdg = b.invoice_masterbi_imdg
+    bl.invoice_masterbi_packing_type = b.invoice_masterbi_packing_type
+    bl.invoice_masterbi_forwarder_code = b.invoice_masterbi_forwarder_code
+    bl.invoice_masterbi_forwarder_name = b.invoice_masterbi_forwarder_name
+    bl.invoice_masterbi_forwarder_tel = b.invoice_masterbi_forwarder_tel
+    bl.invoice_masterbi_exporter_name = b.invoice_masterbi_exporter_name
+    bl.invoice_masterbi_exporter_tel = b.invoice_masterbi_exporter_tel
+    bl.invoice_masterbi_exporter_address = b.invoice_masterbi_exporter_address
+    bl.invoice_masterbi_exporter_tin = b.invoice_masterbi_exporter_tin
+    bl.invoice_masterbi_consignee_name = b.invoice_masterbi_consignee_name
+    bl.invoice_masterbi_consignee_tel = b.invoice_masterbi_consignee_tel
+    bl.invoice_masterbi_consignee_address = b.invoice_masterbi_consignee_address
+    bl.invoice_masterbi_consignee_tin = b.invoice_masterbi_consignee_tin
+    bl.invoice_masterbi_notify_name = b.invoice_masterbi_notify_name
+    bl.invoice_masterbi_notify_tel = b.invoice_masterbi_notify_tel
+    bl.invoice_masterbi_notify_address = b.invoice_masterbi_notify_address
+    bl.invoice_masterbi_notify_tin = b.invoice_masterbi_notify_tin
+    bl.invoice_masterbi_shipping_mark = b.invoice_masterbi_shipping_mark
+    bl.invoice_masterbi_net_weight = b.invoice_masterbi_net_weight
+    bl.invoice_masterbi_net_weight_unit = b.invoice_masterbi_net_weight_unit
+    bl.invoice_masterbi_line_code = b.invoice_masterbi_line_code
+    bl.invoice_masterbi_terminal_code = b.invoice_masterbi_terminal_code
+
+    await bl.save()
+  }
+  
+  return common.success()
+}
