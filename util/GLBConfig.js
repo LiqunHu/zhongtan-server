@@ -263,7 +263,11 @@ module.exports = {
       text: 'KG'
     }
   ],
-  ContainerSizeINFO: [{ id: '20', text: '20' }, { id: '40', text: '40' }, { id: '45', text: '45' }],
+  ContainerSizeINFO: [
+    { id: '20', text: '20' },
+    { id: '40', text: '40' },
+    { id: '45', text: '45' }
+  ],
   ContainerTypeINFO: [
     { id: 'GP', text: 'GP' },
     { id: 'HC', text: 'HC' },
@@ -275,9 +279,20 @@ module.exports = {
     { id: 'TK', text: 'TK' },
     { id: 'FR', text: 'FR' }
   ],
-  PayTypeINFO: [{ id: 'Prepaid', text: 'Prepaid' }, { id: 'Collect', text: 'Collect' }],
-  PayCurrencyINFO: [{ id: 'CY', text: 'CY' }, { id: 'CFS', text: 'CFS' }],
-  VesselServiceINFO: [{ id: 'ALL', text: 'ALL' }, { id: 'EAX1', text: 'EAX1' }, { id: 'EAX2', text: 'EAX2' }, { id: 'EAX4', text: 'EAX4' }],
+  PayTypeINFO: [
+    { id: 'Prepaid', text: 'Prepaid' },
+    { id: 'Collect', text: 'Collect' }
+  ],
+  PayCurrencyINFO: [
+    { id: 'CY', text: 'CY' },
+    { id: 'CFS', text: 'CFS' }
+  ],
+  VesselServiceINFO: [
+    { id: 'ALL', text: 'ALL' },
+    { id: 'EAX1', text: 'EAX1' },
+    { id: 'EAX2', text: 'EAX2' },
+    { id: 'EAX4', text: 'EAX4' }
+  ],
   BLSTATUS_PRE_BOOKING: 'PBK',
   BLSTATUS_BOOKING: 'BK',
   BLSTATUS_PUTBOX_APPLY: 'PA',
@@ -310,8 +325,22 @@ module.exports = {
     { id: 'IV', text: 'Invoice', style: 'label-invoice' },
     { id: 'RE', text: 'Receipt', style: 'label-receipt' }
   ],
-  LB_BATCH_STATE: [{ id: '0', text: 'Unused' }, { id: '1', text: 'Used' }, { id: '2', text: 'Cancel' }],
-  RECEIPT_TYPE_INFO: [{ id: 'COSCO', text: 'COSCO' }, { id: 'OOCL', text: 'OOCL' }],
-  CASH_BANK_INFO: [{ id: 'CASH', text: 'Cash' }, { id: 'CHEQUE', text: 'Cheque' }],
-  COLLECT_FLAG: [{ id: 'PREPAID', text: 'Prepaid' }, { id: 'COLLECT', text: 'Collect' }]
+  LB_BATCH_STATE: [
+    { id: '0', text: 'Unused' },
+    { id: '1', text: 'Used' },
+    { id: '2', text: 'Cancel' }
+  ],
+  RECEIPT_TYPE_INFO: [
+    { id: 'COSCO', text: 'COSCO' },
+    { id: 'OOCL', text: 'OOCL' }
+  ],
+  CASH_BANK_INFO: [
+    { id: 'CASH', text: 'Cash' },
+    { id: 'CHEQUE', text: 'Cheque' },
+    { id: 'TRANSFER', text: 'Bank transfer' }
+  ],
+  COLLECT_FLAG: [
+    { id: 'PREPAID', text: 'Prepaid' },
+    { id: 'COLLECT', text: 'Collect' }
+  ]
 }
