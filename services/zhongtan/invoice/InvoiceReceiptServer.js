@@ -356,3 +356,35 @@ exports.doReleaseAct = async req => {
   return common.success()
 }
 
+exports.downloadCollectAct = async (req, res) => {
+  let doc = common.docValidate(req)
+  let queryStr = `SELECT	*
+    FROM
+      tbl_zhongtan_invoice_masterbl a 
+    INNER JOIN tbl_zhongtan_invoice_vessel b on a.invoice_vessel_id = b.invoice_vessel_id
+    LEFT JOIN tbl_common_user c ON c.user_id = a.invoice_masterbi_customer_id
+    WHERE b.invoice_vessel_code = ?
+    and a.invoice_masterbi_receipt_release_date > ?
+    and a.invoice_masterbi_receipt_release_date < ?`
+  let replacements = [
+    doc.carrier,
+    moment(doc.collect_date[0]).subtract(1, 'days').format('YYYY-MM-DD'),
+    moment(doc.collect_date[1])
+      .add(1, 'days')
+      .format('YYYY-MM-DD')
+  ]
+
+  let result = await model.simpleSelect(queryStr, replacements)
+
+  let renderData = []
+
+  for (let r of result) {
+    let row = JSON.parse(JSON.stringify(r))
+    row.date = moment(r.invoice_masterbi_receipt_release_date).format('YYYY/MM/DD')
+    renderData.push(row)
+  }
+
+  let filepath = await common.ejs2xlsx('collectTemplate.xlsx', renderData)
+
+  res.sendFile(filepath)
+}
