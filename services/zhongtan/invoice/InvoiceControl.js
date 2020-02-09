@@ -31,6 +31,8 @@ module.exports = async (req, res) => {
       ret = await srv.changeCollectAct(req)
     } else if (method === 'changebl') {
       ret = await srv.changeblAct(req)
+    } else if (method === 'deleteVoyage') {
+      ret = await srv.deleteVoyageAct(req)
     }
 
     common.sendData(res, ret)

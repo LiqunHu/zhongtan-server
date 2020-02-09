@@ -768,3 +768,27 @@ exports.changeblAct = async req => {
   
   return common.success()
 }
+
+exports.deleteVoyageAct = async req => {
+  let doc = common.docValidate(req)
+
+  await tb_container.destroy({
+    where: {
+      invoice_vessel_id: doc.invoice_vessel_id
+    }
+  })
+  
+  await tb_bl.destroy({
+    where: {
+      invoice_vessel_id: doc.invoice_vessel_id
+    }
+  })
+
+  await tb_vessel.destroy({
+    where: {
+      invoice_vessel_id: doc.invoice_vessel_id
+    }
+  })
+  
+  return common.success()
+}
