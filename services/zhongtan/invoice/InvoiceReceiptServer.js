@@ -304,7 +304,7 @@ exports.downloadReceiptAct = async req => {
     renderData.check_cash = bl.invoice_masterbi_check_no
   }
 
-  renderData.sum_fee = parseFloat(bl.invoice_masterbi_receipt_amount || 0)
+  renderData.sum_fee = parseFloat(bl.invoice_masterbi_receipt_amount.replace(/,/g, '') || 0)
 
   renderData.sum_fee_str = numberToText(renderData.sum_fee)
 
