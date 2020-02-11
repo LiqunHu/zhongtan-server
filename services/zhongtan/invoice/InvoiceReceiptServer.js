@@ -361,9 +361,8 @@ exports.downloadCollectAct = async (req, res) => {
   let queryStr = `SELECT	*
     FROM
       tbl_zhongtan_invoice_masterbl a 
-    INNER JOIN tbl_zhongtan_invoice_vessel b on a.invoice_vessel_id = b.invoice_vessel_id
-    LEFT JOIN tbl_common_user c ON c.user_id = a.invoice_masterbi_customer_id
-    WHERE b.invoice_vessel_code = ?
+    LEFT JOIN tbl_common_user b ON b.user_id = a.invoice_masterbi_customer_id
+    WHERE a.invoice_masterbi_carrier = ?
     and a.invoice_masterbi_receipt_release_date > ?
     and a.invoice_masterbi_receipt_release_date < ?`
   let replacements = [
