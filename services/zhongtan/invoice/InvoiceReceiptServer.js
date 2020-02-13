@@ -366,12 +366,12 @@ exports.downloadCollectAct = async (req, res) => {
     LEFT JOIN tbl_common_user b ON b.user_id = a.invoice_masterbi_customer_id
     WHERE a.invoice_masterbi_carrier = ?
     and a.invoice_masterbi_receipt_release_date > ?
-    and a.invoice_masterbi_receipt_release_date <= ?`
+    and a.invoice_masterbi_receipt_release_date < ?`
   let replacements = [
     doc.carrier,
-    moment(doc.collect_date[0]).format('YYYY-MM-DD'),
+    moment(doc.collect_date[0]).add(1, 'days').format('YYYY-MM-DD'),
     moment(doc.collect_date[1])
-      .add(1, 'days')
+      .add(2, 'days')
       .format('YYYY-MM-DD')
   ]
 
