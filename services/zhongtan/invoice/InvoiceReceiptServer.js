@@ -292,8 +292,7 @@ exports.downloadReceiptAct = async req => {
     bl.invoice_masterbi_check_cash = doc.invoice_masterbi_check_cash
     bl.invoice_masterbi_check_no = doc.invoice_masterbi_check_no
     bl.invoice_masterbi_received_from = doc.invoice_masterbi_received_from
-    bl.invoice_masterbi_receipt_no =
-      bl.invoice_masterbi_carrier + await seq.genInvoiceReceiptNo()
+    bl.invoice_masterbi_receipt_no = bl.invoice_masterbi_carrier + (await seq.genInvoiceReceiptNo())
     await bl.save()
   }
 
@@ -369,7 +368,9 @@ exports.downloadCollectAct = async (req, res) => {
     and a.invoice_masterbi_receipt_release_date < ?`
   let replacements = [
     doc.carrier,
-    moment(doc.collect_date[0]).add(1, 'days').format('YYYY-MM-DD'),
+    moment(doc.collect_date[0])
+      .add(1, 'days')
+      .format('YYYY-MM-DD'),
     moment(doc.collect_date[1])
       .add(2, 'days')
       .format('YYYY-MM-DD')
@@ -382,6 +383,14 @@ exports.downloadCollectAct = async (req, res) => {
   for (let r of result) {
     let row = JSON.parse(JSON.stringify(r))
     row.date = moment(r.invoice_masterbi_receipt_release_date).format('YYYY/MM/DD')
+    row.bc = ''
+    if (r.invoice_masterbi_check_cash === 'CASH') {
+      row.bc = '1'
+    } else if (r.invoice_masterbi_check_cash === 'CHEQUE') {
+      row.bc = '2'
+    } else if (r.invoice_masterbi_check_cash === 'TRANSFER') {
+      row.bc = '3'
+    }
     renderData.push(row)
   }
 
