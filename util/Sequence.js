@@ -33,7 +33,22 @@ let genReceiptNo = async () => {
   }
 }
 
+let genInvoiceReceiptNo = async () => {
+  try {
+    let queryRst = await sequelize.query("select nextval('invoiceReceiptSeq') num", {
+      type: sequelize.QueryTypes.SELECT
+    })
+    let currentIndex = moment().format('YYYYMMDD') + ('00000000000' + queryRst[0].num).slice(-4)
+
+    return currentIndex
+  } catch (error) {
+    logger.error(error)
+    return error
+  }
+}
+
 module.exports = {
   genUserID: genUserID,
-  genReceiptNo: genReceiptNo
+  genReceiptNo: genReceiptNo,
+  genInvoiceReceiptNo: genInvoiceReceiptNo
 }

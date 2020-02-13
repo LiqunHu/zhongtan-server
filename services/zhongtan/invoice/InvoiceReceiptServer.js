@@ -4,6 +4,8 @@ const numberToText = require('number2text')
 const GLBConfig = require('../../../util/GLBConfig')
 const common = require('../../../util/CommonUtil')
 const model = require('../../../app/model')
+const seq = require('../../../util/Sequence')
+
 const Op = model.Op
 
 const tb_bl = model.zhongtan_invoice_masterbl
@@ -291,7 +293,7 @@ exports.downloadReceiptAct = async req => {
     bl.invoice_masterbi_check_no = doc.invoice_masterbi_check_no
     bl.invoice_masterbi_received_from = doc.invoice_masterbi_received_from
     bl.invoice_masterbi_receipt_no =
-      bl.invoice_masterbi_carrier + moment().format('YYYYMMDD') + ('000000000000000' + bl.invoice_masterbi_bl).slice(-4)
+      bl.invoice_masterbi_carrier + await seq.genInvoiceReceiptNo()
     await bl.save()
   }
 

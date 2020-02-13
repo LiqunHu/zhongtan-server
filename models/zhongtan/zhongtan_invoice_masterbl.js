@@ -373,7 +373,7 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_masterbl', {
   },
   invoice_masterbi_check_no: {
     // check no
-    type: db.STRING(50),
+    type: db.STRING(200),
     defaultValue: '',
     allowNull: false
   },
