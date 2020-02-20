@@ -289,12 +289,12 @@ const df = strInput => {
 const getDelivery = strInput => {
   if (strInput === 'WITZDL008') {
     return 'KICD'
-  } else if (strInput === 'WITZDL012') {
-    return 'AFICD'
   } else if (strInput === 'WITZDL018') {
     return 'ETC CARGO'
   } else if (strInput === 'WITZDL020') {
     return 'HESU'
+  } else if (strInput === 'WITZDL022') {
+    return 'AFICD'
   } else if (strInput === 'WITZW025') {
     return 'GALCO'
   } else if (strInput === 'WITZDL028') {
