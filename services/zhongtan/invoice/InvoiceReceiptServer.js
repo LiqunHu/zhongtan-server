@@ -16,7 +16,8 @@ exports.initAct = async () => {
   let returnData = {
     TFINFO: GLBConfig.TFINFO,
     RECEIPT_TYPE_INFO: GLBConfig.RECEIPT_TYPE_INFO,
-    CASH_BANK_INFO: GLBConfig.CASH_BANK_INFO
+    CASH_BANK_INFO: GLBConfig.CASH_BANK_INFO,
+    RECEIPT_CURRENCY: GLBConfig.RECEIPT_CURRENCY
   }
 
   return common.success(returnData)
@@ -73,6 +74,16 @@ exports.searchVoyageAct = async req => {
           })
         } else if (f.api_name === 'RECEIPT-FEE') {
           filetype = 'Fee'
+          d.files.push({
+            invoice_masterbi_id: b.invoice_masterbi_id,
+            filetype: filetype,
+            date: moment(f.created_at).format('YYYY-MM-DD'),
+            file_id: f.uploadfile_id,
+            url: f.uploadfile_url,
+            release_date: f.uploadfil_release_date
+          })
+        } else if (f.api_name === 'RECEIPT-OF') {
+          filetype = 'Freight'
           d.files.push({
             invoice_masterbi_id: b.invoice_masterbi_id,
             filetype: filetype,
@@ -233,6 +244,16 @@ exports.getMasterbiDataAct = async req => {
           url: f.uploadfile_url,
           release_date: f.uploadfil_release_date
         })
+      } else if (f.api_name === 'RECEIPT-OF') {
+        filetype = 'Freight'
+        d.files.push({
+          invoice_masterbi_id: b.invoice_masterbi_id,
+          filetype: filetype,
+          date: moment(f.created_at).format('YYYY-MM-DD'),
+          file_id: f.uploadfile_id,
+          url: f.uploadfile_url,
+          release_date: f.uploadfil_release_date
+        })
       } else if (f.api_name === 'RECEIPT-DO') {
         filetype = 'DO'
         d.files.push({
@@ -289,6 +310,7 @@ exports.downloadReceiptAct = async req => {
 
   if (!bl.invoice_masterbi_receipt_release_date) {
     bl.invoice_masterbi_receipt_amount = doc.invoice_masterbi_receipt_amount
+    bl.invoice_masterbi_receipt_currency = doc.invoice_masterbi_receipt_currency
     bl.invoice_masterbi_check_cash = doc.invoice_masterbi_check_cash
     bl.invoice_masterbi_check_no = doc.invoice_masterbi_check_no
     bl.invoice_masterbi_received_from = doc.invoice_masterbi_received_from
@@ -341,10 +363,6 @@ exports.doReleaseAct = async req => {
 
   if (file.api_name === 'RECEIPT-DO') {
     bl.invoice_masterbi_do_release_date = file.uploadfil_release_date
-  }
-
-  if (file.api_name === 'RECEIPT-DEPOSIT' || file.api_name === 'RECEIPT-FEE') {
-    bl.invoice_masterbi_invoice_release_date = file.uploadfil_release_date
   }
 
   if (file.api_name === 'RECEIPT-RECEIPT') {

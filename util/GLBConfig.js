@@ -339,6 +339,10 @@ module.exports = {
     { id: 'CHEQUE', text: 'Cheque' },
     { id: 'TRANSFER', text: 'Bank transfer' }
   ],
+  RECEIPT_CURRENCY: [
+    { id: 'USD', text: 'USD' },
+    { id: 'TZS', text: 'TZS' }
+  ],
   COLLECT_FLAG: [
     { id: 'PREPAID', text: 'Prepaid' },
     { id: 'COLLECT', text: 'Collect' }

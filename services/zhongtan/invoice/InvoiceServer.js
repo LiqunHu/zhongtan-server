@@ -210,6 +210,16 @@ exports.searchVoyageAct = async req => {
             url: f.uploadfile_url,
             release_date: f.uploadfil_release_date
           })
+        } else if (f.api_name === 'RECEIPT-OF') {
+          filetype = 'Freight'
+          d.files.push({
+            invoice_masterbi_id: b.invoice_masterbi_id,
+            filetype: filetype,
+            date: moment(f.created_at).format('YYYY-MM-DD'),
+            file_id: f.uploadfile_id,
+            url: f.uploadfile_url,
+            release_date: f.uploadfil_release_date
+          })
         } else if (f.api_name === 'RECEIPT-DO') {
           filetype = 'DO'
           d.files.push({
@@ -371,6 +381,16 @@ exports.getMasterbiDataAct = async req => {
           url: f.uploadfile_url,
           release_date: f.uploadfil_release_date
         })
+      } else if (f.api_name === 'RECEIPT-OF') {
+        filetype = 'Freight'
+        d.files.push({
+          invoice_masterbi_id: b.invoice_masterbi_id,
+          filetype: filetype,
+          date: moment(f.created_at).format('YYYY-MM-DD'),
+          file_id: f.uploadfile_id,
+          url: f.uploadfile_url,
+          release_date: f.uploadfil_release_date
+        })
       } else if (f.api_name === 'RECEIPT-DO') {
         filetype = 'DO'
         d.files.push({
@@ -499,7 +519,7 @@ exports.doReleaseAct = async req => {
     bl.invoice_masterbi_do_release_date = file.uploadfil_release_date
   }
 
-  if (file.api_name === 'RECEIPT-DEPOSIT' || file.api_name === 'RECEIPT-FEE') {
+  if (file.api_name === 'RECEIPT-DEPOSIT' || file.api_name === 'RECEIPT-FEE' || file.api_name === 'RECEIPT-OF') {
     bl.invoice_masterbi_invoice_release_date = file.uploadfil_release_date
   }
 
@@ -608,7 +628,6 @@ exports.depositDoAct = async req => {
     bl.invoice_masterbi_amendment = doc.invoice_masterbi_amendment
     bl.invoice_masterbi_tasac = doc.invoice_masterbi_tasac
     bl.invoice_masterbi_printing = doc.invoice_masterbi_printing
-    bl.invoice_masterbi_of = doc.invoice_masterbi_of
     bl.invoice_masterbi_others = doc.invoice_masterbi_others
     bl.invoice_masterbi_fee_date = new Date()
     await bl.save()
@@ -659,10 +678,6 @@ exports.depositDoAct = async req => {
       renderData.fee.push({ type: 'B/L PRINTING FEE', amount: formatCurrency(bl.invoice_masterbi_printing) })
       renderData.sum_fee += parseFloat(bl.invoice_masterbi_printing)
     }
-    if (bl.invoice_masterbi_of) {
-      renderData.fee.push({ type: 'OCEAN FREIGHT', amount: formatCurrency(bl.invoice_masterbi_of) })
-      renderData.sum_fee += parseFloat(bl.invoice_masterbi_of)
-    }
     if (bl.invoice_masterbi_others) {
       renderData.fee.push({ type: 'OTHERS', amount: formatCurrency(bl.invoice_masterbi_others) })
       renderData.sum_fee += parseFloat(bl.invoice_masterbi_others)
@@ -673,6 +688,45 @@ exports.depositDoAct = async req => {
 
     await tb_uploadfile.create({
       api_name: 'RECEIPT-FEE',
+      user_id: user.user_id,
+      uploadfile_index1: bl.invoice_masterbi_id,
+      uploadfile_name: fileInfo.name,
+      uploadfile_url: fileInfo.url
+    })
+
+    return common.success({ url: fileInfo.url })
+  } else if (doc.depositType === 'Ocean Freight') {
+    bl.invoice_masterbi_customer_id = doc.invoice_masterbi_customer_id
+    bl.invoice_masterbi_carrier = doc.invoice_masterbi_carrier
+    bl.invoice_masterbi_of = doc.invoice_masterbi_of
+    bl.invoice_masterbi_of_date = new Date()
+    await bl.save()
+
+    let renderData = JSON.parse(JSON.stringify(bl))
+    renderData.fee_date = moment(bl.invoice_masterbi_of_date).format('YYYY/MM/DD')
+    renderData.customer_name = customer.user_name
+    renderData.address = customer.user_address
+    renderData.address1 = customer.user_address1
+    renderData.address2 = customer.user_address2
+    renderData.user_name = user.user_name
+    renderData.user_email = user.user_email
+    renderData.receipt_no = await seq.genReceiptNo()
+    renderData.vessel_name = vessel.invoice_vessel_name
+    renderData.voyage_number = vessel.invoice_vessel_voyage
+    renderData.voyage_ata_date = vessel.invoice_vessel_ata
+
+    renderData.fee = []
+    renderData.sum_fee = 0
+
+    renderData.fee.push({ type: 'OCEAN FREIGHT', amount: formatCurrency(bl.invoice_masterbi_of) })
+    renderData.sum_fee += parseFloat(bl.invoice_masterbi_of)
+
+    renderData.sum_fee = formatCurrency(renderData.sum_fee)
+
+    let fileInfo = await common.ejs2Pdf('fee.ejs', renderData, 'zhongtan')
+
+    await tb_uploadfile.create({
+      api_name: 'RECEIPT-OF',
       user_id: user.user_id,
       uploadfile_index1: bl.invoice_masterbi_id,
       uploadfile_name: fileInfo.name,

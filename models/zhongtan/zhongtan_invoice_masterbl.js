@@ -311,6 +311,11 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_masterbl', {
     type: db.DATEONLY,
     allowNull: true
   },
+  invoice_masterbi_of_date: {
+    // Ocean Freight data
+    type: db.DATEONLY,
+    allowNull: true
+  },
   invoice_masterbi_transfer: {
     // CONTAINER TRANSFER
     type: db.STRING(50),
@@ -363,6 +368,12 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_masterbl', {
     // receipt amount
     type: db.STRING(50),
     defaultValue: '',
+    allowNull: false
+  },
+  invoice_masterbi_receipt_currency: {
+    // receipt currency
+    type: db.STRING(10),
+    defaultValue: 'USD',
     allowNull: false
   },
   invoice_masterbi_check_cash: {
