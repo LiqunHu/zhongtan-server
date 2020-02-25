@@ -409,6 +409,35 @@ exports.downloadCollectAct = async (req, res) => {
     } else if (r.invoice_masterbi_check_cash === 'TRANSFER') {
       row.bc = '3'
     }
+
+    row.sum_amount = 0
+    if (r.invoice_masterbi_deposit) {
+      row.sum_amount += parseFloat(r.invoice_masterbi_deposit)
+    }
+    if (r.invoice_masterbi_transfer) {
+      row.sum_amount += parseFloat(r.invoice_masterbi_transfer)
+    }
+    if (r.invoice_masterbi_lolf) {
+      row.sum_amount += parseFloat(r.invoice_masterbi_lolf)
+    }
+    if (r.invoice_masterbi_lcl) {
+      row.sum_amount += parseFloat(r.invoice_masterbi_lcl)
+    }
+    if (r.invoice_masterbi_amendment) {
+      row.sum_amount += parseFloat(r.invoice_masterbi_amendment)
+    }
+    if (r.invoice_masterbi_tasac) {
+      row.sum_amount += parseFloat(r.invoice_masterbi_tasac)
+    }
+    if (r.invoice_masterbi_printing) {
+      row.sum_amount += parseFloat(r.invoice_masterbi_printing)
+    }
+    if (r.invoice_masterbi_of) {
+      row.sum_amount += parseFloat(r.invoice_masterbi_of)
+    }
+    if (r.invoice_masterbi_others) {
+      row.sum_amount += parseFloat(r.invoice_masterbi_others)
+    }
     renderData.push(row)
   }
 
