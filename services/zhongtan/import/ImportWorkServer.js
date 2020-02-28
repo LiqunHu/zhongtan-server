@@ -292,17 +292,19 @@ exports.uploadImportAct = async req => {
               })
             }
           } else {
-            await tb_billlading_charges.create({
-              import_billlading_id: bl.import_billlading_id,
-              import_billlading_charges_type: common.df(gbl.G_DETAILS.G_DATAD.ROWSURCHARGES_CHRG_TYPE),
-              import_billlading_charges_description: common.df(gbl.G_DETAILS.G_DATAD.ROWSURCHARGES_DESCRIPTION),
-              import_billlading_charges_basis: common.df(gbl.G_DETAILS.G_DATAD.ROWSURCHARGES_BASIS),
-              import_billlading_charges_rate: common.df(gbl.G_DETAILS.G_DATAD.ROWSURCHARGES_RATE),
-              import_billlading_charges_pc: common.df(gbl.G_DETAILS.G_DATAD.ROWSURCHARGES_PC_INDICATOR),
-              import_billlading_charges_ttl_ame: common.df(gbl.G_DETAILS.G_DATAD.ROWSURCHARGES_TTL_AMT),
-              import_billlading_charges_pay_loc: common.df(gbl.G_DETAILS.G_DATAD.ROWSURCHARGES_PYMT_LOC),
-              import_billlading_charges_currency: common.df(gbl.G_DETAILS.G_DATAD.ROWSURCHARGES_CURRENCY)
-            })
+            if (gbl.G_DETAILS.G_DATAD) {
+              await tb_billlading_charges.create({
+                import_billlading_id: bl.import_billlading_id,
+                import_billlading_charges_type: common.df(gbl.G_DETAILS.G_DATAD.ROWSURCHARGES_CHRG_TYPE),
+                import_billlading_charges_description: common.df(gbl.G_DETAILS.G_DATAD.ROWSURCHARGES_DESCRIPTION),
+                import_billlading_charges_basis: common.df(gbl.G_DETAILS.G_DATAD.ROWSURCHARGES_BASIS),
+                import_billlading_charges_rate: common.df(gbl.G_DETAILS.G_DATAD.ROWSURCHARGES_RATE),
+                import_billlading_charges_pc: common.df(gbl.G_DETAILS.G_DATAD.ROWSURCHARGES_PC_INDICATOR),
+                import_billlading_charges_ttl_ame: common.df(gbl.G_DETAILS.G_DATAD.ROWSURCHARGES_TTL_AMT),
+                import_billlading_charges_pay_loc: common.df(gbl.G_DETAILS.G_DATAD.ROWSURCHARGES_PYMT_LOC),
+                import_billlading_charges_currency: common.df(gbl.G_DETAILS.G_DATAD.ROWSURCHARGES_CURRENCY)
+              })
+            }
           }
 
           if (_.isArray(gbl.G_DETAILS.G_DATAG)) {
