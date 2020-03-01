@@ -45,6 +45,43 @@ module.exports = db.defineModel('tbl_zhongtan_uploadfile', {
     defaultValue: '',
     allowNull: true
   },
+  uploadfile_acttype: {
+    type: db.STRING(10),
+    defaultValue: '',
+    allowNull: true
+  },
+  uploadfile_amount: {
+    type: db.STRING(50),
+    defaultValue: '',
+    allowNull: true
+  },
+  uploadfile_currency: {
+    type: db.STRING(10),
+    defaultValue: '',
+    allowNull: true
+  },
+  uploadfile_check_cash: {
+    // check cash flag
+    type: db.STRING(20),
+    defaultValue: '',
+    allowNull: false
+  },
+  uploadfile_check_no: {
+    // check no
+    type: db.STRING(200),
+    defaultValue: '',
+    allowNull: false
+  },
+  uploadfile_receipt_no: {
+    // 收据号
+    type: db.STRING(50),
+    allowNull: true
+  },
+  uploadfile_received_from: {
+    // 缴费者
+    type: db.STRING(100),
+    allowNull: true
+  },
   uploadfile_remark: {
     type: db.STRING(1000),
     defaultValue: '',

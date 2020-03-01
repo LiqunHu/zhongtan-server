@@ -308,15 +308,12 @@ exports.downloadReceiptAct = async req => {
     }
   })
 
-  if (!bl.invoice_masterbi_receipt_release_date) {
-    bl.invoice_masterbi_receipt_amount = doc.invoice_masterbi_receipt_amount
-    bl.invoice_masterbi_receipt_currency = doc.invoice_masterbi_receipt_currency
-    bl.invoice_masterbi_check_cash = doc.invoice_masterbi_check_cash
-    bl.invoice_masterbi_check_no = doc.invoice_masterbi_check_no
-    bl.invoice_masterbi_received_from = doc.invoice_masterbi_received_from
-    bl.invoice_masterbi_receipt_no = bl.invoice_masterbi_carrier + (await seq.genInvoiceReceiptNo())
-    await bl.save()
-  }
+  bl.invoice_masterbi_receipt_amount = doc.invoice_masterbi_receipt_amount
+  bl.invoice_masterbi_receipt_currency = doc.invoice_masterbi_receipt_currency
+  bl.invoice_masterbi_check_cash = doc.invoice_masterbi_check_cash
+  bl.invoice_masterbi_check_no = doc.invoice_masterbi_check_no
+  bl.invoice_masterbi_received_from = doc.invoice_masterbi_received_from
+  bl.invoice_masterbi_receipt_no = bl.invoice_masterbi_carrier + (await seq.genInvoiceReceiptNo())
 
   let renderData = JSON.parse(JSON.stringify(bl))
   renderData.receipt_date = moment().format('MMM DD, YYYY')
@@ -338,7 +335,14 @@ exports.downloadReceiptAct = async req => {
     user_id: user.user_id,
     uploadfile_index1: bl.invoice_masterbi_id,
     uploadfile_name: fileInfo.name,
-    uploadfile_url: fileInfo.url
+    uploadfile_url: fileInfo.url,
+    uploadfile_acttype: doc.checkType,
+    uploadfile_amount: doc.invoice_masterbi_receipt_amount,
+    uploadfile_currency: doc.invoice_masterbi_receipt_currency,
+    uploadfile_check_cash: doc.invoice_masterbi_check_cash,
+    uploadfile_check_no: doc.invoice_masterbi_check_no,
+    uploadfile_received_from: doc.invoice_masterbi_received_from,
+    uploadfile_receipt_no: bl.invoice_masterbi_receipt_no
   })
 
   return common.success({ url: fileInfo.url })
@@ -377,13 +381,18 @@ exports.doReleaseAct = async req => {
 
 exports.downloadCollectAct = async (req, res) => {
   let doc = common.docValidate(req)
-  let queryStr = `SELECT	*
+  let queryStr = `SELECT *
     FROM
-      tbl_zhongtan_invoice_masterbl a 
-    LEFT JOIN tbl_common_user b ON b.user_id = a.invoice_masterbi_customer_id
-    WHERE a.invoice_masterbi_carrier = ?
-    and a.invoice_masterbi_receipt_release_date > ?
-    and a.invoice_masterbi_receipt_release_date < ?`
+      tbl_zhongtan_invoice_masterbl a ,
+      tbl_zhongtan_uploadfile b ,
+      tbl_common_user c
+    WHERE
+      b.uploadfile_acttype IN('deposit' , 'fee' , 'freight')
+    AND a.invoice_masterbi_id = b.uploadfile_index1
+    AND a.invoice_masterbi_customer_id = c.user_id
+    AND a.invoice_masterbi_carrier = ?
+    AND b.uploadfil_release_date > ?
+    AND b.uploadfil_release_date < ?`
   let replacements = [
     doc.carrier,
     moment(doc.collect_date[0])
@@ -399,8 +408,11 @@ exports.downloadCollectAct = async (req, res) => {
   let renderData = []
 
   for (let r of result) {
-    let row = JSON.parse(JSON.stringify(r))
+    let row = {}
     row.date = moment(r.invoice_masterbi_receipt_release_date).format('YYYY/MM/DD')
+    row.invoice_masterbi_receipt_no = r.uploadfile_receipt_no
+    row.invoice_masterbi_receipt_currency = r.uploadfile_currency
+    row.sum_amount = r.uploadfile_amount
     row.bc = ''
     if (r.invoice_masterbi_check_cash === 'CASH') {
       row.bc = '1'
@@ -409,35 +421,33 @@ exports.downloadCollectAct = async (req, res) => {
     } else if (r.invoice_masterbi_check_cash === 'TRANSFER') {
       row.bc = '3'
     }
+    row.user_name = r.user_name
+    row.invoice_masterbi_bl = r.invoice_masterbi_bl
+    row.invoice_masterbi_deposit = ''
+    row.invoice_masterbi_of = ''
+    row.invoice_masterbi_transfer = ''
+    row.invoice_masterbi_lolf = ''
+    row.invoice_masterbi_lcl = ''
+    row.invoice_masterbi_amendment = ''
+    row.invoice_masterbi_tasac = ''
+    row.invoice_masterbi_printing = ''
+    row.invoice_masterbi_others = ''
+    if (r.uploadfile_acttype === 'deposit') {
+      row.invoice_masterbi_deposit = r.invoice_masterbi_deposit
+    }
+    if (r.uploadfile_acttype === 'freight') {
+      row.invoice_masterbi_of = r.invoice_masterbi_of
+    }
+    if (r.uploadfile_acttype === 'fee') {
+      row.invoice_masterbi_transfer = r.invoice_masterbi_transfer
+      row.invoice_masterbi_lolf = r.invoice_masterbi_lolf
+      row.invoice_masterbi_lcl = r.invoice_masterbi_lcl
+      row.invoice_masterbi_amendment = r.invoice_masterbi_amendment
+      row.invoice_masterbi_tasac = r.invoice_masterbi_tasac
+      row.invoice_masterbi_printing = r.invoice_masterbi_printing
+      row.invoice_masterbi_others = r.invoice_masterbi_others
+    }
 
-    row.sum_amount = 0
-    if (r.invoice_masterbi_deposit) {
-      row.sum_amount += parseFloat(r.invoice_masterbi_deposit)
-    }
-    if (r.invoice_masterbi_transfer) {
-      row.sum_amount += parseFloat(r.invoice_masterbi_transfer)
-    }
-    if (r.invoice_masterbi_lolf) {
-      row.sum_amount += parseFloat(r.invoice_masterbi_lolf)
-    }
-    if (r.invoice_masterbi_lcl) {
-      row.sum_amount += parseFloat(r.invoice_masterbi_lcl)
-    }
-    if (r.invoice_masterbi_amendment) {
-      row.sum_amount += parseFloat(r.invoice_masterbi_amendment)
-    }
-    if (r.invoice_masterbi_tasac) {
-      row.sum_amount += parseFloat(r.invoice_masterbi_tasac)
-    }
-    if (r.invoice_masterbi_printing) {
-      row.sum_amount += parseFloat(r.invoice_masterbi_printing)
-    }
-    if (r.invoice_masterbi_of) {
-      row.sum_amount += parseFloat(r.invoice_masterbi_of)
-    }
-    if (r.invoice_masterbi_others) {
-      row.sum_amount += parseFloat(r.invoice_masterbi_others)
-    }
     renderData.push(row)
   }
 
