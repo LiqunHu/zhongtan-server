@@ -348,6 +348,13 @@ exports.downloadReceiptAct = async req => {
 
   let fileInfo = await common.ejs2Pdf('receipta.ejs', renderData, 'zhongtan')
 
+  await tb_uploadfile.destroy({
+    where: {
+      api_name: 'RECEIPT-RECEIPT',
+      uploadfile_index1: bl.invoice_masterbi_id,
+      uploadfile_acttype: doc.checkType
+    }
+  })
   await tb_uploadfile.create({
     api_name: 'RECEIPT-RECEIPT',
     user_id: user.user_id,

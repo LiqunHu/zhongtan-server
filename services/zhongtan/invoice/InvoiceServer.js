@@ -502,6 +502,13 @@ exports.downloadDoAct = async req => {
   renderData.container_count = bl.invoice_masterbi_container_no + 'X' + cSize.join(' ')
 
   let fileInfo = await common.ejs2Pdf('do.ejs', renderData, 'zhongtan')
+  
+  await tb_uploadfile.destroy({
+    where: {
+      api_name: 'RECEIPT-DO',
+      uploadfile_index1: bl.invoice_masterbi_id
+    }
+  })
 
   await tb_uploadfile.create({
     api_name: 'RECEIPT-DO',
@@ -627,6 +634,13 @@ exports.depositDoAct = async req => {
 
     let fileInfo = await common.ejs2Pdf('deposit.ejs', renderData, 'zhongtan')
 
+    await tb_uploadfile.destroy({
+      where: {
+        api_name: 'RECEIPT-DEPOSIT',
+        uploadfile_index1: bl.invoice_masterbi_id
+      }
+    })
+
     await tb_uploadfile.create({
       api_name: 'RECEIPT-DEPOSIT',
       user_id: user.user_id,
@@ -702,6 +716,13 @@ exports.depositDoAct = async req => {
 
     let fileInfo = await common.ejs2Pdf('fee.ejs', renderData, 'zhongtan')
 
+    await tb_uploadfile.destroy({
+      where: {
+        api_name: 'RECEIPT-FEE',
+        uploadfile_index1: bl.invoice_masterbi_id
+      }
+    })
+
     await tb_uploadfile.create({
       api_name: 'RECEIPT-FEE',
       user_id: user.user_id,
@@ -740,6 +761,13 @@ exports.depositDoAct = async req => {
     renderData.sum_fee = formatCurrency(renderData.sum_fee)
 
     let fileInfo = await common.ejs2Pdf('fee.ejs', renderData, 'zhongtan')
+
+    await tb_uploadfile.destroy({
+      where: {
+        api_name: 'RECEIPT-OF',
+        uploadfile_index1: bl.invoice_masterbi_id
+      }
+    })
 
     await tb_uploadfile.create({
       api_name: 'RECEIPT-OF',
