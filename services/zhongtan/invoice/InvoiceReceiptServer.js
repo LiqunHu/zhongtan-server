@@ -313,13 +313,15 @@ exports.downloadReceiptAct = async req => {
   bl.invoice_masterbi_check_cash = doc.invoice_masterbi_check_cash
   bl.invoice_masterbi_check_no = doc.invoice_masterbi_check_no
   bl.invoice_masterbi_received_from = doc.invoice_masterbi_received_from
-  bl.invoice_masterbi_receipt_no = bl.invoice_masterbi_carrier + (await seq.genInvoiceReceiptNo())
+  bl.invoice_masterbi_receipt_no = await seq.genInvoiceReceiptNo(bl.invoice_masterbi_carrier)
 
   let renderData = JSON.parse(JSON.stringify(bl))
   renderData.receipt_date = moment().format('MMM DD, YYYY')
 
   if (bl.invoice_masterbi_check_cash === 'CASH') {
     renderData.check_cash = 'Cash'
+  } else if (bl.invoice_masterbi_check_cash === 'TRANSFER') {
+    renderData.check_cash = 'Bank transfer'
   } else {
     renderData.check_cash = bl.invoice_masterbi_check_no
   }
@@ -396,10 +398,9 @@ exports.downloadCollectAct = async (req, res) => {
   let replacements = [
     doc.carrier,
     moment(doc.collect_date[0])
-      .add(1, 'days')
       .format('YYYY-MM-DD'),
     moment(doc.collect_date[1])
-      .add(2, 'days')
+      .add(1, 'days')
       .format('YYYY-MM-DD')
   ]
 
@@ -414,15 +415,16 @@ exports.downloadCollectAct = async (req, res) => {
     row.invoice_masterbi_receipt_currency = r.uploadfile_currency
     row.sum_amount = r.uploadfile_amount
     row.bc = ''
-    if (r.invoice_masterbi_check_cash === 'CASH') {
+    if (r.uploadfile_check_cash === 'CASH') {
       row.bc = '1'
-    } else if (r.invoice_masterbi_check_cash === 'CHEQUE') {
+    } else if (r.uploadfile_check_cash === 'CHEQUE') {
       row.bc = '2'
-    } else if (r.invoice_masterbi_check_cash === 'TRANSFER') {
+    } else if (r.uploadfile_check_cash === 'TRANSFER') {
       row.bc = '3'
     }
     row.user_name = r.user_name
     row.invoice_masterbi_bl = r.invoice_masterbi_bl
+    row.invoice_masterbi_check_no = r.uploadfile_check_no
     row.invoice_masterbi_deposit = ''
     row.invoice_masterbi_of = ''
     row.invoice_masterbi_transfer = ''

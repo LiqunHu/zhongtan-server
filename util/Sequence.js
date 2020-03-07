@@ -33,12 +33,19 @@ let genReceiptNo = async () => {
   }
 }
 
-let genInvoiceReceiptNo = async () => {
+let genInvoiceReceiptNo = async carrier => {
   try {
-    let queryRst = await sequelize.query("select nextval('invoiceReceiptSeq') num", {
-      type: sequelize.QueryTypes.SELECT
-    })
-    let currentIndex = moment().format('YYYYMMDD') + ('00000000000' + queryRst[0].num).slice(-4)
+    let queryRst
+    if (carrier === 'COSCO') {
+      queryRst = await sequelize.query("select nextval('invoiceCOSCOReceiptSeq') num", {
+        type: sequelize.QueryTypes.SELECT
+      })
+    } else if (carrier === 'OOCL') {
+      queryRst = await sequelize.query("select nextval('invoiceOOCLReceiptSeq') num", {
+        type: sequelize.QueryTypes.SELECT
+      })
+    }
+    let currentIndex = carrier + moment().format('YYYYMMDD') + ('00000000000' + queryRst[0].num).slice(-4)
 
     return currentIndex
   } catch (error) {
