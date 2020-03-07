@@ -180,12 +180,15 @@ exports.searchVoyageAct = async req => {
         }
       ]
       d.files = []
-      let files = await tb_uploadfile.findAll({
-        where: {
-          uploadfile_index1: b.invoice_masterbi_id
-        },
-        order: [['created_at', 'DESC']]
-      })
+      queryStr = `SELECT
+        a.*, b.user_name
+      FROM
+        tbl_zhongtan_uploadfile a
+      left join tbl_common_user b on a.uploadfil_release_user_id = b.user_id
+      WHERE
+        a.uploadfile_index1 = ?`
+      replacements = [b.invoice_masterbi_id]
+      let files = await model.simpleSelect(queryStr, replacements)
       d.invoice_masterbi_do_release_date_fmt = moment(d.invoice_masterbi_do_release_date).format('DD/MM/YYYY hh:mm')
       d.invoice_masterbi_invoice_release_date_fmt = moment(d.invoice_masterbi_invoice_release_date).format('DD/MM/YYYY hh:mm')
       for (let f of files) {
@@ -198,7 +201,8 @@ exports.searchVoyageAct = async req => {
             date: moment(f.created_at).format('YYYY-MM-DD'),
             file_id: f.uploadfile_id,
             url: f.uploadfile_url,
-            release_date: f.uploadfil_release_date
+            release_date: f.uploadfil_release_date,
+            release_user: f.user_name
           })
         } else if (f.api_name === 'RECEIPT-FEE') {
           filetype = 'Fee'
@@ -208,7 +212,8 @@ exports.searchVoyageAct = async req => {
             date: moment(f.created_at).format('YYYY-MM-DD'),
             file_id: f.uploadfile_id,
             url: f.uploadfile_url,
-            release_date: f.uploadfil_release_date
+            release_date: f.uploadfil_release_date,
+            release_user: f.user_name
           })
         } else if (f.api_name === 'RECEIPT-OF') {
           filetype = 'Freight'
@@ -218,7 +223,8 @@ exports.searchVoyageAct = async req => {
             date: moment(f.created_at).format('YYYY-MM-DD'),
             file_id: f.uploadfile_id,
             url: f.uploadfile_url,
-            release_date: f.uploadfil_release_date
+            release_date: f.uploadfil_release_date,
+            release_user: f.user_name
           })
         } else if (f.api_name === 'RECEIPT-DO') {
           filetype = 'DO'
@@ -228,7 +234,8 @@ exports.searchVoyageAct = async req => {
             date: moment(f.created_at).format('YYYY-MM-DD'),
             file_id: f.uploadfile_id,
             url: f.uploadfile_url,
-            release_date: f.uploadfil_release_date
+            release_date: f.uploadfil_release_date,
+            release_user: f.user_name
           })
         } else if (f.api_name === 'RECEIPT-RECEIPT') {
           filetype = 'Receipt'
@@ -238,7 +245,8 @@ exports.searchVoyageAct = async req => {
             date: moment(f.created_at).format('YYYY-MM-DD'),
             file_id: f.uploadfile_id,
             url: f.uploadfile_url,
-            release_date: f.uploadfil_release_date
+            release_date: f.uploadfil_release_date,
+            release_user: f.user_name
           })
         }
       }
@@ -351,12 +359,15 @@ exports.getMasterbiDataAct = async req => {
       }
     ]
     d.files = []
-    let files = await tb_uploadfile.findAll({
-      where: {
-        uploadfile_index1: b.invoice_masterbi_id
-      },
-      order: [['created_at', 'DESC']]
-    })
+    queryStr = `SELECT
+        a.*, b.user_name
+      FROM
+        tbl_zhongtan_uploadfile a
+      left join tbl_common_user b on a.uploadfil_release_user_id = b.user_id
+      WHERE
+        a.uploadfile_index1 = ?`
+    replacements = [b.invoice_masterbi_id]
+    let files = await model.simpleSelect(queryStr, replacements)
     d.invoice_masterbi_do_release_date_fmt = moment(d.invoice_masterbi_do_release_date).format('DD/MM/YYYY hh:mm')
     d.invoice_masterbi_invoice_release_date_fmt = moment(d.invoice_masterbi_invoice_release_date).format('DD/MM/YYYY hh:mm')
     for (let f of files) {
@@ -369,7 +380,8 @@ exports.getMasterbiDataAct = async req => {
           date: moment(f.created_at).format('YYYY-MM-DD'),
           file_id: f.uploadfile_id,
           url: f.uploadfile_url,
-          release_date: f.uploadfil_release_date
+          release_date: f.uploadfil_release_date,
+          release_user: f.user_name
         })
       } else if (f.api_name === 'RECEIPT-FEE') {
         filetype = 'Fee'
@@ -379,7 +391,8 @@ exports.getMasterbiDataAct = async req => {
           date: moment(f.created_at).format('YYYY-MM-DD'),
           file_id: f.uploadfile_id,
           url: f.uploadfile_url,
-          release_date: f.uploadfil_release_date
+          release_date: f.uploadfil_release_date,
+          release_user: f.user_name
         })
       } else if (f.api_name === 'RECEIPT-OF') {
         filetype = 'Freight'
@@ -389,7 +402,8 @@ exports.getMasterbiDataAct = async req => {
           date: moment(f.created_at).format('YYYY-MM-DD'),
           file_id: f.uploadfile_id,
           url: f.uploadfile_url,
-          release_date: f.uploadfil_release_date
+          release_date: f.uploadfil_release_date,
+          release_user: f.user_name
         })
       } else if (f.api_name === 'RECEIPT-DO') {
         filetype = 'DO'
@@ -399,7 +413,8 @@ exports.getMasterbiDataAct = async req => {
           date: moment(f.created_at).format('YYYY-MM-DD'),
           file_id: f.uploadfile_id,
           url: f.uploadfile_url,
-          release_date: f.uploadfil_release_date
+          release_date: f.uploadfil_release_date,
+          release_user: f.user_name
         })
       } else if (f.api_name === 'RECEIPT-RECEIPT') {
         filetype = 'Receipt'
@@ -409,7 +424,8 @@ exports.getMasterbiDataAct = async req => {
           date: moment(f.created_at).format('YYYY-MM-DD'),
           file_id: f.uploadfile_id,
           url: f.uploadfile_url,
-          release_date: f.uploadfil_release_date
+          release_date: f.uploadfil_release_date,
+          release_user: f.user_name
         })
       }
     }
@@ -770,16 +786,16 @@ exports.changeCollectAct = async req => {
 exports.changeblAct = async req => {
   let doc = common.docValidate(req)
 
-  for(let b of doc.changedbl) {
+  for (let b of doc.changedbl) {
     let bl = await tb_bl.findOne({
       where: {
         invoice_masterbi_id: b.invoice_masterbi_id
       }
     })
-  
+
     bl.invoice_masterbi_cargo_type = b.invoice_masterbi_cargo_type
     bl.invoice_masterbi_bl_type = b.invoice_masterbi_bl_type
-    bl.invoice_masterbi_destination=b.invoice_masterbi_destination
+    bl.invoice_masterbi_destination = b.invoice_masterbi_destination
     bl.invoice_masterbi_delivery = b.invoice_masterbi_delivery
     bl.invoice_masterbi_loading = b.invoice_masterbi_loading
     bl.invoice_masterbi_container_no = b.invoice_masterbi_container_no
@@ -819,7 +835,7 @@ exports.changeblAct = async req => {
 
     await bl.save()
   }
-  
+
   return common.success()
 }
 
@@ -831,7 +847,7 @@ exports.deleteVoyageAct = async req => {
       invoice_vessel_id: doc.invoice_vessel_id
     }
   })
-  
+
   await tb_bl.destroy({
     where: {
       invoice_vessel_id: doc.invoice_vessel_id
@@ -843,6 +859,6 @@ exports.deleteVoyageAct = async req => {
       invoice_vessel_id: doc.invoice_vessel_id
     }
   })
-  
+
   return common.success()
 }
