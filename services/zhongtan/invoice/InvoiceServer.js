@@ -652,6 +652,7 @@ exports.depositDoAct = async req => {
     return common.success({ url: fileInfo.url })
   } else if (doc.depositType === 'Invoice Fee') {
     bl.invoice_masterbi_customer_id = doc.invoice_masterbi_customer_id
+    bl.invoice_masterbi_carrier = doc.invoice_masterbi_carrier
     bl.invoice_masterbi_transfer = doc.invoice_masterbi_transfer
     bl.invoice_masterbi_lolf = doc.invoice_masterbi_lolf
     bl.invoice_masterbi_lcl = doc.invoice_masterbi_lcl
