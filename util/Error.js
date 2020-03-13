@@ -53,4 +53,5 @@ module.exports = {
   import_03: 'VesselInformation sheet data incorrect',
   import_04: 'Please choose customer',
   import_05: 'Please choose carrier',
+  import_06: 'Please choose invoice type',
 }

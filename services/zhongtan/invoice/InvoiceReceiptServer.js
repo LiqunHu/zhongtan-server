@@ -318,6 +318,11 @@ exports.getContainersDataAct = async req => {
 exports.downloadReceiptAct = async req => {
   let doc = common.docValidate(req),
     user = req.user
+
+  if (!doc.checkType) {
+    return common.error('import_06')
+  }
+
   let bl = await tb_bl.findOne({
     where: {
       invoice_masterbi_id: doc.invoice_masterbi_id
