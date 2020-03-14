@@ -12,6 +12,7 @@ let sequelize = new Sequelize(config.mysql.normal.database, config.mysql.normal.
   host: config.mysql.normal.host,
   port: config.mysql.normal.port,
   dialect: 'mysql',
+  timezone: '+03:00', //东三时区
   pool: {
     max: 5, // max
     min: 0, // min
