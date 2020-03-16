@@ -73,7 +73,7 @@ exports.searchVoyageAct = async req => {
             date: moment(f.created_at).format('YYYY-MM-DD'),
             file_id: f.uploadfile_id,
             url: f.uploadfile_url,
-            release_date: moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm'),
+            release_date: !!f.uploadfil_release_date? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
             release_user: f.user_name
           })
         } else if (f.api_name === 'RECEIPT-FEE') {
@@ -84,7 +84,7 @@ exports.searchVoyageAct = async req => {
             date: moment(f.created_at).format('YYYY-MM-DD'),
             file_id: f.uploadfile_id,
             url: f.uploadfile_url,
-            release_date: moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm'),
+            release_date: !!f.uploadfil_release_date? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
             release_user: f.user_name
           })
         } else if (f.api_name === 'RECEIPT-OF') {
@@ -95,7 +95,7 @@ exports.searchVoyageAct = async req => {
             date: moment(f.created_at).format('YYYY-MM-DD'),
             file_id: f.uploadfile_id,
             url: f.uploadfile_url,
-            release_date: moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm'),
+            release_date: !!f.uploadfil_release_date? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
             release_user: f.user_name
           })
         } else if (f.api_name === 'RECEIPT-DO') {
@@ -106,7 +106,7 @@ exports.searchVoyageAct = async req => {
             date: moment(f.created_at).format('YYYY-MM-DD'),
             file_id: f.uploadfile_id,
             url: f.uploadfile_url,
-            release_date: moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm'),
+            release_date: !!f.uploadfil_release_date? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
             release_user: f.user_name
           })
         } else if (f.api_name === 'RECEIPT-RECEIPT') {
@@ -117,7 +117,7 @@ exports.searchVoyageAct = async req => {
             date: moment(f.created_at).format('YYYY-MM-DD'),
             file_id: f.uploadfile_id,
             url: f.uploadfile_url,
-            release_date: moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm'),
+            release_date: !!f.uploadfil_release_date? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
             release_user: f.user_name
           })
         }
@@ -243,7 +243,7 @@ exports.getMasterbiDataAct = async req => {
           date: moment(f.created_at).format('YYYY-MM-DD'),
           file_id: f.uploadfile_id,
           url: f.uploadfile_url,
-          release_date: moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm'),
+          release_date: !!f.uploadfil_release_date? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
           release_user: f.user_name
         })
       } else if (f.api_name === 'RECEIPT-FEE') {
@@ -254,7 +254,7 @@ exports.getMasterbiDataAct = async req => {
           date: moment(f.created_at).format('YYYY-MM-DD'),
           file_id: f.uploadfile_id,
           url: f.uploadfile_url,
-          release_date: moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm'),
+          release_date: !!f.uploadfil_release_date? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
           release_user: f.user_name
         })
       } else if (f.api_name === 'RECEIPT-OF') {
@@ -265,7 +265,7 @@ exports.getMasterbiDataAct = async req => {
           date: moment(f.created_at).format('YYYY-MM-DD'),
           file_id: f.uploadfile_id,
           url: f.uploadfile_url,
-          release_date: moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm'),
+          release_date: !!f.uploadfil_release_date? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
           release_user: f.user_name
         })
       } else if (f.api_name === 'RECEIPT-DO') {
@@ -276,7 +276,7 @@ exports.getMasterbiDataAct = async req => {
           date: moment(f.created_at).format('YYYY-MM-DD'),
           file_id: f.uploadfile_id,
           url: f.uploadfile_url,
-          release_date: moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm'),
+          release_date: !!f.uploadfil_release_date? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
           release_user: f.user_name
         })
       } else if (f.api_name === 'RECEIPT-RECEIPT') {
@@ -287,7 +287,7 @@ exports.getMasterbiDataAct = async req => {
           date: moment(f.created_at).format('YYYY-MM-DD'),
           file_id: f.uploadfile_id,
           url: f.uploadfile_url,
-          release_date: moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm'),
+          release_date: !!f.uploadfil_release_date? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
           release_user: f.user_name
         })
       }
