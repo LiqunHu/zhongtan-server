@@ -43,7 +43,7 @@
     "written-number": "^0.9.1",
     "number2text": "^1.1.0",
     "nodemailer": "^5.1.1",
-    "server-utils": "https://github.com/LiqunHu/server-utils",
+    "server-utils": "https://github.com/LiqunHu/server-utils#zhongtan",
     "markdown-it": "^8.3.1",
     "markdown-it-abbr": "^1.0.4",
     "markdown-it-container": "^2.0.0",
