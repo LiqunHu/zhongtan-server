@@ -1,7 +1,7 @@
-const model = require('./model.js')
+const model = require('./app/model.js')
 
 // change saleoutitemorder to your table
-const tb_table = model.zhongtan_vessel
+const tb_table = model.zhongtan_invoice_customer
 
 if (process.env.NODE_ENV !== 'production') {
   tb_table
