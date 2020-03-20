@@ -18,7 +18,8 @@ exports.initAct = async () => {
     TFINFO: GLBConfig.TFINFO,
     RECEIPT_TYPE_INFO: GLBConfig.RECEIPT_TYPE_INFO,
     CASH_BANK_INFO: GLBConfig.CASH_BANK_INFO,
-    COLLECT_FLAG: GLBConfig.COLLECT_FLAG
+    COLLECT_FLAG: GLBConfig.COLLECT_FLAG,
+    RECEIPT_CURRENCY: GLBConfig.RECEIPT_CURRENCY
   }
 
   return common.success(returnData)
@@ -370,6 +371,10 @@ exports.getMasterbiDataAct = async req => {
     let files = await model.simpleSelect(queryStr, replacements)
     d.invoice_masterbi_do_release_date_fmt = moment(d.invoice_masterbi_do_release_date).format('DD/MM/YYYY hh:mm')
     d.invoice_masterbi_invoice_release_date_fmt = moment(d.invoice_masterbi_invoice_release_date).format('DD/MM/YYYY hh:mm')
+    // default invoice currency
+    d.invoice_container_deposit_currency = 'USD'
+    d.invoice_ocean_freight_fee_currency = 'USD'
+    d.invoice_fee_currency = 'USD'
     for (let f of files) {
       let filetype = ''
       if (f.api_name === 'RECEIPT-DEPOSIT') {
@@ -383,6 +388,9 @@ exports.getMasterbiDataAct = async req => {
           release_date: !!f.uploadfil_release_date? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
           release_user: f.user_name
         })
+        if(f.uploadfile_currency) {
+          d.invoice_container_deposit_currency = f.uploadfile_currency
+        }
       } else if (f.api_name === 'RECEIPT-FEE') {
         filetype = 'Fee'
         d.files.push({
@@ -394,6 +402,9 @@ exports.getMasterbiDataAct = async req => {
           release_date: !!f.uploadfil_release_date? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
           release_user: f.user_name
         })
+        if(f.uploadfile_currency) {
+          d.invoice_fee_currency = f.uploadfile_currency
+        }
       } else if (f.api_name === 'RECEIPT-OF') {
         filetype = 'Freight'
         d.files.push({
@@ -405,6 +416,9 @@ exports.getMasterbiDataAct = async req => {
           release_date: !!f.uploadfil_release_date? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
           release_user: f.user_name
         })
+        if(f.uploadfile_currency) {
+          d.invoice_ocean_freight_fee_currency = f.uploadfile_currency
+        }
       } else if (f.api_name === 'RECEIPT-DO') {
         filetype = 'DO'
         d.files.push({
@@ -631,6 +645,7 @@ exports.depositDoAct = async req => {
     renderData.vessel_name = vessel.invoice_vessel_name
     renderData.voyage_number = vessel.invoice_vessel_voyage
     renderData.voyage_ata_date = vessel.invoice_vessel_ata
+    renderData.invoice_deposit_currency = doc.invoice_container_deposit_currency
 
     let fileInfo = await common.ejs2Pdf('deposit.ejs', renderData, 'zhongtan')
 
@@ -646,7 +661,8 @@ exports.depositDoAct = async req => {
       user_id: user.user_id,
       uploadfile_index1: bl.invoice_masterbi_id,
       uploadfile_name: fileInfo.name,
-      uploadfile_url: fileInfo.url
+      uploadfile_url: fileInfo.url,
+      uploadfile_currency: doc.invoice_container_deposit_currency
     })
 
     return common.success({ url: fileInfo.url })
@@ -682,6 +698,7 @@ exports.depositDoAct = async req => {
     renderData.vessel_name = vessel.invoice_vessel_name
     renderData.voyage_number = vessel.invoice_vessel_voyage
     renderData.voyage_ata_date = vessel.invoice_vessel_ata
+    renderData.invoice_fee_currency = doc.invoice_fee_currency
 
     renderData.fee = []
     renderData.sum_fee = 0
@@ -729,7 +746,8 @@ exports.depositDoAct = async req => {
       user_id: user.user_id,
       uploadfile_index1: bl.invoice_masterbi_id,
       uploadfile_name: fileInfo.name,
-      uploadfile_url: fileInfo.url
+      uploadfile_url: fileInfo.url,
+      uploadfile_currency: doc.invoice_fee_currency
     })
 
     return common.success({ url: fileInfo.url })
@@ -752,6 +770,7 @@ exports.depositDoAct = async req => {
     renderData.vessel_name = vessel.invoice_vessel_name
     renderData.voyage_number = vessel.invoice_vessel_voyage
     renderData.voyage_ata_date = vessel.invoice_vessel_ata
+    renderData.invoice_fee_currency = doc.invoice_ocean_freight_fee_currency
 
     renderData.fee = []
     renderData.sum_fee = 0
@@ -775,7 +794,8 @@ exports.depositDoAct = async req => {
       user_id: user.user_id,
       uploadfile_index1: bl.invoice_masterbi_id,
       uploadfile_name: fileInfo.name,
-      uploadfile_url: fileInfo.url
+      uploadfile_url: fileInfo.url,
+      uploadfile_currency: doc.invoice_ocean_freight_fee_currency
     })
 
     return common.success({ url: fileInfo.url })

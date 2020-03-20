@@ -187,7 +187,11 @@
                             TOTAL<br/>
                         </td>
                         <td valign="middle" rowspan="1" colspan="1" align="left" class="b_bottom">
-                            USD
+							<% if (ejsData.invoice_deposit_currency) { %>
+							  <%=ejsData.invoice_deposit_currency%>
+							<% } else { %>
+							  USD
+							<% } %>
                         </td>
                         <td valign="top" rowspan="1" colspan="2" align="right" class="b_right b_bottom">
                             <%=ejsData.invoice_masterbi_deposit%>
