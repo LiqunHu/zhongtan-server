@@ -46,7 +46,7 @@ module.exports = db.defineModel('tbl_zhongtan_uploadfile', {
     allowNull: true
   },
   uploadfile_acttype: {
-    type: db.STRING(10),
+    type: db.STRING(20),
     defaultValue: '',
     allowNull: true
   },
@@ -81,6 +81,12 @@ module.exports = db.defineModel('tbl_zhongtan_uploadfile', {
     // 缴费者
     type: db.STRING(100),
     allowNull: true
+  },
+  uploadfile_state: {
+    // 文件状态
+    type: db.STRING(20),
+    defaultValue: '',
+    allowNull: false
   },
   uploadfile_remark: {
     type: db.STRING(1000),

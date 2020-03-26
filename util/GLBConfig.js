@@ -346,5 +346,14 @@ module.exports = {
   COLLECT_FLAG: [
     { id: 'PREPAID', text: 'Prepaid' },
     { id: 'COLLECT', text: 'Collect' }
+  ],
+  UPLOAD_STATE: [
+    { id: 'PM', text: 'Pending at Manager' },
+    // { id: 'MA', text: 'Manager Approved' },
+    { id: 'MD', text: 'Manager Declined' },
+    { id: 'PB', text: 'Pending at Business' },
+    // { id: 'BA', text: 'Business Approved' },
+    { id: 'BD', text: 'Business Declined' },
+    { id: 'AP', text: 'All Approved' }
   ]
 }
