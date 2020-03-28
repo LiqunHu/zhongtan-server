@@ -1,9 +1,6 @@
 const moment = require('moment')
-const logger = require('../../../app/logger').createLogger(__filename)
-const GLBConfig = require('../../../util/GLBConfig')
 const common = require('../../../util/CommonUtil')
 const model = require('../../../app/model')
-const Op = model.Op
 
 const tb_uploadfile = model.zhongtan_uploadfile
 
@@ -49,6 +46,7 @@ exports.searchAct = async req => {
     row.invoice_masterbi_bl = r.invoice_masterbi_bl
     row.uploadfile_id = r.uploadfile_id
     row.user_name = r.user_name
+    row.comment = r.uploadfile_amount_comment
     row.of = ''
     row.deposit = ''
     row.lolf = ''

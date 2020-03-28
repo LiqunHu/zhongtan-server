@@ -92,5 +92,9 @@ module.exports = db.defineModel('tbl_zhongtan_uploadfile', {
     type: db.STRING(1000),
     defaultValue: '',
     allowNull: true
+  },
+  uploadfile_amount_comment: {
+    type: db.STRING(200),
+    allowNull: true
   }
 })

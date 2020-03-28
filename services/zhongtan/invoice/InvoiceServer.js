@@ -398,6 +398,7 @@ exports.getMasterbiDataAct = async req => {
         if(f.uploadfile_currency) {
           d.invoice_container_deposit_currency = f.uploadfile_currency
         }
+        d.invoice_masterbi_deposit_comment = f.uploadfile_amount_comment
       } else if (f.api_name === 'RECEIPT-FEE') {
         filetype = 'Fee'
         d.files.push({
@@ -413,6 +414,7 @@ exports.getMasterbiDataAct = async req => {
         if(f.uploadfile_currency) {
           d.invoice_fee_currency = f.uploadfile_currency
         }
+        d.invoice_fee_comment = f.uploadfile_amount_comment
       } else if (f.api_name === 'RECEIPT-OF') {
         filetype = 'Freight'
         d.files.push({
@@ -428,6 +430,7 @@ exports.getMasterbiDataAct = async req => {
         if(f.uploadfile_currency) {
           d.invoice_ocean_freight_fee_currency = f.uploadfile_currency
         }
+        d.invoice_masterbi_of_comment = f.uploadfile_amount_comment
       } else if (f.api_name === 'RECEIPT-DO') {
         filetype = 'DO'
         d.files.push({
@@ -658,6 +661,7 @@ exports.depositDoAct = async req => {
     renderData.voyage_number = vessel.invoice_vessel_voyage
     renderData.voyage_ata_date = vessel.invoice_vessel_ata
     renderData.invoice_deposit_currency = doc.invoice_container_deposit_currency
+    renderData.invoice_masterbi_deposit_comment = doc.invoice_masterbi_deposit_comment
 
     let fileInfo = await common.ejs2Pdf('deposit.ejs', renderData, 'zhongtan')
 
@@ -675,7 +679,9 @@ exports.depositDoAct = async req => {
       uploadfile_name: fileInfo.name,
       uploadfile_url: fileInfo.url,
       uploadfile_currency: doc.invoice_container_deposit_currency,
-      uploadfile_state: 'PM'
+      uploadfile_state: 'PM',
+      uploadfile_amount_comment : doc.invoice_masterbi_deposit_comment
+
     })
 
     return common.success({ url: fileInfo.url })
@@ -711,7 +717,8 @@ exports.depositDoAct = async req => {
     renderData.vessel_name = vessel.invoice_vessel_name
     renderData.voyage_number = vessel.invoice_vessel_voyage
     renderData.voyage_ata_date = vessel.invoice_vessel_ata
-    renderData.invoice_fee_currency = doc.invoice_fee_currency
+    renderData.fee_currency = doc.invoice_fee_currency
+    renderData.fee_comment = doc.invoice_fee_comment
 
     renderData.fee = []
     renderData.sum_fee = 0
@@ -761,7 +768,8 @@ exports.depositDoAct = async req => {
       uploadfile_name: fileInfo.name,
       uploadfile_url: fileInfo.url,
       uploadfile_currency: doc.invoice_fee_currency,
-      uploadfile_state: 'PM'
+      uploadfile_state: 'PM',
+      uploadfile_amount_comment : doc.invoice_fee_comment
     })
 
     return common.success({ url: fileInfo.url })
@@ -784,7 +792,8 @@ exports.depositDoAct = async req => {
     renderData.vessel_name = vessel.invoice_vessel_name
     renderData.voyage_number = vessel.invoice_vessel_voyage
     renderData.voyage_ata_date = vessel.invoice_vessel_ata
-    renderData.invoice_fee_currency = doc.invoice_ocean_freight_fee_currency
+    renderData.fee_currency = doc.invoice_ocean_freight_fee_currency
+    renderData.fee_comment = doc.invoice_masterbi_of_comment
 
     renderData.fee = []
     renderData.sum_fee = 0
@@ -810,7 +819,8 @@ exports.depositDoAct = async req => {
       uploadfile_name: fileInfo.name,
       uploadfile_url: fileInfo.url,
       uploadfile_currency: doc.invoice_ocean_freight_fee_currency,
-      uploadfile_state: 'PM'
+      uploadfile_state: 'PM',
+      uploadfile_amount_comment : doc.invoice_masterbi_of_comment
     })
 
     return common.success({ url: fileInfo.url })

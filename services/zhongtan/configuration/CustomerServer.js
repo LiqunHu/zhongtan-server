@@ -73,7 +73,8 @@ exports.addAct = async req => {
       user_address: doc.user_address,
       user_address1: doc.user_address1,
       user_address2: doc.user_address2,
-      user_zipcode: doc.user_zipcode
+      user_zipcode: doc.user_zipcode,
+      user_tin: doc.user_tin
     })
 
     await tb_user_groups.create({
@@ -110,6 +111,7 @@ exports.modifyAct = async req => {
     modiuser.user_address2 = doc.new.user_address2
     modiuser.user_state = doc.new.user_state
     modiuser.user_zipcode = doc.new.user_zipcode
+    modiuser.user_tin = doc.new.user_tin
     await modiuser.save()
 
     let returnData = JSON.parse(JSON.stringify(modiuser))

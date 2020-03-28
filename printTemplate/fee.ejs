@@ -191,14 +191,19 @@
                             TOTAL<br/>
                         </td>
                         <td valign="middle" rowspan="1" colspan="1" align="left" class="b_bottom">
-                            <% if (ejsData.invoice_fee_currency) { %>
-							  <%=ejsData.invoice_fee_currency%>
+                            <% if (ejsData.fee_currency) { %>
+							  <%=ejsData.fee_currency%>
 							<% } else { %>
 							  USD
 							<% } %>
                         </td>
                         <td valign="top" rowspan="1" colspan="2" align="right" class="b_right b_bottom">
                             <%=ejsData.sum_fee%>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td valign="middle" rowspan="1" colspan="11" align="left" style="padding-top:20px;">
+                            Comment: <%=ejsData.fee_comment%>
                         </td>
                     </tr>
                     <tr>

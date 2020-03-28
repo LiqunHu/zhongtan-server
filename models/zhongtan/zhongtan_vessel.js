@@ -26,5 +26,10 @@ module.exports = db.defineModel('tbl_zhongtan_vessel', {
     type: db.STRING(20),
     unique: 'vessel_code',
     allowNull: false
+  },
+  vessel_call_sign: {
+    // 呼号
+    type: db.STRING(20),
+    allowNull: true
   }
 })

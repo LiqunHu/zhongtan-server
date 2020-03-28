@@ -54,7 +54,8 @@ exports.addAct = async req => {
       vessel_service_name: doc.vessel_service_name,
       vessel_name: doc.vessel_name,
       vessel_operator: doc.vessel_operator,
-      vessel_code: doc.vessel_code
+      vessel_code: doc.vessel_code,
+      vessel_call_sign: doc.vessel_call_sign
     })
 
     return common.success(vessel)
@@ -74,6 +75,7 @@ exports.modifyAct = async req => {
     vessel.vessel_name = doc.new.vessel_name
     vessel.vessel_operator = doc.new.vessel_operator
     vessel.vessel_code = doc.new.vessel_code
+    vessel.vessel_call_sign = doc.new.vessel_call_sign
     vessel.state = doc.new.state
 
     await vessel.save()
