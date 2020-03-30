@@ -204,7 +204,7 @@ exports.searchVoyageAct = async req => {
             file_id: f.uploadfile_id,
             url: f.uploadfile_url,
             state: f.uploadfile_state,
-            release_date: f.uploadfil_release_date? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
+            release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
             release_user: f.user_name
           })
         } else if (f.api_name === 'RECEIPT-FEE') {
@@ -216,7 +216,7 @@ exports.searchVoyageAct = async req => {
             file_id: f.uploadfile_id,
             url: f.uploadfile_url,
             state: f.uploadfile_state,
-            release_date: f.uploadfil_release_date? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
+            release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
             release_user: f.user_name
           })
         } else if (f.api_name === 'RECEIPT-OF') {
@@ -228,7 +228,7 @@ exports.searchVoyageAct = async req => {
             file_id: f.uploadfile_id,
             url: f.uploadfile_url,
             state: f.uploadfile_state,
-            release_date: f.uploadfil_release_date? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
+            release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
             release_user: f.user_name
           })
         } else if (f.api_name === 'RECEIPT-DO') {
@@ -240,7 +240,7 @@ exports.searchVoyageAct = async req => {
             file_id: f.uploadfile_id,
             url: f.uploadfile_url,
             state: f.uploadfile_state,
-            release_date: f.uploadfil_release_date? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
+            release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
             release_user: f.user_name
           })
         } else if (f.api_name === 'RECEIPT-RECEIPT') {
@@ -252,7 +252,7 @@ exports.searchVoyageAct = async req => {
             file_id: f.uploadfile_id,
             url: f.uploadfile_url,
             state: f.uploadfile_state,
-            release_date: f.uploadfil_release_date? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
+            release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
             release_user: f.user_name
           })
         }
@@ -392,10 +392,10 @@ exports.getMasterbiDataAct = async req => {
           file_id: f.uploadfile_id,
           url: f.uploadfile_url,
           state: f.uploadfile_state,
-          release_date: f.uploadfil_release_date? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
+          release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
           release_user: f.user_name
         })
-        if(f.uploadfile_currency) {
+        if (f.uploadfile_currency) {
           d.invoice_container_deposit_currency = f.uploadfile_currency
         }
         d.invoice_masterbi_deposit_comment = f.uploadfile_amount_comment
@@ -408,10 +408,10 @@ exports.getMasterbiDataAct = async req => {
           file_id: f.uploadfile_id,
           url: f.uploadfile_url,
           state: f.uploadfile_state,
-          release_date: f.uploadfil_release_date? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
+          release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
           release_user: f.user_name
         })
-        if(f.uploadfile_currency) {
+        if (f.uploadfile_currency) {
           d.invoice_fee_currency = f.uploadfile_currency
         }
         d.invoice_fee_comment = f.uploadfile_amount_comment
@@ -424,10 +424,10 @@ exports.getMasterbiDataAct = async req => {
           file_id: f.uploadfile_id,
           url: f.uploadfile_url,
           state: f.uploadfile_state,
-          release_date: f.uploadfil_release_date? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
+          release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
           release_user: f.user_name
         })
-        if(f.uploadfile_currency) {
+        if (f.uploadfile_currency) {
           d.invoice_ocean_freight_fee_currency = f.uploadfile_currency
         }
         d.invoice_masterbi_of_comment = f.uploadfile_amount_comment
@@ -440,7 +440,7 @@ exports.getMasterbiDataAct = async req => {
           file_id: f.uploadfile_id,
           url: f.uploadfile_url,
           state: f.uploadfile_state,
-          release_date: f.uploadfil_release_date? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
+          release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
           release_user: f.user_name
         })
       } else if (f.api_name === 'RECEIPT-RECEIPT') {
@@ -452,7 +452,7 @@ exports.getMasterbiDataAct = async req => {
           file_id: f.uploadfile_id,
           url: f.uploadfile_url,
           state: f.uploadfile_state,
-          release_date: f.uploadfil_release_date? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
+          release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
           release_user: f.user_name
         })
       }
@@ -530,7 +530,7 @@ exports.downloadDoAct = async req => {
   renderData.container_count = bl.invoice_masterbi_container_no + 'X' + cSize.join(' ')
 
   let fileInfo = await common.ejs2Pdf('do.ejs', renderData, 'zhongtan')
-  
+
   await tb_uploadfile.destroy({
     where: {
       api_name: 'RECEIPT-DO',
@@ -560,6 +560,7 @@ exports.doReleaseAct = async req => {
   })
   file.uploadfil_release_date = new Date()
   file.uploadfil_release_user_id = user.user_id
+  await file.save()
 
   let bl = await tb_bl.findOne({
     where: {
@@ -569,18 +570,31 @@ exports.doReleaseAct = async req => {
 
   if (file.api_name === 'RECEIPT-DO') {
     bl.invoice_masterbi_do_release_date = file.uploadfil_release_date
+    await bl.save()
   }
 
   if (file.api_name === 'RECEIPT-DEPOSIT' || file.api_name === 'RECEIPT-FEE' || file.api_name === 'RECEIPT-OF') {
-    bl.invoice_masterbi_invoice_release_date = file.uploadfil_release_date
-  }
+    let acount = await tb_uploadfile.count({
+      where: {
+        uploadfile_index1: file.uploadfile_index1,
+        api_name: ['RECEIPT-DEPOSIT', 'RECEIPT-FEE', 'RECEIPT-OF']
+      }
+    })
 
-  if (file.api_name === 'RECEIPT-RECEIPT') {
-    bl.invoice_masterbi_receipt_release_date = file.uploadfil_release_date
+    let rcount = await tb_uploadfile.count({
+      where: {
+        uploadfile_index1: file.uploadfile_index1,
+        api_name: ['RECEIPT-DEPOSIT', 'RECEIPT-FEE', 'RECEIPT-OF'],
+        uploadfil_release_date: {
+          [Op.ne]: null
+        }
+      }
+    })
+    if (acount === rcount) {
+      bl.invoice_masterbi_invoice_release_date = file.uploadfil_release_date
+      await bl.save()
+    }
   }
-
-  await file.save()
-  await bl.save()
 
   return common.success()
 }
@@ -680,8 +694,7 @@ exports.depositDoAct = async req => {
       uploadfile_url: fileInfo.url,
       uploadfile_currency: doc.invoice_container_deposit_currency,
       uploadfile_state: 'PM',
-      uploadfile_amount_comment : doc.invoice_masterbi_deposit_comment
-
+      uploadfile_amount_comment: doc.invoice_masterbi_deposit_comment
     })
 
     return common.success({ url: fileInfo.url })
@@ -769,7 +782,7 @@ exports.depositDoAct = async req => {
       uploadfile_url: fileInfo.url,
       uploadfile_currency: doc.invoice_fee_currency,
       uploadfile_state: 'PM',
-      uploadfile_amount_comment : doc.invoice_fee_comment
+      uploadfile_amount_comment: doc.invoice_fee_comment
     })
 
     return common.success({ url: fileInfo.url })
@@ -820,7 +833,7 @@ exports.depositDoAct = async req => {
       uploadfile_url: fileInfo.url,
       uploadfile_currency: doc.invoice_ocean_freight_fee_currency,
       uploadfile_state: 'PM',
-      uploadfile_amount_comment : doc.invoice_masterbi_of_comment
+      uploadfile_amount_comment: doc.invoice_masterbi_of_comment
     })
 
     return common.success({ url: fileInfo.url })

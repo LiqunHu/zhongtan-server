@@ -73,7 +73,7 @@ exports.searchVoyageAct = async req => {
             date: moment(f.created_at).format('YYYY-MM-DD'),
             file_id: f.uploadfile_id,
             url: f.uploadfile_url,
-            release_date: f.uploadfil_release_date? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
+            release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
             release_user: f.user_name
           })
         } else if (f.api_name === 'RECEIPT-FEE') {
@@ -84,7 +84,7 @@ exports.searchVoyageAct = async req => {
             date: moment(f.created_at).format('YYYY-MM-DD'),
             file_id: f.uploadfile_id,
             url: f.uploadfile_url,
-            release_date: f.uploadfil_release_date? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
+            release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
             release_user: f.user_name
           })
         } else if (f.api_name === 'RECEIPT-OF') {
@@ -95,7 +95,7 @@ exports.searchVoyageAct = async req => {
             date: moment(f.created_at).format('YYYY-MM-DD'),
             file_id: f.uploadfile_id,
             url: f.uploadfile_url,
-            release_date: f.uploadfil_release_date? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
+            release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
             release_user: f.user_name
           })
         } else if (f.api_name === 'RECEIPT-DO') {
@@ -106,7 +106,7 @@ exports.searchVoyageAct = async req => {
             date: moment(f.created_at).format('YYYY-MM-DD'),
             file_id: f.uploadfile_id,
             url: f.uploadfile_url,
-            release_date: f.uploadfil_release_date? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
+            release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
             release_user: f.user_name
           })
         } else if (f.api_name === 'RECEIPT-RECEIPT') {
@@ -117,7 +117,7 @@ exports.searchVoyageAct = async req => {
             date: moment(f.created_at).format('YYYY-MM-DD'),
             file_id: f.uploadfile_id,
             url: f.uploadfile_url,
-            release_date: f.uploadfil_release_date? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
+            release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
             release_user: f.user_name
           })
         }
@@ -247,10 +247,10 @@ exports.getMasterbiDataAct = async req => {
           date: moment(f.created_at).format('YYYY-MM-DD'),
           file_id: f.uploadfile_id,
           url: f.uploadfile_url,
-          release_date: f.uploadfil_release_date? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
+          release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
           release_user: f.user_name
         })
-        if(f.uploadfile_currency) {
+        if (f.uploadfile_currency) {
           d.invoice_container_deposit_currency = f.uploadfile_currency
           d.invoice_masterbi_receipt_currency = f.uploadfile_currency
         }
@@ -262,10 +262,10 @@ exports.getMasterbiDataAct = async req => {
           date: moment(f.created_at).format('YYYY-MM-DD'),
           file_id: f.uploadfile_id,
           url: f.uploadfile_url,
-          release_date: f.uploadfil_release_date? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
+          release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
           release_user: f.user_name
         })
-        if(f.uploadfile_currency) {
+        if (f.uploadfile_currency) {
           d.invoice_fee_currency = f.uploadfile_currency
         }
       } else if (f.api_name === 'RECEIPT-OF') {
@@ -276,10 +276,10 @@ exports.getMasterbiDataAct = async req => {
           date: moment(f.created_at).format('YYYY-MM-DD'),
           file_id: f.uploadfile_id,
           url: f.uploadfile_url,
-          release_date: f.uploadfil_release_date? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
+          release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
           release_user: f.user_name
         })
-        if(f.uploadfile_currency) {
+        if (f.uploadfile_currency) {
           d.invoice_ocean_freight_fee_currency = f.uploadfile_currency
         }
       } else if (f.api_name === 'RECEIPT-DO') {
@@ -290,7 +290,7 @@ exports.getMasterbiDataAct = async req => {
           date: moment(f.created_at).format('YYYY-MM-DD'),
           file_id: f.uploadfile_id,
           url: f.uploadfile_url,
-          release_date: f.uploadfil_release_date? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
+          release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
           release_user: f.user_name
         })
       } else if (f.api_name === 'RECEIPT-RECEIPT') {
@@ -301,7 +301,7 @@ exports.getMasterbiDataAct = async req => {
           date: moment(f.created_at).format('YYYY-MM-DD'),
           file_id: f.uploadfile_id,
           url: f.uploadfile_url,
-          release_date: f.uploadfil_release_date? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
+          release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
           release_user: f.user_name
         })
       }
@@ -402,6 +402,7 @@ exports.doReleaseAct = async req => {
   })
   file.uploadfil_release_date = new Date()
   file.uploadfil_release_user_id = user.user_id
+  await file.save()
 
   let bl = await tb_bl.findOne({
     where: {
@@ -409,16 +410,28 @@ exports.doReleaseAct = async req => {
     }
   })
 
-  if (file.api_name === 'RECEIPT-DO') {
-    bl.invoice_masterbi_do_release_date = file.uploadfil_release_date
-  }
-
   if (file.api_name === 'RECEIPT-RECEIPT') {
-    bl.invoice_masterbi_receipt_release_date = file.uploadfil_release_date
-  }
+    let acount = await tb_uploadfile.count({
+      where: {
+        uploadfile_index1: file.uploadfile_index1,
+        api_name: 'RECEIPT-RECEIPT'
+      }
+    })
 
-  await file.save()
-  await bl.save()
+    let rcount = await tb_uploadfile.count({
+      where: {
+        uploadfile_index1: file.uploadfile_index1,
+        api_name: 'RECEIPT-RECEIPT',
+        uploadfil_release_date: {
+          [Op.ne]: null
+        }
+      }
+    })
+    if (acount === rcount) {
+      bl.invoice_masterbi_receipt_release_date = file.uploadfil_release_date
+      await bl.save()
+    }
+  }
 
   return common.success()
 }
