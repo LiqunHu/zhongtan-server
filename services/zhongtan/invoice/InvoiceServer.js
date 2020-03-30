@@ -543,8 +543,7 @@ exports.downloadDoAct = async req => {
     user_id: user.user_id,
     uploadfile_index1: bl.invoice_masterbi_id,
     uploadfile_name: fileInfo.name,
-    uploadfile_url: fileInfo.url,
-    uploadfile_state: 'PM'
+    uploadfile_url: fileInfo.url
   })
 
   return common.success({ url: fileInfo.url })
