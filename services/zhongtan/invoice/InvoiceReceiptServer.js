@@ -343,6 +343,10 @@ exports.downloadReceiptAct = async req => {
     }
   })
 
+  if (!bl.invoice_masterbi_invoice_release_date) {
+    return common.error('import_07')
+  }
+
   bl.invoice_masterbi_receipt_amount = doc.invoice_masterbi_receipt_amount
   bl.invoice_masterbi_receipt_currency = doc.invoice_masterbi_receipt_currency
   bl.invoice_masterbi_check_cash = doc.invoice_masterbi_check_cash
