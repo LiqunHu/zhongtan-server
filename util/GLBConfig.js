@@ -361,7 +361,7 @@ module.exports = {
     { id: '5', text: 'Replace' },
     { id: '9', text: 'Original' }
   ],
-  EDI_EMAIL_SENDER: 'EDI@SINOTASHIP.COM(计划)  AS COSCO/OOCL',
+  EDI_EMAIL_SENDER: 'EDI@SINOTASHIP.COM AS COSCO/OOCL',
   EDI_EMAIL_CARBON_COPY: 'EDI@SINOTASHIP.COM',
   EDI_EMAIL_BLIND_CARBON_COPY: 'wufeng@putbox.cn, 540301291@qq.com',
   EDI_EMAIL_RECEIVER: 'EDI@TICTS.COM'
