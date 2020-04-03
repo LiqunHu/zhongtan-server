@@ -340,6 +340,115 @@ const getDelivery = strInput => {
   }
 }
 
+const fs2Edi = async (renderData) => {
+  // INSERT INTO `seqmysql` (`seqname`, `currentValue`, `increment`, `max`) VALUES ('ediInterchangeIDSeq', '1', '1', '99999');
+  // INSERT INTO `seqmysql` (`seqname`, `currentValue`, `increment`, `max`) VALUES ('ediMessageIDSeq', '1', '1', '999999');
+  // ALTER TABLE tbl_zhongtan_invoice_vessel ADD `invoice_vessel_call_sign` varchar(20) DEFAULT NULL COMMENT '呼号';
+  // ALTER TABLE tbl_zhongtan_invoice_masterbl ADD invoice_masterbi_do_delivery_order_no VARCHAR (20) COMMENT 'delivery_order_no';
+  // ALTER TABLE tbl_zhongtan_invoice_masterbl ADD invoice_masterbi_do_edi_state VARCHAR (5) COMMENT 'EDI status';
+  // ALTER TABLE tbl_zhongtan_invoice_masterbl ADD invoice_masterbi_do_edi_create_time datetime COMMENT 'EDI create at';
+  // ALTER TABLE tbl_zhongtan_invoice_masterbl ADD invoice_masterbi_do_edi_update_time datetime COMMENT 'EDI update_at';
+  // ALTER TABLE tbl_zhongtan_invoice_masterbl ADD invoice_masterbi_do_edi_cancel_time datetime COMMENT 'EDI cancel_at';
+
+  let data = JSON.parse(JSON.stringify(renderData))
+  
+  if (!data) {
+    data = {}
+  }
+  logger.error(data)
+  let ediLines = 0
+  // line 1
+  // let interchangeTime = curMoment.format('YYMMDD:HHmm')
+  let ediTxt = 'UNB+UNOA:2+COSCO+TICTS+' + data.interchangeTime + '+' + data.interchangeID + '\'\r\n'
+  ediLines++
+  // line 2
+  ediTxt += 'UNH+' + data.messageID + '+COREOR:D:00B:UN:SMDG20\'\r\n'
+  ediLines++
+  // line 3
+  // messageFunction an..3
+  // 1 – Cancellation
+  // 5 – Replace 
+  // 9 – Original
+  ediTxt += 'BGM+129+' + data.interchangeID + '+' + data.messageFunction + '\'\r\n'
+  ediLines++
+  // line 4
+  // CCYYMMDDHHMM
+  ediTxt += 'DTM+137:' + data.documentDateTime + ':203\'\r\n'
+  ediLines++
+  // line 5
+  ediTxt += 'RFF+RE:' + data.deliveryOrderNumber + '\'\r\n'
+  ediLines++
+  // line 6
+  ediTxt += 'RFF+BM:' + data.billOfLadingNo +'\'\r\n'
+  ediLines++
+  // line 7
+  // CCYYMMDD
+  ediTxt += 'DTM+36:' + data.expiryDate + ':102\'\r\n'
+  ediLines++
+  // line 8
+  // Effective date/time CCYYMMDD
+  ediTxt += 'DTM+7:' + data.effectiveDate + ':102\'\r\n'
+  ediLines++
+  // line 9
+  ediTxt += 'TDT+20+' +data.voyageNo + '+1++' + data.carrierID+ ':172:20+++' + data.vesselCallsign + ':146:11:' +data.vesselName + '\'\r\n'
+  ediLines++
+  // line 10
+  ediTxt += 'RFF+VON:' + data.voyageNo  + '\'\r\n'
+  ediLines++
+  // line 11
+  ediTxt += 'LOC+7+' + data.deliveryPlace + ':139:6\'\r\n'
+  ediLines++
+  // line 12
+  ediTxt += 'LOC+8+' + data.portFinalDestination + ':139:6\'\r\n'
+  ediLines++
+  // line 13
+  ediTxt += 'LOC+76+' + data.portOfLoading + ':139:6\'\r\n'
+  ediLines++
+  // line 14
+  // estimatedArrivalDate ETA
+  ediTxt += 'DTM+132:' + data.eta + ':102\'\r\n'
+  ediLines++
+  // line 15
+  ediTxt += 'NAD+MS+' + data.messageSender + ':172:20\'\r\n'
+  ediLines++
+  // line 16
+  ediTxt += 'NAD+CF+ ' + data.consignee + ':ZZZ:ZZZ\'\r\n'
+  ediLines++
+  // line 17
+  // TIN
+  ediTxt += 'NAD+FW+' + data.tin + ':160:ZZZ\'\r\n'
+  ediLines++
+  // container info group 2 lines
+  // equipmentStatus 3-Import 2-Export
+  if(data.containers) {
+    let seq = 1
+    for (let c of data.containers) {
+      ediTxt += 'EQD+CN+' + c.containerNumber + '+' + c.containerTypeISOcode + ':102:5++' + c.equipmentStatus + '+5\'\r\n'
+      ediLines++
+      ediTxt += 'RFF+SQ:' + seq +'\'\r\n'
+      ediLines++
+      seq++
+    }
+    ediTxt += 'CNT+16+' + data.containers.length + '\'\r\n'
+    ediLines++
+  }
+  // line ..
+  // numberOfMessageSegment
+  ediTxt += 'UNT+' + ediLines + '+' + data.messageID + '\'\r\n'
+  // line ..
+  ediTxt += 'UNZ+1+' + data.interchangeID + '\'\r\n'
+  logger.error(ediTxt)
+  let filePath = path.join(process.cwd(), config.fileSys.filesDir, data.ediName)
+  logger.error(filePath)
+  fs.writeFile(filePath, ediTxt, function(err) {
+    if (err) {
+        throw err
+    }
+  })
+  // let fileInfo = await fileUtil.fileSaveMongoByLocalPath(filePath, bucket, config.fileSys.bucket[bucket].baseUrl)
+  return filePath
+}
+
 module.exports = {
   docValidate: docValidate,
   reqTrans: reqTrans,
@@ -362,5 +471,6 @@ module.exports = {
   getContainerCBM: getContainerCBM,
   df: df,
   getContainerTare: getContainerTare,
-  getDelivery: getDelivery
+  getDelivery: getDelivery,
+  fs2Edi: fs2Edi
 }

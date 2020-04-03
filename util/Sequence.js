@@ -54,8 +54,36 @@ let genInvoiceReceiptNo = async carrier => {
   }
 }
 
+let genEdiInterchangeID = async () => {
+  try {
+    let queryRst = await sequelize.query("select nextval('ediInterchangeIDSeq') num", {
+      type: sequelize.QueryTypes.SELECT
+    }) 
+    let currentIndex = moment().format('YYYYMMDDHHmm') + ('00000' + queryRst[0].num).slice(-4)
+    return currentIndex
+  } catch (error) {
+    logger.error(error)
+    return error
+  }
+}
+
+let genEdiMessageIDSeq = async () => {
+  try {
+    let queryRst = await sequelize.query("select nextval('ediMessageIDSeq') num", {
+      type: sequelize.QueryTypes.SELECT
+    }) 
+    let currentIndex = moment().format('YYYYMMDD') + ('0000000' + queryRst[0].num).slice(-4)
+    return currentIndex
+  } catch (error) {
+    logger.error(error)
+    return error
+  }
+}
+
 module.exports = {
   genUserID: genUserID,
   genReceiptNo: genReceiptNo,
-  genInvoiceReceiptNo: genInvoiceReceiptNo
+  genInvoiceReceiptNo: genInvoiceReceiptNo,
+  genEdiInterchangeID: genEdiInterchangeID,
+  genEdiMessageIDSeq: genEdiMessageIDSeq
 }

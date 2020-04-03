@@ -3,6 +3,10 @@ const moment = require('moment')
 const common = require('../../../util/CommonUtil')
 const model = require('../../../app/model')
 
+const tb_vessel = model.zhongtan_invoice_vessel
+const tb_bl = model.zhongtan_invoice_masterbl
+const tb_container = model.zhongtan_invoice_containers
+
 const tb_uploadfile = model.zhongtan_uploadfile
 
 exports.searchAct = async req => {
@@ -95,4 +99,52 @@ exports.declineAct = async req => {
   })
   file.uploadfile_state = 'BD'
   await file.save()
+}
+
+exports.getInvoiceDetailAct = async req => {
+  let doc = common.docValidate(req)
+
+  let bl = await tb_bl.findOne({
+    where: {
+      invoice_masterbi_id: doc.invoice_masterbi_id
+    }
+  })
+
+  let vessel = await tb_vessel.findOne({
+    where: {
+      invoice_vessel_id: bl.invoice_vessel_id
+    }
+  })
+
+  let continers = await tb_container.findAll({
+    where: {
+      invoice_vessel_id: bl.invoice_vessel_id,
+      invoice_containers_bl: bl.invoice_masterbi_bl
+    },
+    order: [['invoice_containers_size', 'ASC']]
+  })
+  let cMap = new Map()
+  for (let c of continers) {
+    if(cMap.get(c.invoice_containers_size)) {
+      cMap.set(c.invoice_containers_size, cMap.get(c.invoice_containers_size) + 1)
+    } else {
+      cMap.set(c.invoice_containers_size, 1)
+    }
+  }
+  let containerSize = ''
+  for (var [k, v] of cMap) {
+    containerSize = containerSize + k + ' * ' + v + '    '
+  }
+
+  let returnData = {
+    invoice_vessel_name: vessel.invoice_vessel_name,
+    invoice_vessel_voyage: vessel.invoice_vessel_voyage,
+    invoice_masterbi_bl: bl.invoice_masterbi_bl,
+    container_size_type: containerSize,
+    invoice_masterbi_loading: bl.invoice_masterbi_loading,
+    invoice_masterbi_destination: bl.invoice_masterbi_destination,
+    invoice_masterbi_cargo_type: bl.invoice_masterbi_cargo_type
+  }
+
+  return common.success(returnData)
 }

@@ -446,11 +446,13 @@ exports.downloadCollectAct = async (req, res) => {
     FROM
       tbl_zhongtan_invoice_masterbl a ,
       tbl_zhongtan_uploadfile b ,
-      tbl_common_user c
+      tbl_common_user c,
+      tbl_zhongtan_invoice_vessel v
     WHERE
       b.uploadfile_acttype IN('deposit' , 'fee' , 'freight')
     AND a.invoice_masterbi_id = b.uploadfile_index1
     AND a.invoice_masterbi_customer_id = c.user_id
+    AND a.invoice_vessel_id = v.invoice_vessel_id
     AND a.invoice_masterbi_carrier = ?
     AND b.created_at > ?
     AND b.created_at < ?`
@@ -509,7 +511,7 @@ exports.downloadCollectAct = async (req, res) => {
       row.invoice_masterbi_printing = r.invoice_masterbi_printing
       row.invoice_masterbi_others = r.invoice_masterbi_others
     }
-
+    row.invoice_vessel_name = r.invoice_vessel_name
     renderData.push(row)
   }
 

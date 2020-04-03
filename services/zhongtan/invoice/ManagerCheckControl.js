@@ -11,8 +11,10 @@ module.exports = async (req, res) => {
       ret = await srv.searchAct(req)
     } else if(method === 'approve') {
       ret = await srv.approveAct(req)
-    }else if(method === 'decline') {
+    } else if(method === 'decline') {
       ret = await srv.declineAct(req)
+    } else if(method === 'getInvoiceDetail') {
+      ret = await srv.getInvoiceDetailAct(req)
     }
 
     common.sendData(res, ret)

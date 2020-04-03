@@ -5,6 +5,7 @@ const GLBConfig = require('../../../util/GLBConfig')
 const common = require('../../../util/CommonUtil')
 const model = require('../../../app/model')
 const seq = require('../../../util/Sequence')
+const mailer = require('../../../util/Mail')
 const Op = model.Op
 
 const tb_user = model.common_user
@@ -71,7 +72,8 @@ exports.uploadImportAct = async req => {
         invoice_vessel_voyage: vesslInfoJS[0]['VOYAGE NUM'],
         invoice_vessel_eta: typeof vesslInfoJS[0]['ETA'] === 'object' ? vesslInfoJS[0]['ETA'].Format('dd/MM/yyyy') : vesslInfoJS[0]['ETA'],
         invoice_vessel_ata: typeof vesslInfoJS[0]['ATA'] === 'object' ? vesslInfoJS[0]['ATA'].Format('dd/MM/yyyy') : vesslInfoJS[0]['ATA'],
-        invoice_vessel_atd: typeof vesslInfoJS[0]['ATD'] === 'object' ? vesslInfoJS[0]['ATD'].Format('dd/MM/yyyy') : vesslInfoJS[0]['ATD']
+        invoice_vessel_atd: typeof vesslInfoJS[0]['ATD'] === 'object' ? vesslInfoJS[0]['ATD'].Format('dd/MM/yyyy') : vesslInfoJS[0]['ATD'],
+        invoice_vessel_call_sign: vesslInfoJS[0]['CALL SIGN'],
       })
 
       for (let m of masterBIJS) {
@@ -241,7 +243,8 @@ exports.searchVoyageAct = async req => {
             url: f.uploadfile_url,
             state: f.uploadfile_state,
             release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
-            release_user: f.user_name
+            release_user: f.user_name,
+            edi_state: b.invoice_masterbi_do_edi_state
           })
         } else if (f.api_name === 'RECEIPT-RECEIPT') {
           filetype = 'Receipt'
@@ -381,6 +384,36 @@ exports.getMasterbiDataAct = async req => {
     d.invoice_container_deposit_currency = 'USD'
     d.invoice_ocean_freight_fee_currency = 'USD'
     d.invoice_fee_currency = 'USD'
+    // vessel info
+    let vessel = await tb_vessel.findOne({
+      where: {
+        invoice_vessel_id: d.invoice_vessel_id
+      }
+    })
+    d.invoice_vessel_name = vessel.invoice_vessel_name
+    d.invoice_vessel_voyage = vessel.invoice_vessel_voyage
+    // container info
+    let continers = await tb_container.findAll({
+      where: {
+        invoice_vessel_id: d.invoice_vessel_id,
+        invoice_containers_bl: d.invoice_masterbi_bl
+      },
+      order: [['invoice_containers_size', 'ASC']]
+    })
+    let cMap = new Map()
+    for (let c of continers) {
+      if(cMap.get(c.invoice_containers_size)) {
+        cMap.set(c.invoice_containers_size, cMap.get(c.invoice_containers_size) + 1)
+      } else {
+        cMap.set(c.invoice_containers_size, 1)
+      }
+    }
+    let containerSize = ''
+    for (var [k, v] of cMap) {
+      containerSize = containerSize + k + ' * ' + v + '    '
+    }
+    d.container_size_type = containerSize
+    // file info
     for (let f of files) {
       let filetype = ''
       if (f.api_name === 'RECEIPT-DEPOSIT') {
@@ -395,6 +428,7 @@ exports.getMasterbiDataAct = async req => {
           release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
           release_user: f.user_name
         })
+        d.invoice_masterbi_deposit_state = f.uploadfile_state
         if (f.uploadfile_currency) {
           d.invoice_container_deposit_currency = f.uploadfile_currency
         }
@@ -411,6 +445,7 @@ exports.getMasterbiDataAct = async req => {
           release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
           release_user: f.user_name
         })
+        d.invoice_fee_state = f.uploadfile_state
         if (f.uploadfile_currency) {
           d.invoice_fee_currency = f.uploadfile_currency
         }
@@ -427,6 +462,7 @@ exports.getMasterbiDataAct = async req => {
           release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
           release_user: f.user_name
         })
+        d.invoice_ocean_freight_fee_state = f.uploadfile_state
         if (f.uploadfile_currency) {
           d.invoice_ocean_freight_fee_currency = f.uploadfile_currency
         }
@@ -441,7 +477,8 @@ exports.getMasterbiDataAct = async req => {
           url: f.uploadfile_url,
           state: f.uploadfile_state,
           release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
-          release_user: f.user_name
+          release_user: f.user_name,
+          edi_state: b.invoice_masterbi_do_edi_state
         })
       } else if (f.api_name === 'RECEIPT-RECEIPT') {
         filetype = 'Receipt'
@@ -488,11 +525,12 @@ exports.downloadDoAct = async req => {
       invoice_masterbi_id: doc.invoice_masterbi_id
     }
   })
-
+  let delivery_order_no = ('000000000000000' + bl.invoice_masterbi_id).slice(-8)
   if (!bl.invoice_masterbi_do_release_date) {
     bl.invoice_masterbi_delivery_to = doc.invoice_masterbi_delivery_to
     bl.invoice_masterbi_do_date = moment().format('YYYY-MM-DD')
     bl.invoice_masterbi_valid_to = doc.invoice_masterbi_valid_to
+    bl.invoice_masterbi_do_delivery_order_no = delivery_order_no
     await bl.save()
   }
 
@@ -508,9 +546,9 @@ exports.downloadDoAct = async req => {
       invoice_containers_bl: bl.invoice_masterbi_bl
     }
   })
-
+  
   let renderData = JSON.parse(JSON.stringify(bl))
-  renderData.delivery_order_no = ('000000000000000' + bl.invoice_masterbi_id).slice(-8)
+  renderData.delivery_order_no = delivery_order_no
   renderData.invoice_vessel_name = vessel.invoice_vessel_name
   renderData.invoice_vessel_voyage = vessel.invoice_vessel_voyage
   renderData.vessel_eta = moment(vessel.invoice_vessel_eta, 'DD-MM-YYYY').format('DD/MM/YYYY')
@@ -545,7 +583,6 @@ exports.downloadDoAct = async req => {
     uploadfile_name: fileInfo.name,
     uploadfile_url: fileInfo.url
   })
-
   return common.success({ url: fileInfo.url })
 }
 
@@ -947,4 +984,121 @@ exports.deleteVoyageAct = async req => {
   })
 
   return common.success()
+}
+
+exports.doCreateEdiAct = async req => {
+  let doc = common.docValidate(req)
+  let bl = await tb_bl.findOne({
+    where: {
+      invoice_masterbi_id: doc.invoice_masterbi_id
+    }
+  })
+  if(!bl.invoice_masterbi_do_delivery_order_no) {
+    let delivery_order_no = ('000000000000000' + bl.invoice_masterbi_id).slice(-8)
+    bl.invoice_masterbi_do_delivery_order_no = delivery_order_no
+  }
+  bl.invoice_masterbi_do_edi_state = '9' // GLBConfig.EDI_MESSAGE_FUNCTION
+  bl.invoice_masterbi_do_edi_create_time = new Date()
+  await bl.save()
+
+  let customer = await tb_user.findOne({
+    where: {
+      user_id: bl.invoice_masterbi_customer_id
+    }
+  })
+
+  let vessel = await tb_vessel.findOne({
+    where: {
+      invoice_vessel_id: bl.invoice_vessel_id
+    }
+  })
+
+  let continers = await tb_container.findAll({
+    where: {
+      invoice_vessel_id: bl.invoice_vessel_id,
+      invoice_containers_bl: bl.invoice_masterbi_bl
+    }
+  })
+  this.createEditFile(bl, customer, vessel, continers, '9')
+}
+
+exports.doCancelEdiAct = async req => {
+  let doc = common.docValidate(req)
+  let bl = await tb_bl.findOne({
+    where: {
+      invoice_masterbi_id: doc.invoice_masterbi_id
+    }
+  })
+  bl.invoice_masterbi_do_edi_state = '1' // GLBConfig.EDI_MESSAGE_FUNCTION
+  bl.invoice_masterbi_do_edi_cancel_time = new Date()
+  await bl.save()
+
+  let customer = await tb_user.findOne({
+    where: {
+      user_id: bl.invoice_masterbi_customer_id
+    }
+  })
+
+  let vessel = await tb_vessel.findOne({
+    where: {
+      invoice_vessel_id: bl.invoice_vessel_id
+    }
+  })
+
+  let continers = await tb_container.findAll({
+    where: {
+      invoice_vessel_id: bl.invoice_vessel_id,
+      invoice_containers_bl: bl.invoice_masterbi_bl
+    },
+    order: [['invoice_containers_size', 'ASC']]
+  })
+  this.createEditFile(bl, customer, vessel, continers, '1')
+}
+
+exports.createEditFile = async (bl, customer, vessel, continers, ediStatus) =>{
+  let ediData = {}
+  let curMoment = moment()
+  ediData.interchangeTime = curMoment.format('YYMMDD:HHmm')
+  ediData.interchangeID = await seq.genEdiInterchangeID()
+  ediData.messageID = await seq.genEdiInterchangeID()
+  ediData.ediName = ediData.interchangeID + '.edi'
+  ediData.messageFunction = ediStatus // GLBConfig.EDI_MESSAGE_FUNCTION
+  ediData.documentDateTime = curMoment.format('YYYYMMDDHHMM')
+  ediData.deliveryOrderNumber = bl.invoice_masterbi_do_delivery_order_no
+  ediData.billOfLadingNo = bl.invoice_masterbi_bl
+  ediData.expiryDate = moment(bl.invoice_masterbi_valid_to).format('YYYYMMDD')
+  ediData.effectiveDate = curMoment.format('YYYYMMDD')
+  ediData.voyageNo = vessel.invoice_vessel_voyage
+  ediData.carrierID = bl.invoice_masterbi_carrier
+  ediData.vesselCallsign = vessel.invoice_vessel_call_sign
+  ediData.vesselName = vessel.invoice_vessel_name
+  ediData.voyageNo = vessel.invoice_vessel_voyage
+  ediData.deliveryPlace = bl.invoice_masterbi_delivery
+  ediData.portFinalDestination = bl.invoice_masterbi_destination
+  ediData.portOfLoading = bl.invoice_masterbi_loading
+  ediData.eta = moment(vessel.invoice_vessel_eta).format('YYYYMMDD')
+  ediData.messageSender = 'COSCO'
+  ediData.consignee = bl.invoice_masterbi_consignee_name
+  ediData.tin = customer.user_tin
+  var ediCs = []
+  for(let c of continers) {
+    let cc = {
+      containerNumber: c.invoice_containers_no,
+      containerTypeISOcode: c.invoice_containers_size,
+      equipmentStatus: '3'
+    }
+    ediCs.push(cc)
+  }
+  ediData.containers = ediCs
+  // create edi file
+  let fileInfo = await common.fs2Edi(ediData)
+  
+  let mailSubject = 'EDI ' + bl.invoice_masterbi_bl
+  let mailContent = ''
+  let mailHtml = ''
+  let attachments = [{
+    filename : ediData.ediName,
+    path: fileInfo
+  }]
+  await mailer.sendEdiMail(GLBConfig.EDI_EMAIL_SENDER, GLBConfig.EDI_EMAIL_RECEIVER, GLBConfig.EDI_EMAIL_CARBON_COPY, GLBConfig.EDI_EMAIL_BLIND_CARBON_COPY, mailSubject, mailContent, mailHtml, attachments)
 }

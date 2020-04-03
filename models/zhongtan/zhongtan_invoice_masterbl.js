@@ -397,5 +397,26 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_masterbl', {
     // 缴费者
     type: db.STRING(100),
     allowNull: true
+  },
+  invoice_masterbi_do_delivery_order_no: {
+    // do delivery_order_no
+    type: db.STRING(20),
+    allowNull: true
+  },
+  invoice_masterbi_do_edi_state: {
+    type: db.STRING(5),
+    allowNull: true
+  },
+  invoice_masterbi_do_edi_create_time: {
+    type: db.DATE,
+    allowNull: true
+  },
+  invoice_masterbi_do_edi_update_time: {
+    type: db.DATE,
+    allowNull: true
+  },
+  invoice_masterbi_do_edi_cancel_time: {
+    type: db.DATE,
+    allowNull: true
   }
 })

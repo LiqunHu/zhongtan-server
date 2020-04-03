@@ -10,11 +10,26 @@ const sendMail = async (to, subject, text, html) => {
     to: to, // list of receivers
     subject: subject || '', // Subject line
     text: text || '', // plain text body
-    html: html || '' // html body
+    html: html || ''
+  })
+  return info
+}
+
+const sendEdiMail = async (from, to, cc, bcc, subject, text, html, attachments) => {
+  let info = await transporter.sendMail({
+    from: from, // sender address
+    to: to, // list of receivers
+    cc: cc, // list of Carbon Copy
+    bcc: bcc, // list of Blind Carbon Copy
+    subject: subject || '', // Subject line
+    text: text || '', // plain text body
+    html: html || '',
+    attachments: attachments // html body
   })
   return info
 }
 
 module.exports = {
-  sendMail: sendMail
+  sendMail: sendMail,
+  sendEdiMail: sendEdiMail
 }

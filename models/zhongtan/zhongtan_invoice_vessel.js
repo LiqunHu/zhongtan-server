@@ -42,5 +42,10 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_vessel', {
     type: db.STRING(20),
     defaultValue: '',
     allowNull: false
+  },
+  invoice_vessel_call_sign: {
+    // 呼号
+    type: db.STRING(20),
+    allowNull: true
   }
 })
