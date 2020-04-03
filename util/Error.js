@@ -40,6 +40,7 @@ module.exports = {
   auth_21: '微信验证失败',
   auth_22: '用户不存在',
   auth_23: '验证码请求太频繁',
+  auth_24: 'wrong password',
   billlading_01: 'billloading state error',
   billlading_02: 'billloading No in no stock',
   billlading_03: 'billloading not exist',

@@ -899,6 +899,24 @@ function formatCurrency(num) {
 
 exports.changeCollectAct = async req => {
   let doc = common.docValidate(req)
+
+  if(!doc.collet_change_password) {
+    return common.error('auth_18')
+  } else {
+    let adminUser = await tb_user.findOne({
+      where: {
+        user_username: 'admin'
+      }
+    })
+    if(adminUser) {
+      if(adminUser.user_password !== doc.collet_change_password) {
+        return common.error('auth_24')
+      }
+    } else {
+      return common.error('auth_18')
+    }
+  }
+
   let bl = await tb_bl.findOne({
     where: {
       invoice_masterbi_id: doc.invoice_masterbi_id
@@ -968,6 +986,22 @@ exports.changeblAct = async req => {
 
 exports.deleteVoyageAct = async req => {
   let doc = common.docValidate(req)
+  if(!doc.delete_voyage_password) {
+    return common.error('auth_18')
+  } else {
+    let adminUser = await tb_user.findOne({
+      where: {
+        user_username: 'admin'
+      }
+    })
+    if(adminUser) {
+      if(adminUser.user_password !== doc.delete_voyage_password) {
+        return common.error('auth_24')
+      }
+    } else {
+      return common.error('auth_18')
+    }
+  }
 
   await tb_container.destroy({
     where: {
