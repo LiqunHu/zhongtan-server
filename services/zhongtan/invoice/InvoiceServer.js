@@ -1,6 +1,6 @@
 const X = require('xlsx')
 const moment = require('moment')
-const logger = require('../../../app/logger').createLogger(__filename)
+// const logger = require('../../../app/logger').createLogger(__filename)
 const GLBConfig = require('../../../util/GLBConfig')
 const common = require('../../../util/CommonUtil')
 const model = require('../../../app/model')
@@ -197,10 +197,6 @@ exports.searchVoyageAct = async req => {
       d.invoice_masterbi_invoice_release_date_fmt = moment(d.invoice_masterbi_invoice_release_date).format('DD/MM/YYYY hh:mm')
       for (let f of files) {
         let filetype = ''
-        if(f.uploadfil_release_date) {
-          logger.info(f.uploadfil_release_date)
-          logger.info(moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm'))
-        }
         if (f.api_name === 'RECEIPT-DEPOSIT') {
           filetype = 'Deposit'
           d.files.push({
@@ -420,10 +416,6 @@ exports.getMasterbiDataAct = async req => {
     // file info
     for (let f of files) {
       let filetype = ''
-      if(f.uploadfil_release_date) {
-        logger.info(f.uploadfil_release_date)
-        logger.info(moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm'))
-      }
       if (f.api_name === 'RECEIPT-DEPOSIT') {
         filetype = 'Deposit'
         d.files.push({
