@@ -2,12 +2,20 @@ const moment = require('moment')
 // const logger = require('../../../app/logger').createLogger(__filename)
 const common = require('../../../util/CommonUtil')
 const model = require('../../../app/model')
+const GLBConfig = require('../../../util/GLBConfig')
 
 const tb_vessel = model.zhongtan_invoice_vessel
 const tb_bl = model.zhongtan_invoice_masterbl
 const tb_container = model.zhongtan_invoice_containers
 
 const tb_uploadfile = model.zhongtan_uploadfile
+
+exports.initAct = async () => {
+  let returnData = {
+    UPLOAD_STATE: GLBConfig.UPLOAD_STATE
+  }
+  return common.success(returnData)
+}
 
 exports.searchAct = async req => {
   let doc = common.docValidate(req),
@@ -23,9 +31,13 @@ exports.searchAct = async req => {
     'RECEIPT-OF' ,
     'RECEIPT-DEPOSIT' ,
     'RECEIPT-FEE'
-  )
-  AND b.uploadfile_state = 'PB'`
+  )`
   let replacements = []
+  
+  if (doc.upload_state) {
+    queryStr += ' AND b.uploadfile_state = ?'
+    replacements.push(doc.upload_state)
+  }
 
   if (doc.bl) {
     queryStr += ' AND a.invoice_masterbi_bl = ?'
@@ -52,9 +64,12 @@ exports.searchAct = async req => {
     row.uploadfile_id = r.uploadfile_id
     row.user_name = r.user_name
     row.comment = r.uploadfile_amount_comment
+    row.upload_state = r.uploadfile_state
     row.of = ''
     row.deposit = ''
+    row.transfer = ''
     row.lolf = ''
+    row.lcl = ''
     row.amendment = ''
     row.tasac = ''
     row.printing = ''
@@ -67,7 +82,9 @@ exports.searchAct = async req => {
       row.deposit = r.invoice_masterbi_deposit
     } else if (r.api_name === 'RECEIPT-FEE') {
       row.receipt_type = 'Invoice Fee'
+      row.transfer = r.invoice_masterbi_transfer
       row.lolf = r.invoice_masterbi_lolf
+      row.lcl = r.invoice_masterbi_lcl
       row.amendment = r.invoice_masterbi_amendment
       row.tasac = r.invoice_masterbi_tasac
       row.printing = r.invoice_masterbi_printing
