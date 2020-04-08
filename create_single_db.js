@@ -1,7 +1,7 @@
 const model = require('./app/model.js')
 
 // change saleoutitemorder to your table
-const tb_table = model.zhongtan_invoice_customer
+const tb_table = model.zhongtan_invoice_verification_log
 
 if (process.env.NODE_ENV !== 'production') {
   tb_table

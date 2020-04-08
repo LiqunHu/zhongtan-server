@@ -8,6 +8,7 @@ const tb_bl = model.zhongtan_invoice_masterbl
 const tb_container = model.zhongtan_invoice_containers
 
 const tb_uploadfile = model.zhongtan_uploadfile
+const tb_verification = model.zhongtan_invoice_verification_log
 
 exports.searchAct = async req => {
   let doc = common.docValidate(req),
@@ -80,7 +81,8 @@ exports.searchAct = async req => {
 }
 
 exports.approveAct = async req => {
-  let doc = common.docValidate(req)
+  let doc = common.docValidate(req),
+    user = req.user
   let file = await tb_uploadfile.findOne({
     where: {
       uploadfile_id: doc.uploadfile_id
@@ -88,10 +90,19 @@ exports.approveAct = async req => {
   })
   file.uploadfile_state = 'AP'
   await file.save()
+  await tb_verification.create({
+    invoice_masterbi_id: file.uploadfile_index1,
+    uploadfile_id: file.uploadfile_id,
+    user_id: user.user_id,
+    api_name: file.api_name,
+    uploadfile_state: 'AP'
+  })
+  return common.success()
 }
 
 exports.declineAct = async req => {
-  let doc = common.docValidate(req)
+  let doc = common.docValidate(req),
+    user = req.user
   let file = await tb_uploadfile.findOne({
     where: {
       uploadfile_id: doc.uploadfile_id
@@ -99,6 +110,14 @@ exports.declineAct = async req => {
   })
   file.uploadfile_state = 'BD'
   await file.save()
+  await tb_verification.create({
+    invoice_masterbi_id: file.uploadfile_index1,
+    uploadfile_id: file.uploadfile_id,
+    user_id: user.user_id,
+    api_name: file.api_name,
+    uploadfile_state: 'BD'
+  })
+  return common.success()
 }
 
 exports.getInvoiceDetailAct = async req => {
@@ -125,7 +144,7 @@ exports.getInvoiceDetailAct = async req => {
   })
   let cMap = new Map()
   for (let c of continers) {
-    if(cMap.get(c.invoice_containers_size)) {
+    if (cMap.get(c.invoice_containers_size)) {
       cMap.set(c.invoice_containers_size, cMap.get(c.invoice_containers_size) + 1)
     } else {
       cMap.set(c.invoice_containers_size, 1)
