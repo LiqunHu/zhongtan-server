@@ -105,15 +105,16 @@ exports.approveAct = async req => {
       uploadfile_id: doc.uploadfile_id
     }
   })
-  file.uploadfile_state = 'AP'
-  await file.save()
   await tb_verification.create({
     invoice_masterbi_id: file.uploadfile_index1,
     uploadfile_id: file.uploadfile_id,
     user_id: user.user_id,
     api_name: file.api_name,
+    uploadfile_state_pre: file.uploadfile_state,
     uploadfile_state: 'AP'
   })
+  file.uploadfile_state = 'AP'
+  await file.save()
   return common.success()
 }
 
@@ -125,15 +126,16 @@ exports.declineAct = async req => {
       uploadfile_id: doc.uploadfile_id
     }
   })
-  file.uploadfile_state = 'BD'
-  await file.save()
   await tb_verification.create({
     invoice_masterbi_id: file.uploadfile_index1,
     uploadfile_id: file.uploadfile_id,
     user_id: user.user_id,
     api_name: file.api_name,
+    uploadfile_state_pre: file.uploadfile_state,
     uploadfile_state: 'BD'
   })
+  file.uploadfile_state = 'BD'
+  await file.save()
   return common.success()
 }
 

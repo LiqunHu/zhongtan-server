@@ -29,5 +29,11 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_verification_log', {
     type: db.STRING(20),
     defaultValue: '',
     allowNull: false
+  },
+  uploadfile_state_pre: {
+    // 文件状态修改前
+    type: db.STRING(20),
+    defaultValue: '',
+    allowNull: false
   }
 })
