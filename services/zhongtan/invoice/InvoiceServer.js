@@ -96,7 +96,7 @@ exports.uploadImportAct = async req => {
           invoice_masterbi_gross_volume_unit: m['Gross Volume Unit'],
           invoice_masterbi_invoice_value: m['Invoice Value'] || '',
           invoice_masterbi_invoice_currency: m['Invoice Currency'] || '',
-          invoice_masterbi_freight_charge: m['Freight Charge'] || '',
+          invoice_masterbi_freight_charge: m['Freight Terms'] || '',
           invoice_masterbi_freight_currency: m['Freight Currency'] || '',
           invoice_masterbi_imdg: m['IMDG Code'] || '',
           invoice_masterbi_packing_type: m['Packing Type'] || '',
