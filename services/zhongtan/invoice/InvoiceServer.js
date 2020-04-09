@@ -610,6 +610,9 @@ exports.doReleaseAct = async req => {
   }
 
   if (file.api_name === 'RECEIPT-DEPOSIT' || file.api_name === 'RECEIPT-FEE' || file.api_name === 'RECEIPT-OF') {
+    if(file.uploadfile_state !== 'AP') {
+      return common.error('import_08')
+    }
     let acount = await tb_uploadfile.count({
       where: {
         uploadfile_index1: file.uploadfile_index1,

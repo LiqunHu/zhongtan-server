@@ -56,4 +56,5 @@ module.exports = {
   import_05: 'Please choose carrier',
   import_06: 'Please choose invoice type',
   import_07: 'Please finish the invoice release',
+  import_08: 'Please finish the verification',
 }
