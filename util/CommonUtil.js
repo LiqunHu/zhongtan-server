@@ -359,7 +359,7 @@ const fs2Edi = async (renderData) => {
   let ediLines = 0
   // line 1
   // let interchangeTime = curMoment.format('YYMMDD:HHmm')
-  let ediTxt = 'UNB+UNOA:2+COSCO+TICTS+' + data.interchangeTime + '+' + data.interchangeID + '\'\r\n'
+  let ediTxt = 'UNB+UNOA:2+' + data.senderID + '+TICTS+' + data.interchangeTime + '+' + data.interchangeID + '\'\r\n'
   ediLines++
   // line 2
   ediTxt += 'UNH+' + data.messageID + '+COREOR:D:00B:UN:SMDG20\'\r\n'
@@ -449,6 +449,22 @@ const fs2Edi = async (renderData) => {
   return filePath
 }
 
+const glbConfigId2Text = (glbDict, id) => {
+  if(glbDict) {
+    for(let g of glbDict) {
+      if(g.id === id) {
+        return g.text
+      }
+    }
+  }
+  return id
+}
+
+const fileSaveMongo = async (localPath, bucket) => {
+  let fileInfo = await fileUtil.fileSaveMongoByLocalPath(localPath, bucket, config.fileSys.bucket[bucket].baseUrl)
+  return fileInfo
+}
+
 module.exports = {
   docValidate: docValidate,
   reqTrans: reqTrans,
@@ -472,5 +488,7 @@ module.exports = {
   df: df,
   getContainerTare: getContainerTare,
   getDelivery: getDelivery,
-  fs2Edi: fs2Edi
+  fs2Edi: fs2Edi,
+  glbConfigId2Text: glbConfigId2Text,
+  fileSaveMongo: fileSaveMongo
 }
