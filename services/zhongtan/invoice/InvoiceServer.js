@@ -740,6 +740,8 @@ exports.depositDoAct = async req => {
   } else if (doc.depositType === 'Invoice Fee') {
     bl.invoice_masterbi_customer_id = doc.invoice_masterbi_customer_id
     bl.invoice_masterbi_carrier = doc.invoice_masterbi_carrier
+    // bl.invoice_masterbi_bl_amendment = doc.invoice_masterbi_bl_amendment
+    // bl.invoice_masterbi_cod_charge = doc.invoice_masterbi_cod_charge
     bl.invoice_masterbi_transfer = doc.invoice_masterbi_transfer
     bl.invoice_masterbi_lolf = doc.invoice_masterbi_lolf
     bl.invoice_masterbi_lcl = doc.invoice_masterbi_lcl
@@ -774,6 +776,14 @@ exports.depositDoAct = async req => {
 
     renderData.fee = []
     renderData.sum_fee = 0
+    // if (bl.invoice_masterbi_bl_amendment) {
+    //   renderData.fee.push({ type: 'B/L AMENDMENT', amount: formatCurrency(bl.invoice_masterbi_bl_amendment) })
+    //   renderData.sum_fee += parseFloat(bl.invoice_masterbi_bl_amendment)
+    // }
+    // if (bl.invoice_masterbi_cod_charge) {
+    //   renderData.fee.push({ type: 'COD CHARGE', amount: formatCurrency(bl.invoice_masterbi_cod_charge) })
+    //   renderData.sum_fee += parseFloat(bl.invoice_masterbi_cod_charge)
+    // }
     if (bl.invoice_masterbi_transfer) {
       renderData.fee.push({ type: 'CONTAINER TRANSFER', amount: formatCurrency(bl.invoice_masterbi_transfer) })
       renderData.sum_fee += parseFloat(bl.invoice_masterbi_transfer)
@@ -1095,6 +1105,10 @@ exports.doCancelEdiAct = async req => {
 exports.createEditFile = async (bl, customer, vessel, continers, ediStatus) =>{
   let ediData = {}
   let curMoment = moment()
+  ediData.senderID = 'COS'
+  if(bl.invoice_masterbi_carrier === 'OOCL') {
+    ediData.senderID = 'OOCL'
+  }
   ediData.interchangeTime = curMoment.format('YYMMDD:HHmm')
   ediData.interchangeID = await seq.genEdiInterchangeID()
   ediData.messageID = await seq.genEdiInterchangeID()
