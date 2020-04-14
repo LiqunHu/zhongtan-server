@@ -22,7 +22,7 @@ module.exports = async (req, res) => {
     } else if (method === 'downloadCollect') {
       return await srv.downloadCollectAct(req, res)
     } else if (method === 'doUndoRelease') {
-      return await srv.doUndoReleaseAct(req)
+      ret = await srv.doUndoReleaseAct(req)
     }
     common.sendData(res, ret)
   } catch (error) {

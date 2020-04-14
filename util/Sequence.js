@@ -80,10 +80,38 @@ let genEdiMessageIDSeq = async () => {
   }
 }
 
+let genFixedInvoiceSeq = async () => {
+  try {
+    let queryRst = await sequelize.query("select nextval('fixedInvoiceSeq') num", {
+      type: sequelize.QueryTypes.SELECT
+    }) 
+    let currentIndex = moment().format('MMDD') + ('0000' + queryRst[0].num).slice(-4)
+    return currentIndex
+  } catch (error) {
+    logger.error(error)
+    return error
+  }
+}
+
+let genFixedReceiptSeq = async () => {
+  try {
+    let queryRst = await sequelize.query("select nextval('fixedReceiptSeq') num", {
+      type: sequelize.QueryTypes.SELECT
+    }) 
+    let currentIndex = moment().format('MMDD') + ('0000' + queryRst[0].num).slice(-4)
+    return currentIndex
+  } catch (error) {
+    logger.error(error)
+    return error
+  }
+}
+
 module.exports = {
   genUserID: genUserID,
   genReceiptNo: genReceiptNo,
   genInvoiceReceiptNo: genInvoiceReceiptNo,
   genEdiInterchangeID: genEdiInterchangeID,
-  genEdiMessageIDSeq: genEdiMessageIDSeq
+  genEdiMessageIDSeq: genEdiMessageIDSeq,
+  genFixedInvoiceSeq: genFixedInvoiceSeq,
+  genFixedReceiptSeq: genFixedReceiptSeq
 }

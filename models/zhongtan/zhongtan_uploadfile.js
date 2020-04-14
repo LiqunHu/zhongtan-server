@@ -96,5 +96,13 @@ module.exports = db.defineModel('tbl_zhongtan_uploadfile', {
   uploadfile_amount_comment: {
     type: db.STRING(200),
     allowNull: true
+  },
+  uploadfil_undo_release_date: {
+    type: db.DATE,
+    allowNull: true
+  },
+  uploadfil_undo_release_user_id: {
+    type: db.STRING(36),
+    allowNull: true
   }
 })

@@ -37,6 +37,10 @@ module.exports = async (req, res) => {
       ret = await srv.doCreateEdiAct(req)
     } else if (method === 'doCancelEdi') {
       ret = await srv.doCancelEdiAct(req)
+    } else if (method === 'searchFixedDeposit') {
+      ret = await srv.searchFixedDepositAct(req)
+    } else if (method === 'checkPassword') {
+      ret = await srv.checkPasswordAct(req)
     }
 
     common.sendData(res, ret)

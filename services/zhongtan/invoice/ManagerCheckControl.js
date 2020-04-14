@@ -17,6 +17,8 @@ module.exports = async (req, res) => {
       ret = await srv.declineAct(req)
     } else if(method === 'getInvoiceDetail') {
       ret = await srv.getInvoiceDetailAct(req)
+    } else if(method === 'getTimeline') {
+      ret = await srv.getTimelineAct(req)
     }
 
     common.sendData(res, ret)

@@ -23,4 +23,8 @@ router.post('/web/SailSchedule/:method', services.SailScheduleControl)
 router.post('/web/WebConfig/:method', services.WebConfigControl)
 router.post('/web/Web/:method', services.WebControl)
 
+router.post('/fee/InvoiceDefaultFee/:method', services.InvoiceDefaultFeeControl)
+router.post('/fee/CustomerFixedDeposit/:method', services.CustomerFixedDepositControl)
+router.post('/fee/CustomerFixedReceipt/:method', services.CustomerFixedReceiptControl)
+
 module.exports = router

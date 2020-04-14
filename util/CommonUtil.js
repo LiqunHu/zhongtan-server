@@ -460,6 +460,21 @@ const glbConfigId2Text = (glbDict, id) => {
   return id
 }
 
+const glbConfigId2Attr = (glbDict, id, attr) => {
+  if(glbDict) {
+    for(let g of glbDict) {
+      if(g.id === id) {
+        if(attr) {
+          return g[attr]
+        } else {
+          g.text
+        }
+      }
+    }
+  }
+  return id
+}
+
 const fileSaveMongo = async (localPath, bucket) => {
   let fileInfo = await fileUtil.fileSaveMongoByLocalPath(localPath, bucket, config.fileSys.bucket[bucket].baseUrl)
   return fileInfo
@@ -490,5 +505,6 @@ module.exports = {
   getDelivery: getDelivery,
   fs2Edi: fs2Edi,
   glbConfigId2Text: glbConfigId2Text,
-  fileSaveMongo: fileSaveMongo
+  fileSaveMongo: fileSaveMongo,
+  glbConfigId2Attr: glbConfigId2Attr
 }

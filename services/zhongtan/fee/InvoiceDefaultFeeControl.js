@@ -1,6 +1,6 @@
 const common = require('../../../util/CommonUtil')
 const logger = require('../../../app/logger').createLogger(__filename)
-const srv = require('./BusinessCheckServer')
+const srv = require('./InvoiceDefaultFeeServer')
 
 module.exports = async (req, res) => {
   try {
@@ -11,16 +11,14 @@ module.exports = async (req, res) => {
       ret = await srv.initAct(req)
     } else if (method === 'search') {
       ret = await srv.searchAct(req)
-    } else if(method === 'approve') {
-      ret = await srv.approveAct(req)
-    } else if(method === 'decline') {
-      ret = await srv.declineAct(req)
-    } else if(method === 'getInvoiceDetail') {
-      ret = await srv.getInvoiceDetailAct(req)
-    } else if(method === 'getTimeline') {
-      ret = await srv.getTimelineAct(req)
+    } else if (method === 'create') {
+      ret = await srv.createAct(req)
+    } else if (method === 'update') {
+      ret = await srv.updateAct(req)
+    } else if (method === 'delete') {
+      ret = await srv.deleteAct(req)
     }
-
+    
     common.sendData(res, ret)
   } catch (error) {
     common.sendFault(res, error)

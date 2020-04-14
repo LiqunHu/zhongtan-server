@@ -418,5 +418,17 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_masterbl', {
   invoice_masterbi_do_edi_cancel_time: {
     type: db.DATE,
     allowNull: true
+  },
+  invoice_masterbi_bl_amendment: {
+    // B/L amendment
+    type: db.STRING(50),
+    defaultValue: '',
+    allowNull: false
+  },
+  invoice_masterbi_cod_charge: {
+    // COD Charge
+    type: db.STRING(50),
+    defaultValue: '',
+    allowNull: false
   }
 })

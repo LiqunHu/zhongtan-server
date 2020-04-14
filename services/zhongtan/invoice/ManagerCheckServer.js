@@ -81,6 +81,8 @@ exports.searchAct = async req => {
       row.deposit = r.invoice_masterbi_deposit
     } else if (r.api_name === 'RECEIPT-FEE') {
       row.receipt_type = 'Invoice Fee'
+      row.blAmendment = r.invoice_masterbi_bl_amendment
+      row.codCharge = r.invoice_masterbi_cod_charge
       row.transfer = r.invoice_masterbi_transfer
       row.lolf = r.invoice_masterbi_lolf
       row.lcl = r.invoice_masterbi_lcl
@@ -183,4 +185,36 @@ exports.getInvoiceDetailAct = async req => {
   }
 
   return common.success(returnData)
+}
+
+
+exports.getTimelineAct = async req => {
+  let doc = common.docValidate(req)
+  let queryStr = `select a.*, b.user_username, b.user_email, b.user_name from 
+    tbl_zhongtan_invoice_verification_log a ,
+    tbl_common_user b
+    WHERE
+      a.user_id = b.user_id` 
+    let replacements = []
+    if (doc.uploadfile_id) {
+      queryStr += ' AND a.uploadfile_id = ?'
+      replacements.push(doc.uploadfile_id)
+    }
+    queryStr += ' ORDER BY a.created_at DESC'
+    let verifications = await model.simpleSelect(queryStr, replacements)
+    let timeline = []
+    if(verifications) {
+      for (let v of verifications) {
+        timeline.push({
+          'verification_log_id': v.verification_log_id,
+          'uploadfile_state_pre': common.glbConfigId2Text(GLBConfig.UPLOAD_STATE, v.uploadfile_state_pre),
+          'uploadfile_state': common.glbConfigId2Text(GLBConfig.UPLOAD_STATE, v.uploadfile_state),
+          'created_at': moment(v.created_at).format('DD/MM/YYYY HH:mm'),
+          'user_username': v.user_username,
+          'user_email': v.user_email,
+          'user_name': v.user_name,
+        })
+      }
+    }
+    return timeline
 }

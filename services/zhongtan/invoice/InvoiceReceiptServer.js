@@ -526,7 +526,7 @@ exports.downloadCollectAct = async (req, res) => {
 }
 
 exports.doUndoReleaseAct = async req => {
-  let doc = common.docValidate(req)
+  let doc = common.docValidate(req), user = req.user
 
   if(!doc.undo_release_password) {
     return common.error('auth_18')
@@ -551,8 +551,8 @@ exports.doUndoReleaseAct = async req => {
   })
   file.uploadfil_release_date = null
   file.uploadfil_release_user_id = null
-  // file.uploadfil_undo_release_date = new Date()
-  // file.uploadfil_undo_release_user_id = user.user_id
+  file.uploadfil_undo_release_date = new Date()
+  file.uploadfil_undo_release_user_id = user.user_id
   await file.save()
 
   let bl = await tb_bl.findOne({
