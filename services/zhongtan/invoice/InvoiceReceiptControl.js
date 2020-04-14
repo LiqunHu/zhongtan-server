@@ -21,8 +21,9 @@ module.exports = async (req, res) => {
       ret = await srv.doReleaseAct(req)
     } else if (method === 'downloadCollect') {
       return await srv.downloadCollectAct(req, res)
-    } 
-
+    } else if (method === 'doUndoRelease') {
+      return await srv.doUndoReleaseAct(req)
+    }
     common.sendData(res, ret)
   } catch (error) {
     common.sendFault(res, error)

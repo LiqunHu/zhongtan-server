@@ -8,6 +8,7 @@ const seq = require('../../../util/Sequence')
 
 const Op = model.Op
 
+const tb_user = model.common_user
 const tb_bl = model.zhongtan_invoice_masterbl
 const tb_vessel = model.zhongtan_invoice_vessel
 const tb_uploadfile = model.zhongtan_uploadfile
@@ -488,6 +489,8 @@ exports.downloadCollectAct = async (req, res) => {
     row.invoice_masterbi_bl = r.invoice_masterbi_bl
     row.invoice_masterbi_check_no = r.uploadfile_check_no
     row.invoice_masterbi_deposit = ''
+    row.invoice_masterbi_bl_amendment = ''
+    row.invoice_masterbi_cod_charge = ''
     row.invoice_masterbi_of = ''
     row.invoice_masterbi_transfer = ''
     row.invoice_masterbi_lolf = ''
@@ -503,6 +506,8 @@ exports.downloadCollectAct = async (req, res) => {
       row.invoice_masterbi_of = r.invoice_masterbi_of
     }
     if (r.uploadfile_acttype === 'fee') {
+      row.invoice_masterbi_bl_amendment = r.invoice_masterbi_bl_amendment
+      row.invoice_masterbi_cod_charge = r.invoice_masterbi_cod_charge
       row.invoice_masterbi_transfer = r.invoice_masterbi_transfer
       row.invoice_masterbi_lolf = r.invoice_masterbi_lolf
       row.invoice_masterbi_lcl = r.invoice_masterbi_lcl
@@ -518,4 +523,44 @@ exports.downloadCollectAct = async (req, res) => {
   let filepath = await common.ejs2xlsx('collectTemplate.xlsx', renderData)
 
   res.sendFile(filepath)
+}
+
+exports.doUndoReleaseAct = async req => {
+  let doc = common.docValidate(req)
+
+  if(!doc.undo_release_password) {
+    return common.error('auth_18')
+  } else {
+    let adminUser = await tb_user.findOne({
+      where: {
+        user_username: 'admin'
+      }
+    })
+    if(adminUser) {
+      if(adminUser.user_password !== doc.undo_release_password) {
+        return common.error('auth_24')
+      }
+    } else {
+      return common.error('auth_18')
+    }
+  }
+  let file = await tb_uploadfile.findOne({
+    where: {
+      uploadfile_id: doc.file_id
+    }
+  })
+  file.uploadfil_release_date = null
+  file.uploadfil_release_user_id = null
+  // file.uploadfil_undo_release_date = new Date()
+  // file.uploadfil_undo_release_user_id = user.user_id
+  await file.save()
+
+  let bl = await tb_bl.findOne({
+    where: {
+      invoice_masterbi_id: file.uploadfile_index1
+    }
+  })
+  bl.invoice_masterbi_receipt_release_date = null
+  await bl.save()
+  return common.success()
 }
