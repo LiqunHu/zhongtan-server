@@ -64,6 +64,7 @@ exports.searchAct = async req => {
     row.user_name = r.user_name
     row.comment = r.uploadfile_amount_comment
     row.upload_state = r.uploadfile_state
+    row.invoice_customer_name = r.invoice_masterbi_customer_name
     row.of = ''
     row.deposit = ''
     row.transfer = ''
