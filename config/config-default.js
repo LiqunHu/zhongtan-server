@@ -3,9 +3,9 @@ const config = {
     normal: {
       database: 'zhongtandata',
       username: 'root',
-      password: '123456',
+      password: 'password',
       host: 'localhost',
-      port: 33306
+      port: 3306
     },
     readonly: {}
   },
@@ -24,7 +24,7 @@ const config = {
   mongoSyncFlag: false,
   mongo: {
     url: 'mongodb://127.0.0.1:27017',
-    options: {},
+    options: {useUnifiedTopology: true},
     dbName: 'zhongtandata'
   },
   // for elasticsearch

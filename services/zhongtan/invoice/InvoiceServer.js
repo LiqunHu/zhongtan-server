@@ -689,6 +689,9 @@ exports.depositDoAct = async req => {
     }
   })
 
+  if (bl.invoice_masterbi_invoice_release_date) {
+    return common.error('import_09')
+  }
   let vessel = await tb_vessel.findOne({
     where: {
       invoice_vessel_id: bl.invoice_vessel_id
