@@ -3,6 +3,7 @@ const moment = require('moment')
 const common = require('../../../util/CommonUtil')
 const model = require('../../../app/model')
 const GLBConfig = require('../../../util/GLBConfig')
+const Op = model.Op
 
 const tb_vessel = model.zhongtan_invoice_vessel
 const tb_bl = model.zhongtan_invoice_masterbl
@@ -145,7 +146,39 @@ exports.approveAct = async req => {
     uploadfile_state: 'AP'
   })
   file.uploadfile_state = 'AP'
+  // TODO business check release
+  file.uploadfil_release_date = new Date()
+  file.uploadfil_release_user_id = user.user_id
   await file.save()
+
+  // TODO business check release
+  if (file.api_name === 'RECEIPT-DEPOSIT' || file.api_name === 'RECEIPT-FEE' || file.api_name === 'RECEIPT-OF') {
+    let bl = await tb_bl.findOne({
+      where: {
+        invoice_masterbi_id: file.uploadfile_index1
+      }
+    })
+    let acount = await tb_uploadfile.count({
+      where: {
+        uploadfile_index1: file.uploadfile_index1,
+        api_name: ['RECEIPT-DEPOSIT', 'RECEIPT-FEE', 'RECEIPT-OF']
+      }
+    })
+
+    let rcount = await tb_uploadfile.count({
+      where: {
+        uploadfile_index1: file.uploadfile_index1,
+        api_name: ['RECEIPT-DEPOSIT', 'RECEIPT-FEE', 'RECEIPT-OF'],
+        uploadfil_release_date: {
+          [Op.ne]: null
+        }
+      }
+    })
+    if (acount === rcount) {
+      bl.invoice_masterbi_invoice_release_date = file.uploadfil_release_date
+      await bl.save()
+    }
+  }
   return common.success()
 }
 

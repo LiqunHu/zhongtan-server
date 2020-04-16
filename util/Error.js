@@ -57,6 +57,7 @@ module.exports = {
   import_06: 'Please choose invoice type',
   import_07: 'Please finish the invoice release',
   import_08: 'Please finish the verification',
+  import_09: 'Invoice already release',
   fee_01: 'Fee already exists, Please edit',
   fee_02: 'Fixed Deposit exists, Please invalid',
   fee_03: 'Fixed Deposit already approved, Please invalid',

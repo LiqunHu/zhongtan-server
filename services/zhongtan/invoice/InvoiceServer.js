@@ -742,7 +742,7 @@ exports.depositDoAct = async req => {
         uploadfile_index1: bl.invoice_masterbi_id
       }
     })
-
+    
     await tb_uploadfile.create({
       api_name: 'RECEIPT-DEPOSIT',
       user_id: user.user_id,
@@ -750,7 +750,7 @@ exports.depositDoAct = async req => {
       uploadfile_name: fileInfo.name,
       uploadfile_url: fileInfo.url,
       uploadfile_currency: doc.invoice_container_deposit_currency,
-      uploadfile_state: 'PM',
+      uploadfile_state: 'PB', // TODO state PM => PB
       uploadfile_amount_comment: doc.invoice_masterbi_deposit_comment
     })
 
@@ -848,7 +848,7 @@ exports.depositDoAct = async req => {
       uploadfile_name: fileInfo.name,
       uploadfile_url: fileInfo.url,
       uploadfile_currency: doc.invoice_fee_currency,
-      uploadfile_state: 'PM',
+      uploadfile_state: 'PB', // TODO state PM => PB
       uploadfile_amount_comment: doc.invoice_fee_comment
     })
 
@@ -899,7 +899,7 @@ exports.depositDoAct = async req => {
       uploadfile_name: fileInfo.name,
       uploadfile_url: fileInfo.url,
       uploadfile_currency: doc.invoice_ocean_freight_fee_currency,
-      uploadfile_state: 'PM',
+      uploadfile_state: 'PB', // TODO state PM => PB
       uploadfile_amount_comment: doc.invoice_masterbi_of_comment
     })
 
