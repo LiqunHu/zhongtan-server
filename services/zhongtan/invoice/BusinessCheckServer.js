@@ -50,7 +50,7 @@ exports.searchAct = async req => {
   }
 
   if (doc.start_date) {
-    queryStr += ' and ((b.created_at >= ? and b.created_at <= ?) or (c.created_at >= ? and c.created_at <= ?))'
+    queryStr += ' and ((a.created_at >= ? and a.created_at <= ?) or (c.created_at >= ? and c.created_at <= ?))'
     replacements.push(doc.start_date)
     replacements.push(moment(doc.end_date, 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
     replacements.push(doc.start_date)
