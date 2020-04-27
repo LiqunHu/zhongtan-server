@@ -162,10 +162,19 @@
                         <td valign="middle" rowspan="1" colspan="3" align="center" class="b_left b_right b_top b_bottom">
                             BILL OF LANDING<br/>
                         </td>
-                        <td valign="middle" rowspan="1" colspan="5" align="center" class="b_right b_top b_bottom">
+                        <td valign="middle" rowspan="1" colspan="3" align="center" class="b_top b_bottom">
                             DESCRIPTION
                         </td>
-                        <td valign="middle" rowspan="1" colspan="3" align="center" class="b_right b_top b_bottom">
+                        <td valign="middle" rowspan="1" align="center" class="b_top b_bottom">
+                            QTY
+                        </td>
+                        <td valign="middle" rowspan="1" align="center" class="b_top b_bottom">
+                            CNT
+                        </td>
+                        <td valign="middle" rowspan="1" align="center" class="b_right b_top b_bottom">
+                            STA
+                        </td>
+                        <td valign="middle" rowspan="1" colspan="2" align="center" class="b_right b_top b_bottom">
                             AMOUNT IN USD
                         </td>
                     </tr>
@@ -173,17 +182,32 @@
                         <td valign="middle" rowspan="3" colspan="3" align="center" class="b_left b_right b_bottom">
                             <%=ejsData.invoice_masterbi_bl%>
                         </td>
-                        <td valign="middle" rowspan="3" colspan="5" align="left" class="b_right b_bottom">
+                        <td valign="middle" rowspan="3" colspan="3" align="center" class="b_bottom">
                             CONTAINER DEPOSIT
                         </td>
-                        <td valign="top" rowspan="3" colspan="3" align="right" class="b_right b_bottom">
+                        <td valign="middle" rowspan="3" align="center" class="b_bottom">
+                            <%for (var i = 0; i < ejsData.containers.length; i++) {%>
+                                <%= ejsData.containers[i].quantity %><br/>
+                            <%}-%>
+                        </td>
+                        <td valign="middle" rowspan="3"  align="center" class="b_bottom">
+                            <%for (var i = 0; i < ejsData.containers.length; i++) {%>
+                                <%= ejsData.containers[i].cnty_type %><br/>
+                            <%}-%>
+                        </td>
+                        <td valign="middle" rowspan="3" align="center" class="b_right b_bottom">
+                            <%for (var i = 0; i < ejsData.containers.length; i++) {%>
+                                <%= ejsData.containers[i].standard %><br/>
+                            <%}-%>
+                        </td>
+                        <td valign="top" rowspan="3" colspan="2" align="right" class="b_right b_bottom">
                             <%=ejsData.invoice_masterbi_deposit%>
                         </td>
                     </tr>
                     <tr></tr>
                     <tr></tr>
                     <tr>
-                        <td valign="top" rowspan="1" colspan="8" align="right" class="b_left b_right b_bottom">
+                        <td valign="top" rowspan="1" colspan="9" align="right" class="b_left b_right b_bottom">
                             TOTAL<br/>
                         </td>
                         <td valign="middle" rowspan="1" colspan="1" align="left" class="b_bottom">
@@ -193,7 +217,7 @@
 							  USD
 							<% } %>
                         </td>
-                        <td valign="top" rowspan="1" colspan="2" align="right" class="b_right b_bottom">
+                        <td valign="top" rowspan="1" colspan="1" align="right" class="b_right b_bottom">
                             <%=ejsData.invoice_masterbi_deposit%>
                         </td>
                     </tr>

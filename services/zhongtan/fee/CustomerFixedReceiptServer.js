@@ -114,7 +114,7 @@ exports.searchAct = async req => {
 }
 
 exports.receiptAct = async req => {
-  let doc = common.docValidate(req), user = req.user
+  let doc = common.docValidate(req), user = req.user, curDate = new Date()
   let theDeposit = await tb_fixed_deposit.findOne({
     where: {
       fixed_deposit_id: doc.fixed_deposit_id,
@@ -136,8 +136,10 @@ exports.receiptAct = async req => {
 
   theDeposit.deposit_check_cash_no = doc.deposit_check_cash_no
   theDeposit.deposit_receipt_no = await seq.genFixedReceiptSeq()
-  theDeposit.deposit_receipt_date = new Date()
-  theDeposit.updated_at = new Date()
+  theDeposit.deposit_receipt_date = curDate
+  theDeposit.updated_at = curDate
+  theDeposit.deposit_receipt_release_date = curDate
+  theDeposit.deposit_work_state = 'W'
   await theDeposit.save()
 
   let renderData = {}
@@ -169,7 +171,9 @@ exports.receiptAct = async req => {
     uploadfile_check_cash: theDeposit.deposit_check_cash,
     uploadfile_check_no: theDeposit.deposit_check_cash_no,
     uploadfile_received_from: theCustomer.user_name,
-    uploadfile_receipt_no: theDeposit.deposit_receipt_no
+    uploadfile_receipt_no: theDeposit.deposit_receipt_no,
+    uploadfil_release_date: curDate,
+    uploadfil_release_user_id: user.user_id
   })
 
   return common.success({ url: fileInfo.url })

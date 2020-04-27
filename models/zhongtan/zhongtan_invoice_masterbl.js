@@ -430,5 +430,27 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_masterbl', {
     type: db.STRING(50),
     defaultValue: '',
     allowNull: false
+  },
+  invoice_masterbi_deposit_fixed: {
+    // masterbi_deposit_fixed
+    type: db.STRING(2),
+    defaultValue: '0',
+    allowNull: false
+  },
+  invoice_masterbi_deposit_release_date: {
+    type: db.DATE,
+    allowNull: true
+  },
+  invoice_masterbi_fee_release_date: {
+    type: db.DATE,
+    allowNull: true
+  },
+  invoice_masterbi_deposit_receipt_date: {
+    type: db.DATE,
+    allowNull: true
+  },
+  invoice_masterbi_invoice_receipt_date: {
+    type: db.DATE,
+    allowNull: true
   }
 })

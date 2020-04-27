@@ -2,12 +2,15 @@ const common = require('../../../util/CommonUtil')
 const GLBConfig = require('../../../util/GLBConfig')
 const logger = require('../../../app/logger').createLogger(__filename)
 const model = require('../../../app/model')
+const moment = require('moment')
 
 // tables
 const tb_common_usergroup = model.common_usergroup
 const tb_common_user = model.common_user
 const tb_common_systemmenu = model.common_systemmenu
 const tb_common_usergroupmenu = model.common_usergroupmenu
+const tb_bl = model.zhongtan_invoice_masterbl
+const tb_file = model.zhongtan_uploadfile
 
 exports.initAct = async () => {
   let returnData = {}
@@ -234,4 +237,62 @@ exports.deleteAct = async req => {
   } else {
     return common.error('group_02')
   }
+}
+
+exports.doBasicDataAct = async () => {
+  //2020-04-27 修改 数据初期化
+  let start = moment().format('YYYY-MM-DD hh:mm:ss')
+  let masterbls = await tb_bl.findAll({
+    where: {
+      state: GLBConfig.ENABLE
+    }
+  })
+  for(let b of masterbls) {
+    let files = await tb_file.findAll({
+      where: {
+        uploadfile_index1: b.invoice_masterbi_id,
+        api_name: ['RECEIPT-DEPOSIT', 'RECEIPT-FEE', 'RECEIPT-OF', 'RECEIPT-RECEIPT']
+      }
+    })
+    for(let f of files) {
+      if(f.api_name === 'RECEIPT-DEPOSIT') {
+        if(f.uploadfil_release_date || f.uploadfile_state === 'AP') {
+          if(!f.uploadfil_release_date) {
+            f.uploadfil_release_date = f.updated_at
+          }
+          b.invoice_masterbi_deposit_release_date = f.uploadfil_release_date
+        }
+      } else if(f.api_name === 'RECEIPT-FEE' || f.api_name === 'RECEIPT-OF') {
+        if(f.uploadfil_release_date || f.uploadfile_state === 'AP') {
+          if(!f.uploadfil_release_date) {
+            f.uploadfil_release_date = f.updated_at
+          }
+          b.invoice_masterbi_fee_release_date = f.uploadfil_release_date ? f.uploadfil_release_date : f.updated_at
+        }
+      } else {
+        if(!f.uploadfil_release_date) {
+          f.uploadfil_release_date = f.updated_at
+        }
+        if(f.uploadfile_acttype === 'deposit') {
+          b.invoice_masterbi_deposit_receipt_date = f.uploadfil_release_date
+        } else if(f.uploadfile_acttype === 'fee' || f.uploadfile_acttype === 'freight') {
+          b.invoice_masterbi_invoice_receipt_date = f.uploadfil_release_date
+        }
+      }
+      await f.save()
+    }
+    if(!b.invoice_masterbi_invoice_release_date && common.checkInvoiceState(b)) {
+      b.invoice_masterbi_invoice_release_date = b.invoice_masterbi_deposit_release_date
+    }
+    if(!b.invoice_masterbi_receipt_release_date && common.checkDoState(b)) {
+      b.invoice_masterbi_receipt_release_date = b.invoice_masterbi_deposit_receipt_date
+    }
+    await b.save()
+  }
+  let end = moment().format('YYYY-MM-DD hh:mm:ss')
+  let returnData = {
+    start: start,
+    end: end
+  }
+  return common.success(returnData)
 }

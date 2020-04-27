@@ -1,6 +1,6 @@
 const common = require('../../../util/CommonUtil')
 const logger = require('../../../app/logger').createLogger(__filename)
-const srv = require('./GroupServer')
+const srv = require('./InvoiceSearchServer')
 
 module.exports = async (req, res) => {
   try {
@@ -11,17 +11,12 @@ module.exports = async (req, res) => {
       ret = await srv.initAct(req)
     } else if (method === 'search') {
       ret = await srv.searchAct(req)
-    } else if (method === 'getcheck') {
-      ret = await srv.getCheckAct(req)
-    } else if (method === 'add') {
-      ret = await srv.addAct(req)
-    } else if (method === 'modify') {
-      ret = await srv.modifyAct(req)
-    } else if (method === 'delete') {
-      ret = await srv.deleteAct(req)
-    } else if (method === 'doBasicData') {
-      ret = await srv.doBasicDataAct(req)
-    }
+    } else if (method === 'downloadDo') {
+      ret = await srv.downloadDoAct(req)
+    } else if (method === 'checkPassword') {
+      ret = await srv.checkPasswordAct(req)
+    } 
+    
     common.sendData(res, ret)
   } catch (error) {
     common.sendFault(res, error)

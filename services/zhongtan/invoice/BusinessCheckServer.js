@@ -78,14 +78,12 @@ exports.searchAct = async req => {
     row.tasac = ''
     row.printing = ''
     row.others = ''
-    if (r.api_name === 'RECEIPT-OF') {
-      row.receipt_type = 'Ocean Freight'
-      row.of = r.invoice_masterbi_of
-    } else if (r.api_name === 'RECEIPT-DEPOSIT') {
+    if (r.api_name === 'RECEIPT-DEPOSIT') {
       row.receipt_type = 'Deposit Amount'
       row.deposit = r.invoice_masterbi_deposit
     } else if (r.api_name === 'RECEIPT-FEE') {
       row.receipt_type = 'Invoice Fee'
+      row.of = r.invoice_masterbi_of
       row.blAmendment = r.invoice_masterbi_bl_amendment
       row.codCharge = r.invoice_masterbi_cod_charge
       row.transfer = r.invoice_masterbi_transfer
@@ -111,12 +109,26 @@ exports.searchAct = async req => {
 
 exports.approveAct = async req => {
   let doc = common.docValidate(req),
-    user = req.user
+    user = req.user, curDate = new Date()
+
   let file = await tb_uploadfile.findOne({
     where: {
       uploadfile_id: doc.uploadfile_id
     }
   })
+
+  await tb_verification.create({
+    invoice_masterbi_id: file.uploadfile_index1,
+    uploadfile_id: file.uploadfile_id,
+    user_id: user.user_id,
+    api_name: file.api_name,
+    uploadfile_state_pre: file.uploadfile_state,
+    uploadfile_state: 'AP'
+  })
+  file.uploadfile_state = 'AP'
+  file.uploadfil_release_date = curDate
+  file.uploadfil_release_user_id = user.user_id
+  await file.save()
 
   if(file.api_name === 'GUARANTEE-LETTER' || file.api_name === 'FIXED-INVOICE') {
     let fixedDeposit = await tb_fixed_deposit.findOne({
@@ -128,62 +140,37 @@ exports.approveAct = async req => {
     if(fixedDeposit.deposit_work_state === 'I') {
       return common.error('fee_05')
     }
-    fixedDeposit.deposit_approve_date = new Date()
-    fixedDeposit.updated_at = new Date()
+    fixedDeposit.deposit_approve_date = curDate
+    fixedDeposit.updated_at = curDate
     if(file.api_name === 'GUARANTEE-LETTER') {
       fixedDeposit.deposit_work_state = 'W'
+    } else {
+      fixedDeposit.deposit_invoice_release_date = curDate
     }
     await fixedDeposit.save()
+  } else {
+    let bl = await tb_bl.findOne({
+      where: {
+        invoice_masterbi_id: file.uploadfile_index1
+      }
+    })
+    if (file.api_name === 'RECEIPT-DEPOSIT') {
+      bl.invoice_masterbi_deposit_release_date = curDate
+    } else if (file.api_name === 'RECEIPT-FEE') {
+      bl.invoice_masterbi_fee_release_date = curDate
+    }
+    if(common.checkInvoiceState(bl)) {
+      bl.invoice_masterbi_invoice_release_date = curDate
+    }
+    await bl.save()
   }
 
-  await tb_verification.create({
-    invoice_masterbi_id: file.uploadfile_index1,
-    uploadfile_id: file.uploadfile_id,
-    user_id: user.user_id,
-    api_name: file.api_name,
-    uploadfile_state_pre: file.uploadfile_state,
-    uploadfile_state: 'AP'
-  })
-  file.uploadfile_state = 'AP'
-  // TODO business check release
-  // file.uploadfil_release_date = new Date()
-  // file.uploadfil_release_user_id = user.user_id
-  await file.save()
-
-  // TODO business check release
-  // if (file.api_name === 'RECEIPT-DEPOSIT' || file.api_name === 'RECEIPT-FEE' || file.api_name === 'RECEIPT-OF') {
-  //   let bl = await tb_bl.findOne({
-  //     where: {
-  //       invoice_masterbi_id: file.uploadfile_index1
-  //     }
-  //   })
-  //   let acount = await tb_uploadfile.count({
-  //     where: {
-  //       uploadfile_index1: file.uploadfile_index1,
-  //       api_name: ['RECEIPT-DEPOSIT', 'RECEIPT-FEE', 'RECEIPT-OF']
-  //     }
-  //   })
-
-  //   let rcount = await tb_uploadfile.count({
-  //     where: {
-  //       uploadfile_index1: file.uploadfile_index1,
-  //       api_name: ['RECEIPT-DEPOSIT', 'RECEIPT-FEE', 'RECEIPT-OF'],
-  //       uploadfil_release_date: {
-  //         [Op.ne]: null
-  //       }
-  //     }
-  //   })
-  //   if (acount === rcount) {
-  //     bl.invoice_masterbi_invoice_release_date = file.uploadfil_release_date
-  //     await bl.save()
-  //   }
-  // }
   return common.success()
 }
 
 exports.declineAct = async req => {
   let doc = common.docValidate(req),
-    user = req.user
+    user = req.user, curDate = new Date()
   let file = await tb_uploadfile.findOne({
     where: {
       uploadfile_id: doc.uploadfile_id
@@ -211,8 +198,21 @@ exports.declineAct = async req => {
       return common.error('fee_05')
     }
     fixedDeposit.deposit_invoice_date = null
-    fixedDeposit.updated_at = new Date()
+    fixedDeposit.updated_at = curDate
     await fixedDeposit.save()
+  } else {
+    let bl = await tb_bl.findOne({
+      where: {
+        invoice_masterbi_id: file.uploadfile_index1
+      }
+    })
+    if (file.api_name === 'RECEIPT-DEPOSIT') {
+      bl.invoice_masterbi_deposit_date = null
+    } else if (file.api_name === 'RECEIPT-FEE') {
+      bl.invoice_masterbi_fee_date = null
+    }
+    bl.updated_at = curDate
+    await bl.save()
   }
 
   return common.success()
@@ -260,7 +260,8 @@ exports.getInvoiceDetailAct = async req => {
     container_size_type: containerSize,
     invoice_masterbi_loading: bl.invoice_masterbi_loading,
     invoice_masterbi_destination: bl.invoice_masterbi_destination,
-    invoice_masterbi_cargo_type: bl.invoice_masterbi_cargo_type
+    invoice_masterbi_cargo_type: bl.invoice_masterbi_cargo_type,
+    invoice_masterbi_freight: bl.invoice_masterbi_freight
   }
 
   return common.success(returnData)

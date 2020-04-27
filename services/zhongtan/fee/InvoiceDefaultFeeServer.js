@@ -3,11 +3,34 @@ const common = require('../../../util/CommonUtil')
 const model = require('../../../app/model')
 
 const tb_default_fee = model.zhongtan_invoice_default_fee
+const tb_fee_config = model.zhongtan_invoice_fixed_fee_config
 
 exports.initAct = async () => {
+  let fee_config = await tb_fee_config.findAll({
+    where: {
+      state: GLBConfig.ENABLE
+    }
+  })
+  let im_fee = []
+  let tr_fee = []
+  if(fee_config) {
+    for(let con of fee_config) {
+      if(con.fee_cargo_type === 'IM') {
+        im_fee.push({
+          id: con.fee_id,
+          text: con.fee_name
+        })
+      } else if(con.fee_cargo_type === 'TR') {
+        tr_fee.push({
+          id: con.fee_id,
+          text: con.fee_name
+        })
+      }
+    }
+  }
   let returnData = {
-    IM_FEE_NAME: GLBConfig.INVOICE_DEFAULT_IM_FEE_NAME,
-    TR_FEE_NAME: GLBConfig.INVOICE_DEFAULT_TR_FEE_NAME,
+    IM_FEE_NAME: im_fee,
+    TR_FEE_NAME: tr_fee,
     FEE_TYPE: GLBConfig.INVOICE_DEFAULT_FEE_TYPE,
     RECEIPT_CURRENCY: GLBConfig.RECEIPT_CURRENCY,
     CARGO_TYPE: GLBConfig.INVOICE_CARGO_TYPE
@@ -54,7 +77,8 @@ exports.createAct = async req => {
       fee_container_size: doc.fee_container_size,
       fee_amount: doc.fee_amount,
       fee_currency: doc.fee_currency,
-      user_id: user.user_id
+      user_id: user.user_id,
+      is_necessary: doc.is_necessary ? GLBConfig.ENABLE : GLBConfig.DISABLE
     })
   }
   return common.success()
@@ -64,12 +88,17 @@ exports.updateAct = async req => {
   let doc = common.docValidate(req)
   let updateFee = await tb_default_fee.findOne({
     where: {
-      default_fee_id: doc.default_fee_id,
+      default_fee_id: doc.new.default_fee_id,
       state: GLBConfig.ENABLE
     }
   })
   if(updateFee) {
     updateFee.fee_amount = doc.new.fee_amount
+    if(doc.new.is_necessary) {
+      updateFee.is_necessary = GLBConfig.ENABLE
+    } else {
+      updateFee.is_necessary = GLBConfig.DISABLE
+    }
     updateFee.updated_at = new Date()
     await updateFee.save()
   }

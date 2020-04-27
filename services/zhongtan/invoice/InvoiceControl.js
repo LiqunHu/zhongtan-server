@@ -35,14 +35,18 @@ module.exports = async (req, res) => {
       ret = await srv.deleteVoyageAct(req)
     } else if (method === 'doCreateEdi') {
       ret = await srv.doCreateEdiAct(req)
+    } else if (method === 'doReplaceEdi') {
+      ret = await srv.doReplaceEdiAct(req)
     } else if (method === 'doCancelEdi') {
       ret = await srv.doCancelEdiAct(req)
     } else if (method === 'searchFixedDeposit') {
       ret = await srv.searchFixedDepositAct(req)
     } else if (method === 'checkPassword') {
       ret = await srv.checkPasswordAct(req)
+    } else if (method === 'doEditVessel') {
+      ret = await srv.doEditVesselAct(req)
     }
-
+    
     common.sendData(res, ret)
   } catch (error) {
     common.sendFault(res, error)

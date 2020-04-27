@@ -58,9 +58,14 @@ module.exports = {
   import_07: 'Please finish the invoice release',
   import_08: 'Please finish the verification',
   import_09: 'Invoice already release',
+  import_10: 'Collect no freight charge',
   fee_01: 'Fee already exists, Please edit',
-  fee_02: 'Fixed Deposit exists, Please invalid',
-  fee_03: 'Fixed Deposit already approved, Please invalid',
-  fee_04: 'Fixed Deposit do not exist',
-  fee_05: 'Fixed Deposit already invalid',
+  fee_02: 'Fixed container deposit exists, Please invalid',
+  fee_03: 'Fixed container deposit already approved, Please invalid',
+  fee_04: 'Fixed container deposit do not exist',
+  fee_05: 'Fixed container deposit already invalid',
+  deposit_01: 'Must have container deposit',
+  deposit_02: 'Must have invoice fee',
+  deposit_03: 'IM, Freight collect must have Ocean Freight AND Invoice Fee',
+  deposit_04: 'TR, Freight collect must have Ocean Freight'
 }

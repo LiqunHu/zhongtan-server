@@ -41,5 +41,11 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_default_fee', {
     // user_id
     type: db.STRING(36),
     allowNull: true
+  },
+  is_necessary: {
+    // is_necessary
+    type: db.STRING(2),
+    allowNull: false,
+    defaultValue: '0'
   }
 })

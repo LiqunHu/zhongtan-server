@@ -480,6 +480,60 @@ const fileSaveMongo = async (localPath, bucket) => {
   return fileInfo
 }
 
+const checkInvoiceState = bl => {
+  if(bl.invoice_masterbi_cargo_type === 'IM' && bl.invoice_masterbi_freight === 'PREPAID') {
+    // deposit， invoice fee two fee two incoice
+    if(bl.invoice_masterbi_deposit_release_date && bl.invoice_masterbi_fee_release_date) {
+      return true
+    }
+  } else if(bl.invoice_masterbi_cargo_type === 'IM' && bl.invoice_masterbi_freight === 'COLLECT') {
+    // deposit， Ocean, Invoice three fee two invoice
+    if(bl.invoice_masterbi_deposit_release_date && bl.invoice_masterbi_fee_release_date) {
+      return true
+    }
+  } else if(bl.invoice_masterbi_cargo_type === 'TR' && bl.invoice_masterbi_freight === 'PREPAID') {
+    // at least deposit
+    if(bl.invoice_masterbi_deposit_release_date) {
+      return true
+    }
+  } else if(bl.invoice_masterbi_cargo_type === 'TR' && bl.invoice_masterbi_freight === 'COLLECT') {
+    // at least deposit， Ocean 
+    if(bl.invoice_masterbi_deposit_release_date && bl.invoice_masterbi_fee_release_date) {
+      return true
+    }
+  }
+  return false
+}
+
+const checkDoState = bl => {
+  if(bl.invoice_masterbi_cargo_type === 'IM' && bl.invoice_masterbi_freight === 'PREPAID') {
+    // deposit， invoice fee two fee two incoice
+    if(bl.invoice_masterbi_deposit_receipt_date && bl.invoice_masterbi_invoice_receipt_date) {
+      return true
+    }
+  } else if(bl.invoice_masterbi_cargo_type === 'IM' && bl.invoice_masterbi_freight === 'COLLECT') {
+    // deposit， Ocean, Invoice three fee two invoice
+    if(bl.invoice_masterbi_deposit_receipt_date && bl.invoice_masterbi_invoice_receipt_date) {
+      return true
+    }
+  } else if(bl.invoice_masterbi_cargo_type === 'TR' && bl.invoice_masterbi_freight === 'PREPAID') {
+    // at least deposit
+    if(bl.invoice_masterbi_deposit_receipt_date) {
+      return true
+    }
+  } else if(bl.invoice_masterbi_cargo_type === 'TR' && bl.invoice_masterbi_freight === 'COLLECT') {
+    // at least deposit， Ocean 
+    if(bl.invoice_masterbi_deposit_receipt_date && bl.invoice_masterbi_invoice_receipt_date) {
+      return true
+    }
+  }
+  return false
+}
+
+const isNumber = value => {
+  return typeof value === 'number' && !isNaN(value)
+}
+
 module.exports = {
   docValidate: docValidate,
   reqTrans: reqTrans,
@@ -506,5 +560,8 @@ module.exports = {
   fs2Edi: fs2Edi,
   glbConfigId2Text: glbConfigId2Text,
   fileSaveMongo: fileSaveMongo,
-  glbConfigId2Attr: glbConfigId2Attr
+  glbConfigId2Attr: glbConfigId2Attr,
+  checkInvoiceState: checkInvoiceState,
+  checkDoState: checkDoState,
+  isNumber: isNumber
 }

@@ -369,23 +369,6 @@ module.exports = {
     { id: 'IM', text: 'IMPORT' },
     { id: 'TR', text: 'TRANSIT' }
   ],
-  INVOICE_DEFAULT_IM_FEE_NAME: [
-    { id: 'B/L amendment', text: 'B/L amendment', column: 'invoice_masterbi_bl_amendment', type: 'Invoice Fee' },
-    { id: 'COD Charge', text: 'COD Charge', column: 'invoice_masterbi_cod_charge', type: 'Invoice Fee' },
-    { id: 'Amendment Fee', text: 'Amendment Fee', column: 'invoice_masterbi_amendment', type: 'Invoice Fee' },
-    { id: 'TASAC FEE', text: 'TASAC FEE', column: 'invoice_masterbi_tasac', type: 'Invoice Fee' },
-    { id: 'Container Deposit', text: 'Container Deposit', column: 'invoice_masterbi_deposit', type: 'Container Deposit' },
-    { id: 'LIFT ON/OF', text: 'LIFT ON/OFF', column: 'invoice_masterbi_lolf', type: 'Invoice Fee' },
-    { id: 'Container Transfer', text: 'Container Transfer', column: 'invoice_masterbi_transfer', type: 'Invoice Fee' },
-    { id: 'LCL FEE', text: 'LCL FEE', column: 'invoice_masterbi_lcl', type: 'Invoice Fee' }
-  ],
-  INVOICE_DEFAULT_TR_FEE_NAME: [
-    { id: 'B/L amendment', text: 'B/L amendment', column: 'invoice_masterbi_bl_amendment', type: 'Invoice Fee' },
-    { id: 'COD Charge', text: 'COD Charge', column: 'invoice_masterbi_cod_charge', type: 'Invoice Fee' },
-    { id: 'Amendment Fee', text: 'Amendment Fee', column: 'invoice_masterbi_amendment', type: 'Invoice Fee' },
-    { id: 'TASAC FEE', text: 'TASAC FEE', column: 'invoice_masterbi_tasac', type: 'Invoice Fee' },
-    { id: 'Container Deposit', text: 'Container Deposit', column: 'invoice_masterbi_deposit', type: 'Container Deposit' }
-  ],
   INVOICE_DEFAULT_FEE_TYPE: [
     { id: 'BL', text: 'BL' },
     { id: 'CON', text: 'CONTAINER' }

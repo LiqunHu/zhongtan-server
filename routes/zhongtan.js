@@ -18,6 +18,7 @@ router.post('/invoice/Invoice/:method', services.InvoiceControl)
 router.post('/invoice/InvoiceReceipt/:method', services.InvoiceReceiptControl)
 router.post('/invoice/ManagerCheck/:method', services.ManagerCheckControl)
 router.post('/invoice/BusinessCheck/:method', services.BusinessCheckControl)
+router.post('/invoice/InvoiceSearch/:method', services.InvoiceSearchControl)
 
 router.post('/web/SailSchedule/:method', services.SailScheduleControl)
 router.post('/web/WebConfig/:method', services.WebConfigControl)

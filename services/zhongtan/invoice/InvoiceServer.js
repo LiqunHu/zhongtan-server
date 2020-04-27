@@ -1,5 +1,6 @@
 const X = require('xlsx')
 const moment = require('moment')
+const numberToText = require('number2text')
 // const logger = require('../../../app/logger').createLogger(__filename)
 const GLBConfig = require('../../../util/GLBConfig')
 const common = require('../../../util/CommonUtil')
@@ -13,6 +14,8 @@ const tb_vessel = model.zhongtan_invoice_vessel
 const tb_bl = model.zhongtan_invoice_masterbl
 const tb_container = model.zhongtan_invoice_containers
 const tb_uploadfile = model.zhongtan_uploadfile
+const tb_fee_config = model.zhongtan_invoice_fixed_fee_config
+const tb_fixed_deposit = model.zhongtan_customer_fixed_deposit
 
 exports.initAct = async () => {
   let returnData = {
@@ -66,6 +69,24 @@ exports.uploadImportAct = async req => {
     if (vessel) {
       return common.error('import_01')
     } else {
+      for (let m of masterBIJS) {
+        let masterbi_freight = m['Freight Terms'] || ''
+        if(masterbi_freight) {
+          if(masterbi_freight.toUpperCase().indexOf('PREPAID') != -1) {
+            masterbi_freight = 'PREPAID'
+          } else if(masterbi_freight.toUpperCase().indexOf('COLLECT') != -1) {
+            masterbi_freight = 'COLLECT'
+          }
+        }
+        let freight_charge = m['Freight Charge'] || ''
+        if(!freight_charge || isNaN(Number(freight_charge))) {
+          freight_charge = ''
+        }
+        if(masterbi_freight === 'COLLECT' && !freight_charge) {
+          return common.error('import_10')
+        }
+      }
+
       vessel = await tb_vessel.create({
         invoice_vessel_name: vesslInfoJS[0]['VESSEL NAME'],
         invoice_vessel_code: vesslInfoJS[0]['VESSEL CODE'],
@@ -77,6 +98,27 @@ exports.uploadImportAct = async req => {
       })
 
       for (let m of masterBIJS) {
+        let masterbi_freight = m['Freight Terms'] || ''
+        if(masterbi_freight) {
+          if(masterbi_freight.toUpperCase().indexOf('PREPAID') != -1) {
+            masterbi_freight = 'PREPAID'
+          } else if(masterbi_freight.toUpperCase().indexOf('COLLECT') != -1) {
+            masterbi_freight = 'COLLECT'
+          }
+        }
+        let freight_charge = m['Freight Charge'] || ''
+        if(!freight_charge || isNaN(Number(freight_charge))) {
+          freight_charge = ''
+        }
+
+        let freight_currency = m['Freight Currency'] || ''
+        if(freight_currency) {
+          if(masterbi_freight.toUpperCase().indexOf('USD') != -1) {
+            freight_currency = 'USD'
+          } else if(masterbi_freight.toUpperCase().indexOf('TZS') != -1) {
+            freight_currency = 'TZS'
+          }
+        }
         await tb_bl.create({
           invoice_vessel_id: vessel.invoice_vessel_id,
           invoice_masterbi_bl: m['#M B/L No'],
@@ -84,7 +126,7 @@ exports.uploadImportAct = async req => {
           invoice_masterbi_bl_type: m['*B/L Type'],
           invoice_masterbi_destination: m['Place of Destination'],
           invoice_masterbi_delivery: m['Place of Delivery'],
-          invoice_masterbi_freight: m['Freight Terms'] || '',
+          invoice_masterbi_freight: masterbi_freight,
           invoice_masterbi_loading: m['Port of Loading'],
           invoice_masterbi_container_no: m['Number of Containers'],
           invoice_masterbi_goods_description: m['Description of Goods'],
@@ -96,8 +138,8 @@ exports.uploadImportAct = async req => {
           invoice_masterbi_gross_volume_unit: m['Gross Volume Unit'],
           invoice_masterbi_invoice_value: m['Invoice Value'] || '',
           invoice_masterbi_invoice_currency: m['Invoice Currency'] || '',
-          invoice_masterbi_freight_charge: m['Freight Terms'] || '',
-          invoice_masterbi_freight_currency: m['Freight Currency'] || '',
+          invoice_masterbi_freight_charge: freight_charge,
+          invoice_masterbi_freight_currency: freight_currency,
           invoice_masterbi_imdg: m['IMDG Code'] || '',
           invoice_masterbi_packing_type: m['Packing Type'] || '',
           invoice_masterbi_forwarder_code: m['Forwarder Code'] || '',
@@ -183,98 +225,51 @@ exports.searchVoyageAct = async req => {
           text: d.user_name
         }
       ]
-      d.files = []
-      queryStr = `SELECT
-        a.*, b.user_name
-      FROM
-        tbl_zhongtan_uploadfile a
-      left join tbl_common_user b on a.uploadfil_release_user_id = b.user_id
-      WHERE
-        a.uploadfile_index1 = ?`
-      replacements = [b.invoice_masterbi_id]
-      let files = await model.simpleSelect(queryStr, replacements)
       d.invoice_masterbi_do_release_date_fmt = moment(d.invoice_masterbi_do_release_date).format('DD/MM/YYYY hh:mm')
       d.invoice_masterbi_invoice_release_date_fmt = moment(d.invoice_masterbi_invoice_release_date).format('DD/MM/YYYY hh:mm')
-      for (let f of files) {
-        let filetype = ''
-        if (f.api_name === 'RECEIPT-DEPOSIT') {
-          filetype = 'Deposit'
-          d.files.push({
-            invoice_masterbi_id: b.invoice_masterbi_id,
-            filetype: filetype,
-            date: moment(f.created_at).format('YYYY-MM-DD'),
-            file_id: f.uploadfile_id,
-            url: f.uploadfile_url,
-            state: f.uploadfile_state,
-            release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
-            release_user: f.user_name
-          })
-          d.invoice_masterbi_deposit_state = f.uploadfile_state
-          if (f.uploadfile_currency) {
-            d.invoice_container_deposit_currency = f.uploadfile_currency
-          }
-          d.invoice_masterbi_deposit_comment = f.uploadfile_amount_comment
-        } else if (f.api_name === 'RECEIPT-FEE') {
-          filetype = 'Fee'
-          d.files.push({
-            invoice_masterbi_id: b.invoice_masterbi_id,
-            filetype: filetype,
-            date: moment(f.created_at).format('YYYY-MM-DD'),
-            file_id: f.uploadfile_id,
-            url: f.uploadfile_url,
-            state: f.uploadfile_state,
-            release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
-            release_user: f.user_name
-          })
-          d.invoice_fee_state = f.uploadfile_state
-          if (f.uploadfile_currency) {
-            d.invoice_fee_currency = f.uploadfile_currency
-          }
-          d.invoice_fee_comment = f.uploadfile_amount_comment
-        } else if (f.api_name === 'RECEIPT-OF') {
-          filetype = 'Freight'
-          d.files.push({
-            invoice_masterbi_id: b.invoice_masterbi_id,
-            filetype: filetype,
-            date: moment(f.created_at).format('YYYY-MM-DD'),
-            file_id: f.uploadfile_id,
-            url: f.uploadfile_url,
-            state: f.uploadfile_state,
-            release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
-            release_user: f.user_name
-          })
-          d.invoice_ocean_freight_fee_state = f.uploadfile_state
-          if (f.uploadfile_currency) {
-            d.invoice_ocean_freight_fee_currency = f.uploadfile_currency
-          }
-          d.invoice_masterbi_of_comment = f.uploadfile_amount_comment
-        } else if (f.api_name === 'RECEIPT-DO') {
-          filetype = 'DO'
-          d.files.push({
-            invoice_masterbi_id: b.invoice_masterbi_id,
-            filetype: filetype,
-            date: moment(f.created_at).format('YYYY-MM-DD'),
-            file_id: f.uploadfile_id,
-            url: f.uploadfile_url,
-            state: f.uploadfile_state,
-            release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
-            release_user: f.user_name,
-            edi_state: b.invoice_masterbi_do_edi_state
-          })
-        } else if (f.api_name === 'RECEIPT-RECEIPT') {
-          filetype = 'Receipt'
-          d.files.push({
-            invoice_masterbi_id: b.invoice_masterbi_id,
-            filetype: filetype,
-            date: moment(f.created_at).format('YYYY-MM-DD'),
-            file_id: f.uploadfile_id,
-            url: f.uploadfile_url,
-            state: f.uploadfile_state,
-            release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
-            release_user: f.user_name
-          })
+      // Carrier
+      if(!d.invoice_masterbi_carrier) {
+        if(d.invoice_masterbi_bl.indexOf('COS') >= 0) {
+          d.invoice_masterbi_carrier  = 'COSCO'
+        } else if(d.invoice_masterbi_bl.indexOf('OOLU') >= 0) {
+          d.invoice_masterbi_carrier  = 'OOCL'
         }
       }
+      // default invoice currency
+      d.invoice_container_deposit_currency = 'USD'
+      d.invoice_masterbi_of_currency = 'USD'
+      d.invoice_fee_currency = 'USD'
+      // vessel info
+      let vessel = await tb_vessel.findOne({
+        where: {
+          invoice_vessel_id: d.invoice_vessel_id
+        }
+      })
+      d.invoice_vessel_name = vessel.invoice_vessel_name
+      d.invoice_vessel_voyage = vessel.invoice_vessel_voyage
+      // container info
+      queryStr = `SELECT invoice_containers_size, COUNT(invoice_containers_size) AS invoice_containers_count 
+      FROM tbl_zhongtan_invoice_containers WHERE invoice_containers_bl= ? AND invoice_vessel_id = ? AND state = ? 
+      GROUP BY invoice_containers_size ORDER BY invoice_containers_size`
+      replacements = []
+      replacements.push(d.invoice_masterbi_bl)
+      replacements.push(d.invoice_vessel_id)
+      replacements.push(GLBConfig.ENABLE)
+      let continers = await model.simpleSelect(queryStr, replacements)
+
+      let containerSize = ''
+      for (let c of continers) {
+        containerSize = containerSize + c.invoice_containers_size + ' * ' + c.invoice_containers_count + '    '
+      }
+      d.container_size_type = containerSize
+      // D/O state
+      d.invoice_masterbi_do_state = common.checkDoState(d)
+      // delivery to
+      if(!d.invoice_masterbi_delivery_to && d.customerINFO && d.customerINFO.length === 1) {
+        d.invoice_masterbi_delivery_to = d.customerINFO[0].text
+      }
+      // files
+      d = await this.getMasterbiFiles(d)
       returnData.masterbl.rows.push(d)
     }
 
@@ -355,19 +350,18 @@ exports.getMasterbiDataAct = async req => {
     returnData = {}
 
   let queryStr = `select
-    a.*, b.user_name
-  from
-    tbl_zhongtan_invoice_masterbl a
-  LEFT JOIN tbl_common_user b ON b.user_id = a.invoice_masterbi_customer_id
-  WHERE
-    a.invoice_vessel_id = ? `
+      a.*, b.user_name
+    from
+      tbl_zhongtan_invoice_masterbl a
+    LEFT JOIN tbl_common_user b ON b.user_id = a.invoice_masterbi_customer_id
+    WHERE
+      a.invoice_vessel_id = ? `
   let replacements = [doc.invoice_vessel_id]
-
   if (doc.collect) {
     if (doc.collect === 'COLLECT') {
       queryStr += 'AND a.invoice_masterbi_freight = "COLLECT" '
     } else {
-      queryStr += 'AND a.invoice_masterbi_freight != "COLLECT" OR a.invoice_masterbi_freight IS NULL OR a.invoice_masterbi_freight = ""'
+      queryStr += 'AND (a.invoice_masterbi_freight != "COLLECT" OR a.invoice_masterbi_freight IS NULL OR a.invoice_masterbi_freight = "")'
     }
   }
 
@@ -383,21 +377,19 @@ exports.getMasterbiDataAct = async req => {
         text: d.user_name
       }
     ]
-    d.files = []
-    queryStr = `SELECT
-        a.*, b.user_name
-      FROM
-        tbl_zhongtan_uploadfile a
-      left join tbl_common_user b on a.uploadfil_release_user_id = b.user_id
-      WHERE
-        a.uploadfile_index1 = ?`
-    replacements = [b.invoice_masterbi_id]
-    let files = await model.simpleSelect(queryStr, replacements)
     d.invoice_masterbi_do_release_date_fmt = moment(d.invoice_masterbi_do_release_date).format('DD/MM/YYYY hh:mm')
     d.invoice_masterbi_invoice_release_date_fmt = moment(d.invoice_masterbi_invoice_release_date).format('DD/MM/YYYY hh:mm')
+    // Carrier
+    if(!d.invoice_masterbi_carrier) {
+      if(d.invoice_masterbi_bl.indexOf('COS') >= 0) {
+        d.invoice_masterbi_carrier  = 'COSCO'
+      } else if(d.invoice_masterbi_bl.indexOf('OOLU') >= 0) {
+        d.invoice_masterbi_carrier  = 'OOCL'
+      }
+    }
     // default invoice currency
     d.invoice_container_deposit_currency = 'USD'
-    d.invoice_ocean_freight_fee_currency = 'USD'
+    d.invoice_masterbi_of_currency = 'USD'
     d.invoice_fee_currency = 'USD'
     // vessel info
     let vessel = await tb_vessel.findOne({
@@ -408,111 +400,137 @@ exports.getMasterbiDataAct = async req => {
     d.invoice_vessel_name = vessel.invoice_vessel_name
     d.invoice_vessel_voyage = vessel.invoice_vessel_voyage
     // container info
-    let continers = await tb_container.findAll({
-      where: {
-        invoice_vessel_id: d.invoice_vessel_id,
-        invoice_containers_bl: d.invoice_masterbi_bl
-      },
-      order: [['invoice_containers_size', 'ASC']]
-    })
-    let cMap = new Map()
-    for (let c of continers) {
-      if(cMap.get(c.invoice_containers_size)) {
-        cMap.set(c.invoice_containers_size, cMap.get(c.invoice_containers_size) + 1)
-      } else {
-        cMap.set(c.invoice_containers_size, 1)
-      }
-    }
+    queryStr = `SELECT invoice_containers_size, COUNT(invoice_containers_size) AS invoice_containers_count 
+      FROM tbl_zhongtan_invoice_containers WHERE invoice_containers_bl= ? AND invoice_vessel_id = ? AND state = ? 
+      GROUP BY invoice_containers_size ORDER BY invoice_containers_size`
+    replacements = []
+    replacements.push(d.invoice_masterbi_bl)
+    replacements.push(d.invoice_vessel_id)
+    replacements.push(GLBConfig.ENABLE)
+    let continers = await model.simpleSelect(queryStr, replacements)
+
     let containerSize = ''
-    for (var [k, v] of cMap) {
-      containerSize = containerSize + k + ' * ' + v + '    '
+    for (let c of continers) {
+      containerSize = containerSize + c.invoice_containers_size + ' * ' + c.invoice_containers_count + '    '
     }
     d.container_size_type = containerSize
-    // file info
-    for (let f of files) {
-      let filetype = ''
-      if (f.api_name === 'RECEIPT-DEPOSIT') {
-        filetype = 'Deposit'
-        d.files.push({
-          invoice_masterbi_id: b.invoice_masterbi_id,
-          filetype: filetype,
-          date: moment(f.created_at).format('YYYY-MM-DD'),
-          file_id: f.uploadfile_id,
-          url: f.uploadfile_url,
-          state: f.uploadfile_state,
-          release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
-          release_user: f.user_name
-        })
-        d.invoice_masterbi_deposit_state = f.uploadfile_state
-        if (f.uploadfile_currency) {
-          d.invoice_container_deposit_currency = f.uploadfile_currency
-        }
-        d.invoice_masterbi_deposit_comment = f.uploadfile_amount_comment
-      } else if (f.api_name === 'RECEIPT-FEE') {
-        filetype = 'Fee'
-        d.files.push({
-          invoice_masterbi_id: b.invoice_masterbi_id,
-          filetype: filetype,
-          date: moment(f.created_at).format('YYYY-MM-DD'),
-          file_id: f.uploadfile_id,
-          url: f.uploadfile_url,
-          state: f.uploadfile_state,
-          release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
-          release_user: f.user_name
-        })
-        d.invoice_fee_state = f.uploadfile_state
-        if (f.uploadfile_currency) {
-          d.invoice_fee_currency = f.uploadfile_currency
-        }
-        d.invoice_fee_comment = f.uploadfile_amount_comment
-      } else if (f.api_name === 'RECEIPT-OF') {
-        filetype = 'Freight'
-        d.files.push({
-          invoice_masterbi_id: b.invoice_masterbi_id,
-          filetype: filetype,
-          date: moment(f.created_at).format('YYYY-MM-DD'),
-          file_id: f.uploadfile_id,
-          url: f.uploadfile_url,
-          state: f.uploadfile_state,
-          release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
-          release_user: f.user_name
-        })
-        d.invoice_ocean_freight_fee_state = f.uploadfile_state
-        if (f.uploadfile_currency) {
-          d.invoice_ocean_freight_fee_currency = f.uploadfile_currency
-        }
-        d.invoice_masterbi_of_comment = f.uploadfile_amount_comment
-      } else if (f.api_name === 'RECEIPT-DO') {
-        filetype = 'DO'
-        d.files.push({
-          invoice_masterbi_id: b.invoice_masterbi_id,
-          filetype: filetype,
-          date: moment(f.created_at).format('YYYY-MM-DD'),
-          file_id: f.uploadfile_id,
-          url: f.uploadfile_url,
-          state: f.uploadfile_state,
-          release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
-          release_user: f.user_name,
-          edi_state: b.invoice_masterbi_do_edi_state
-        })
-      } else if (f.api_name === 'RECEIPT-RECEIPT') {
-        filetype = 'Receipt'
-        d.files.push({
-          invoice_masterbi_id: b.invoice_masterbi_id,
-          filetype: filetype,
-          date: moment(f.created_at).format('YYYY-MM-DD'),
-          file_id: f.uploadfile_id,
-          url: f.uploadfile_url,
-          state: f.uploadfile_state,
-          release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
-          release_user: f.user_name
-        })
-      }
+    // D/O state
+    d.invoice_masterbi_do_state = common.checkDoState(d)
+    // delivery to
+    if(!d.invoice_masterbi_delivery_to && d.customerINFO && d.customerINFO.length === 1) {
+      d.invoice_masterbi_delivery_to = d.customerINFO[0].text
     }
+    // file info
+    d = await this.getMasterbiFiles(d)
     returnData.rows.push(d)
   }
 
   return common.success(returnData)
+}
+
+exports.getMasterbiFiles = async d => {
+  d.files = []
+  let queryStr = `SELECT a.*, b.user_name FROM tbl_zhongtan_uploadfile a
+      left join tbl_common_user b on a.uploadfil_release_user_id = b.user_id
+      WHERE a.uploadfile_index1 = ?`
+  let replacements = [d.invoice_masterbi_id]
+  let files = await model.simpleSelect(queryStr, replacements)
+  for (let f of files) {
+    let filetype = ''
+    if (f.api_name === 'RECEIPT-DEPOSIT') {
+      filetype = 'Deposit'
+      d.files.push({
+        invoice_masterbi_id: d.invoice_masterbi_id,
+        filetype: filetype,
+        date: moment(f.created_at).format('YYYY-MM-DD'),
+        file_id: f.uploadfile_id,
+        url: f.uploadfile_url,
+        state: f.uploadfile_state,
+        release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
+        release_user: f.user_name
+      })
+      d.invoice_masterbi_deposit_state = f.uploadfile_state
+      if (f.uploadfile_currency) {
+        d.invoice_container_deposit_currency = f.uploadfile_currency
+      }
+      d.invoice_masterbi_deposit_comment = f.uploadfile_amount_comment
+      if(f.uploadfile_state === 'AP' || f.uploadfil_release_date) {
+        d.invoice_masterbi_deposit_release_date = f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : moment(f.updated_at).format('DD/MM/YYYY HH:mm')
+      }
+    } else if (f.api_name === 'RECEIPT-FEE') {
+      filetype = 'Fee'
+      d.files.push({
+        invoice_masterbi_id: d.invoice_masterbi_id,
+        filetype: filetype,
+        date: moment(f.created_at).format('YYYY-MM-DD'),
+        file_id: f.uploadfile_id,
+        url: f.uploadfile_url,
+        state: f.uploadfile_state,
+        release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
+        release_user: f.user_name
+      })
+      d.invoice_fee_state = f.uploadfile_state
+      if (f.uploadfile_currency) {
+        d.invoice_fee_currency = f.uploadfile_currency
+      }
+      d.invoice_fee_comment = f.uploadfile_amount_comment
+      if(f.uploadfile_state === 'AP' || f.uploadfil_release_date) {
+        d.invoice_masterbi_fee_release_date = f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : moment(f.updated_at).format('DD/MM/YYYY HH:mm')
+      }
+    } else if (f.api_name === 'RECEIPT-OF') {
+      filetype = 'Freight'
+      d.files.push({
+        invoice_masterbi_id: d.invoice_masterbi_id,
+        filetype: filetype,
+        date: moment(f.created_at).format('YYYY-MM-DD'),
+        file_id: f.uploadfile_id,
+        url: f.uploadfile_url,
+        state: f.uploadfile_state,
+        release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
+        release_user: f.user_name
+      })
+      d.invoice_ocean_freight_fee_state = f.uploadfile_state
+      if (f.uploadfile_currency) {
+        d.invoice_masterbi_of_currency = f.uploadfile_currency
+      }
+      d.invoice_masterbi_of_comment = f.uploadfile_amount_comment
+      if(f.uploadfile_state === 'AP' || f.uploadfil_release_date) {
+        d.invoice_masterbi_fee_release_date = f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : moment(f.updated_at).format('DD/MM/YYYY HH:mm')
+      }
+    } else if (f.api_name === 'RECEIPT-DO') {
+      filetype = 'DO'
+      d.files.push({
+        invoice_masterbi_id: d.invoice_masterbi_id,
+        filetype: filetype,
+        date: moment(f.created_at).format('YYYY-MM-DD'),
+        file_id: f.uploadfile_id,
+        url: f.uploadfile_url,
+        state: f.uploadfile_state,
+        release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
+        release_user: f.user_name,
+        edi_state: d.invoice_masterbi_do_edi_state
+      })
+    } else if (f.api_name === 'RECEIPT-RECEIPT') {
+      filetype = 'Receipt'
+      d.files.push({
+        invoice_masterbi_id: d.invoice_masterbi_id,
+        filetype: filetype,
+        receipt_type: f.uploadfile_acttype,
+        date: moment(f.created_at).format('YYYY-MM-DD'),
+        file_id: f.uploadfile_id,
+        url: f.uploadfile_url,
+        state: f.uploadfile_state,
+        release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
+        release_user: f.user_name
+      })
+      if(f.uploadfile_acttype === 'deposit') {
+        d.invoice_masterbi_deposit_receipt_date = moment(f.created_at).format('DD/MM/YYYY HH:mm')
+      } else if(f.uploadfile_acttype === 'fee') {
+        d.invoice_masterbi_invoice_receipt_date = moment(f.created_at).format('DD/MM/YYYY HH:mm')
+      }
+    }
+  }
+  return d
 }
 
 exports.getContainersDataAct = async req => {
@@ -682,16 +700,13 @@ exports.searchCustomerAct = async req => {
 
 exports.depositDoAct = async req => {
   let doc = common.docValidate(req),
-    user = req.user
+    user = req.user, curDate = new Date()
   let bl = await tb_bl.findOne({
     where: {
       invoice_masterbi_id: doc.invoice_masterbi_id
     }
   })
 
-  if (bl.invoice_masterbi_invoice_release_date) {
-    return common.error('import_09')
-  }
   let vessel = await tb_vessel.findOne({
     where: {
       invoice_vessel_id: bl.invoice_vessel_id
@@ -711,14 +726,45 @@ exports.depositDoAct = async req => {
   if (!doc.invoice_masterbi_carrier) {
     return common.error('import_05')
   }
+  
+  let queryStr = `SELECT invoice_containers_size, COUNT(invoice_containers_size) AS invoice_containers_count 
+      FROM tbl_zhongtan_invoice_containers WHERE invoice_containers_bl= ? AND invoice_vessel_id = ? AND state = ? 
+      GROUP BY invoice_containers_size ORDER BY invoice_containers_size`
+  let replacements = []
+  replacements.push(bl.invoice_masterbi_bl)
+  replacements.push(bl.invoice_vessel_id)
+  replacements.push(GLBConfig.ENABLE)
+  let continers = await model.simpleSelect(queryStr, replacements)
 
   if (doc.depositType === 'Container Deposit') {
+    if(!doc.invoice_masterbi_deposit) {
+      return common.error('deposit_01')
+    }
     bl.invoice_masterbi_customer_id = doc.invoice_masterbi_customer_id
+    bl.invoice_masterbi_delivery_to = customer.user_name
     bl.invoice_masterbi_carrier = doc.invoice_masterbi_carrier
     bl.invoice_masterbi_deposit = doc.invoice_masterbi_deposit
-    bl.invoice_masterbi_deposit_date = new Date()
-    await bl.save()
-
+    bl.invoice_masterbi_deposit_date = curDate
+    let fd = null
+    if(doc.invoice_masterbi_deposit_fixed && doc.invoice_masterbi_deposit_fixed === '1') {
+      if(bl.invoice_masterbi_deposit_release_date) {
+        return common.error('import_09')
+      }
+      bl.invoice_masterbi_deposit_fixed = GLBConfig.ENABLE
+      bl.invoice_masterbi_deposit_release_date = curDate
+      fd = await tb_fixed_deposit.findOne({
+        where: {
+          fixed_deposit_id: doc.invoice_masterbi_deposit_fixed_id,
+          state: GLBConfig.ENABLE
+        }
+      })
+      if(!fd) {
+        return common.error('fee_04')
+      }
+    } else {
+      bl.invoice_masterbi_deposit_release_date = null
+    }
+    
     let renderData = JSON.parse(JSON.stringify(bl))
     renderData.deposit_date = moment(bl.invoice_masterbi_deposit_date).format('YYYY/MM/DD')
     renderData.receipt_no = await seq.genReceiptNo()
@@ -733,16 +779,51 @@ exports.depositDoAct = async req => {
     renderData.voyage_ata_date = vessel.invoice_vessel_ata
     renderData.invoice_deposit_currency = doc.invoice_container_deposit_currency
     renderData.invoice_masterbi_deposit_comment = doc.invoice_masterbi_deposit_comment
-
-    let fileInfo = await common.ejs2Pdf('deposit.ejs', renderData, 'zhongtan')
-
-    await tb_uploadfile.destroy({
-      where: {
-        api_name: 'RECEIPT-DEPOSIT',
-        uploadfile_index1: bl.invoice_masterbi_id
+    renderData.containers = []
+    if(doc.invoice_masterbi_deposit_fixed && doc.invoice_masterbi_deposit_fixed === '1') {
+      // fixed container deposit
+      renderData.containers.push({
+        quantity: 'FIXED',
+        cnty_type: 'CNT',
+        standard: 'DEPOSIT'
+      })
+    } else if(doc.invoice_masterbi_deposit_necessary) {
+      if(doc.invoice_masterbi_deposit_type ==='BL') {
+        renderData.containers.push({
+          quantity: '1',
+          cnty_type: '',
+          standard: 'B/L'
+        })
+      } else {
+        for(let c of continers) {
+          renderData.containers.push({
+            quantity: c.invoice_containers_count,
+            cnty_type: c.invoice_containers_size,
+            standard: ''
+          })
+        }
       }
-    })
-    
+    }
+    let fileInfo = await common.ejs2Pdf('deposit.ejs', renderData, 'zhongtan')
+    if(bl.invoice_masterbi_deposit_receipt_date) {
+      bl.invoice_masterbi_deposit_receipt_date = null
+    } else {
+      await tb_uploadfile.destroy({
+        where: {
+          api_name: 'RECEIPT-DEPOSIT',
+          uploadfile_index1: bl.invoice_masterbi_id
+        }
+      })
+    }
+    let uploadfile_state = 'PB' // TODO state PM => PB
+    let uploadfil_release_date = null
+    let uploadfil_release_user_id = null
+    if(doc.invoice_masterbi_deposit_fixed && doc.invoice_masterbi_deposit_fixed === '1') {
+      // fixed container deposit auto check=> release=> receipt=> receipt release
+      uploadfile_state = 'AP'
+      uploadfil_release_date = curDate
+      uploadfil_release_user_id = user.user_id
+    }
     await tb_uploadfile.create({
       api_name: 'RECEIPT-DEPOSIT',
       user_id: user.user_id,
@@ -750,14 +831,86 @@ exports.depositDoAct = async req => {
       uploadfile_name: fileInfo.name,
       uploadfile_url: fileInfo.url,
       uploadfile_currency: doc.invoice_container_deposit_currency,
-      uploadfile_state: 'PB', // TODO state PM => PB
-      uploadfile_amount_comment: doc.invoice_masterbi_deposit_comment
+      uploadfile_state: uploadfile_state, 
+      uploadfile_amount_comment: doc.invoice_masterbi_deposit_comment,
+      uploadfil_release_date: uploadfil_release_date,
+      uploadfil_release_user_id: uploadfil_release_user_id
     })
 
+    if(doc.invoice_masterbi_deposit_fixed && doc.invoice_masterbi_deposit_fixed === '1') {
+      bl.invoice_masterbi_receipt_amount = bl.invoice_masterbi_deposit
+      bl.invoice_masterbi_receipt_currency = fd.deposit_currency
+      bl.invoice_masterbi_check_cash = fd.deposit_check_cash
+      bl.invoice_masterbi_check_no = fd.deposit_check_cash_no
+      bl.invoice_masterbi_received_from = customer.user_name
+      bl.invoice_masterbi_receipt_no = await seq.genInvoiceReceiptNo(bl.invoice_masterbi_carrier)
+      if(common.checkInvoiceState(bl)) {
+        bl.invoice_masterbi_invoice_release_date = curDate
+      }
+      bl.invoice_masterbi_deposit_receipt_date = curDate
+      if(common.checkDoState(bl)) {
+        bl.invoice_masterbi_receipt_release_date = curDate
+      }
+      let renderData = JSON.parse(JSON.stringify(bl))
+      renderData.receipt_date = moment().format('MMM DD, YYYY')
+      if (bl.invoice_masterbi_check_cash === 'CASH') {
+        renderData.check_cash = 'Cash'
+      } else if (bl.invoice_masterbi_check_cash === 'TRANSFER') {
+        renderData.check_cash = 'Bank transfer'
+      } else {
+        renderData.check_cash = bl.invoice_masterbi_check_no
+      }
+      renderData.sum_fee = parseFloat(bl.invoice_masterbi_receipt_amount.replace(/,/g, '') || 0)
+      renderData.sum_fee_str = numberToText(renderData.sum_fee)
+      let fileInfo = await common.ejs2Pdf('receipta.ejs', renderData, 'zhongtan')
+      await tb_uploadfile.destroy({
+        where: {
+          api_name: 'RECEIPT-RECEIPT',
+          uploadfile_index1: bl.invoice_masterbi_id,
+          uploadfile_acttype: doc.checkType
+        }
+      })
+      await tb_uploadfile.create({
+        api_name: 'RECEIPT-RECEIPT',
+        user_id: user.user_id,
+        uploadfile_index1: bl.invoice_masterbi_id,
+        uploadfile_name: fileInfo.name,
+        uploadfile_url: fileInfo.url,
+        uploadfile_acttype: 'deposit',
+        uploadfile_amount: bl.invoice_masterbi_receipt_amount,
+        uploadfile_currency: bl.invoice_masterbi_receipt_currency,
+        uploadfile_check_cash: bl.invoice_masterbi_check_cash,
+        uploadfile_check_no: bl.invoice_masterbi_check_no,
+        uploadfile_received_from: bl.invoice_masterbi_received_from,
+        uploadfile_receipt_no: bl.invoice_masterbi_receipt_no,
+        uploadfil_release_date: uploadfil_release_date,
+        uploadfil_release_user_id: uploadfil_release_user_id
+      })
+    }
+    await bl.save()
     return common.success({ url: fileInfo.url })
   } else if (doc.depositType === 'Invoice Fee') {
+    if(bl.invoice_masterbi_freight === 'COLLECT') {
+      if(bl.invoice_masterbi_cargo_type === 'IM') {
+        if(!(doc.invoice_masterbi_of &&
+          (doc.invoice_masterbi_bl_amendment || doc.invoice_masterbi_cod_charge || doc.invoice_masterbi_transfer 
+            || doc.invoice_masterbi_lolf || doc.invoice_masterbi_lcl || doc.invoice_masterbi_amendment 
+            || doc.invoice_masterbi_tasac || doc.invoice_masterbi_printing || doc.invoice_masterbi_others))) {
+              return common.error('deposit_03')
+            }
+      }else if(bl.invoice_masterbi_cargo_type === 'TR' && !doc.invoice_masterbi_of){
+        return common.error('deposit_04')
+      }
+    } else {
+      if(!(doc.invoice_masterbi_of || doc.invoice_masterbi_bl_amendment || doc.invoice_masterbi_cod_charge || doc.invoice_masterbi_transfer 
+        || doc.invoice_masterbi_lolf || doc.invoice_masterbi_lcl || doc.invoice_masterbi_amendment 
+        || doc.invoice_masterbi_tasac || doc.invoice_masterbi_printing || doc.invoice_masterbi_others)) {
+          return common.error('deposit_02')
+        }
+    }
     bl.invoice_masterbi_customer_id = doc.invoice_masterbi_customer_id
     bl.invoice_masterbi_carrier = doc.invoice_masterbi_carrier
+    bl.invoice_masterbi_of = doc.invoice_masterbi_of
     bl.invoice_masterbi_bl_amendment = doc.invoice_masterbi_bl_amendment
     bl.invoice_masterbi_cod_charge = doc.invoice_masterbi_cod_charge
     bl.invoice_masterbi_transfer = doc.invoice_masterbi_transfer
@@ -767,17 +920,11 @@ exports.depositDoAct = async req => {
     bl.invoice_masterbi_tasac = doc.invoice_masterbi_tasac
     bl.invoice_masterbi_printing = doc.invoice_masterbi_printing
     bl.invoice_masterbi_others = doc.invoice_masterbi_others
-    bl.invoice_masterbi_fee_date = new Date()
-    await bl.save()
-
-    bl = await tb_bl.findOne({
-      where: {
-        invoice_masterbi_id: doc.invoice_masterbi_id
-      }
-    })
+    bl.invoice_masterbi_fee_date = curDate
+    bl.invoice_masterbi_fee_release_date = null
+    bl.invoice_masterbi_invoice_release_date = null
 
     let renderData = JSON.parse(JSON.stringify(bl))
-
     renderData.fee_date = moment(bl.invoice_masterbi_fee_date).format('YYYY/MM/DD')
     renderData.customer_name = customer.user_name
     renderData.address = customer.user_address
@@ -794,53 +941,246 @@ exports.depositDoAct = async req => {
 
     renderData.fee = []
     renderData.sum_fee = 0
+
     if (bl.invoice_masterbi_bl_amendment) {
-      renderData.fee.push({ type: 'B/L AMENDMENT', amount: formatCurrency(bl.invoice_masterbi_bl_amendment) })
+      let fee = { type: 'B/L AMENDMENT', amount: formatCurrency(bl.invoice_masterbi_bl_amendment), containers: []}
+      if(doc.invoice_masterbi_bl_amendment_necessary) {
+        if(doc.invoice_masterbi_bl_amendment_type ==='BL') {
+          fee.containers.push({
+            quantity: '1',
+            cnty_type: '',
+            standard: 'B/L'
+          })
+        } else {
+          for(let c of continers) {
+            fee.containers.push({
+              quantity: c.invoice_containers_count,
+              cnty_type: c.invoice_containers_size,
+              standard: ''
+            })
+          }
+        }
+      }
+      renderData.fee.push(fee)
       renderData.sum_fee += parseFloat(bl.invoice_masterbi_bl_amendment)
     }
     if (bl.invoice_masterbi_cod_charge) {
-      renderData.fee.push({ type: 'COD CHARGE', amount: formatCurrency(bl.invoice_masterbi_cod_charge) })
+      let fee = { type: 'COD CHARGE', amount: formatCurrency(bl.invoice_masterbi_cod_charge), containers: []}
+      if(doc.invoice_masterbi_cod_charge_necessary) {
+        if(doc.invoice_masterbi_cod_charge_type ==='BL') {
+          fee.containers.push({
+            quantity: '1',
+            cnty_type: '',
+            standard: 'B/L'
+          })
+        } else {
+          for(let c of continers) {
+            fee.containers.push({
+              quantity: c.invoice_containers_count,
+              cnty_type: c.invoice_containers_size,
+              standard: ''
+            })
+          }
+        }
+      }
+      renderData.fee.push(fee)
       renderData.sum_fee += parseFloat(bl.invoice_masterbi_cod_charge)
     }
     if (bl.invoice_masterbi_transfer) {
-      renderData.fee.push({ type: 'CONTAINER TRANSFER', amount: formatCurrency(bl.invoice_masterbi_transfer) })
+      let fee = { type: 'CONTAINER TRANSFER', amount: formatCurrency(bl.invoice_masterbi_transfer), containers: []}
+      if(doc.invoice_masterbi_transfer_necessary) {
+        if(doc.invoice_masterbi_transfer_type ==='BL') {
+          fee.containers.push({
+            quantity: '1',
+            cnty_type: '',
+            standard: 'B/L'
+          })
+        } else {
+          for(let c of continers) {
+            fee.containers.push({
+              quantity: c.invoice_containers_count,
+              cnty_type: c.invoice_containers_size,
+              standard: ''
+            })
+          }
+        }
+      }
+      renderData.fee.push(fee)
       renderData.sum_fee += parseFloat(bl.invoice_masterbi_transfer)
     }
     if (bl.invoice_masterbi_lolf) {
-      renderData.fee.push({ type: 'LIFT ON LIFT OFF', amount: formatCurrency(bl.invoice_masterbi_lolf) })
+      let fee = { type: 'LIFT ON LIFT OFF', amount: formatCurrency(bl.invoice_masterbi_lolf), containers: []}
+      if(doc.invoice_masterbi_lolf_necessary) {
+        if(doc.invoice_masterbi_lolf_type ==='BL') {
+          fee.containers.push({
+            quantity: '1',
+            cnty_type: '',
+            standard: 'B/L'
+          })
+        } else {
+          for(let c of continers) {
+            fee.containers.push({
+              quantity: c.invoice_containers_count,
+              cnty_type: c.invoice_containers_size,
+              standard: ''
+            })
+          }
+        }
+      }
+      renderData.fee.push(fee)
       renderData.sum_fee += parseFloat(bl.invoice_masterbi_lolf)
     }
     if (bl.invoice_masterbi_lcl) {
-      renderData.fee.push({ type: 'LCL FEE', amount: formatCurrency(bl.invoice_masterbi_lcl) })
+      let fee = { type: 'LCL FEE', amount: formatCurrency(bl.invoice_masterbi_lcl), containers: []}
+      if(doc.invoice_masterbi_lcl_necessary) {
+        if(doc.invoice_masterbi_lcl_type ==='BL') {
+          fee.containers.push({
+            quantity: '1',
+            cnty_type: '',
+            standard: 'B/L'
+          })
+        } else {
+          for(let c of continers) {
+            fee.containers.push({
+              quantity: c.invoice_containers_count,
+              cnty_type: c.invoice_containers_size,
+              standard: ''
+            })
+          }
+        }
+      }
+      renderData.fee.push(fee)
       renderData.sum_fee += parseFloat(bl.invoice_masterbi_lcl)
     }
     if (bl.invoice_masterbi_amendment) {
-      renderData.fee.push({ type: 'AMENDMENT FEE', amount: formatCurrency(bl.invoice_masterbi_amendment) })
+      let fee = { type: 'AMENDMENT FEE', amount: formatCurrency(bl.invoice_masterbi_amendment), containers: []}
+      if(doc.invoice_masterbi_amendment_necessary) {
+        if(doc.invoice_masterbi_amendment_type ==='BL') {
+          fee.containers.push({
+            quantity: '1',
+            cnty_type: '',
+            standard: 'B/L'
+          })
+        } else {
+          for(let c of continers) {
+            fee.containers.push({
+              quantity: c.invoice_containers_count,
+              cnty_type: c.invoice_containers_size,
+              standard: ''
+            })
+          }
+        }
+      }
+      renderData.fee.push(fee)
       renderData.sum_fee += parseFloat(bl.invoice_masterbi_amendment)
     }
     if (bl.invoice_masterbi_tasac) {
-      renderData.fee.push({ type: 'TASAC FEE', amount: formatCurrency(bl.invoice_masterbi_tasac) })
+      let fee = { type: 'TASAC FEE', amount: formatCurrency(bl.invoice_masterbi_tasac), containers: []}
+      if(doc.invoice_masterbi_tasac_necessary) {
+        if(doc.invoice_masterbi_tasac_type ==='BL') {
+          fee.containers.push({
+            quantity: '1',
+            cnty_type: '',
+            standard: 'B/L'
+          })
+        } else {
+          for(let c of continers) {
+            fee.containers.push({
+              quantity: c.invoice_containers_count,
+              cnty_type: c.invoice_containers_size,
+              standard: ''
+            })
+          }
+        }
+      }
+      renderData.fee.push(fee)
       renderData.sum_fee += parseFloat(bl.invoice_masterbi_tasac)
     }
     if (bl.invoice_masterbi_printing) {
-      renderData.fee.push({ type: 'B/L PRINTING FEE', amount: formatCurrency(bl.invoice_masterbi_printing) })
+      let fee = { type: 'B/L PRINTING FEE', amount: formatCurrency(bl.invoice_masterbi_printing), containers: []}
+      if(doc.invoice_masterbi_printing_necessary) {
+        if(doc.invoice_masterbi_printing_type ==='BL') {
+          fee.containers.push({
+            quantity: '1',
+            cnty_type: '',
+            standard: 'B/L'
+          })
+        } else {
+          for(let c of continers) {
+            fee.containers.push({
+              quantity: c.invoice_containers_count,
+              cnty_type: c.invoice_containers_size,
+              standard: ''
+            })
+          }
+        }
+      }
+      renderData.fee.push(fee)
       renderData.sum_fee += parseFloat(bl.invoice_masterbi_printing)
     }
     if (bl.invoice_masterbi_others) {
-      renderData.fee.push({ type: 'OTHERS', amount: formatCurrency(bl.invoice_masterbi_others) })
+      let fee = { type: 'OTHERS', amount: formatCurrency(bl.invoice_masterbi_others), containers: []}
+      if(doc.invoice_masterbi_others_necessary) {
+        if(doc.invoice_masterbi_others_type ==='BL') {
+          fee.containers.push({
+            quantity: '1',
+            cnty_type: '',
+            standard: 'B/L'
+          })
+        } else {
+          for(let c of continers) {
+            fee.containers.push({
+              quantity: c.invoice_containers_count,
+              cnty_type: c.invoice_containers_size,
+              standard: ''
+            })
+          }
+        }
+      }
+      renderData.fee.push(fee)
       renderData.sum_fee += parseFloat(bl.invoice_masterbi_others)
     }
-    renderData.sum_fee = formatCurrency(renderData.sum_fee)
-
-    let fileInfo = await common.ejs2Pdf('fee.ejs', renderData, 'zhongtan')
-
-    await tb_uploadfile.destroy({
-      where: {
-        api_name: 'RECEIPT-FEE',
-        uploadfile_index1: bl.invoice_masterbi_id
+    if (bl.invoice_masterbi_of) {
+      let fee = { type: 'OCEAN FREIGHT', amount: formatCurrency(bl.invoice_masterbi_of), containers: []}
+      if(doc.invoice_masterbi_of_fixed && doc.invoice_masterbi_of_fixed === '1') {
+        fee.containers.push({
+          quantity: '1',
+          cnty_type: '',
+          standard: 'B/L'
+        })
+      } else if(doc.invoice_masterbi_of_necessary) {
+        if(doc.invoice_masterbi_of_type ==='BL') {
+          fee.containers.push({
+            quantity: '1',
+            cnty_type: '',
+            standard: 'B/L'
+          })
+        } else {
+          for(let c of continers) {
+            fee.containers.push({
+              quantity: c.invoice_containers_count,
+              cnty_type: c.invoice_containers_size,
+              standard: ''
+            })
+          }
+        }
       }
-    })
+      renderData.fee.push(fee)
+      renderData.sum_fee += parseFloat(bl.invoice_masterbi_of)
+    }
 
+    renderData.sum_fee = formatCurrency(renderData.sum_fee)
+    let fileInfo = await common.ejs2Pdf('fee.ejs', renderData, 'zhongtan')
+    if(bl.invoice_masterbi_invoice_receipt_date) {
+      bl.invoice_masterbi_invoice_receipt_date = null
+    } else {
+      await tb_uploadfile.destroy({
+        where: {
+          api_name: 'RECEIPT-FEE',
+          uploadfile_index1: bl.invoice_masterbi_id
+        }
+      })
+    }
     await tb_uploadfile.create({
       api_name: 'RECEIPT-FEE',
       user_id: user.user_id,
@@ -851,7 +1191,7 @@ exports.depositDoAct = async req => {
       uploadfile_state: 'PB', // TODO state PM => PB
       uploadfile_amount_comment: doc.invoice_fee_comment
     })
-
+    await bl.save()
     return common.success({ url: fileInfo.url })
   } else if (doc.depositType === 'Ocean Freight') {
     bl.invoice_masterbi_customer_id = doc.invoice_masterbi_customer_id
@@ -872,7 +1212,7 @@ exports.depositDoAct = async req => {
     renderData.vessel_name = vessel.invoice_vessel_name
     renderData.voyage_number = vessel.invoice_vessel_voyage
     renderData.voyage_ata_date = vessel.invoice_vessel_ata
-    renderData.fee_currency = doc.invoice_ocean_freight_fee_currency
+    renderData.fee_currency = doc.invoice_masterbi_of_currency
     renderData.fee_comment = doc.invoice_masterbi_of_comment
 
     renderData.fee = []
@@ -898,7 +1238,7 @@ exports.depositDoAct = async req => {
       uploadfile_index1: bl.invoice_masterbi_id,
       uploadfile_name: fileInfo.name,
       uploadfile_url: fileInfo.url,
-      uploadfile_currency: doc.invoice_ocean_freight_fee_currency,
+      uploadfile_currency: doc.invoice_masterbi_of_currency,
       uploadfile_state: 'PB', // TODO state PM => PB
       uploadfile_amount_comment: doc.invoice_masterbi_of_comment
     })
@@ -1013,23 +1353,6 @@ exports.changeblAct = async req => {
 
 exports.deleteVoyageAct = async req => {
   let doc = common.docValidate(req)
-  if(!doc.delete_voyage_password) {
-    return common.error('auth_18')
-  } else {
-    let adminUser = await tb_user.findOne({
-      where: {
-        user_username: 'admin'
-      }
-    })
-    if(adminUser) {
-      if(adminUser.user_password !== doc.delete_voyage_password) {
-        return common.error('auth_24')
-      }
-    } else {
-      return common.error('auth_18')
-    }
-  }
-
   await tb_container.destroy({
     where: {
       invoice_vessel_id: doc.invoice_vessel_id
@@ -1085,6 +1408,39 @@ exports.doCreateEdiAct = async req => {
     }
   })
   this.createEditFile(bl, customer, vessel, continers, '9')
+}
+
+exports.doReplaceEdiAct = async req => {
+  let doc = common.docValidate(req)
+  let bl = await tb_bl.findOne({
+    where: {
+      invoice_masterbi_id: doc.invoice_masterbi_id
+    }
+  })
+  bl.invoice_masterbi_do_edi_state = '5' // GLBConfig.EDI_MESSAGE_FUNCTION
+  bl.invoice_masterbi_do_edi_cancel_time = new Date()
+  await bl.save()
+
+  let customer = await tb_user.findOne({
+    where: {
+      user_id: bl.invoice_masterbi_customer_id
+    }
+  })
+
+  let vessel = await tb_vessel.findOne({
+    where: {
+      invoice_vessel_id: bl.invoice_vessel_id
+    }
+  })
+
+  let continers = await tb_container.findAll({
+    where: {
+      invoice_vessel_id: bl.invoice_vessel_id,
+      invoice_containers_bl: bl.invoice_masterbi_bl
+    },
+    order: [['invoice_containers_size', 'ASC']]
+  })
+  this.createEditFile(bl, customer, vessel, continers, '5')
 }
 
 exports.doCancelEdiAct = async req => {
@@ -1176,6 +1532,13 @@ exports.searchFixedDepositAct = async req => {
   let doc = common.docValidate(req)
   let renderData = {}
 
+  let bl = await tb_bl.findOne({
+    where: {
+      invoice_masterbi_id: doc.invoice_masterbi_id
+    }
+  })
+
+  let isTrCo = bl.invoice_masterbi_cargo_type === 'TR' && bl.invoice_masterbi_freight === 'COLLECT'
   let queryStr = `select * from tbl_zhongtan_invoice_default_fee where state = '1' AND fee_cargo_type = ? `
   let replacements = [doc.invoice_masterbi_cargo_type]
   let defaultFees = await model.simpleSelect(queryStr, replacements)
@@ -1190,16 +1553,23 @@ exports.searchFixedDepositAct = async req => {
     for(let f of defaultFees) {
       let column = ''
       let type = ''
-      if(doc.invoice_masterbi_cargo_type == 'TR') {
-        column = common.glbConfigId2Attr(GLBConfig.INVOICE_DEFAULT_TR_FEE_NAME, f.fee_name, 'column')
-        type = common.glbConfigId2Attr(GLBConfig.INVOICE_DEFAULT_TR_FEE_NAME, f.fee_name, 'type')
-      } else {
-        column = common.glbConfigId2Attr(GLBConfig.INVOICE_DEFAULT_IM_FEE_NAME, f.fee_name, 'column')
-        type = common.glbConfigId2Attr(GLBConfig.INVOICE_DEFAULT_IM_FEE_NAME, f.fee_name, 'type')
+      let fee_config = await tb_fee_config.findOne({
+        where: {
+          fee_cargo_type: doc.invoice_masterbi_cargo_type,
+          fee_name: f.fee_name,
+          state: GLBConfig.ENABLE
+        }
+      })
+      if(fee_config) {
+        column = fee_config.fee_column
+        type = fee_config.fee_type
       }
+      renderData[column+'_necessary'] = f.is_necessary
       if(f.fee_type === 'BL') {
         renderData[column] = f.fee_amount
+        renderData[column + '_type'] = 'BL'
       } else {
+        renderData[column + '_type'] = 'CON'
         if(!renderData[column]) {
           renderData[column] = 0
         }
@@ -1211,10 +1581,11 @@ exports.searchFixedDepositAct = async req => {
       }
       if(type === 'Container Deposit') {
         renderData.invoice_container_deposit_currency = f.fee_currency
-      } else if(type === 'Ocean Freight') {
-        renderData.invoice_ocean_freight_fee_currency = f.fee_currency
       } else {
         renderData.invoice_fee_currency = f.fee_currency
+        if(isTrCo) {
+          renderData[column+'_necessary'] = '0'
+        }
       }
     }
   }
@@ -1222,16 +1593,25 @@ exports.searchFixedDepositAct = async req => {
   if(doc.invoice_masterbi_customer_id) {
     queryStr = `select * from tbl_zhongtan_customer_fixed_deposit where state = '1' 
                     AND fixed_deposit_customer_id = ? AND deposit_work_state = ? AND ((deposit_begin_date <= ? AND deposit_long_term = ?) 
-                    OR (deposit_begin_date <= ? AND deposit_expire_date >= ?)) ORDER BY created_at LIMIT 1`
+                    OR (deposit_begin_date <= ? AND deposit_expire_date >= ?)) ORDER BY created_at DESC LIMIT 1`
     replacements = [doc.invoice_masterbi_customer_id, 'W', moment().format('YYYY-MM-DD'), GLBConfig.ENABLE, moment().format('YYYY-MM-DD'), moment().format('YYYY-MM-DD')]
     let fixedDeposits = await model.simpleSelect(queryStr, replacements)
     if(fixedDeposits && fixedDeposits.length > 0) {
-      renderData.invoice_masterbi_deposit = '0.00'
+      renderData.invoice_masterbi_deposit = '0'
+      renderData.invoice_masterbi_deposit_necessary = ''
+      renderData.invoice_masterbi_deposit_fixed = '1'
+      renderData.invoice_masterbi_deposit_fixed_id = fixedDeposits[0].fixed_deposit_id
       renderData.invoice_container_deposit_currency = fixedDeposits[0].deposit_currency ? fixedDeposits[0].deposit_currency : 'USD'
       renderData.invoice_masterbi_deposit_comment = fixedDeposits[0].fixed_deposit_type === 'GU' ? 'GUARANTEE LETTER NO.' + fixedDeposits[0].deposit_guarantee_letter_no : 'FIXED CONTAINER DEPOSIT/' + fixedDeposits[0].deposit_receipt_no
     }
   }
   
+  if(bl.invoice_masterbi_freight_charge && common.isNumber(bl.invoice_masterbi_freight_charge)) {
+    renderData.invoice_masterbi_of = bl.invoice_masterbi_freight_charge
+    renderData.invoice_masterbi_of_necessary = ''
+    renderData.invoice_masterbi_of_fixed = '1'
+    renderData.invoice_masterbi_of_currency = bl.invoice_masterbi_freight_currency ? bl.invoice_masterbi_freight_currency : 'USD'
+  }
   return common.success(renderData)
 }
 
@@ -1256,3 +1636,23 @@ exports.checkPasswordAct = async req => {
   return common.success()
 }
 
+exports.doEditVesselAct = async req => {
+  let doc = common.docValidate(req)
+  let vessel = await tb_vessel.findOne({
+    where: {
+      invoice_vessel_id: doc.invoice_vessel_id
+    }
+  })
+  if(vessel) {
+    vessel.invoice_vessel_name = doc.invoice_vessel_name
+    vessel.invoice_vessel_code = doc.invoice_vessel_code
+    vessel.invoice_vessel_voyage = doc.invoice_vessel_voyage
+    vessel.invoice_vessel_call_sign = doc.invoice_vessel_call_sign
+    vessel.invoice_vessel_eta = doc.invoice_vessel_eta ? moment(doc.invoice_vessel_eta).format('DD/MM/YYYY') : null
+    vessel.invoice_vessel_ata = doc.invoice_vessel_ata ? moment(doc.invoice_vessel_ata).format('DD/MM/YYYY') : null
+    vessel.invoice_vessel_atd = doc.invoice_vessel_atd ? moment(doc.invoice_vessel_atd).format('DD/MM/YYYY') : null
+    vessel.updated_at = new Date()
+    await vessel.save()
+  }
+  return common.success()
+}

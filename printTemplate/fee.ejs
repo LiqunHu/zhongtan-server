@@ -162,43 +162,85 @@
                         <td valign="middle" rowspan="1" colspan="3" align="center" class="b_left b_right b_top b_bottom">
                             BILL OF LANDING<br/>
                         </td>
-                        <td valign="middle" rowspan="1" colspan="5" align="center" class="b_right b_top b_bottom">
-                            DESCRIPTION
-                        </td>
-                        <td valign="middle" rowspan="1" colspan="3" align="center" class="b_right b_top b_bottom">
-                            AMOUNT IN USD
+                        <td valign="middle" rowspan="1" colspan="8" style="padding: 0" class="b_right b_bottom">
+                            <table style="width: 100%; height: 100%; border-collapse:collapse; table-layout: fixed;" cellpadding="0" cellspacing="0" border="0">
+                                <tr>
+                                    <td align="center" colspan="2">
+                                        DESCRIPTION
+                                    </td>
+                                    <td align="center" colspan="1">
+                                        QTY
+                                    </td>
+                                    <td align="center" colspan="1">
+                                        CNT
+                                    </td>
+                                    <td align="center" colspan="1" class="b_right">
+                                        STA
+                                    </td>
+                                    <td align="center" width="160">
+                                        AMOUNT IN USD
+                                    </td>
+                                </tr>
+                            </table>
                         </td>
                     </tr>
                     <tr>
-                        <td valign="middle" rowspan="3" colspan="3" align="center" class="b_left b_right b_bottom">
+                        <td valign="middle" rowspan="3" colspan="3" align="center" class="b_left b_right">
                             <%=ejsData.invoice_masterbi_bl%>
                         </td>
-                        <td valign="middle" rowspan="3" colspan="5" align="left" class="b_right b_bottom">
-                            <%for (var i = 0; i < ejsData.fee.length; i++) {%>
-                                <%= ejsData.fee[i].type %><br/>
-                            <%}-%>
-                        </td>
-                        <td valign="top" rowspan="3" colspan="3" align="right" class="b_right b_bottom">
-                            <%for (var i = 0; i < ejsData.fee.length; i++) {%>
-                                <%= ejsData.fee[i].amount %><br/>
-                            <%}-%>
+                        <td valign="middle" rowspan="3" colspan="8" align="left" class="b_right">
+                            <table style="width: 100%; height: 100%; border-collapse:collapse; table-layout: fixed;" cellpadding="0" cellspacing="0" border="0">
+                                <%for (var i = 0; i < ejsData.fee.length; i++) {%>
+                                    <tr>
+                                        <td align="left" valign="top" colspan="2">
+                                            <%= ejsData.fee[i].type %>
+                                        </td>
+                                        <td align="right" colspan="1">
+                                            <%for (var j = 0; j < ejsData.fee[i].containers.length; j++) {%>
+                                                <%= ejsData.fee[i].containers[j].quantity %><br/>
+                                            <%}-%>
+                                        </td>
+                                        <td align="right" colspan="1">
+                                            <%for (var j = 0; j < ejsData.fee[i].containers.length; j++) {%>
+                                                <%= ejsData.fee[i].containers[j].cnty_type %><br/>
+                                            <%}-%>
+                                        </td>
+                                        <td align="right" colspan="1" class="b_right">
+                                            <%for (var j = 0; j < ejsData.fee[i].containers.length; j++) {%>
+                                                <%= ejsData.fee[i].containers[j].standard %><br/>
+                                            <%}-%>
+                                        </td>
+                                        <td align="right" valign="top" width="160">
+                                            <%= ejsData.fee[i].amount %><br/>
+                                        </td>
+                                    </tr>
+                                <%}-%>
+                            </table>
                         </td>
                     </tr>
                     <tr></tr>
                     <tr></tr>
                     <tr>
-                        <td valign="top" rowspan="1" colspan="8" align="right" class="b_left b_right b_bottom">
-                            TOTAL<br/>
+                        <td valign="top" rowspan="1" colspan="3" align="right" class="b_left b_right b_top b_bottom">
                         </td>
-                        <td valign="middle" rowspan="1" colspan="1" align="left" class="b_bottom">
-                            <% if (ejsData.fee_currency) { %>
-							  <%=ejsData.fee_currency%>
-							<% } else { %>
-							  USD
-							<% } %>
-                        </td>
-                        <td valign="top" rowspan="1" colspan="2" align="right" class="b_right b_bottom">
-                            <%=ejsData.sum_fee%>
+                        <td valign="middle" rowspan="1" colspan="8" style="padding: 0" class="b_right b_top b_bottom">
+                            <table style="width: 100%; height: 100%; border-collapse:collapse; table-layout: fixed;" cellpadding="0" cellspacing="0" border="0">
+                                <tr>
+                                    <td align="right" colspan="4" class="b_right">
+                                        TOTAL
+                                    </td>
+                                    <td align="left" width="80">
+                                        <% if (ejsData.fee_currency) { %>
+                                            <%=ejsData.fee_currency%>
+                                          <% } else { %>
+                                            USD
+                                          <% } %>
+                                    </td>
+                                    <td align="right" width="80">
+                                        <%=ejsData.sum_fee%>
+                                    </td>
+                                </tr>
+                            </table>
                         </td>
                     </tr>
                     <tr>
