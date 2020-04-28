@@ -182,7 +182,8 @@ exports.getInvoiceDetailAct = async req => {
     container_size_type: containerSize,
     invoice_masterbi_loading: bl.invoice_masterbi_loading,
     invoice_masterbi_destination: bl.invoice_masterbi_destination,
-    invoice_masterbi_cargo_type: bl.invoice_masterbi_cargo_type
+    invoice_masterbi_cargo_type: bl.invoice_masterbi_cargo_type,
+    invoice_masterbi_freight: bl.invoice_masterbi_freight
   }
 
   return common.success(returnData)
