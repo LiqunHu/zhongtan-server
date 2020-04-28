@@ -37,7 +37,9 @@ exports.searchAct = async req => {
       (a.invoice_masterbi_deposit_date IS NOT NULL OR a.invoice_masterbi_fee_date IS NOT NULL) AND a.invoice_masterbi_do_date is null AND a.state = ? `
   let replacements = [GLBConfig.ENABLE]
   if (doc.start_date && doc.end_date) {
-    queryStr += ' AND v.created_at >= ? and v.created_at < ?'
+    queryStr += ' AND ((a.invoice_masterbi_fee_date >= ? and a.invoice_masterbi_fee_date < ?) OR (a.invoice_masterbi_deposit_date >= ? and a.invoice_masterbi_deposit_date < ?))'
+    replacements.push(doc.start_date)
+    replacements.push(moment(doc.end_date, 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
     replacements.push(doc.start_date)
     replacements.push(moment(doc.end_date, 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
   }
