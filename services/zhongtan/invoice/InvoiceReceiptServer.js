@@ -177,7 +177,7 @@ exports.getMasterbiFiles = async d => {
   d.files = []
   let queryStr = `SELECT a.*, b.user_name FROM tbl_zhongtan_uploadfile a
       left join tbl_common_user b on a.uploadfil_release_user_id = b.user_id
-      WHERE a.uploadfile_index1 = ?`
+      WHERE a.uploadfile_index1 = ? order by created_at`
   let replacements = [d.invoice_masterbi_id]
   let files = await model.simpleSelect(queryStr, replacements)
   for (let f of files) {
@@ -269,9 +269,35 @@ exports.getMasterbiFiles = async d => {
         release_user: f.user_name
       })
       if(f.uploadfile_acttype === 'deposit') {
-        d.invoice_masterbi_deposit_receipt_date = moment(f.created_at).format('DD/MM/YYYY HH:mm')
+        let rcount = await tb_uploadfile.count({
+          where: {
+            uploadfile_index1: d.invoice_masterbi_id,
+            api_name: 'RECEIPT-DEPOSIT',
+            uploadfil_release_date: {
+              [Op.gt]: f.created_at
+            }
+          }
+        })
+        if(rcount <= 0) {
+          d.invoice_masterbi_deposit_receipt_date = moment(f.created_at).format('DD/MM/YYYY HH:mm')
+        } else {
+          d.invoice_masterbi_invoice_receipt_date = null
+        }
       } else if(f.uploadfile_acttype === 'fee') {
-        d.invoice_masterbi_invoice_receipt_date = moment(f.created_at).format('DD/MM/YYYY HH:mm')
+        let rcount = await tb_uploadfile.count({
+          where: {
+            uploadfile_index1: d.invoice_masterbi_id,
+            api_name: 'RECEIPT-FEE',
+            uploadfil_release_date: {
+              [Op.gt]: f.created_at
+            }
+          }
+        })
+        if(rcount <= 0) {
+          d.invoice_masterbi_invoice_receipt_date = moment(f.created_at).format('DD/MM/YYYY HH:mm')
+        } else {
+          d.invoice_masterbi_invoice_receipt_date = null
+        }
       }
     }
   }

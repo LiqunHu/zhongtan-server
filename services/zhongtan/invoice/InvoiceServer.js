@@ -18,13 +18,23 @@ const tb_fee_config = model.zhongtan_invoice_fixed_fee_config
 const tb_fixed_deposit = model.zhongtan_customer_fixed_deposit
 
 exports.initAct = async () => {
+  let DELIVER = []
+  let queryStr = `SELECT user_name FROM tbl_common_user WHERE state = '1' AND user_type = ? GROUP BY user_name`
+  let replacements = [GLBConfig.TYPE_CUSTOMER]
+  let deliverys = await model.simpleSelect(queryStr, replacements)
+  if(deliverys) {
+    for(let d of deliverys) {
+      DELIVER.push(d.user_name)
+    }
+  }
   let returnData = {
     TFINFO: GLBConfig.TFINFO,
     RECEIPT_TYPE_INFO: GLBConfig.RECEIPT_TYPE_INFO,
     CASH_BANK_INFO: GLBConfig.CASH_BANK_INFO,
     COLLECT_FLAG: GLBConfig.COLLECT_FLAG,
     RECEIPT_CURRENCY: GLBConfig.RECEIPT_CURRENCY,
-    UPLOAD_STATE: GLBConfig.UPLOAD_STATE
+    UPLOAD_STATE: GLBConfig.UPLOAD_STATE,
+    DELIVER: DELIVER
   }
 
   return common.success(returnData)
@@ -677,10 +687,17 @@ exports.searchCustomerAct = async req => {
     let returnData = {
       customerINFO: []
     }
-    let queryStr = `select * from tbl_common_user 
-                where state = "1" and user_type = "${GLBConfig.TYPE_CUSTOMER}"  
-                and (user_username like ? or user_phone like ? or user_name like ?)`
+    let queryStr = `select a.*, c.fixed_deposit_id from tbl_common_user a left join 
+                    (select MAX(fixed_deposit_id) fixed_deposit_id, fixed_deposit_customer_id from tbl_zhongtan_customer_fixed_deposit b 
+                      where b.state = '1' and b.deposit_work_state = 'W' and ((b.deposit_begin_date <= ? AND b.deposit_long_term = '1') 
+                      OR (b.deposit_begin_date <= ? AND b.deposit_expire_date >= ?)) GROUP BY fixed_deposit_customer_id) 
+                      c on a.user_id = c.fixed_deposit_customer_id 
+                   where a.state = '1' and a.user_type = '${GLBConfig.TYPE_CUSTOMER}'  
+                   and (a.user_username like ? or a.user_phone like ? or a.user_name like ?)`
     let replacements = []
+    replacements.push(moment().format('YYYY-MM-DD'))
+    replacements.push(moment().format('YYYY-MM-DD'))
+    replacements.push(moment().format('YYYY-MM-DD'))
     let search_text = '%' + doc.search_text + '%'
     replacements.push(search_text)
     replacements.push(search_text)
@@ -689,7 +706,8 @@ exports.searchCustomerAct = async req => {
     for (let s of shippers) {
       returnData.customerINFO.push({
         id: s.user_id,
-        text: s.user_name
+        text: s.user_name,
+        fixed: s.fixed_deposit_id
       })
     }
     return common.success(returnData)
@@ -746,7 +764,7 @@ exports.depositDoAct = async req => {
     bl.invoice_masterbi_deposit = doc.invoice_masterbi_deposit
     bl.invoice_masterbi_deposit_date = curDate
     let fd = null
-    if(doc.invoice_masterbi_deposit_fixed && doc.invoice_masterbi_deposit_fixed === '1') {
+    if(doc.invoice_masterbi_deposit_fixed && doc.invoice_masterbi_deposit_fixed === '1' && !doc.depositEdit) {
       if(bl.invoice_masterbi_deposit_release_date) {
         return common.error('import_09')
       }
@@ -761,8 +779,6 @@ exports.depositDoAct = async req => {
       if(!fd) {
         return common.error('fee_04')
       }
-    } else {
-      bl.invoice_masterbi_deposit_release_date = null
     }
     
     let renderData = JSON.parse(JSON.stringify(bl))
@@ -780,7 +796,7 @@ exports.depositDoAct = async req => {
     renderData.invoice_deposit_currency = doc.invoice_container_deposit_currency
     renderData.invoice_masterbi_deposit_comment = doc.invoice_masterbi_deposit_comment
     renderData.containers = []
-    if(doc.invoice_masterbi_deposit_fixed && doc.invoice_masterbi_deposit_fixed === '1') {
+    if(doc.invoice_masterbi_deposit_fixed && doc.invoice_masterbi_deposit_fixed === '1' && !doc.depositEdit) {
       // fixed container deposit
       renderData.containers.push({
         quantity: 'FIXED',
@@ -818,7 +834,7 @@ exports.depositDoAct = async req => {
     let uploadfile_state = 'PB' // TODO state PM => PB
     let uploadfil_release_date = null
     let uploadfil_release_user_id = null
-    if(doc.invoice_masterbi_deposit_fixed && doc.invoice_masterbi_deposit_fixed === '1') {
+    if(doc.invoice_masterbi_deposit_fixed && doc.invoice_masterbi_deposit_fixed === '1' && !doc.depositEdit) {
       // fixed container deposit auto check=> release=> receipt=> receipt release
       uploadfile_state = 'AP'
       uploadfil_release_date = curDate
@@ -837,7 +853,7 @@ exports.depositDoAct = async req => {
       uploadfil_release_user_id: uploadfil_release_user_id
     })
 
-    if(doc.invoice_masterbi_deposit_fixed && doc.invoice_masterbi_deposit_fixed === '1') {
+    if(doc.invoice_masterbi_deposit_fixed && doc.invoice_masterbi_deposit_fixed === '1' && !doc.depositEdit) {
       bl.invoice_masterbi_receipt_amount = bl.invoice_masterbi_deposit
       bl.invoice_masterbi_receipt_currency = fd.deposit_currency
       bl.invoice_masterbi_check_cash = fd.deposit_check_cash

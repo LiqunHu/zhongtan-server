@@ -58,7 +58,7 @@ exports.searchAct = async req => {
     queryStr += ' and a.invoice_masterbi_bl like ? '
     replacements.push('%' + doc.bl + '%')
   }
-  queryStr += ' ORDER BY v.created_at DESC, a.invoice_masterbi_bl'
+  queryStr += ' ORDER BY IFNULL(a.invoice_masterbi_fee_date, a.invoice_masterbi_fee_date) desc, a.invoice_masterbi_bl'
   let result = await model.queryWithCount(doc, queryStr, replacements)
   returnData.total = result.count
   returnData.rows = []
