@@ -11,13 +11,23 @@ const tb_container = model.zhongtan_invoice_containers
 const tb_uploadfile = model.zhongtan_uploadfile
 
 exports.initAct = async () => {
+  let DELIVER = []
+  let queryStr = `SELECT user_name FROM tbl_common_user WHERE state = '1' AND user_type = ? GROUP BY user_name`
+  let replacements = [GLBConfig.TYPE_CUSTOMER]
+  let deliverys = await model.simpleSelect(queryStr, replacements)
+  if(deliverys) {
+    for(let d of deliverys) {
+      DELIVER.push(d.user_name)
+    }
+  }
   let returnData = {
     TFINFO: GLBConfig.TFINFO,
     RECEIPT_TYPE_INFO: GLBConfig.RECEIPT_TYPE_INFO,
     CASH_BANK_INFO: GLBConfig.CASH_BANK_INFO,
     COLLECT_FLAG: GLBConfig.COLLECT_FLAG,
     RECEIPT_CURRENCY: GLBConfig.RECEIPT_CURRENCY,
-    UPLOAD_STATE: GLBConfig.UPLOAD_STATE
+    UPLOAD_STATE: GLBConfig.UPLOAD_STATE,
+    DELIVER: DELIVER
   }
 
   return common.success(returnData)
