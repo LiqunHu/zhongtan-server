@@ -429,7 +429,7 @@ const fs2Edi = async (renderData) => {
       ediLines++
       seq++
     }
-    ediTxt += 'CNT+16+' + data.containers.length + '\'\r\n'
+    ediTxt += 'CNT+16:' + data.containers.length + '\'\r\n'
     ediLines++
   }
   // line ..
