@@ -28,4 +28,6 @@ router.post('/fee/InvoiceDefaultFee/:method', services.InvoiceDefaultFeeControl)
 router.post('/fee/CustomerFixedDeposit/:method', services.CustomerFixedDepositControl)
 router.post('/fee/CustomerFixedReceipt/:method', services.CustomerFixedReceiptControl)
 
+router.post('/configuration/IcdConfig/:method', services.IcdConfigControl)
+
 module.exports = router

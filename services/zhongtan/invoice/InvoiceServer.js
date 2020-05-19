@@ -27,6 +27,15 @@ exports.initAct = async () => {
       DELIVER.push(d.user_name)
     }
   }
+
+  let ICD = []
+  queryStr = `SELECT icd_name, icd_code FROM tbl_zhongtan_icd WHERE state = ? GROUP BY icd_code`
+  replacements = [GLBConfig.ENABLE]
+  let icds = await model.simpleSelect(queryStr, replacements)
+  if(icds) {
+    ICD = icds
+  }
+
   let returnData = {
     TFINFO: GLBConfig.TFINFO,
     RECEIPT_TYPE_INFO: GLBConfig.RECEIPT_TYPE_INFO,
@@ -34,7 +43,8 @@ exports.initAct = async () => {
     COLLECT_FLAG: GLBConfig.COLLECT_FLAG,
     RECEIPT_CURRENCY: GLBConfig.RECEIPT_CURRENCY,
     UPLOAD_STATE: GLBConfig.UPLOAD_STATE,
-    DELIVER: DELIVER
+    DELIVER: DELIVER,
+    ICD: ICD
   }
 
   return common.success(returnData)
@@ -89,8 +99,8 @@ exports.uploadImportAct = async req => {
           }
         }
         let freight_charge = m['Freight Charge'] || ''
-        if(!freight_charge || isNaN(Number(freight_charge))) {
-          freight_charge = ''
+        if(freight_charge && isNaN(Number(freight_charge))) {
+          return common.error('import_11')
         }
         if(masterbi_freight === 'COLLECT' && !freight_charge) {
           return common.error('import_10')
@@ -574,6 +584,8 @@ exports.downloadDoAct = async req => {
     bl.invoice_masterbi_do_date = moment().format('YYYY-MM-DD')
     bl.invoice_masterbi_valid_to = doc.invoice_masterbi_valid_to
     bl.invoice_masterbi_do_delivery_order_no = delivery_order_no
+    bl.invoice_masterbi_do_fcl = doc.invoice_masterbi_do_fcl
+    bl.invoice_masterbi_do_icd = doc.invoice_masterbi_do_icd
     await bl.save()
   }
 
@@ -590,6 +602,12 @@ exports.downloadDoAct = async req => {
     }
   })
   
+  let commonUser = await tb_user.findOne({
+    where: {
+      user_id: user.user_id
+    }
+  })
+
   let renderData = JSON.parse(JSON.stringify(bl))
   renderData.delivery_order_no = delivery_order_no
   renderData.invoice_vessel_name = vessel.invoice_vessel_name
@@ -597,9 +615,11 @@ exports.downloadDoAct = async req => {
   renderData.vessel_eta = moment(vessel.invoice_vessel_eta, 'DD-MM-YYYY').format('DD/MM/YYYY')
   renderData.do_date = moment(bl.invoice_masterbi_do_date).format('DD/MM/YYYY')
   renderData.valid_to = moment(bl.invoice_masterbi_valid_to).format('DD/MM/YYYY')
-  renderData.delivery_to = common.getDelivery(bl.invoice_masterbi_delivery)
-  renderData.user_name = user.user_name
-  renderData.user_email = user.user_email
+  renderData.delivery_to = bl.invoice_masterbi_do_icd
+  renderData.fcl = bl.invoice_masterbi_do_fcl
+  renderData.user_name = commonUser.user_name
+  renderData.user_phone = commonUser.user_phone
+  renderData.user_email = commonUser.user_email
   renderData.containers = JSON.parse(JSON.stringify(continers))
   let cSize = []
   for (let i = 0; i < renderData.containers.length; i++) {
@@ -737,6 +757,12 @@ exports.depositDoAct = async req => {
     }
   })
 
+  let commonUser = await tb_user.findOne({
+    where: {
+      user_id: user.user_id
+    }
+  })
+
   if (!customer) {
     return common.error('import_04')
   }
@@ -788,8 +814,9 @@ exports.depositDoAct = async req => {
     renderData.address = customer.user_address
     renderData.address1 = customer.user_address1
     renderData.address2 = customer.user_address2
-    renderData.user_name = user.user_name
-    renderData.user_email = user.user_email
+    renderData.user_name = commonUser.user_name
+    renderData.user_phone = commonUser.user_phone
+    renderData.user_email = commonUser.user_email
     renderData.vessel_name = vessel.invoice_vessel_name
     renderData.voyage_number = vessel.invoice_vessel_voyage
     renderData.voyage_ata_date = vessel.invoice_vessel_ata
@@ -946,8 +973,9 @@ exports.depositDoAct = async req => {
     renderData.address = customer.user_address
     renderData.address1 = customer.user_address1
     renderData.address2 = customer.user_address2
-    renderData.user_name = user.user_name
-    renderData.user_email = user.user_email
+    renderData.user_name = commonUser.user_name
+    renderData.user_phone = commonUser.user_phone
+    renderData.user_email = commonUser.user_email
     renderData.receipt_no = await seq.genReceiptNo()
     renderData.vessel_name = vessel.invoice_vessel_name
     renderData.voyage_number = vessel.invoice_vessel_voyage
@@ -1222,8 +1250,9 @@ exports.depositDoAct = async req => {
     renderData.address = customer.user_address
     renderData.address1 = customer.user_address1
     renderData.address2 = customer.user_address2
-    renderData.user_name = user.user_name
-    renderData.user_email = user.user_email
+    renderData.user_name = commonUser.user_name
+    renderData.user_phone = commonUser.user_phone
+    renderData.user_email = commonUser.user_email
     renderData.receipt_no = await seq.genReceiptNo()
     renderData.vessel_name = vessel.invoice_vessel_name
     renderData.voyage_number = vessel.invoice_vessel_voyage

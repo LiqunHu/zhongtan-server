@@ -59,6 +59,7 @@ module.exports = {
   import_08: 'Please finish the verification',
   import_09: 'Invoice already release',
   import_10: 'Collect no freight charge',
+  import_11: 'Freight charge is not number',
   fee_01: 'Fee already exists, Please edit',
   fee_02: 'Fixed container deposit exists, Please invalid',
   fee_03: 'Fixed container deposit already approved, Please invalid',
@@ -67,5 +68,7 @@ module.exports = {
   deposit_01: 'Must have container deposit',
   deposit_02: 'Must have invoice fee',
   deposit_03: 'IM, Freight collect must have Ocean Freight AND Invoice Fee',
-  deposit_04: 'TR, Freight collect must have Ocean Freight'
+  deposit_04: 'TR, Freight collect must have Ocean Freight',
+  icd_01: 'Edit ICD do not exist',
+  icd_02: 'ICD name or code already exists'
 }

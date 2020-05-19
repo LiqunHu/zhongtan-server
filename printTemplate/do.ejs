@@ -42,7 +42,13 @@
             <td class="b_left b_right" colspan="3"><b>POD/ETA:</b><%=ejsData.vessel_eta%></td>
           </tr>
           <tr style="font-size: 10px;" valign="top">
-            <td class="b_left b_right b_bottom" colspan="3"><b>ICD/TERMINAL:</b><%=ejsData.delivery_to%></td>
+            <td class="b_left b_right b_bottom" colspan="3"><b>ICD/TERMINAL:</b>
+              <% if (ejsData.delivery_to) { %>
+                <%=ejsData.delivery_to%>
+              <% } else { %>
+                TICTS TERMINAL
+              <% } %>
+            </td>
           </tr>
           <tr>
             <td colspan="3" class="b_left b_right b_bottom">
@@ -97,8 +103,13 @@
           </tr>
           <tr style="font-size: 10px;" valign="top">
             <td class="b_left b_right b_bottom" colspan="2" style="font-size: 15px;">
-              <b
-                >FCL/FCL<br />
+              <b>
+                <% if (ejsData.fcl) { %>
+                  <%=ejsData.fcl%>
+                <% } else { %>
+                  FCL/FCL
+                <% } %>
+              <br />
                 EMPTY RETURN ADDRESS CONTAINERS Term-in-Ref D&D Invoice Deposit Invoice Freight Invoice
               </b>
             </td>
@@ -117,7 +128,11 @@
         </tbody>
       </table>
       <div style="padding-top: 5px; padding-left: 3px;">
-        Prepared By: <%= ejsData.user_name %></br>
+        Prepared By: <%= ejsData.user_name %>
+        <% if (ejsData.user_phone) { %>
+          &nbsp;&nbsp;&nbsp;&nbsp;Tel:&nbsp;&nbsp;<%=ejsData.user_phone%>
+        <% } %>
+        </br>
         <div style="padding-left:90px;">
           <a href="<%=ejsData.user_email%>"><%=ejsData.user_email%></a>
         </div>

@@ -452,5 +452,15 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_masterbl', {
   invoice_masterbi_invoice_receipt_date: {
     type: db.DATE,
     allowNull: true
+  },
+  invoice_masterbi_do_fcl: {
+    // D/O FCL/LCL
+    type: db.STRING(20),
+    allowNull: true
+  },
+  invoice_masterbi_do_icd: {
+    // D/O 堆场
+    type: db.STRING(20),
+    allowNull: true
   }
 })
