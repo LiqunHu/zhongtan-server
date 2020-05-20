@@ -19,7 +19,7 @@ const tb_fixed_deposit = model.zhongtan_customer_fixed_deposit
 
 exports.initAct = async () => {
   let DELIVER = []
-  let queryStr = `SELECT user_name FROM tbl_common_user WHERE state = '1' AND user_type = ? GROUP BY user_name`
+  let queryStr = `SELECT user_name FROM tbl_common_user WHERE state = '1' AND user_type = ? ORDER BY user_name`
   let replacements = [GLBConfig.TYPE_CUSTOMER]
   let deliverys = await model.simpleSelect(queryStr, replacements)
   if(deliverys) {
@@ -29,7 +29,7 @@ exports.initAct = async () => {
   }
 
   let ICD = []
-  queryStr = `SELECT icd_name, icd_code FROM tbl_zhongtan_icd WHERE state = ? GROUP BY icd_code`
+  queryStr = `SELECT icd_name, icd_code FROM tbl_zhongtan_icd WHERE state = ? ORDER BY icd_code`
   replacements = [GLBConfig.ENABLE]
   let icds = await model.simpleSelect(queryStr, replacements)
   if(icds) {
