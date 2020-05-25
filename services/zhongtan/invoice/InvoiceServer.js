@@ -68,7 +68,10 @@ exports.uploadImportAct = async req => {
     })
     if(doc.importFileType && doc.importFileType === 'bulk') {
       // 散货
-      let bulkInfo = wb.Sheets['SAMPLE FORMAT']
+      let bulkInfo = wb.Sheets['BULKSHIPMENT']
+      if(!bulkInfo) {
+        return common.error('import_12')
+      }
       let bulkInfoJS = X.utils.sheet_to_json(bulkInfo, {})
       if (!bulkInfoJS[0]['Ves/Voy']) {
         return common.error('import_03')
@@ -85,54 +88,69 @@ exports.uploadImportAct = async req => {
       if (vessel) {
         return common.error('import_01')
       } else {
-        // vessel = await tb_vessel.create({
-        //   invoice_vessel_name: ves,
-        //   invoice_vessel_voyage: voy,
-        //   invoice_vessel_type: 'Bulk'
-        // })
+        vessel = await tb_vessel.create({
+          invoice_vessel_name: ves,
+          invoice_vessel_voyage: voy,
+          invoice_vessel_eta: typeof bulkInfoJS[0]['ETA'] === 'object' ? bulkInfoJS[0]['ETA'].Format('dd/MM/yyyy') : bulkInfoJS[0]['ETA'],
+          invoice_vessel_atd: typeof bulkInfoJS[0]['ETD'] === 'object' ? bulkInfoJS[0]['ETD'].Format('dd/MM/yyyy') : bulkInfoJS[0]['ETD'],
+          invoice_vessel_type: 'Bulk'
+        })
 
-        // for (let m of bulkInfoJS) {
-        //   await tb_bl.create({
-        //     invoice_vessel_id: vessel.invoice_vessel_id,
-        //     invoice_masterbi_bl: m['B/L Nr.'],
-        //     invoice_masterbi_cargo_type: m['Cargo Classification'],
-        //     invoice_masterbi_destination: m['Discharge Port'],
-        //     invoice_masterbi_delivery: m['Delivery'],
-        //     invoice_masterbi_freight: m['Freight Terms'],
-        //     invoice_masterbi_loading: m['Loading Port'],
-        //     invoice_masterbi_gross_weight: m['Weight:'],
-        //     invoice_masterbi_gross_weight_unit: m['Gross Weight Unit'],
-        //     invoice_masterbi_gross_volume: m['Gross Volume'],
-        //     invoice_masterbi_gross_volume_unit: m['Gross Volume Unit'],
-        //     invoice_masterbi_invoice_value: m['Invoice Value'] || '',
-        //     invoice_masterbi_invoice_currency: m['Invoice Currency'] || '',
-        //     invoice_masterbi_freight_charge: freight_charge,
-        //     invoice_masterbi_freight_currency: freight_currency,
-        //     invoice_masterbi_imdg: m['IMDG Code'] || '',
-        //     invoice_masterbi_packing_type: m['Packing Type'] || '',
-        //     invoice_masterbi_forwarder_code: m['Forwarder Code'] || '',
-        //     invoice_masterbi_forwarder_name: m['Forwarder Name'] || '',
-        //     invoice_masterbi_forwarder_tel: m['Forwarder Tel'] || '',
-        //     invoice_masterbi_exporter_name: m['Exporter Name'] || '',
-        //     invoice_masterbi_exporter_tel: m['Exporter Tel'] || '',
-        //     invoice_masterbi_exporter_address: m['Exporter Address'] || '',
-        //     invoice_masterbi_exporter_tin: m['Exporter TIN'] || '',
-        //     invoice_masterbi_consignee_name: m['Consignee Name'] || '',
-        //     invoice_masterbi_consignee_tel: m['Consignee Tel'] || '',
-        //     invoice_masterbi_consignee_address: m['Consignee Address'] || '',
-        //     invoice_masterbi_consignee_tin: m['Consignee TIN'] || '',
-        //     invoice_masterbi_notify_name: m['Notify Name'] || '',
-        //     invoice_masterbi_notify_tel: m['Notify Tel'] || '',
-        //     invoice_masterbi_notify_address: m['Notify Address'] || '',
-        //     invoice_masterbi_notify_tin: m['Notify TIN'] || '',
-        //     invoice_masterbi_shipping_mark: m['Shipping Mark'] || '',
-        //     invoice_masterbi_net_weight: m['Net Weight'] || '',
-        //     invoice_masterbi_net_weight_unit: m['Net Weight Unit'] || '',
-        //     invoice_masterbi_line_code: m['LineAgent Code'] || '',
-        //     invoice_masterbi_terminal_code: m['TerminalCode'] || '',
-        //     invoice_masterbi_do_icd: m['TerminalCode'] || ''
-        //   })
-        // }
+        for (let m of bulkInfoJS) {
+          let pcs = ''
+          let qty = ''
+          let weight = ''
+          let weight_unit = ''
+          let measurement = ''
+          let measurement_unit = ''
+          let freight = m['Freight Terms'] || ''
+          if(m['PCS/QTY']) {
+            qty = m['PCS/QTY'].replace(/(\d+(\.\d+)?)/ig, '')
+            pcs = m['PCS/QTY'].replace(qty, '')
+          }
+          if(m['Weight']) {
+            weight_unit = m['Weight'].replace(/(\d+(\.\d+)?)/ig, '')
+            weight = m['Weight'].replace(weight_unit, '')
+          }
+          if(m['Measurement']) {
+            measurement_unit = m['Measurement'].replace(/(\d+(\.\d+)?)/ig, '')
+            measurement = m['Measurement'].replace(measurement_unit, '')
+          }
+          if(m['Freight Terms']) {
+            freight = m['Freight Terms']
+          }
+          if(freight) {
+            if(freight.toUpperCase().indexOf('PREPAID') != -1) {
+              freight = 'PREPAID'
+            } else if(freight.toUpperCase().indexOf('COLLECT') != -1) {
+              freight = 'COLLECT'
+            }
+          } else {
+            freight = 'PREPAID'
+          }
+
+          await tb_bl.create({
+            invoice_vessel_id: vessel.invoice_vessel_id,
+            invoice_masterbi_bl: m['B/L Nr.'],
+            invoice_masterbi_loading: m['Loading Port'],
+            invoice_masterbi_destination: m['Discharge Port'],
+            invoice_masterbi_delivery: m['Delivery'],
+            invoice_masterbi_cargo_type: m['Cargo Classification'],
+            invoice_masterbi_exporter_name: m['SHIPPER'] || '',
+            invoice_masterbi_consignee_name: m['CNEE'] || '',
+            invoice_masterbi_notify_name: m['NOTIFY'] || '',
+            invoice_masterbi_shipping_mark: m['MARKS & NRS'] || '',
+            invoice_masterbi_goods_description: m['COMMODITY'],
+            invoice_masterbi_package_no: pcs,
+            invoice_masterbi_package_unit: qty,
+            invoice_masterbi_gross_weight: weight,
+            invoice_masterbi_gross_weight_unit: weight_unit,
+            invoice_masterbi_gross_volume: measurement,
+            invoice_masterbi_gross_volume_unit: measurement_unit,
+            invoice_masterbi_freight: freight,
+            invoice_masterbi_do_icd: m['ICD NAME'] || ''
+          })
+        }
       }
     } else {
       // 集装箱
@@ -143,8 +161,6 @@ exports.uploadImportAct = async req => {
       let vesslInfoJS = X.utils.sheet_to_json(vesselInfo, {})
       let masterBIJS = X.utils.sheet_to_json(masterBI, {})
       let containersJS = X.utils.sheet_to_json(containers, {})
-      // const data = fs.readFileSync(f.response.info.path, 'utf8')
-      // console.log(data)
 
       if (!(vesslInfoJS[0]['VESSEL NAME'] && vesslInfoJS[0]['VOYAGE NUM'])) {
         return common.error('import_03')
@@ -186,6 +202,7 @@ exports.uploadImportAct = async req => {
           invoice_vessel_ata: typeof vesslInfoJS[0]['ATA'] === 'object' ? vesslInfoJS[0]['ATA'].Format('dd/MM/yyyy') : vesslInfoJS[0]['ATA'],
           invoice_vessel_atd: typeof vesslInfoJS[0]['ATD'] === 'object' ? vesslInfoJS[0]['ATD'].Format('dd/MM/yyyy') : vesslInfoJS[0]['ATD'],
           invoice_vessel_call_sign: vesslInfoJS[0]['CALL SIGN'],
+          invoice_vessel_type: 'Container'
         })
 
         for (let m of masterBIJS) {
@@ -684,26 +701,30 @@ exports.downloadDoAct = async req => {
   renderData.delivery_order_no = delivery_order_no
   renderData.invoice_vessel_name = vessel.invoice_vessel_name
   renderData.invoice_vessel_voyage = vessel.invoice_vessel_voyage
-  renderData.vessel_eta = moment(vessel.invoice_vessel_eta, 'DD-MM-YYYY').format('DD/MM/YYYY')
-  renderData.do_date = moment(bl.invoice_masterbi_do_date).format('DD/MM/YYYY')
-  renderData.valid_to = moment(bl.invoice_masterbi_valid_to).format('DD/MM/YYYY')
+  renderData.vessel_eta = vessel.invoice_vessel_eta ? moment(vessel.invoice_vessel_eta, 'DD-MM-YYYY').format('DD/MM/YYYY') : ''
+  renderData.vessel_atd = vessel.invoice_vessel_atd ? moment(vessel.invoice_vessel_atd, 'DD-MM-YYYY').format('DD/MM/YYYY') : ''
+  renderData.do_date = bl.invoice_masterbi_do_date ? moment(bl.invoice_masterbi_do_date).format('DD/MM/YYYY') : ''
+  renderData.valid_to = bl.invoice_masterbi_valid_to ? moment(bl.invoice_masterbi_valid_to).format('DD/MM/YYYY') : ''
   renderData.delivery_to = bl.invoice_masterbi_do_icd
   renderData.fcl = bl.invoice_masterbi_do_fcl
   renderData.user_name = commonUser.user_name
   renderData.user_phone = commonUser.user_phone
   renderData.user_email = commonUser.user_email
-  renderData.containers = JSON.parse(JSON.stringify(continers))
-  let cSize = []
-  for (let i = 0; i < renderData.containers.length; i++) {
-    renderData.containers[i].invoice_containers_tare = common.getContainerTare(renderData.containers[i].invoice_containers_size)
-    if (cSize.indexOf(renderData.containers[i].invoice_containers_size) < 0) {
-      cSize.push(renderData.containers[i].invoice_containers_size)
+  let fileInfo = {}
+  if(vessel.invoice_vessel_type && vessel.invoice_vessel_type === 'Bulk') {
+    fileInfo = await common.ejs2Pdf('doBulk.ejs', renderData, 'zhongtan')
+  } else {
+    renderData.containers = JSON.parse(JSON.stringify(continers))
+    let cSize = []
+    for (let i = 0; i < renderData.containers.length; i++) {
+      renderData.containers[i].invoice_containers_tare = common.getContainerTare(renderData.containers[i].invoice_containers_size)
+      if (cSize.indexOf(renderData.containers[i].invoice_containers_size) < 0) {
+        cSize.push(renderData.containers[i].invoice_containers_size)
+      }
     }
+    renderData.container_count = bl.invoice_masterbi_container_no + 'X' + cSize.join(' ')
+    fileInfo = await common.ejs2Pdf('do.ejs', renderData, 'zhongtan')
   }
-  renderData.container_count = bl.invoice_masterbi_container_no + 'X' + cSize.join(' ')
-
-  let fileInfo = await common.ejs2Pdf('do.ejs', renderData, 'zhongtan')
-
   await tb_uploadfile.destroy({
     where: {
       api_name: 'RECEIPT-DO',

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title></title>
+  </head>
+  <body>
+    <div style="size: A4 landscape; padding: 0px 30px; page-break-before: always">
+      <h3 style="text-align:center">CHINESE – TANZANIAN JOINT SHIPPING COMPANY (SINOTASHIP)</h3>
+      <table width="100%" style="border-collapse:collapse; table-layout: fixed;">
+        <tbody>
+          <tr class="b_left b_right b_top " style="height: 50px; font-size: 20px;" valign="top">
+            <td>Page 1 of 1</td>
+            <td>DELIVERY ORDER</td>
+            <td>SINOTASHIP</td>
+          </tr>
+          <tr style="font-size: 20px;" valign="top">
+            <td class="b_left b_bottom" colspan="2"><b>PLEASE DELIVER TO:</b><%=ejsData.invoice_masterbi_delivery_to%></td>
+            <td class="b_right b_bottom"><b><span style="width: 70px;">DATE</span>:</b><%=ejsData.do_date%></td>
+          </tr>
+          <tr style="font-size: 10px; height: 30px;" valign="bottom">
+            <td class="b_left" colspan="2"><b>CONSIGNEE NAME:</b><%=ejsData.invoice_masterbi_consignee_name%></td>
+            <td class="b_right"><b><span style="width: 130px;">DELIVERY ORDER NO.</span>:</b><span style="width: 150px; padding-left:20px;"><%=ejsData.delivery_order_no%></span></td>
+          </tr>
+          <tr style="font-size: 10px;" valign="top">
+            <td class="b_left b_bottom" rowspan="3" colspan="2"><b>ADDRESS:</b><%=ejsData.invoice_masterbi_consignee_address%></td>
+            <td class="b_right"><b><span style="width: 130px;">B/L NO.</span>:</b><span style="width: 150px; padding-left:20px;"><%=ejsData.invoice_masterbi_bl%></span></td>
+          </tr>
+          <tr style="font-size: 10px;" valign="top">
+            <td class="b_right"><b><span style="width: 130px;">VESSEL.</span>:</b><span style="width: 150px; padding-left:20px;"><%=ejsData.invoice_vessel_name%></span></td>
+          </tr>
+          <tr style="font-size: 10px;" valign="top">
+            <td class="b_right b_bottom"><b><span style="width: 130px;">VOYAGE NO.</span>:</b><span style="width: 150px; padding-left:20px;"><%=ejsData.invoice_vessel_voyage%></span></td>
+          </tr>
+          <tr style="font-size: 10px;" valign="top">
+            <td class="b_left b_right" colspan="3"><b><span style="width: 90px;">POL/ETD</span>:</b><span style="width: 100px; padding-left:20px;"><%=ejsData.vessel_atd%></span></td>
+          </tr>
+          <tr style="font-size: 10px;" valign="top">
+            <td class="b_left b_right" colspan="3"><b><span style="width: 90px;">POD/ETA</span>:</b><span style="width: 100px; padding-left:20px;"><%=ejsData.vessel_eta%></span></td>
+          </tr>
+          <tr style="font-size: 10px;" valign="top">
+            <td class="b_left b_right b_bottom" colspan="3"><b><span style="width: 90px;">ICD/TERMINAL</span>:</b><span style="width: 100px; padding-left:20px;">
+              <% if (ejsData.delivery_to) { %>
+                <%=ejsData.delivery_to%>
+              <% } else { %>
+                TICTS TERMINAL
+              <% } %>
+            </span>
+            </td>
+          </tr>
+          <tr>
+            <td colspan="3" class="b_left b_right b_bottom">
+              <table width="100%" style="border-collapse:collapse; font-size: 10px; text-align: center;">
+                <thead class="b_bottom">
+                  <tr style="height: 20px;"></tr>
+                  <tr valign="top">
+                    <th>MARKS &<br />NUMBERS</th>
+                    <th>PCS/QTY</th>
+                    <th>COMMODITY</th>
+                    <th>NET WT<br />KGM/</th>
+                    <th>MEASUREMENT<br />CBM</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr style="height: 20px;"></tr>
+                  <tr>
+                    <td><%= ejsData.invoice_masterbi_shipping_mark %></td>
+                    <td><%= ejsData.invoice_masterbi_package_no %><%= ejsData.invoice_masterbi_package_unit %></td>
+                    <td><%= ejsData.invoice_masterbi_goods_description %></td>
+                    <td><%= ejsData.invoice_masterbi_gross_weight %><%= ejsData.invoice_masterbi_gross_weight_unit %></td>
+                    <td><%= ejsData.invoice_masterbi_gross_volume %><%= ejsData.invoice_masterbi_gross_volume_unit %></td>
+                  </tr>
+                  <tr style="height: 30px;"></tr>
+                  <tr style="text-align: right;">
+                    <td colspan="3">TOTAL:</td>
+                    <td style="text-align: center;">
+                      <%= ejsData.invoice_masterbi_gross_weight %><%= ejsData.invoice_masterbi_gross_weight_unit %>
+                    </td>
+                    <td style="text-align: center;">
+                      <%= ejsData.invoice_masterbi_gross_volume %><%= ejsData.invoice_masterbi_gross_volume_unit %>
+                    </td>
+                  </tr>
+                  <tr style="text-align: left;">
+                    <td colspan="5">Released comment</td>
+                  </tr>
+                  <tr style="height: 20px;"></tr>
+                </tbody>
+              </table>
+            </td>
+          </tr>
+          <tr style="font-size: 10px;" valign="top">
+            <td class="b_left b_right b_bottom" colspan="3"><b>CARGO DETAILS AS PER ATTACHED COPY OF B/L</b></td>
+          </tr>
+          <tr style="font-size: 10px;" valign="top">
+            <td class="b_left b_right b_bottom" colspan="2" style="font-size: 15px;">
+              <b>
+                EMPTY RETURN ADDRESS CONTAINERS Term-in-Ref D&D Invoice Deposit Invoice Freight Invoice
+              </b>
+              <br />
+              <div style="padding-left:100px;">
+              Prepared By: 
+              <span><%= ejsData.user_name %></span>
+              <span style="margin-left:30px;"><%= ejsData.user_phone %></span>
+              <span style="margin-left:30px;"><%= ejsData.user_email %></span>
+              </div>
+              <br />
+            </td>
+            <td class="b_left b_right b_bottom">
+              FOR FURTHER INFORMATION CONTACT<br />
+              CHINESE-TANZANIAN JOIN SHIPPING COMPANY,<br />
+              31, KISUTU ROAD P.O. BOX 696, DAR ES ALAAM<br />
+              Rukonge Jones    E-mail:  rukonge@sinotaship.com<br />
+              Tel (direct) +255 22 2113389<br />
+              Fax: +255 22 2113388
+            </td>
+          </tr>
+          <tr>
+            <td class="b_left b_right b_bottom" colspan="3" style="height: 150px;"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </body>
+  <style>
+    @page {
+      size: A4 landscape;
+      margin: 0;
+    }
+    .b_left {
+      border-left: 1px solid black;
+    }
+
+    .b_right {
+      border-right: 1px solid black;
+    }
+
+    .b_top {
+      border-top: 1px solid black;
+    }
+
+    .b_bottom {
+      border-bottom: 1px solid black;
+    }
+    span {
+      display: inline-block;
+    }
+  </style>
+</html>
