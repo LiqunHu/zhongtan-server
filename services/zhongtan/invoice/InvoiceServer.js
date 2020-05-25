@@ -667,9 +667,13 @@ exports.downloadDoAct = async req => {
       invoice_masterbi_id: doc.invoice_masterbi_id
     }
   })
+  if(!doc.invoice_masterbi_delivery_to || !doc.invoice_masterbi_valid_to) {
+    return common.error('do_01')
+  }
+
   let delivery_order_no = ('000000000000000' + bl.invoice_masterbi_id).slice(-8)
   if (!bl.invoice_masterbi_do_release_date) {
-    bl.invoice_masterbi_delivery_to = bl.invoice_masterbi_delivery_to ? bl.invoice_masterbi_delivery_to : doc.invoice_masterbi_delivery_to_input
+    bl.invoice_masterbi_delivery_to = doc.invoice_masterbi_delivery_to
     bl.invoice_masterbi_do_date = moment().format('YYYY-MM-DD')
     bl.invoice_masterbi_valid_to = doc.invoice_masterbi_valid_to
     bl.invoice_masterbi_do_delivery_order_no = delivery_order_no

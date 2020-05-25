@@ -71,5 +71,6 @@ module.exports = {
   deposit_03: 'IM, Freight collect must have Ocean Freight AND Invoice Fee',
   deposit_04: 'TR, Freight collect must have Ocean Freight',
   icd_01: 'Edit ICD do not exist',
-  icd_02: 'ICD name or code already exists'
+  icd_02: 'ICD name or code already exists',
+  do_01: 'D/O delivery or valid must be input'
 }
