@@ -37,6 +37,7 @@ exports.addAct = async req => {
 
   let addIcd = await tb_icd.findOne({
     where: {
+      state : GLBConfig.ENABLE,
       [Op.or]: [{ icd_name: doc.icd_name }, { icd_code: doc.icd_code }]
     }
   })

@@ -481,50 +481,66 @@ const fileSaveMongo = async (localPath, bucket) => {
 }
 
 const checkInvoiceState = bl => {
-  if(bl.invoice_masterbi_cargo_type === 'IM' && bl.invoice_masterbi_freight === 'PREPAID') {
-    // deposit， invoice fee two fee two incoice
-    if(bl.invoice_masterbi_deposit_release_date && bl.invoice_masterbi_fee_release_date) {
+  if(bl.invoice_masterbi_vessel_type && bl.invoice_masterbi_vessel_type === 'Bulk') {
+    if(bl.invoice_masterbi_cargo_type === 'TR' && bl.invoice_masterbi_freight === 'PREPAID') {
+      return true
+    } else if(bl.invoice_masterbi_fee_release_date) {
       return true
     }
-  } else if(bl.invoice_masterbi_cargo_type === 'IM' && bl.invoice_masterbi_freight === 'COLLECT') {
-    // deposit， Ocean, Invoice three fee two invoice
-    if(bl.invoice_masterbi_deposit_release_date && bl.invoice_masterbi_fee_release_date) {
-      return true
-    }
-  } else if(bl.invoice_masterbi_cargo_type === 'TR' && bl.invoice_masterbi_freight === 'PREPAID') {
-    // at least deposit
-    if(bl.invoice_masterbi_deposit_release_date) {
-      return true
-    }
-  } else if(bl.invoice_masterbi_cargo_type === 'TR' && bl.invoice_masterbi_freight === 'COLLECT') {
-    // at least deposit， Ocean 
-    if(bl.invoice_masterbi_deposit_release_date && bl.invoice_masterbi_fee_release_date) {
-      return true
+  } else {
+    if(bl.invoice_masterbi_cargo_type === 'IM' && bl.invoice_masterbi_freight === 'PREPAID') {
+      // deposit， invoice fee two fee two incoice
+      if(bl.invoice_masterbi_deposit_release_date && bl.invoice_masterbi_fee_release_date) {
+        return true
+      }
+    } else if(bl.invoice_masterbi_cargo_type === 'IM' && bl.invoice_masterbi_freight === 'COLLECT') {
+      // deposit， Ocean, Invoice three fee two invoice
+      if(bl.invoice_masterbi_deposit_release_date && bl.invoice_masterbi_fee_release_date) {
+        return true
+      }
+    } else if(bl.invoice_masterbi_cargo_type === 'TR' && bl.invoice_masterbi_freight === 'PREPAID') {
+      // at least deposit
+      if(bl.invoice_masterbi_deposit_release_date) {
+        return true
+      }
+    } else if(bl.invoice_masterbi_cargo_type === 'TR' && bl.invoice_masterbi_freight === 'COLLECT') {
+      // at least deposit， Ocean 
+      if(bl.invoice_masterbi_deposit_release_date && bl.invoice_masterbi_fee_release_date) {
+        return true
+      }
     }
   }
   return false
 }
 
 const checkDoState = bl => {
-  if(bl.invoice_masterbi_cargo_type === 'IM' && bl.invoice_masterbi_freight === 'PREPAID') {
-    // deposit， invoice fee two fee two incoice
-    if(bl.invoice_masterbi_deposit_receipt_date && bl.invoice_masterbi_invoice_receipt_date) {
+  if(bl.invoice_masterbi_vessel_type && bl.invoice_masterbi_vessel_type === 'Bulk') {
+    if(bl.invoice_masterbi_cargo_type === 'TR' && bl.invoice_masterbi_freight === 'PREPAID') {
+      return true
+    } else if(bl.invoice_masterbi_invoice_receipt_date) {
       return true
     }
-  } else if(bl.invoice_masterbi_cargo_type === 'IM' && bl.invoice_masterbi_freight === 'COLLECT') {
-    // deposit， Ocean, Invoice three fee two invoice
-    if(bl.invoice_masterbi_deposit_receipt_date && bl.invoice_masterbi_invoice_receipt_date) {
-      return true
-    }
-  } else if(bl.invoice_masterbi_cargo_type === 'TR' && bl.invoice_masterbi_freight === 'PREPAID') {
-    // at least deposit
-    if(bl.invoice_masterbi_deposit_receipt_date) {
-      return true
-    }
-  } else if(bl.invoice_masterbi_cargo_type === 'TR' && bl.invoice_masterbi_freight === 'COLLECT') {
-    // at least deposit， Ocean 
-    if(bl.invoice_masterbi_deposit_receipt_date && bl.invoice_masterbi_invoice_receipt_date) {
-      return true
+  } else {
+    if(bl.invoice_masterbi_cargo_type === 'IM' && bl.invoice_masterbi_freight === 'PREPAID') {
+      // deposit， invoice fee two fee two incoice
+      if(bl.invoice_masterbi_deposit_receipt_date && bl.invoice_masterbi_invoice_receipt_date) {
+        return true
+      }
+    } else if(bl.invoice_masterbi_cargo_type === 'IM' && bl.invoice_masterbi_freight === 'COLLECT') {
+      // deposit， Ocean, Invoice three fee two invoice
+      if(bl.invoice_masterbi_deposit_receipt_date && bl.invoice_masterbi_invoice_receipt_date) {
+        return true
+      }
+    } else if(bl.invoice_masterbi_cargo_type === 'TR' && bl.invoice_masterbi_freight === 'PREPAID') {
+      // at least deposit
+      if(bl.invoice_masterbi_deposit_receipt_date) {
+        return true
+      }
+    } else if(bl.invoice_masterbi_cargo_type === 'TR' && bl.invoice_masterbi_freight === 'COLLECT') {
+      // at least deposit， Ocean 
+      if(bl.invoice_masterbi_deposit_receipt_date && bl.invoice_masterbi_invoice_receipt_date) {
+        return true
+      }
     }
   }
   return false

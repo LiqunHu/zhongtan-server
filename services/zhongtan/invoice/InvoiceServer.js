@@ -138,6 +138,8 @@ exports.uploadImportAct = async req => {
             invoice_masterbi_cargo_type: m['Cargo Classification'],
             invoice_masterbi_exporter_name: m['SHIPPER'] || '',
             invoice_masterbi_consignee_name: m['CNEE'] || '',
+            invoice_masterbi_consignee_address: m['CNEE ADDRESS'] || '',
+            invoice_masterbi_delivery_to: m['CNEE ADDRESS'] || '',
             invoice_masterbi_notify_name: m['NOTIFY'] || '',
             invoice_masterbi_shipping_mark: m['MARKS & NRS'] || '',
             invoice_masterbi_goods_description: m['COMMODITY'],
@@ -148,7 +150,8 @@ exports.uploadImportAct = async req => {
             invoice_masterbi_gross_volume: measurement,
             invoice_masterbi_gross_volume_unit: measurement_unit,
             invoice_masterbi_freight: freight,
-            invoice_masterbi_do_icd: m['ICD NAME'] || ''
+            invoice_masterbi_do_icd: m['ICD NAME'] || '',
+            invoice_masterbi_vessel_type: 'Bulk'
           })
         }
       }
@@ -157,6 +160,9 @@ exports.uploadImportAct = async req => {
       let vesselInfo = wb.Sheets['VesselInformation']
       let masterBI = wb.Sheets['MasterBl']
       let containers = wb.Sheets['Containers']
+      if(!vesselInfo || !masterBI || !containers) {
+        return common.error('import_03')
+      }
 
       let vesslInfoJS = X.utils.sheet_to_json(vesselInfo, {})
       let masterBIJS = X.utils.sheet_to_json(masterBI, {})
@@ -269,7 +275,8 @@ exports.uploadImportAct = async req => {
             invoice_masterbi_net_weight: m['Net Weight'] || '',
             invoice_masterbi_net_weight_unit: m['Net Weight Unit'] || '',
             invoice_masterbi_line_code: m['LineAgent Code'] || '',
-            invoice_masterbi_terminal_code: m['TerminalCode'] || ''
+            invoice_masterbi_terminal_code: m['TerminalCode'] || '',
+            invoice_masterbi_vessel_type: 'Container'
           })
         }
 

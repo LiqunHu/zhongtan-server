@@ -462,5 +462,10 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_masterbl', {
     // D/O 堆场
     type: db.STRING(20),
     allowNull: true
+  },
+  invoice_masterbi_vessel_type: {
+    type: db.STRING(20),
+    defaultValue: 'Container',
+    allowNull: false
   }
 })

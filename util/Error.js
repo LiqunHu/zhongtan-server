@@ -72,5 +72,11 @@ module.exports = {
   deposit_04: 'TR, Freight collect must have Ocean Freight',
   icd_01: 'Edit ICD do not exist',
   icd_02: 'ICD name or code already exists',
-  do_01: 'D/O delivery or valid must be input'
+  do_01: 'D/O delivery or valid must be input',
+  container_size_01: 'Edit contaienr size do not exist',
+  container_size_02: 'Contaienr size name or code already exists',
+  container_type_01: 'Edit contaienr type do not exist',
+  container_type_02: 'Contaienr type name or code already exists',
+  discharge_port_01: 'Edit discharge port do not exist',
+  discharge_port_02: 'Discharge port name or code already exists'
 }
