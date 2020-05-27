@@ -91,8 +91,8 @@ exports.uploadImportAct = async req => {
         vessel = await tb_vessel.create({
           invoice_vessel_name: ves,
           invoice_vessel_voyage: voy,
-          invoice_vessel_eta: typeof bulkInfoJS[0]['ETA'] === 'object' ? bulkInfoJS[0]['ETA'].Format('dd/MM/yyyy') : bulkInfoJS[0]['ETA'],
-          invoice_vessel_atd: typeof bulkInfoJS[0]['ETD'] === 'object' ? bulkInfoJS[0]['ETD'].Format('dd/MM/yyyy') : bulkInfoJS[0]['ETD'],
+          invoice_vessel_eta: typeof bulkInfoJS[0]['ETA'] === 'object' ? moment(bulkInfoJS[0]['ETA']).add(1, 'days').format('DD/MM/YYYY') : bulkInfoJS[0]['ETA'],
+          invoice_vessel_atd: typeof bulkInfoJS[0]['ETD'] === 'object' ? moment(bulkInfoJS[0]['ETD']).add(1, 'days').format('DD/MM/YYYY') : bulkInfoJS[0]['ETD'],
           invoice_vessel_type: 'Bulk'
         })
 
@@ -204,9 +204,9 @@ exports.uploadImportAct = async req => {
           invoice_vessel_name: vesslInfoJS[0]['VESSEL NAME'],
           invoice_vessel_code: vesslInfoJS[0]['VESSEL CODE'],
           invoice_vessel_voyage: vesslInfoJS[0]['VOYAGE NUM'],
-          invoice_vessel_eta: typeof vesslInfoJS[0]['ETA'] === 'object' ? vesslInfoJS[0]['ETA'].Format('dd/MM/yyyy') : vesslInfoJS[0]['ETA'],
-          invoice_vessel_ata: typeof vesslInfoJS[0]['ATA'] === 'object' ? vesslInfoJS[0]['ATA'].Format('dd/MM/yyyy') : vesslInfoJS[0]['ATA'],
-          invoice_vessel_atd: typeof vesslInfoJS[0]['ATD'] === 'object' ? vesslInfoJS[0]['ATD'].Format('dd/MM/yyyy') : vesslInfoJS[0]['ATD'],
+          invoice_vessel_eta: typeof vesslInfoJS[0]['ETA'] === 'object' ? moment(vesslInfoJS[0]['ETA']).add(1, 'days').format('DD/MM/YYYY') : vesslInfoJS[0]['ETA'],
+          invoice_vessel_ata: typeof vesslInfoJS[0]['ATA'] === 'object' ? moment(vesslInfoJS[0]['ATA']).add(1, 'days').format('DD/MM/YYYY') : vesslInfoJS[0]['ATA'],
+          invoice_vessel_atd: typeof vesslInfoJS[0]['ATD'] === 'object' ? moment(vesslInfoJS[0]['ATD']).add(1, 'days').format('DD/MM/YYYY') : vesslInfoJS[0]['ATD'],
           invoice_vessel_call_sign: vesslInfoJS[0]['CALL SIGN'],
           invoice_vessel_type: 'Container'
         })
