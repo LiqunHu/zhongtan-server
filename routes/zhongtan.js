@@ -34,4 +34,6 @@ router.post('/configuration/ContainerSizeConfig/:method', services.ContainerSize
 router.post('/configuration/ContainerTypeConfig/:method', services.ContainerTypeConfigControl)
 router.post('/configuration/DischargePortConfig/:method', services.DischargePortConfigControl)
 
+router.post('/equipment/OverdueCalculationConfig/:method', services.OverdueCalculationConfigControl)
+
 module.exports = router
