@@ -121,8 +121,8 @@ exports.createAct = async req => {
   let newDeposits = await tb_fixed_deposit.create({
     fixed_deposit_customer_id: doc.fixed_deposit_customer_id,
     fixed_deposit_type: doc.fixed_deposit_type,
-    deposit_begin_date: doc.deposit_begin_date ? moment(doc.deposit_begin_date).format('YYYY-MM-DD') : null,
-    deposit_expire_date: doc.deposit_expire_date ? moment(doc.deposit_expire_date).format('YYYY-MM-DD') : null,
+    deposit_begin_date: doc.deposit_begin_date ? moment(doc.deposit_begin_date).add(1, 'days').format('YYYY-MM-DD') : null,
+    deposit_expire_date: doc.deposit_expire_date ? moment(doc.deposit_expire_date).add(1, 'days').format('YYYY-MM-DD') : null,
     deposit_long_term: doc.deposit_long_term ? GLBConfig.ENABLE : GLBConfig.DISABLE,
     deposit_guarantee_letter_no: doc.fixed_deposit_type === 'GU' ? doc.deposit_guarantee_letter_no: '',
     deposit_amount: doc.fixed_deposit_type === 'FD' ? doc.deposit_amount: '',
@@ -169,8 +169,8 @@ exports.updateAct = async req => {
     if(updateDeposit.deposit_approve_date) {
       return common.error('fee_03')
     }
-    updateDeposit.deposit_begin_date = doc.deposit_begin_date ? moment(doc.deposit_begin_date).format('YYYY-MM-DD') : null
-    updateDeposit.deposit_expire_date = doc.deposit_expire_date ? moment(doc.deposit_expire_date).format('YYYY-MM-DD') : null
+    updateDeposit.deposit_begin_date = doc.deposit_begin_date ? moment(doc.deposit_begin_date).add(1, 'days').format('YYYY-MM-DD') : null
+    updateDeposit.deposit_expire_date = doc.deposit_expire_date ? moment(doc.deposit_expire_date).add(1, 'days').format('YYYY-MM-DD') : null
     updateDeposit.deposit_long_term = doc.deposit_long_term ? GLBConfig.ENABLE : GLBConfig.DISABLE
     updateDeposit.user_id = user.user_id
     if(doc.fixed_deposit_type === 'FD') {

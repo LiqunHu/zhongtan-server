@@ -1797,9 +1797,9 @@ exports.doEditVesselAct = async req => {
     vessel.invoice_vessel_code = doc.invoice_vessel_code
     vessel.invoice_vessel_voyage = doc.invoice_vessel_voyage
     vessel.invoice_vessel_call_sign = doc.invoice_vessel_call_sign
-    vessel.invoice_vessel_eta = doc.invoice_vessel_eta ? moment(doc.invoice_vessel_eta).format('DD/MM/YYYY') : null
-    vessel.invoice_vessel_ata = doc.invoice_vessel_ata ? moment(doc.invoice_vessel_ata).format('DD/MM/YYYY') : null
-    vessel.invoice_vessel_atd = doc.invoice_vessel_atd ? moment(doc.invoice_vessel_atd).format('DD/MM/YYYY') : null
+    vessel.invoice_vessel_eta = doc.invoice_vessel_eta ? moment(doc.invoice_vessel_eta).add(1, 'days').format('DD/MM/YYYY') : null
+    vessel.invoice_vessel_ata = doc.invoice_vessel_ata ? moment(doc.invoice_vessel_ata).add(1, 'days').format('DD/MM/YYYY') : null
+    vessel.invoice_vessel_atd = doc.invoice_vessel_atd ? moment(doc.invoice_vessel_atd).add(1, 'days').format('DD/MM/YYYY') : null
     vessel.updated_at = new Date()
     await vessel.save()
   }
