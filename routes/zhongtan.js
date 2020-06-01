@@ -31,9 +31,9 @@ router.post('/fee/CustomerFixedReceipt/:method', services.CustomerFixedReceiptCo
 router.post('/configuration/IcdConfig/:method', services.IcdConfigControl)
 
 router.post('/configuration/ContainerSizeConfig/:method', services.ContainerSizeConfigControl)
-router.post('/configuration/ContainerTypeConfig/:method', services.ContainerTypeConfigControl)
 router.post('/configuration/DischargePortConfig/:method', services.DischargePortConfigControl)
 
 router.post('/equipment/OverdueCalculationConfig/:method', services.OverdueCalculationConfigControl)
+router.post('/equipment/ImportOverdueCalculation/:method', services.ImportOverdueCalculationControl)
 
 module.exports = router

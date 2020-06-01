@@ -81,4 +81,5 @@ module.exports = {
   discharge_port_02: 'Discharge port name or code already exists',
   equipment_01: 'charge rule already exists',
   equipment_02: 'charge rule do not exist',
+  equipment_03: 'container do not exist',
 }

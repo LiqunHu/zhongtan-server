@@ -4,7 +4,6 @@ const model = require('../../../app/model')
 
 const tb_overdue_charge_rule = model.zhongtan_overdue_charge_rule
 const tb_container_size = model.zhongtan_container_size
-const tb_container_type = model.zhongtan_container_type
 const tb_discharge_port = model.zhongtan_discharge_port
 
 exports.initAct = async () => {
@@ -15,13 +14,6 @@ exports.initAct = async () => {
       state : GLBConfig.ENABLE
     },
     order: [['container_size_code', 'ASC']]
-  })
-  returnData['CONTAINER_TYPE'] = await tb_container_type.findAll({
-    attributes: ['container_type_code', 'container_type_name'],
-    where: {
-      state : GLBConfig.ENABLE
-    },
-    order: [['container_type_code', 'ASC']]
   })
   returnData['DISCHARGE_PORT'] = await tb_discharge_port.findAll({
     attributes: ['discharge_port_code', 'discharge_port_name'],
@@ -57,12 +49,8 @@ exports.searchAct = async req => {
       queryStr += ' and overdue_charge_container_size = ?'
       replacements.push(doc.search_data.overdue_charge_container_size)
     }
-    if (doc.search_data.overdue_charge_container_type) {
-      queryStr += ' and overdue_charge_container_type = ?'
-      replacements.push(doc.search_data.overdue_charge_container_type)
-    }
   }
-  queryStr += ' order by overdue_charge_cargo_type, overdue_charge_discharge_port, overdue_charge_carrier, overdue_charge_container_size, overdue_charge_container_type, overdue_charge_min_day'
+  queryStr += ' order by overdue_charge_cargo_type, overdue_charge_discharge_port, overdue_charge_carrier, overdue_charge_container_size, overdue_charge_min_day'
   let result = await model.queryWithCount(doc, queryStr, replacements)
 
   returnData.total = result.count
@@ -74,18 +62,17 @@ exports.searchAct = async req => {
 exports.addAct = async req => {
   let doc = common.docValidate(req)
 
-  let discharge_ports = doc.overdue_charge_discharge_port
-  let container_types = doc.overdue_charge_container_type
+  let discharge_ports = doc.overdue_charge_discharge_port_multiple
+  let container_sizes = doc.overdue_charge_container_size_multiple
   for (let d of discharge_ports) {
-    for(let c of container_types) {
+    for(let c of container_sizes) {
       let queryStr = `select * from tbl_zhongtan_overdue_charge_rule where state = '1' and 
         overdue_charge_cargo_type = ? and overdue_charge_discharge_port = ? and overdue_charge_carrier = ? and overdue_charge_container_size = ? 
-        and overdue_charge_container_type = ? and ((overdue_charge_min_day <= ? and overdue_charge_max_day >= ?) or (overdue_charge_min_day <= ? and overdue_charge_max_day >= ?))`
+        and ((overdue_charge_min_day <= ? and overdue_charge_max_day >= ?) or (overdue_charge_min_day <= ? and overdue_charge_max_day >= ?))`
       let replacements = [
         doc.overdue_charge_cargo_type,
         d,
         doc.overdue_charge_carrier,
-        doc.overdue_charge_container_size,
         c,
         doc.overdue_charge_min_day,
         doc.overdue_charge_min_day,
@@ -100,13 +87,12 @@ exports.addAct = async req => {
   }
   
   for (let d of discharge_ports) {
-    for(let c of container_types) {
+    for(let c of container_sizes) {
       await tb_overdue_charge_rule.create({
         overdue_charge_cargo_type: doc.overdue_charge_cargo_type,
         overdue_charge_discharge_port: d,
         overdue_charge_carrier: doc.overdue_charge_carrier,
-        overdue_charge_container_size: doc.overdue_charge_container_size,
-        overdue_charge_container_type: c,
+        overdue_charge_container_size: c,
         overdue_charge_min_day: doc.overdue_charge_min_day,
         overdue_charge_max_day: doc.overdue_charge_max_day,
         overdue_charge_amount: doc.overdue_charge_amount,
@@ -129,15 +115,13 @@ exports.modifyAct = async req => {
 
   if(obj) {
     let queryStr = `select * from tbl_zhongtan_overdue_charge_rule where overdue_charge_rule_id != ? and state = '1' and 
-        overdue_charge_cargo_type = ? and overdue_charge_discharge_port = ? and overdue_charge_carrier = ? and overdue_charge_container_size = ? 
-        and overdue_charge_container_type = ? and ((overdue_charge_min_day <= ? and overdue_charge_max_day >= ?) or (overdue_charge_min_day <= ? and overdue_charge_max_day >= ?))`
+        overdue_charge_cargo_type = ? and overdue_charge_discharge_port = ? and overdue_charge_carrier = ? and overdue_charge_container_size = ? and ((overdue_charge_min_day <= ? and overdue_charge_max_day >= ?) or (overdue_charge_min_day <= ? and overdue_charge_max_day >= ?))`
     let replacements = [
       doc.old.overdue_charge_rule_id,
       doc.new.overdue_charge_cargo_type,
       doc.new.overdue_charge_discharge_port,
       doc.new.overdue_charge_carrier,
       doc.new.overdue_charge_container_size,
-      doc.new.overdue_charge_container_type,
       doc.new.overdue_charge_min_day,
       doc.new.overdue_charge_min_day,
       doc.new.overdue_charge_max_day,
@@ -152,7 +136,6 @@ exports.modifyAct = async req => {
     obj.overdue_charge_discharge_port = doc.new.overdue_charge_discharge_port
     obj.overdue_charge_carrier = doc.new.overdue_charge_carrier
     obj.overdue_charge_container_size = doc.new.overdue_charge_container_size
-    obj.overdue_charge_container_type = doc.new.overdue_charge_container_type
     obj.overdue_charge_min_day = doc.new.overdue_charge_min_day
     obj.overdue_charge_max_day = doc.new.overdue_charge_max_day
     obj.overdue_charge_amount = doc.new.overdue_charge_amount
