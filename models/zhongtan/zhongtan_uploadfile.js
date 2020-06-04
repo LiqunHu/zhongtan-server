@@ -104,5 +104,9 @@ module.exports = db.defineModel('tbl_zhongtan_uploadfile', {
   uploadfil_undo_release_user_id: {
     type: db.STRING(36),
     allowNull: true
+  },
+  uploadfile_customer_id: {
+    type: db.STRING(50),
+    allowNull: true
   }
 })

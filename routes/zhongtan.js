@@ -35,5 +35,6 @@ router.post('/configuration/DischargePortConfig/:method', services.DischargePort
 
 router.post('/equipment/OverdueCalculationConfig/:method', services.OverdueCalculationConfigControl)
 router.post('/equipment/ImportOverdueCalculation/:method', services.ImportOverdueCalculationControl)
+router.post('/equipment/ImportOverdueReceipt/:method', services.ImportOverdueReceiptControl)
 
 module.exports = router

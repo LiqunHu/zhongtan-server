@@ -11,6 +11,7 @@ const tb_container = model.zhongtan_invoice_containers
 const tb_uploadfile = model.zhongtan_uploadfile
 const tb_verification = model.zhongtan_invoice_verification_log
 const tb_fixed_deposit = model.zhongtan_customer_fixed_deposit
+const tb_invoice_container = model.zhongtan_overdue_invoice_containers
 
 exports.initAct = async () => {
   let returnData = {
@@ -22,19 +23,21 @@ exports.initAct = async () => {
 exports.searchAct = async req => {
   let doc = common.docValidate(req),
     returnData = {}
-  let queryStr = `select a.*, b.*, c.*, d.*, e.user_name as fixed_deposit_customer_name, f.user_name as invoice_masterbi_customer_name from 
+  let queryStr = `select a.*, b.*, c.*, d.*, e.user_name as fixed_deposit_customer_name, f.user_name as invoice_masterbi_customer_name, g.user_name as overdue_invoice_customer_name from 
     tbl_zhongtan_uploadfile a LEFT JOIN tbl_zhongtan_invoice_masterbl b ON a.uploadfile_index1 = b.invoice_masterbi_id
     LEFT JOIN tbl_zhongtan_customer_fixed_deposit c ON a.uploadfile_index1 = c.fixed_deposit_id
     LEFT JOIN tbl_common_user d ON a.user_id = d.user_id
     LEFT JOIN tbl_common_user e ON c.fixed_deposit_customer_id = e.user_id
     LEFT JOIN tbl_common_user f ON b.invoice_masterbi_customer_id = f.user_id
+    LEFT JOIN tbl_common_user g ON a.uploadfile_customer_id = g.user_id
   WHERE
   a.api_name IN(
     'RECEIPT-OF' ,
     'RECEIPT-DEPOSIT' ,
     'RECEIPT-FEE',
     'GUARANTEE-LETTER',
-    'FIXED-INVOICE'
+    'FIXED-INVOICE',
+    'OVERDUE-INVOICE'
   )`
   let replacements = []
   
@@ -93,6 +96,37 @@ exports.searchAct = async req => {
       row.tasac = r.invoice_masterbi_tasac
       row.printing = r.invoice_masterbi_printing
       row.others = r.invoice_masterbi_others
+      row.feeTotal = 0
+      if(row.of) {
+        row.feeTotal += parseFloat(row.of)
+      }
+      if(row.blAmendment) {
+        row.feeTotal += parseFloat(row.blAmendment)
+      }
+      if(row.codCharge) {
+        row.feeTotal += parseFloat(row.codCharge)
+      }
+      if(row.transfer) {
+        row.feeTotal += parseFloat(row.transfer)
+      }
+      if(row.lolf) {
+        row.feeTotal += parseFloat(row.lolf)
+      }
+      if(row.lcl) {
+        row.feeTotal += parseFloat(row.lcl)
+      }
+      if(row.amendment) {
+        row.feeTotal += parseFloat(row.amendment)
+      }
+      if(row.tasac) {
+        row.feeTotal += parseFloat(row.tasac)
+      }
+      if(row.printing) {
+        row.feeTotal += parseFloat(row.printing)
+      }
+      if(row.others) {
+        row.feeTotal += parseFloat(row.others)
+      }
     } else if (r.api_name === 'GUARANTEE-LETTER') {
       row.receipt_type = 'Guarantee Letter'
       row.invoice_customer_name = r.fixed_deposit_customer_name
@@ -100,6 +134,10 @@ exports.searchAct = async req => {
       row.receipt_type = 'Fixed Invoice'
       row.invoice_customer_name = r.fixed_deposit_customer_name
       row.fixed_deposit_amount = r.deposit_amount
+    } else if(r.api_name === 'OVERDUE-INVOICE') {
+      row.receipt_type = 'Overdue Invoice'
+      row.invoice_customer_name = r.overdue_invoice_customer_name
+      row.overdue_invoice_amount = r.uploadfile_amount
     }
     returnData.rows.push(row)
   }
@@ -148,6 +186,23 @@ exports.approveAct = async req => {
       fixedDeposit.deposit_invoice_release_date = curDate
     }
     await fixedDeposit.save()
+  } else if(file.api_name === 'OVERDUE-INVOICE') {
+    let containers = await tb_invoice_container.findAll({
+      where: {
+        overdue_invoice_containers_invoice_uploadfile_id: file.uploadfile_id
+      }
+    })
+    if(containers) {
+      for(let c of containers) {
+        let con = await tb_container.findOne({
+          where: {
+            invoice_containers_id: c.overdue_invoice_containers_invoice_containers_id
+          }
+        })
+        con.invoice_containers_empty_return_invoice_release_date = curDate
+        await con.save()
+      }
+    }
   } else {
     let bl = await tb_bl.findOne({
       where: {
@@ -200,6 +255,23 @@ exports.declineAct = async req => {
     fixedDeposit.deposit_invoice_date = null
     fixedDeposit.updated_at = curDate
     await fixedDeposit.save()
+  } else if(file.api_name === 'OVERDUE-INVOICE') {
+    // let containers = await tb_invoice_container.findAll({
+    //   where: {
+    //     overdue_invoice_containers_invoice_uploadfile_id: file.uploadfile_id
+    //   }
+    // })
+    // if(containers) {
+    //   for(let c of containers) {
+    //     let con = await tb_container.findOne({
+    //       where: {
+    //         invoice_containers_id: c.overdue_invoice_containers_invoice_containers_id
+    //       }
+    //     })
+    //     con.invoice_containers_empty_return_invoice_date = null
+    //     await con.save()
+    //   }
+    // }
   } else {
     let bl = await tb_bl.findOne({
       where: {
@@ -262,6 +334,63 @@ exports.getInvoiceDetailAct = async req => {
     invoice_masterbi_destination: bl.invoice_masterbi_destination,
     invoice_masterbi_cargo_type: bl.invoice_masterbi_cargo_type,
     invoice_masterbi_freight: bl.invoice_masterbi_freight
+  }
+
+  return common.success(returnData)
+}
+
+exports.getOverdueInvoiceDetailAct = async req => {
+  let doc = common.docValidate(req)
+
+  let bl = await tb_bl.findOne({
+    where: {
+      invoice_masterbi_id: doc.invoice_masterbi_id
+    }
+  })
+
+  let vessel = await tb_vessel.findOne({
+    where: {
+      invoice_vessel_id: bl.invoice_vessel_id
+    }
+  })
+
+  let continers = await tb_container.findAll({
+    where: {
+      invoice_vessel_id: bl.invoice_vessel_id,
+      invoice_containers_bl: bl.invoice_masterbi_bl
+    },
+    order: [['invoice_containers_size', 'ASC']]
+  })
+  let cMap = new Map()
+  for (let c of continers) {
+    if (cMap.get(c.invoice_containers_size)) {
+      cMap.set(c.invoice_containers_size, cMap.get(c.invoice_containers_size) + 1)
+    } else {
+      cMap.set(c.invoice_containers_size, 1)
+    }
+  }
+  let containerSize = ''
+  for (var [k, v] of cMap) {
+    containerSize = containerSize + k + ' * ' + v + '    '
+  }
+
+  let queryStr = `SELECT a.*, b.invoice_containers_no, b.invoice_containers_size
+                  FROM tbl_zhongtan_overdue_invoice_containers a
+                  LEFT JOIN tbl_zhongtan_invoice_containers b ON a.overdue_invoice_containers_invoice_containers_id = b.invoice_containers_id
+                  WHERE a.overdue_invoice_containers_invoice_uploadfile_id = ?`
+  let replacements = [doc.uploadfile_id]
+  let invoice_contaienrs = await model.simpleSelect(queryStr, replacements)
+
+  let returnData = {
+    invoice_vessel_name: vessel.invoice_vessel_name,
+    invoice_vessel_voyage: vessel.invoice_vessel_voyage,
+    invoice_masterbi_bl: bl.invoice_masterbi_bl,
+    container_size_type: containerSize,
+    invoice_masterbi_loading: bl.invoice_masterbi_loading,
+    invoice_masterbi_destination: bl.invoice_masterbi_destination,
+    invoice_masterbi_cargo_type: bl.invoice_masterbi_cargo_type,
+    invoice_masterbi_freight: bl.invoice_masterbi_freight,
+    invoice_contaienrs : invoice_contaienrs
   }
 
   return common.success(returnData)

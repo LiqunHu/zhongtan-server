@@ -17,6 +17,10 @@ module.exports = async (req, res) => {
       ret = await srv.ladenReleaseSaveAct(req)
     } else if (method === 'emptyReturnSave') {
       ret = await srv.emptyReturnSaveAct(req)
+    } else if (method === 'searchCustomer') {
+      ret = await srv.searchCustomerAct(req)
+    } else if (method === 'emptyInvoice') {
+      ret = await srv.emptyInvoiceAct(req)
     }
     common.sendData(res, ret)
   } catch (error) {
