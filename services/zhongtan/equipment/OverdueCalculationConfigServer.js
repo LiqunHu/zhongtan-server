@@ -68,7 +68,7 @@ exports.addAct = async req => {
     for(let c of container_sizes) {
       let queryStr = `select * from tbl_zhongtan_overdue_charge_rule where state = '1' and 
         overdue_charge_cargo_type = ? and overdue_charge_discharge_port = ? and overdue_charge_carrier = ? and overdue_charge_container_size = ? 
-        and ((overdue_charge_min_day <= ? and overdue_charge_max_day >= ?) or (overdue_charge_min_day <= ? and overdue_charge_max_day >= ?))`
+        and ((overdue_charge_min_day <= ? and overdue_charge_max_day >= ?) and (overdue_charge_min_day <= ? and overdue_charge_max_day >= ?))`
       let replacements = [
         doc.overdue_charge_cargo_type,
         d,
