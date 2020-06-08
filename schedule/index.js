@@ -1,5 +1,5 @@
-const test = require('./test')
+const ediMail = require('./ediMail')
 
 module.exports = {
-  test: test.test 
+  readEdiMail: ediMail.readEdiMail 
 }

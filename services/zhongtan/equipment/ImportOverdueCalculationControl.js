@@ -21,7 +21,11 @@ module.exports = async (req, res) => {
       ret = await srv.searchCustomerAct(req)
     } else if (method === 'emptyInvoice') {
       ret = await srv.emptyInvoiceAct(req)
-    }
+    } else if (method === 'checkPassword') {
+      ret = await srv.checkPasswordAct(req)
+    } else if (method === 'actuallyOverdueCopy') {
+      ret = await srv.actuallyOverdueCopyAct(req)
+    } 
     common.sendData(res, ret)
   } catch (error) {
     common.sendFault(res, error)

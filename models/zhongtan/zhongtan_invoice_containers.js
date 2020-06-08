@@ -160,5 +160,9 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_containers', {
   invoice_containers_customer_id: {
     type: db.STRING(50),
     allowNull: true
-  }
+  },
+  invoice_containers_actually_return_edi_date: {
+    type: db.STRING(20),
+    allowNull: true
+  },
 })

@@ -37,4 +37,6 @@ router.post('/equipment/OverdueCalculationConfig/:method', services.OverdueCalcu
 router.post('/equipment/ImportOverdueCalculation/:method', services.ImportOverdueCalculationControl)
 router.post('/equipment/ImportOverdueReceipt/:method', services.ImportOverdueReceiptControl)
 
+router.post('/configuration/EdiDepotConfig/:method', services.EdiDepotConfigControl)
+
 module.exports = router

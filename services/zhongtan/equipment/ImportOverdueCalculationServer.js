@@ -133,12 +133,13 @@ exports.calculationAct = async req => {
   if(chargeRules && chargeRules.length  > 0) {
     let diff = moment(doc.return_date, 'DD/MM/YYYY').diff(moment(doc.invoice_vessel_ata, 'DD/MM/YYYY'), 'days') + 1 // Calendar day Cover First Day
     let overdueAmount = 0
+    let freeMaxDay = 0
     for(let c of chargeRules) {
       let charge = parseInt(c.overdue_charge_amount)
       let min = parseInt(c.overdue_charge_min_day)
+      let max = parseInt(c.overdue_charge_max_day)
       if(diff >= min) {
         if(c.overdue_charge_max_day) {
-          let max = parseInt(c.overdue_charge_max_day)
           if(diff > max) {
             overdueAmount = overdueAmount + charge * (max - min + 1)
           } else {
@@ -147,10 +148,15 @@ exports.calculationAct = async req => {
         } else {
           overdueAmount = overdueAmount + charge * (diff - min + 1)
         }
+        if(charge === 0) {
+          if(max > freeMaxDay) {
+            freeMaxDay = max
+          }
+        }
       }
     }
     let returnData = {
-      diff_days: diff,
+      diff_days: diff > freeMaxDay ? diff - freeMaxDay : 0,
       overdue_amount: overdueAmount
     }
     return common.success(returnData)
@@ -308,6 +314,43 @@ exports.emptyInvoiceAct = async req => {
   } else {
     return common.error('equipment_03')
   }
+}
+
+exports.checkPasswordAct = async req => {
+  let doc = common.docValidate(req)
+  if(!doc.check_password) {
+    return common.error('auth_18')
+  } else {
+    let adminUser = await tb_user.findOne({
+      where: {
+        user_username: 'admin'
+      }
+    })
+    if(adminUser) {
+      if(adminUser.user_password !== doc.check_password) {
+        return common.error('auth_24')
+      }
+    } else {
+      return common.error('auth_18')
+    }
+  }
+  return common.success()
+}
+
+exports.actuallyOverdueCopyAct = async req => {
+  let doc = common.docValidate(req)
+  let con = await tb_container.findOne({
+    where: {
+      invoice_containers_id: doc.invoice_containers_id
+    }
+  })
+  if(con) {
+    con.invoice_containers_empty_return_date = con.invoice_containers_actually_return_date
+    con.invoice_containers_empty_return_overdue_days = con.invoice_containers_actually_return_overdue_days
+    con.invoice_containers_empty_return_overdue_amount = con.invoice_containers_actually_return_overdue_amount
+    con.save()
+  }
+  return common.success()
 }
 
 function formatCurrency(num) {

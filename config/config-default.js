@@ -88,7 +88,7 @@ const config = {
     // }
   },
   // schedule job
-  scheduleJobs: [],
+  scheduleJobs: [{name: 'readEdiMail', rule: '0 0/5 * * * ?'}],
   // sms: {
   //   appid: '26763',
   //   appkey: '0d7e27433af7744451809fb2136ae834',
@@ -122,6 +122,13 @@ const config = {
       user: 'system@sinotaship.com', // generated ethereal user
       pass: 'kKqkZutAK2b0B6jX' // generated ethereal password
     }
+  },
+  sysEdiMailConfig: {
+    user: 'edi@sinotaship.com',
+    password: 'SHIPping@20200401',
+    host: 'imap.263.net',
+    port: 993,
+    tls: true
   },
   // SECRET_KEY
   SECRET_KEY: 'zc7#_66#g%u2n$j_)j$-r(swt74d(2l%wc2y=wqt_m8kpy%04*',
