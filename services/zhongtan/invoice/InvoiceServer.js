@@ -682,7 +682,7 @@ exports.downloadDoAct = async req => {
   if (!bl.invoice_masterbi_do_release_date) {
     bl.invoice_masterbi_delivery_to = doc.invoice_masterbi_delivery_to
     bl.invoice_masterbi_do_date = moment().format('YYYY-MM-DD')
-    bl.invoice_masterbi_valid_to = doc.invoice_masterbi_valid_to
+    bl.invoice_masterbi_valid_to = doc.invoice_masterbi_valid_to ? moment(doc.invoice_masterbi_valid_to).add(1, 'days').format('YYYY-MM-DD') : null
     bl.invoice_masterbi_do_delivery_order_no = delivery_order_no
     bl.invoice_masterbi_do_fcl = doc.invoice_masterbi_do_fcl
     bl.invoice_masterbi_do_icd = doc.invoice_masterbi_do_icd
