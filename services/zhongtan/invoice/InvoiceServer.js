@@ -378,8 +378,8 @@ exports.searchVoyageAct = async req => {
         containerSize = containerSize + c.invoice_containers_size + ' * ' + c.invoice_containers_count + '    '
       }
       d.container_size_type = containerSize
-      // D/O state
-      d.invoice_masterbi_do_state = common.checkDoState(d)
+      // D/O state overdue check
+      d.invoice_masterbi_do_state = common.checkDoState(d) && await checkOverdueDoState(d, vessel)
       // delivery to
       if(!d.invoice_masterbi_delivery_to && d.customerINFO && d.customerINFO.length === 1) {
         d.invoice_masterbi_delivery_to = d.customerINFO[0].text
@@ -531,7 +531,7 @@ exports.getMasterbiDataAct = async req => {
     }
     d.container_size_type = containerSize
     // D/O state
-    d.invoice_masterbi_do_state = common.checkDoState(d)
+    d.invoice_masterbi_do_state = common.checkDoState(d) && await checkOverdueDoState(d, vessel)
     // delivery to
     if(!d.invoice_masterbi_delivery_to && d.customerINFO && d.customerINFO.length === 1) {
       d.invoice_masterbi_delivery_to = d.customerINFO[0].text
@@ -1804,4 +1804,57 @@ exports.doEditVesselAct = async req => {
     await vessel.save()
   }
   return common.success()
+}
+
+const checkOverdueDoState = async (bl, ves) => {
+  if(ves.invoice_vessel_ata) {
+    let diff = moment().diff(moment(ves.invoice_vessel_ata, 'DD/MM/YYYY'), 'days') + 1
+    if(bl.invoice_masterbi_cargo_type === 'IM' && diff > 14) {
+      // 进口的话14天
+      let acount = await tb_container.count({
+        where: {
+          invoice_vessel_id: bl.invoice_vessel_id,
+          invoice_containers_bl: bl.invoice_masterbi_bl
+        }
+      })
+      let rcount = await tb_container.count({
+        where: {
+          invoice_vessel_id: bl.invoice_vessel_id,
+          invoice_containers_bl: bl.invoice_masterbi_bl,
+          invoice_containers_empty_return_receipt_release_date: {
+            [Op.ne]: null
+          }
+        }
+      })
+      return acount === rcount
+    } else if(bl.invoice_masterbi_cargo_type === 'TR') {
+      // 过境的根据国家名称，然后分30天(BI,RW,SS,UG,MW,ZW)，40天(ZM)，55天（CD）
+      let discharge_port = bl.invoice_masterbi_destination.substring(0, 2)
+      let days30 = ['BI', 'RW', 'SS', 'UG', 'MW', 'ZW']
+      let days40 = ['ZM']
+      let days55 = ['CD']
+      if((days30.indexOf(discharge_port) >= 0 && diff > 30) 
+        || (days40.indexOf(discharge_port) >= 0 && diff > 40) 
+        || (days55.indexOf(discharge_port) >= 0 && diff > 55)) {
+        let acount = await tb_container.count({
+          where: {
+            invoice_vessel_id: bl.invoice_vessel_id,
+            invoice_containers_bl: bl.invoice_masterbi_bl
+          }
+        })
+        let rcount = await tb_container.count({
+          where: {
+            invoice_vessel_id: bl.invoice_vessel_id,
+            invoice_containers_bl: bl.invoice_masterbi_bl,
+            invoice_containers_empty_return_receipt_release_date: {
+              [Op.ne]: null
+            }
+          }
+        })
+        return acount === rcount
+      } 
+    }
+    return true
+  } 
+  return false
 }

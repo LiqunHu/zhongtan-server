@@ -40,7 +40,7 @@ exports.searchAct = async req => {
   let doc = common.docValidate(req)
   let returnData = {}
 
-  let queryStr = `SELECT a.*, b.invoice_vessel_name, b.invoice_vessel_voyage, b.invoice_vessel_ata, b.invoice_vessel_atd, b.invoice_vessel_eta, c.invoice_masterbi_id, c.invoice_masterbi_cargo_type, c.invoice_masterbi_destination from tbl_zhongtan_invoice_containers a LEFT JOIN tbl_zhongtan_invoice_vessel b ON a.invoice_vessel_id = b.invoice_vessel_id AND b.state = '1' LEFT JOIN tbl_zhongtan_invoice_masterbl c ON a.invoice_containers_bl = c.invoice_masterbi_bl AND c.state = 1 WHERE a.state = '1'`
+  let queryStr = `SELECT a.*, b.invoice_vessel_name, b.invoice_vessel_voyage, b.invoice_vessel_ata, b.invoice_vessel_atd, b.invoice_vessel_eta, c.invoice_masterbi_id, c.invoice_masterbi_cargo_type, c.invoice_masterbi_destination from tbl_zhongtan_invoice_containers a LEFT JOIN tbl_zhongtan_invoice_vessel b ON a.invoice_vessel_id = b.invoice_vessel_id AND b.state = '1' LEFT JOIN tbl_zhongtan_invoice_masterbl c ON a.invoice_containers_bl = c.invoice_masterbi_bl AND c.state = '1' AND c.invoice_vessel_id = a.invoice_vessel_id WHERE a.state = '1'`
   let replacements = []
 
   if(doc.search_data) {
@@ -256,7 +256,7 @@ exports.emptyInvoiceAct = async req => {
     renderData.invoiceNo = await seq.genEquipmentInvoiceSeq()
     renderData.vesselName = vessel.invoice_vessel_name
     renderData.voyageNumber = vessel.invoice_vessel_voyage
-    renderData.voyageAtaDate = moment(vessel.invoice_vessel_ata, 'DD/MM/YYYY').format('YYYY/MM/DD')
+    renderData.voyageAtaDate = vessel.invoice_vessel_ata
     renderData.user_name = commonUser.user_name
     renderData.user_phone = commonUser.user_phone
     renderData.user_email = commonUser.user_email

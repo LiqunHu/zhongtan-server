@@ -23,7 +23,7 @@ exports.searchAct = async req => {
   let doc = common.docValidate(req)
   let returnData = {}
 
-  let queryStr = `SELECT a.*, b.invoice_vessel_name, b.invoice_vessel_voyage, b.invoice_vessel_ata, b.invoice_vessel_atd, b.invoice_vessel_eta, c.invoice_masterbi_id, c.invoice_masterbi_cargo_type, c.invoice_masterbi_destination from tbl_zhongtan_invoice_containers a LEFT JOIN tbl_zhongtan_invoice_vessel b ON a.invoice_vessel_id = b.invoice_vessel_id AND b.state = '1' LEFT JOIN tbl_zhongtan_invoice_masterbl c ON a.invoice_containers_bl = c.invoice_masterbi_bl AND c.state = 1 WHERE a.state = '1' AND c.invoice_masterbi_id IN (SELECT u.uploadfile_index1 FROM tbl_zhongtan_uploadfile u WHERE u.api_name = 'OVERDUE-INVOICE' AND (u.uploadfile_receipt_no IS NULL OR u.uploadfile_receipt_no = '')) `
+  let queryStr = `SELECT a.*, b.invoice_vessel_name, b.invoice_vessel_voyage, b.invoice_vessel_ata, b.invoice_vessel_atd, b.invoice_vessel_eta, c.invoice_masterbi_id, c.invoice_masterbi_cargo_type, c.invoice_masterbi_destination from tbl_zhongtan_invoice_containers a LEFT JOIN tbl_zhongtan_invoice_vessel b ON a.invoice_vessel_id = b.invoice_vessel_id AND b.state = '1' LEFT JOIN tbl_zhongtan_invoice_masterbl c ON a.invoice_containers_bl = c.invoice_masterbi_bl AND c.state = '1' AND c.invoice_vessel_id = a.invoice_vessel_id WHERE a.state = '1' AND c.invoice_masterbi_id IN (SELECT u.uploadfile_index1 FROM tbl_zhongtan_uploadfile u WHERE u.api_name = 'OVERDUE-INVOICE' AND (u.uploadfile_receipt_no IS NULL OR u.uploadfile_receipt_no = '')) `
   let replacements = []
 
   if(doc.search_data) {
