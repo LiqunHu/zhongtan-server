@@ -736,12 +736,12 @@ exports.downloadDoAct = async req => {
     renderData.container_count = bl.invoice_masterbi_container_no + 'X' + cSize.join(' ')
     fileInfo = await common.ejs2Pdf('do.ejs', renderData, 'zhongtan')
   }
-  await tb_uploadfile.destroy({
-    where: {
-      api_name: 'RECEIPT-DO',
-      uploadfile_index1: bl.invoice_masterbi_id
-    }
-  })
+  // await tb_uploadfile.destroy({
+  //   where: {
+  //     api_name: 'RECEIPT-DO',
+  //     uploadfile_index1: bl.invoice_masterbi_id
+  //   }
+  // })
 
   await tb_uploadfile.create({
     api_name: 'RECEIPT-DO',
