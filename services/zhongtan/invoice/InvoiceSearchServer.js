@@ -3,6 +3,7 @@ const moment = require('moment')
 const GLBConfig = require('../../../util/GLBConfig')
 const common = require('../../../util/CommonUtil')
 const model = require('../../../app/model')
+const Op = model.Op
 
 const tb_user = model.common_user
 const tb_vessel = model.zhongtan_invoice_vessel
@@ -20,6 +21,15 @@ exports.initAct = async () => {
       DELIVER.push(d.user_name)
     }
   }
+
+  let ICD = []
+  queryStr = `SELECT icd_name, icd_code FROM tbl_zhongtan_icd WHERE state = ? ORDER BY icd_code`
+  replacements = [GLBConfig.ENABLE]
+  let icds = await model.simpleSelect(queryStr, replacements)
+  if(icds) {
+    ICD = icds
+  }
+
   let returnData = {
     TFINFO: GLBConfig.TFINFO,
     RECEIPT_TYPE_INFO: GLBConfig.RECEIPT_TYPE_INFO,
@@ -27,7 +37,8 @@ exports.initAct = async () => {
     COLLECT_FLAG: GLBConfig.COLLECT_FLAG,
     RECEIPT_CURRENCY: GLBConfig.RECEIPT_CURRENCY,
     UPLOAD_STATE: GLBConfig.UPLOAD_STATE,
-    DELIVER: DELIVER
+    DELIVER: DELIVER,
+    ICD: ICD
   }
 
   return common.success(returnData)
@@ -110,7 +121,7 @@ exports.searchAct = async req => {
     }
     d.container_size_type = containerSize
     // D/O state
-    d.invoice_masterbi_do_state = common.checkDoState(d)
+    d.invoice_masterbi_do_state = common.checkDoState(d) && await checkOverdueDoState(d)
     // delivery to
     if(!d.invoice_masterbi_delivery_to && d.customerINFO && d.customerINFO.length === 1) {
       d.invoice_masterbi_delivery_to = d.customerINFO[0].text
@@ -242,6 +253,8 @@ exports.downloadDoAct = async req => {
     bl.invoice_masterbi_do_date = moment().format('YYYY-MM-DD')
     bl.invoice_masterbi_valid_to = doc.invoice_masterbi_valid_to
     bl.invoice_masterbi_do_delivery_order_no = delivery_order_no
+    bl.invoice_masterbi_do_fcl = doc.invoice_masterbi_do_fcl
+    bl.invoice_masterbi_do_icd = doc.invoice_masterbi_do_icd
     await bl.save()
   }
 
@@ -265,7 +278,8 @@ exports.downloadDoAct = async req => {
   renderData.vessel_eta = moment(vessel.invoice_vessel_eta, 'DD-MM-YYYY').format('DD/MM/YYYY')
   renderData.do_date = moment(bl.invoice_masterbi_do_date).format('DD/MM/YYYY')
   renderData.valid_to = moment(bl.invoice_masterbi_valid_to).format('DD/MM/YYYY')
-  renderData.delivery_to = common.getDelivery(bl.invoice_masterbi_delivery)
+  renderData.delivery_to = bl.invoice_masterbi_do_icd
+  renderData.fcl = bl.invoice_masterbi_do_fcl
   renderData.user_name = user.user_name
   renderData.user_email = user.user_email
   renderData.containers = JSON.parse(JSON.stringify(continers))
@@ -316,4 +330,57 @@ exports.checkPasswordAct = async req => {
     }
   }
   return common.success()
+}
+
+const checkOverdueDoState = async (bl) => {
+  if(bl.invoice_vessel_ata) {
+    let diff = moment().diff(moment(bl.invoice_vessel_ata, 'DD/MM/YYYY'), 'days') + 1
+    if(bl.invoice_masterbi_cargo_type === 'IM' && diff > 14) {
+      // 进口的话14天
+      let acount = await tb_container.count({
+        where: {
+          invoice_vessel_id: bl.invoice_vessel_id,
+          invoice_containers_bl: bl.invoice_masterbi_bl
+        }
+      })
+      let rcount = await tb_container.count({
+        where: {
+          invoice_vessel_id: bl.invoice_vessel_id,
+          invoice_containers_bl: bl.invoice_masterbi_bl,
+          invoice_containers_empty_return_receipt_release_date: {
+            [Op.ne]: null
+          }
+        }
+      })
+      return acount === rcount
+    } else if(bl.invoice_masterbi_cargo_type === 'TR') {
+      // 过境的根据国家名称，然后分30天(BI,RW,SS,UG,MW,ZW)，40天(ZM)，55天（CD）
+      let discharge_port = bl.invoice_masterbi_destination.substring(0, 2)
+      let days30 = ['BI', 'RW', 'SS', 'UG', 'MW', 'ZW']
+      let days40 = ['ZM']
+      let days55 = ['CD']
+      if((days30.indexOf(discharge_port) >= 0 && diff > 30) 
+        || (days40.indexOf(discharge_port) >= 0 && diff > 40) 
+        || (days55.indexOf(discharge_port) >= 0 && diff > 55)) {
+        let acount = await tb_container.count({
+          where: {
+            invoice_vessel_id: bl.invoice_vessel_id,
+            invoice_containers_bl: bl.invoice_masterbi_bl
+          }
+        })
+        let rcount = await tb_container.count({
+          where: {
+            invoice_vessel_id: bl.invoice_vessel_id,
+            invoice_containers_bl: bl.invoice_masterbi_bl,
+            invoice_containers_empty_return_receipt_release_date: {
+              [Op.ne]: null
+            }
+          }
+        })
+        return acount === rcount
+      } 
+    }
+    return true
+  } 
+  return false
 }
