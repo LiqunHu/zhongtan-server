@@ -123,6 +123,7 @@ exports.calculationAct = async req => {
   }
   let chargeRules = await tb_overdue_charge_rule.findAll({
     where: {
+      state: GLBConfig.ENABLE,
       overdue_charge_cargo_type: doc.invoice_masterbi_cargo_type,
       overdue_charge_discharge_port: discharge_port,
       overdue_charge_carrier: charge_carrier,

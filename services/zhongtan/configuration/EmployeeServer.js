@@ -59,6 +59,7 @@ exports.addAct = async req => {
   if (usergroup) {
     let adduser = await tb_user.findOne({
       where: {
+        state: GLBConfig.ENABLE,
         [Op.or]: [{ user_phone: doc.user_phone }, { user_username: doc.user_username }]
       }
     })
