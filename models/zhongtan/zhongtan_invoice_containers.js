@@ -165,4 +165,8 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_containers', {
     type: db.STRING(20),
     allowNull: true
   },
+  invoice_containers_depot_name: {
+    type: db.STRING(50),
+    allowNull: true
+  },
 })

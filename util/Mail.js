@@ -172,6 +172,7 @@ const readEdiMail = (ediDepots) => {
                                     }
                                     container.invoice_containers_actually_return_overdue_days = diff > freeMaxDay ? diff - freeMaxDay : 0
                                     container.invoice_containers_actually_return_overdue_amount = overdueAmount
+                                    container.invoice_containers_depot_name = edi.edi_depot_name
                                   }
                                 }
                                 await container.save()
