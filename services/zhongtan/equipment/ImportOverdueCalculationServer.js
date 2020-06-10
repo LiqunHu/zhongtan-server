@@ -177,10 +177,6 @@ exports.emptyReturnSaveAct = async req => {
     con.invoice_containers_empty_return_date = moment(doc.invoice_containers_empty_return_date).add(1, 'days').format('DD/MM/YYYY')
     con.invoice_containers_empty_return_overdue_amount = doc.invoice_containers_empty_return_overdue_amount
     con.invoice_containers_empty_return_overdue_days = doc.invoice_containers_empty_return_overdue_days
-    con.invoice_containers_empty_return_invoice_date = null
-    con.invoice_containers_empty_return_invoice_release_date = null
-    con.invoice_containers_empty_return_receipt_date = null
-    con.invoice_containers_empty_return_receipt_release_date = null
     await con.save()
     return common.success()
   } else {

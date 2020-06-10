@@ -27,6 +27,13 @@ exports.searchAct = async req => {
   let replacements = []
 
   if(doc.search_data) {
+    if (doc.search_data.date && doc.search_data.date.length > 1) {
+      let start_date = doc.search_data.date[0]
+      let end_date = doc.search_data.date[1]
+      queryStr += ' and a.invoice_containers_empty_return_invoice_date >= ? and a.invoice_containers_empty_return_invoice_date < ? '
+      replacements.push(start_date)
+      replacements.push(moment(end_date, 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
+    }
     if (doc.search_data.invoice_containers_bl) {
       queryStr += ' and a.invoice_containers_bl like ? '
       replacements.push('%' + doc.search_data.invoice_containers_bl + '%')
