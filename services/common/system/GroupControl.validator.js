@@ -44,7 +44,7 @@ module.exports = {
             .max(50),
           node_type: Joi.string().max(2),
           parent_id: Joi.number().integer(),
-          usergroup_code: Joi.string().max(20),
+          usergroup_code: Joi.string().max(50),
           menus: Joi.array().items(
             Joi.object().keys({
               systemmenu_id: Joi.number().integer()

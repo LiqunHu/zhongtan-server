@@ -25,7 +25,10 @@ module.exports = async (req, res) => {
       ret = await srv.checkPasswordAct(req)
     } else if (method === 'actuallyOverdueCopy') {
       ret = await srv.actuallyOverdueCopyAct(req)
+    } else if (method === 'containerInvoiceDetail') {
+      ret = await srv.containerInvoiceDetailAct(req)
     } 
+    
     common.sendData(res, ret)
   } catch (error) {
     common.sendFault(res, error)

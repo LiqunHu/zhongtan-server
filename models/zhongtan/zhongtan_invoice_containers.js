@@ -118,38 +118,77 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_containers', {
     allowNull: true
   },
   invoice_containers_empty_return_date: {
+    // 还空日期
     type: db.STRING(20),
     allowNull: true
   },
   invoice_containers_empty_return_overdue_days: {
+    // 还空超期天数
     type: db.STRING(10),
     allowNull: true
   },
   invoice_containers_empty_return_overdue_amount: {
+    // 还空超期金额
+    type: db.STRING(50),
+    allowNull: true
+  },
+  invoice_containers_empty_return_date_invoice: {
+    // 开票还空开票日期
+    type: db.STRING(20),
+    allowNull: true
+  },
+  invoice_containers_empty_return_overdue_days_invoice: {
+    // 开票还空超期天数
+    type: db.STRING(10),
+    allowNull: true
+  },
+  invoice_containers_empty_return_overdue_amount_invoice: {
+    // 开票还空超期金额
+    type: db.STRING(50),
+    allowNull: true
+  },
+  invoice_containers_empty_return_date_receipt: {
+    // 收据还空开票日期
+    type: db.STRING(20),
+    allowNull: true
+  },
+  invoice_containers_empty_return_overdue_days_receipt: {
+    // 收据还空超期天数
+    type: db.STRING(10),
+    allowNull: true
+  },
+  invoice_containers_empty_return_overdue_amount_receipt: {
+    // 收据还空超期金额
     type: db.STRING(50),
     allowNull: true
   },
   invoice_containers_empty_return_invoice_date: {
+    // 还空开票日期
     type: db.DATE,
     allowNull: true
   },
   invoice_containers_empty_return_invoice_release_date: {
+    // 还空开票release日期
     type: db.DATE,
     allowNull: true
   },
   invoice_containers_empty_return_receipt_date: {
+    // 还空收据日期
     type: db.DATE,
     allowNull: true
   },
   invoice_containers_empty_return_receipt_release_date: {
+    // 还空收据release日期
     type: db.DATE,
     allowNull: true
   },
   invoice_containers_actually_return_date: {
+    // 还空场站EDI日期
     type: db.STRING(20),
     allowNull: true
   },
   invoice_containers_actually_return_overdue_days: {
+    // 还空场站
     type: db.STRING(10),
     allowNull: true
   },
@@ -166,7 +205,13 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_containers', {
     allowNull: true
   },
   invoice_containers_depot_name: {
+    // 场站名称
     type: db.STRING(50),
+    allowNull: true
+  },
+  invoice_containers_empty_return_overdue_free_days: {
+    // 免箱期
+    type: db.STRING(10),
     allowNull: true
   },
 })

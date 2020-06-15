@@ -45,7 +45,7 @@ const genMenu = async parentId => {
                   LEFT JOIN tbl_common_api b ON a.api_id = b.api_id
                   WHERE a.parent_id = ?
                   ORDER BY
-                    a.systemmenu_index`
+                    a.systemmenu_id, a.systemmenu_name`
   let menus = await model.simpleSelect(queryStr, [parentId])
   for (let m of menus) {
     let sub_menus = []

@@ -157,15 +157,21 @@ exports.doReceiptAct = async req => {
       overdue_invoice_containers_invoice_uploadfile_id : file_id
     }
   })
-  for(let i of invoiceContainers) {
+  for(let incon of invoiceContainers) {
     let con = await tb_container.findOne({
       where: {
-        invoice_containers_id : i.overdue_invoice_containers_invoice_containers_id
+        invoice_containers_id : incon.overdue_invoice_containers_invoice_containers_id
       }
     })
     con.invoice_containers_empty_return_receipt_date = curDate
     con.invoice_containers_empty_return_receipt_release_date = curDate
+    con.invoice_containers_empty_return_date_receipt = incon.overdue_invoice_containers_return_date
+    con.invoice_containers_empty_return_overdue_days_receipt = incon.overdue_invoice_containers_overdue_days
+    con.invoice_containers_empty_return_overdue_amount_receipt = incon.overdue_invoice_containers_overdue_amount
     con.save()
+
+    incon.overdue_invoice_containers_receipt_date = curDate
+    incon.save()
   }
   invoice.uploadfile_receipt_no = receipt_no
   invoice.save()

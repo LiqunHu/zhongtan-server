@@ -23,7 +23,7 @@ exports.initAct = async () => {
 exports.searchAct = async req => {
   let doc = common.docValidate(req),
     returnData = {}
-  let queryStr = `select a.*, b.*, c.*, d.*, e.user_name as fixed_deposit_customer_name, f.user_name as invoice_masterbi_customer_name, g.user_name as overdue_invoice_customer_name from 
+  let queryStr = `select a.*, a.created_at as uploadfile_created_at, b.*, c.*, d.*, e.user_name as fixed_deposit_customer_name, f.user_name as invoice_masterbi_customer_name, g.user_name as overdue_invoice_customer_name from 
     tbl_zhongtan_uploadfile a LEFT JOIN tbl_zhongtan_invoice_masterbl b ON a.uploadfile_index1 = b.invoice_masterbi_id
     LEFT JOIN tbl_zhongtan_customer_fixed_deposit c ON a.uploadfile_index1 = c.fixed_deposit_id
     LEFT JOIN tbl_common_user d ON a.user_id = d.user_id
@@ -58,7 +58,7 @@ exports.searchAct = async req => {
     replacements.push(doc.start_date)
     replacements.push(moment(doc.end_date, 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
   }
-
+  queryStr = queryStr + " order by a.uploadfile_id desc"
   let result = await model.queryWithCount(doc, queryStr, replacements)
   returnData.total = result.count
   returnData.rows = []
@@ -72,6 +72,7 @@ exports.searchAct = async req => {
     row.upload_state = r.uploadfile_state
     row.deposit_work_state = r.deposit_work_state
     row.invoice_customer_name = r.invoice_masterbi_customer_name
+    row.uploadfile_created_at = moment(r.uploadfile_created_at).format("YYYY-MM-DD HH:mm")
     row.of = ''
     row.deposit = ''
     row.transfer = ''

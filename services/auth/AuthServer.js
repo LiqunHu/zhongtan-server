@@ -381,7 +381,7 @@ const iterationMenu = async (user, groups, parent_id) => {
           where a.systemmenu_id = b.systemmenu_id
           and a.usergroup_id in (?)
           and b.parent_id = ?
-          order by b.systemmenu_index`
+          order by b.systemmenu_index, b.systemmenu_name`
 
     let replacements = [groups, parent_id]
     let menus = await sequelize.query(queryStr, {

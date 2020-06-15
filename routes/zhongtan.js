@@ -10,9 +10,14 @@ router.post('/configuration/ContainerManagerConfig/:method', services.ContainerM
 router.post('/configuration/BillladingNoConfig/:method', services.BillladingNoConfigControl)
 router.post('/configuration/Customer/:method', services.CustomerControl)
 router.post('/configuration/Employee/:method', services.EmployeeControl)
+router.post('/configuration/IcdConfig/:method', services.IcdConfigControl)
+router.post('/configuration/ContainerSizeConfig/:method', services.ContainerSizeConfigControl)
+router.post('/configuration/DischargePortConfig/:method', services.DischargePortConfigControl)
+
 router.post('/export/Booking/:method', services.BookingControl)
 router.post('/export/BookingWork/:method', services.BookingWorkControl)
 router.post('/export/Receipt/:method', services.ReceiptControl)
+
 router.post('/import/ImportWork/:method', services.ImportWorkControl)
 router.post('/invoice/Invoice/:method', services.InvoiceControl)
 router.post('/invoice/InvoiceReceipt/:method', services.InvoiceReceiptControl)
@@ -28,19 +33,13 @@ router.post('/fee/InvoiceDefaultFee/:method', services.InvoiceDefaultFeeControl)
 router.post('/fee/CustomerFixedDeposit/:method', services.CustomerFixedDepositControl)
 router.post('/fee/CustomerFixedReceipt/:method', services.CustomerFixedReceiptControl)
 
-router.post('/configuration/IcdConfig/:method', services.IcdConfigControl)
-
-router.post('/configuration/ContainerSizeConfig/:method', services.ContainerSizeConfigControl)
-router.post('/configuration/DischargePortConfig/:method', services.DischargePortConfigControl)
-
 router.post('/equipment/OverdueCalculationConfig/:method', services.OverdueCalculationConfigControl)
 router.post('/equipment/ImportOverdueCalculation/:method', services.ImportOverdueCalculationControl)
 router.post('/equipment/ImportOverdueReceipt/:method', services.ImportOverdueReceiptControl)
-
 router.post('/configuration/EdiDepotConfig/:method', services.EdiDepotConfigControl)
-
 router.post('/equipment/ImportOverdueCalculationSearch/:method', services.ImportOverdueCalculationSearchControl)
-
+router.post('/equipment/ImportOverdueStatistics/:method', services.ImportOverdueStatisticsControl)
+router.post('/equipment/ImportDemurrageStatisticsInvoice/:method', services.ImportDemurrageStatisticsInvoiceControl)
 router.post('/equipment/EmptyStockManagement/:method', services.EmptyStockManagementControl)
 
 module.exports = router
