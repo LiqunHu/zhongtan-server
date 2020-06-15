@@ -170,13 +170,24 @@ exports.calculationAct = async req => {
   } else if(doc.invoice_containers_bl.indexOf('OOLU') >= 0) {
     charge_carrier  = 'OOCL'
   }
+
+  let con_size_type = await tb_container_size.findOne({
+    attributes: ['container_size_code', 'container_size_name'],
+    where: {
+      state : GLBConfig.ENABLE,
+      [Op.or]: [{ container_size_code: doc.invoice_containers_size }, { container_size_name: doc.invoice_containers_size }]
+    }
+  })
+  if(!con_size_type) {
+    return common.error('equipment_02')
+  }
   let chargeRules = await tb_overdue_charge_rule.findAll({
     where: {
       state: GLBConfig.ENABLE,
       overdue_charge_cargo_type: doc.invoice_masterbi_cargo_type,
       overdue_charge_discharge_port: discharge_port,
       overdue_charge_carrier: charge_carrier,
-      overdue_charge_container_size: doc.invoice_containers_size
+      overdue_charge_container_size: con_size_type.container_size_code
     },
     order: [['overdue_charge_min_day', 'DESC']]
   })
@@ -338,7 +349,7 @@ exports.emptyInvoiceAct = async req => {
             [Op.ne]: null
           }
         },
-        order: [['overdue_invoice_containers_receipt_date', 'DESC']]
+        order: [['overdue_invoice_containers_overdue_days', 'DESC'], ['overdue_invoice_containers_receipt_date', 'DESC']]
       })
       if(rcon) {
         s.starting_date = moment(rcon.overdue_invoice_containers_return_date, 'DD/MM/YYYY').add(1, 'days').format('DD/MM/YYYY')
