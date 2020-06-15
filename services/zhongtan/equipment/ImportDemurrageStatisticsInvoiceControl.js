@@ -11,6 +11,10 @@ module.exports = async (req, res) => {
       ret = await srv.initAct(req)
     } else if (method === 'search') {
       ret = await srv.searchAct(req)
+    } else if (method === 'exportDemurrageReport') {
+      return await srv.exportDemurrageReportAct(req, res)
+    } else if (method === 'exportDemurrageAdminReport') {
+      return await srv.exportDemurrageAdminReportAct(req, res)
     }
     common.sendData(res, ret)
   } catch (error) {

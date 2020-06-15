@@ -168,6 +168,7 @@ exports.doReceiptAct = async req => {
     con.invoice_containers_empty_return_date_receipt = incon.overdue_invoice_containers_return_date
     con.invoice_containers_empty_return_overdue_days_receipt = incon.overdue_invoice_containers_overdue_days
     con.invoice_containers_empty_return_overdue_amount_receipt = incon.overdue_invoice_containers_overdue_amount
+    con.invoice_containers_empty_return_date_receipt_no = receipt_no
     con.save()
 
     incon.overdue_invoice_containers_receipt_date = curDate

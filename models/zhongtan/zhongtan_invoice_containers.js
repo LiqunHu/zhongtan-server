@@ -214,4 +214,9 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_containers', {
     type: db.STRING(10),
     allowNull: true
   },
+  invoice_containers_empty_return_date_receipt_no: {
+    // 收据编号
+    type: db.STRING(50),
+    allowNull: true
+  },
 })
