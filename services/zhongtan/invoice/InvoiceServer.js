@@ -1797,9 +1797,27 @@ exports.doEditVesselAct = async req => {
     vessel.invoice_vessel_code = doc.invoice_vessel_code
     vessel.invoice_vessel_voyage = doc.invoice_vessel_voyage
     vessel.invoice_vessel_call_sign = doc.invoice_vessel_call_sign
-    vessel.invoice_vessel_eta = doc.invoice_vessel_eta ? moment(doc.invoice_vessel_eta, 'DD/MM/YYYY').format('DD/MM/YYYY') : null
-    vessel.invoice_vessel_ata = doc.invoice_vessel_ata ? moment(doc.invoice_vessel_ata, 'DD/MM/YYYY').format('DD/MM/YYYY') : null
-    vessel.invoice_vessel_atd = doc.invoice_vessel_atd ? moment(doc.invoice_vessel_atd, 'DD/MM/YYYY').format('DD/MM/YYYY') : null
+    if(doc.invoice_vessel_eta) {
+      if(doc.invoice_vessel_eta.length > 10) {
+        vessel.invoice_vessel_eta = moment(doc.invoice_vessel_eta).local().format('DD/MM/YYYY')
+      } else {
+        vessel.invoice_vessel_eta = moment(doc.invoice_vessel_eta, 'DD/MM/YYYY').local().format('DD/MM/YYYY')
+      }
+    }
+    if(doc.invoice_vessel_ata) {
+      if(doc.invoice_vessel_ata.length > 10) {
+        vessel.invoice_vessel_ata = moment(doc.invoice_vessel_ata).local().format('DD/MM/YYYY')
+      } else {
+        vessel.invoice_vessel_ata = moment(doc.invoice_vessel_ata, 'DD/MM/YYYY').local().format('DD/MM/YYYY')
+      }
+    }
+    if(doc.invoice_vessel_atd) {
+      if(doc.invoice_vessel_atd.length > 10) {
+        vessel.invoice_vessel_atd = moment(doc.invoice_vessel_atd).local().format('DD/MM/YYYY')
+      } else {
+        vessel.invoice_vessel_atd = moment(doc.invoice_vessel_atd, 'DD/MM/YYYY').local().format('DD/MM/YYYY')
+      }
+    }
     vessel.updated_at = new Date()
     await vessel.save()
   }
