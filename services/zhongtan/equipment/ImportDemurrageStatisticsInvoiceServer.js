@@ -224,7 +224,7 @@ exports.exportDemurrageAdminReportAct = async(req, res) => {
     row.actual_amount = r.invoice_containers_actually_return_overdue_amount
     row.balance = ''
     if(r.invoice_containers_empty_return_overdue_amount && r.invoice_containers_actually_return_overdue_amount) {
-      row.balance = parseFloat(r.invoice_containers_actually_balance) - parseFloat(r.invoice_containers_actually_return_overdue_amount)
+      row.balance = parseFloat(r.invoice_containers_empty_return_overdue_amount) - parseFloat(r.invoice_containers_actually_return_overdue_amount)
     }
     renderData.push(row)
   }
