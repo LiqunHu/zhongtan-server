@@ -219,4 +219,14 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_containers', {
     type: db.STRING(50),
     allowNull: true
   },
+  invoice_containers_actually_gate_out_edi_date: {
+    // gate out
+    type: db.STRING(50),
+    allowNull: true
+  },
+  invoice_containers_actually_gate_out_date: {
+    // gate out
+    type: db.STRING(50),
+    allowNull: true
+  },
 })

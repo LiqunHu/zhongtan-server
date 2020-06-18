@@ -42,5 +42,11 @@ module.exports = db.defineModel('tbl_zhongtan_edi_depot', {
     type: db.STRING(50),
     defaultValue: '',
     allowNull: false
+  },
+  edi_depot_gate_in_out_regex: {
+    // 判断GATE IN/OUT
+    type: db.STRING(50),
+    defaultValue: '',
+    allowNull: false
   }
 })
