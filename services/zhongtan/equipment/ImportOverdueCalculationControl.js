@@ -27,6 +27,8 @@ module.exports = async (req, res) => {
       ret = await srv.actuallyOverdueCopyAct(req)
     } else if (method === 'containerInvoiceDetail') {
       ret = await srv.containerInvoiceDetailAct(req)
+    } else if (method === 'issuingStoringOrder') {
+      ret = await srv.issuingStoringOrderAct(req)
     } 
     
     common.sendData(res, ret)

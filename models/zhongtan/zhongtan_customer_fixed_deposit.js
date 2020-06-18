@@ -54,7 +54,7 @@ module.exports = db.defineModel('tbl_zhongtan_customer_fixed_deposit', {
   },
   deposit_check_cash_no: {
     // deposit_check_cash_no
-    type: db.STRING(10),
+    type: db.STRING(200),
     allowNull: true
   },
   deposit_invoice_date: {
@@ -106,5 +106,10 @@ module.exports = db.defineModel('tbl_zhongtan_customer_fixed_deposit', {
     // user_id
     type: db.STRING(36),
     allowNull: false
-  }
+  },
+  deposit_bank_reference_no: {
+    // deposit_check_cash_no
+    type: db.STRING(200),
+    allowNull: true
+  },
 })

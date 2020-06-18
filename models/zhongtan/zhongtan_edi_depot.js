@@ -16,21 +16,31 @@ module.exports = db.defineModel('tbl_zhongtan_edi_depot', {
   edi_depot_sender_email: {
     // 场站发送edi邮箱地址
     type: db.STRING(50),
+    defaultValue: '',
     allowNull: false
   },
   edi_depot_cnt_regex: {
     // 箱号正则
     type: db.STRING(50),
+    defaultValue: '',
     allowNull: false
   },
   edi_depot_dmt_regex: {
     // 还箱时间正则
     type: db.STRING(50),
+    defaultValue: '',
     allowNull: false
   },
   edi_depot_dmt_format: {
     // 时间格式
     type: db.STRING(50),
+    defaultValue: '',
+    allowNull: false
+  },
+  edi_depot_storing_order_email: {
+    // 场站接收storing order邮箱地址
+    type: db.STRING(50),
+    defaultValue: '',
     allowNull: false
   }
 })

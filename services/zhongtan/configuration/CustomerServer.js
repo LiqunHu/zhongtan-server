@@ -30,7 +30,7 @@ exports.searchAct = async req => {
     replacements.push(search_text)
     replacements.push(search_text)
   }
-
+  queryStr += ' order by user_blacklist desc, user_username'
   let result = await model.queryWithCount(doc, queryStr, replacements)
 
   returnData.total = result.count
@@ -139,6 +139,23 @@ exports.deleteAct = async req => {
     await deluser.save()
     redisClient.del(['REDISKEYAUTH', 'WEB', deluser.user_id].join('_'))
     redisClient.del(['REDISKEYAUTH', 'MOBILE', deluser.user_id].join('_'))
+    return common.success()
+  } else {
+    return common.error('operator_03')
+  }
+}
+
+exports.changeBlacklistAct = async req => {
+  let doc = common.docValidate(req)
+  let modiuser = await tb_user.findOne({
+    where: {
+      user_id: doc.user_id,
+      state: GLBConfig.ENABLE
+    }
+  })
+  if (modiuser) {
+    modiuser.user_blacklist = doc.user_blacklist
+    await modiuser.save()
     return common.success()
   } else {
     return common.error('operator_03')

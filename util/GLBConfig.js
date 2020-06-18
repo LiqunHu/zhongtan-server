@@ -382,4 +382,7 @@ module.exports = {
     { id: 'W', text: 'WORKING', color: 'success'},
     { id: 'I', text: 'INVALID', color: 'error'}
   ],
+  STORING_ORDER_EMAIL_SENDER: 'equipmentcontrol@sinotaship.com',
+  STORING_ORDER_CARBON_COPY: 'DEMURRAGE@SINOTASHIP.COM',
+  STORING_ORDER_BLIND_CARBON_COPY: '540301291@qq.com',
 }

@@ -379,7 +379,7 @@ exports.searchVoyageAct = async req => {
       }
       d.container_size_type = containerSize
       // D/O state overdue check
-      d.invoice_masterbi_do_state = common.checkDoState(d) && await checkOverdueDoState(d, vessel)
+      d.invoice_masterbi_do_state = common.checkDoState(d) && await checkConditionDoState(d, vessel)
       // delivery to
       if(!d.invoice_masterbi_delivery_to && d.customerINFO && d.customerINFO.length === 1) {
         d.invoice_masterbi_delivery_to = d.customerINFO[0].text
@@ -531,7 +531,7 @@ exports.getMasterbiDataAct = async req => {
     }
     d.container_size_type = containerSize
     // D/O state
-    d.invoice_masterbi_do_state = common.checkDoState(d) && await checkOverdueDoState(d, vessel)
+    d.invoice_masterbi_do_state = common.checkDoState(d) && await checkConditionDoState(d, vessel)
     // delivery to
     if(!d.invoice_masterbi_delivery_to && d.customerINFO && d.customerINFO.length === 1) {
       d.invoice_masterbi_delivery_to = d.customerINFO[0].text
@@ -989,6 +989,7 @@ exports.depositDoAct = async req => {
       bl.invoice_masterbi_receipt_currency = fd.deposit_currency
       bl.invoice_masterbi_check_cash = fd.deposit_check_cash
       bl.invoice_masterbi_check_no = fd.deposit_check_cash_no
+      bl.invoice_masterbi_bank_reference_no = fd.deposit_bank_reference_no
       bl.invoice_masterbi_received_from = customer.user_name
       bl.invoice_masterbi_receipt_no = await seq.genInvoiceReceiptNo(bl.invoice_masterbi_carrier)
       if(common.checkInvoiceState(bl)) {
@@ -1003,9 +1004,9 @@ exports.depositDoAct = async req => {
       if (bl.invoice_masterbi_check_cash === 'CASH') {
         renderData.check_cash = 'Cash'
       } else if (bl.invoice_masterbi_check_cash === 'TRANSFER') {
-        renderData.check_cash = 'Bank transfer'
+        renderData.check_cash = 'Bank transfer/ ' + bl.invoice_masterbi_bank_reference_no
       } else {
-        renderData.check_cash = bl.invoice_masterbi_check_no
+        renderData.check_cash = 'Cheque/ ' + bl.invoice_masterbi_check_no
       }
       renderData.sum_fee = parseFloat(bl.invoice_masterbi_receipt_amount.replace(/,/g, '') || 0)
       renderData.sum_fee_str = numberToText(renderData.sum_fee)
@@ -1028,6 +1029,7 @@ exports.depositDoAct = async req => {
         uploadfile_currency: bl.invoice_masterbi_receipt_currency,
         uploadfile_check_cash: bl.invoice_masterbi_check_cash,
         uploadfile_check_no: bl.invoice_masterbi_check_no,
+        uploadfile_bank_reference_no: bl.invoice_masterbi_bank_reference_no,
         uploadfile_received_from: bl.invoice_masterbi_received_from,
         uploadfile_receipt_no: bl.invoice_masterbi_receipt_no,
         uploadfil_release_date: uploadfil_release_date,
@@ -1824,7 +1826,9 @@ exports.doEditVesselAct = async req => {
   return common.success()
 }
 
-const checkOverdueDoState = async (bl, ves) => {
+const checkConditionDoState = async (bl, ves) => {
+  let overdueCheck = false
+  let blacklistCheck = false
   if(ves.invoice_vessel_ata) {
     let diff = moment().diff(moment(ves.invoice_vessel_ata, 'DD/MM/YYYY'), 'days') + 1
     if(bl.invoice_masterbi_cargo_type === 'IM' && diff > 14) {
@@ -1844,7 +1848,7 @@ const checkOverdueDoState = async (bl, ves) => {
           }
         }
       })
-      return acount === rcount
+      overdueCheck = acount === rcount
     } else if(bl.invoice_masterbi_cargo_type === 'TR') {
       // 过境的根据国家名称，然后分30天(BI,RW,SS,UG,MW,ZW)，40天(ZM)，55天（CD）
       let discharge_port = bl.invoice_masterbi_destination.substring(0, 2)
@@ -1869,10 +1873,23 @@ const checkOverdueDoState = async (bl, ves) => {
             }
           }
         })
-        return acount === rcount
+        overdueCheck = acount === rcount
       } 
     }
-    return true
+    overdueCheck = true
   } 
-  return false
+
+  if(bl.invoice_masterbi_customer_id) {
+    let customer = await tb_user.findOne({
+      where: {
+        user_id: bl.invoice_masterbi_customer_id
+      }
+    })
+    if(customer) {
+      if(GLBConfig.ENABLE !== customer.user_blacklist) {
+        blacklistCheck = true
+      }
+    }
+  }
+  return overdueCheck && blacklistCheck
 }

@@ -467,5 +467,11 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_masterbl', {
     type: db.STRING(20),
     defaultValue: 'Container',
     allowNull: false
-  }
+  },
+  invoice_masterbi_bank_reference_no: {
+    // bank reference no
+    type: db.STRING(200),
+    defaultValue: '',
+    allowNull: false
+  },
 })

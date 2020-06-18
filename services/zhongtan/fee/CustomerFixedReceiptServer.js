@@ -135,6 +135,7 @@ exports.receiptAct = async req => {
   }
 
   theDeposit.deposit_check_cash_no = doc.deposit_check_cash_no
+  theDeposit.deposit_bank_reference_no = doc.deposit_bank_reference_no
   theDeposit.deposit_receipt_no = await seq.genFixedReceiptSeq()
   theDeposit.deposit_receipt_date = curDate
   theDeposit.updated_at = curDate
@@ -149,8 +150,13 @@ exports.receiptAct = async req => {
   renderData.fixed_deposit_currency = theDeposit.deposit_currency
   renderData.fixed_deposit_amount = parseFloat(theDeposit.deposit_amount.replace(/,/g, '') || 0)
   renderData.fixed_deposit_amount_str = numberToText(renderData.fixed_deposit_amount)
-  renderData.fixed_deposit_check_cash = theDeposit.deposit_check_cash
-
+  if (theDeposit.deposit_check_cash === 'CASH') {
+    renderData.fixed_deposit_check_cash = 'Cash'
+  } else if (theDeposit.deposit_check_cash === 'TRANSFER') {
+    renderData.fixed_deposit_check_cash = 'Bank transfer/ ' + theDeposit.deposit_bank_reference_no
+  } else {
+    renderData.fixed_deposit_check_cash = 'Cheque/ ' + theDeposit.deposit_check_cash_no
+  }
   let fileInfo = await common.ejs2Pdf('fixedReceipt.ejs', renderData, 'zhongtan')
 
   await tb_uploadfile.destroy({

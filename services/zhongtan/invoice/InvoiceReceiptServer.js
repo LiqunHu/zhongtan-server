@@ -5,7 +5,6 @@ const GLBConfig = require('../../../util/GLBConfig')
 const common = require('../../../util/CommonUtil')
 const model = require('../../../app/model')
 const seq = require('../../../util/Sequence')
-
 const Op = model.Op
 
 const tb_user = model.common_user
@@ -343,6 +342,7 @@ exports.downloadReceiptAct = async req => {
   bl.invoice_masterbi_receipt_currency = doc.invoice_masterbi_receipt_currency
   bl.invoice_masterbi_check_cash = doc.invoice_masterbi_check_cash
   bl.invoice_masterbi_check_no = doc.invoice_masterbi_check_no
+  bl.invoice_masterbi_bank_reference_no = doc.invoice_masterbi_bank_reference_no
   bl.invoice_masterbi_received_from = doc.invoice_masterbi_received_from
   bl.invoice_masterbi_receipt_no = await seq.genInvoiceReceiptNo(bl.invoice_masterbi_carrier)
   if(doc.checkType === 'deposit') {
@@ -378,9 +378,9 @@ exports.downloadReceiptAct = async req => {
   if (bl.invoice_masterbi_check_cash === 'CASH') {
     renderData.check_cash = 'Cash'
   } else if (bl.invoice_masterbi_check_cash === 'TRANSFER') {
-    renderData.check_cash = 'Bank transfer'
+    renderData.check_cash = 'Bank transfer/ ' + bl.invoice_masterbi_bank_reference_no
   } else {
-    renderData.check_cash = bl.invoice_masterbi_check_no
+    renderData.check_cash = 'Cheque/ ' + bl.invoice_masterbi_check_no
   }
   renderData.sum_fee = parseFloat(bl.invoice_masterbi_receipt_amount.replace(/,/g, '') || 0)
   renderData.sum_fee_str = numberToText(renderData.sum_fee)
@@ -399,7 +399,8 @@ exports.downloadReceiptAct = async req => {
     uploadfile_received_from: doc.invoice_masterbi_received_from,
     uploadfile_receipt_no: bl.invoice_masterbi_receipt_no,
     uploadfil_release_date: curDate,
-    uploadfil_release_user_id: user.user_id
+    uploadfil_release_user_id: user.user_id,
+    uploadfile_bank_reference_no: doc.invoice_masterbi_bank_reference_no,
   })
 
   return common.success({ url: fileInfo.url })
@@ -445,15 +446,11 @@ exports.downloadCollectAct = async (req, res) => {
     AND a.invoice_vessel_id = v.invoice_vessel_id
     AND a.invoice_masterbi_carrier = ?
     AND b.created_at > ?
-    AND b.created_at < ?`
+    AND b.created_at < ? order by a.invoice_vessel_id desc, a.invoice_masterbi_bl`
   let replacements = [
     doc.carrier,
-    moment(doc.collect_date[0])
-      .add(1, 'days')
-      .format('YYYY-MM-DD'),
-    moment(doc.collect_date[1])
-      .add(2, 'days')
-      .format('YYYY-MM-DD')
+    moment(doc.collect_date[0]).local().format('YYYY-MM-DD'),
+    moment(doc.collect_date[1]).local().add(1, 'days').format('YYYY-MM-DD')
   ]
 
   let result = await model.simpleSelect(queryStr, replacements)
@@ -477,6 +474,7 @@ exports.downloadCollectAct = async (req, res) => {
     row.user_name = r.user_name
     row.invoice_masterbi_bl = r.invoice_masterbi_bl
     row.invoice_masterbi_check_no = r.uploadfile_check_no
+    row.invoice_masterbi_bank_reference_no = r.uploadfile_bank_reference_no
     row.invoice_masterbi_deposit = ''
     row.invoice_masterbi_bl_amendment = ''
     row.invoice_masterbi_cod_charge = ''

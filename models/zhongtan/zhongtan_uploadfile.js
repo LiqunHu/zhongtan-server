@@ -108,5 +108,9 @@ module.exports = db.defineModel('tbl_zhongtan_uploadfile', {
   uploadfile_customer_id: {
     type: db.STRING(50),
     allowNull: true
-  }
+  },
+  uploadfile_bank_reference_no: {
+    type: db.STRING(200),
+    allowNull: true
+  },
 })

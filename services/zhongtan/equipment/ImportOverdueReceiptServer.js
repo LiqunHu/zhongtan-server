@@ -127,9 +127,9 @@ exports.doReceiptAct = async req => {
   if (doc.overdue_invoice_check_cash === 'CASH') {
     renderData.check_cash = 'Cash'
   } else if (doc.overdue_invoice_check_cash === 'TRANSFER') {
-    renderData.check_cash = 'Bank transfer'
+    renderData.check_cash = 'Bank transfer/ ' + doc.overdue_invoice_bank_reference_no
   } else {
-    renderData.check_cash = doc.overdue_invoice_check_no
+    renderData.check_cash = 'Cheque/ ' + doc.overdue_invoice_check_no
   }
   renderData.sum_fee = parseFloat(invoice.uploadfile_amount.replace(/,/g, '') || 0)
   renderData.sum_fee_str = numberToText(renderData.sum_fee)
@@ -149,7 +149,8 @@ exports.doReceiptAct = async req => {
     uploadfile_received_from: doc.overdue_invoice_received_from,
     uploadfile_receipt_no: receipt_no,
     uploadfil_release_date: curDate,
-    uploadfil_release_user_id: user.user_id
+    uploadfil_release_user_id: user.user_id,
+    uploadfile_bank_reference_no: doc.overdue_invoice_bank_reference_no,
   })
 
   let invoiceContainers = await tb_invoice_container.findAll({

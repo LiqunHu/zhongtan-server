@@ -106,5 +106,10 @@ module.exports = db.defineModel('tbl_common_user', {
   user_tin: {
     type: db.STRING(20),
     allowNull: true
+  },
+  user_blacklist: {
+    type: db.STRING(10),
+    defaultValue: '0',
+    allowNull: false
   }
 })

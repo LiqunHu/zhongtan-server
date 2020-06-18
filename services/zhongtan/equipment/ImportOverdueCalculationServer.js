@@ -4,6 +4,7 @@ const common = require('../../../util/CommonUtil')
 const GLBConfig = require('../../../util/GLBConfig')
 const model = require('../../../app/model')
 const seq = require('../../../util/Sequence')
+const mailer = require('../../../util/Mail')
 const Op = model.Op
 
 const tb_user = model.common_user
@@ -11,11 +12,10 @@ const tb_vessel = model.zhongtan_invoice_vessel
 const tb_bl = model.zhongtan_invoice_masterbl
 const tb_overdue_charge_rule = model.zhongtan_overdue_charge_rule
 const tb_container_size = model.zhongtan_container_size
-const tb_discharge_port = model.zhongtan_discharge_port
 const tb_container = model.zhongtan_invoice_containers
 const tb_invoice_container = model.zhongtan_overdue_invoice_containers
 const tb_uploadfile = model.zhongtan_uploadfile
-
+const tb_edi_depot = model.zhongtan_edi_depot
 
 exports.initAct = async () => {
   let returnData = {}
@@ -26,12 +26,12 @@ exports.initAct = async () => {
     },
     order: [['container_size_code', 'ASC']]
   })
-  returnData['DISCHARGE_PORT'] = await tb_discharge_port.findAll({
-    attributes: ['discharge_port_code', 'discharge_port_name'],
+  returnData['EDI_DEPOT'] = await tb_edi_depot.findAll({
+    attributes: ['edi_depot_name'],
     where: {
       state : GLBConfig.ENABLE
     },
-    order: [['discharge_port_code', 'ASC']]
+    order: [['edi_depot_name', 'ASC']]
   })
   returnData['UPLOAD_STATE'] = GLBConfig.UPLOAD_STATE
   return common.success(returnData)
@@ -149,6 +149,20 @@ exports.searchAct = async req => {
         d.invoice_containers_empty_return_overdue_free_days_fixed = true
       } else {
         d.invoice_containers_empty_return_overdue_free_days_fixed = false
+      }
+
+      let brcount = await tb_invoice_container.count({
+        where: {
+          overdue_invoice_containers_invoice_masterbi_id: d.invoice_masterbi_id,
+          overdue_invoice_containers_receipt_date: {
+            [Op.ne]: null
+          }
+        }
+      })
+      if(brcount > 0) {
+        d.invoice_containers_issuing_storing_order_status = true
+      } else {
+        d.invoice_containers_issuing_storing_order_status = false
       }
     }
   }
@@ -492,6 +506,131 @@ exports.containerInvoiceDetailAct = async req => {
     }
   }
   return common.success(result)
+}
+
+exports.issuingStoringOrderAct = async req => {
+  let doc = common.docValidate(req), user = req.user
+  let selection = doc.selection
+  let storingOrderPara = doc.storingOrderPara
+  let receiptSelection = []
+  let receiptInvocieCons = []
+  if(selection && selection.length > 0) {
+    for(let s of selection) {
+      if(s.invoice_containers_issuing_storing_order_status) {
+        receiptSelection.push(s)
+        let rcon = await tb_invoice_container.findOne({
+          where: {
+            overdue_invoice_containers_invoice_containers_id: s.invoice_containers_id,
+            overdue_invoice_containers_receipt_date: {
+              [Op.ne]: null
+            }
+          },
+          order: [['overdue_invoice_containers_overdue_days', 'DESC'], ['overdue_invoice_containers_receipt_date', 'DESC']]
+        })
+        if(rcon) {
+          receiptInvocieCons.push(rcon)
+        }
+      }
+    }
+  }
+  if(receiptSelection && receiptSelection.length > 0 && receiptInvocieCons && receiptInvocieCons.length > 0) {
+    let mergeCon = {}
+    for(let r of receiptInvocieCons) {
+      if(mergeCon.hasOwnProperty(r.overdue_invoice_containers_return_date)) {
+        mergeCon[r.overdue_invoice_containers_return_date].push(r)
+      } else {
+        mergeCon[r.overdue_invoice_containers_return_date] = []
+        mergeCon[r.overdue_invoice_containers_return_date].push(r)
+      }
+    }
+
+    let row0 = receiptSelection[0]
+    let bl = await tb_bl.findOne({
+      where: {
+        invoice_masterbi_id: row0.invoice_masterbi_id
+      }
+    })
+  
+    let vessel = await tb_vessel.findOne({
+      where: {
+        invoice_vessel_id: row0.invoice_vessel_id
+      }
+    })
+  
+    let customer = await tb_user.findOne({
+      where: {
+        user_id: row0.invoice_containers_customer_id
+      }
+    })
+  
+    let commonUser = await tb_user.findOne({
+      where: {
+        user_id: user.user_id
+      }
+    })
+
+    let depot = await tb_edi_depot.findOne({
+      where: {
+        state : GLBConfig.ENABLE,
+        edi_depot_name: storingOrderPara.invoice_containers_depot_name
+      }
+    })
+    if(depot.edi_depot_storing_order_email) {
+      for(let key in mergeCon) {
+        let renderData = {}
+        renderData.depotName = depot.edi_depot_name
+        renderData.customerName = customer.user_name
+        renderData.returnDateStr = moment(key, 'DD/MM/YYYY').format('MMM DD, YYYY')
+        renderData.bl = bl.invoice_masterbi_bl
+        renderData.vessel = vessel.invoice_vessel_name
+        renderData.voyage = vessel.invoice_vessel_voyage
+        if(bl.invoice_masterbi_bl) {
+          if(bl.invoice_masterbi_bl.indexOf('COS') >= 0) {
+            renderData.line = 'COSCO'
+          } else if(bl.invoice_masterbi_bl.indexOf('OOLU') >= 0) {
+            renderData.line = 'OOCL'
+          }
+        }
+        renderData.user_name = commonUser.user_name
+        renderData.user_phone = commonUser.user_phone
+        renderData.user_email = commonUser.user_email
+
+        renderData.containers = []
+        let seq = 1
+        for(let s of mergeCon[key]) {
+          let con = await tb_container.findOne({
+            where: {
+              invoice_containers_id: s.overdue_invoice_containers_invoice_containers_id
+            }
+          })
+          let con_size_type = await tb_container_size.findOne({
+            attributes: ['container_size_code', 'container_size_name'],
+            where: {
+              state : GLBConfig.ENABLE,
+              [Op.or]: [{ container_size_code: con.invoice_containers_size }, { container_size_name: con.invoice_containers_size }]
+            }
+          })
+          renderData.containers.push({
+            seq: seq,
+            containerNo: con.invoice_containers_no,
+            sizeTYpe: con_size_type.container_size_name
+          })
+          seq++
+          con.invoice_containers_depot_name = depot.edi_depot_name
+          con.save()
+        }
+        let html = await common.ejs2Html('StoringOrder.ejs', renderData)
+        let mailSubject = customer.user_name + '/' + bl.invoice_masterbi_bl
+        let mailContent = ''
+        let mailHtml = html
+        let attachments = []
+        await mailer.sendEdiMail(GLBConfig.STORING_ORDER_EMAIL_SENDER, depot.edi_depot_storing_order_email, GLBConfig.STORING_ORDER_CARBON_COPY, GLBConfig.STORING_ORDER_BLIND_CARBON_COPY, mailSubject, mailContent, mailHtml, attachments)
+      }
+    }
+    return common.success()
+  } else {
+    return common.error('equipment_03')
+  }
 }
 
 function formatCurrency(num) {

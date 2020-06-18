@@ -129,6 +129,7 @@ exports.createAct = async req => {
     deposit_currency: doc.fixed_deposit_type === 'FD' ? doc.deposit_currency : '',
     deposit_check_cash: doc.fixed_deposit_type === 'FD' ? doc.deposit_check_cash: '',
     deposit_check_cash_no: doc.fixed_deposit_type === 'FD' ? doc.deposit_check_cash_no: '',
+    deposit_bank_reference_no: doc.fixed_deposit_type === 'FD' ? doc.deposit_bank_reference_no: '',
     deposit_work_state: 'N',
     user_id: user.user_id
   })
@@ -178,6 +179,7 @@ exports.updateAct = async req => {
       updateDeposit.deposit_currency = doc.deposit_currency
       updateDeposit.deposit_check_cash = doc.deposit_check_cash
       updateDeposit.deposit_check_cash_no = doc.deposit_check_cash_no
+      updateDeposit.deposit_bank_reference_no = doc.deposit_bank_reference_no
     } else {
       updateDeposit.deposit_guarantee_letter_no = doc.deposit_guarantee_letter_no
 

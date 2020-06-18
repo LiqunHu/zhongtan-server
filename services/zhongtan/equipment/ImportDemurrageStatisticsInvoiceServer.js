@@ -2,8 +2,11 @@ const moment = require('moment')
 const common = require('../../../util/CommonUtil')
 const GLBConfig = require('../../../util/GLBConfig')
 const model = require('../../../app/model')
+const Op = model.Op
 
 const tb_container_size = model.zhongtan_container_size
+const tb_invoice_container = model.zhongtan_overdue_invoice_containers
+const tb_uploadfile = model.zhongtan_uploadfile
 
 exports.initAct = async () => {
   let returnData = {}
@@ -141,12 +144,68 @@ exports.exportDemurrageReportAct = async(req, res) => {
       row.invoice_date = moment(r.invoice_containers_empty_return_invoice_date).format('YYYY-MM-DD HH:ss')
     }
     row.payer = r.user_name
+    let rcons = await tb_invoice_container.findAll({
+      where: {
+        overdue_invoice_containers_invoice_containers_id: r.invoice_containers_id,
+        overdue_invoice_containers_receipt_date: {
+          [Op.ne]: null
+        }
+      },
+      order: [['overdue_invoice_containers_overdue_days', 'DESC'], ['overdue_invoice_containers_receipt_date', 'DESC']]
+    })
     row.receipt_date = ''
-    if(r.invoice_containers_empty_return_receipt_date) {
-      row.receipt_date = moment(r.invoice_containers_empty_return_receipt_date).format('YYYY-MM-DD HH:ss')
+    row.receipt_no = ''
+    if(rcons && rcons.length > 0) {
+      row.return_date = rcons[0].overdue_invoice_containers_return_date
+      row.invoice_amount = rcons[0].overdue_invoice_containers_overdue_amount
+      let ifile = await tb_uploadfile.findOne({
+        where: {
+          uploadfile_id: rcons[0].overdue_invoice_containers_invoice_uploadfile_id
+        }
+      })
+      if(ifile) {
+        row.invoice_date = moment(ifile.created_at).format('YYYY-MM-DD HH:ss')
+        let rfile = await tb_uploadfile.findOne({
+          where: {
+            uploadfile_index3: ifile.uploadfile_id
+          }
+        })
+        if(rfile) {
+          row.receipt_date = moment(rfile.created_at).format('YYYY-MM-DD HH:ss')
+          row.receipt_no = rfile.uploadfile_receipt_no
+          row.bank_reference_no = rfile.uploadfile_bank_reference_no
+          row.check_no = rfile.uploadfile_check_no
+        }
+      }
     }
-    row.receipt_no = r.invoice_containers_empty_return_date_receipt_no
     renderData.push(row)
+    if(rcons && rcons.length > 1) {
+      for(let i = 1; i < rcons.length; i++) {
+        let row = {}
+        row.return_date = rcons[i].overdue_invoice_containers_return_date
+        row.invoice_amount = rcons[i].overdue_invoice_containers_overdue_amount
+        let ifile = await tb_uploadfile.findOne({
+          where: {
+            uploadfile_id: rcons[i].overdue_invoice_containers_invoice_uploadfile_id
+          }
+        })
+        if(ifile) {
+          row.invoice_date = moment(ifile.created_at).format('YYYY-MM-DD HH:ss')
+          let rfile = await tb_uploadfile.findOne({
+            where: {
+              uploadfile_index3: ifile.uploadfile_id
+            }
+          })
+          if(rfile) {
+            row.receipt_date = moment(rfile.created_at).format('YYYY-MM-DD HH:ss')
+            row.receipt_no = rfile.uploadfile_receipt_no
+            row.bank_reference_no = rfile.uploadfile_bank_reference_no
+            row.check_no = rfile.uploadfile_check_no
+            renderData.push(row)
+          }
+        }
+      }
+    }
   }
 
   let filepath = await common.ejs2xlsx('DemurrageTemplate.xlsx', renderData)
@@ -207,18 +266,41 @@ exports.exportDemurrageAdminReportAct = async(req, res) => {
     }
     row.billlading_no = r.invoice_containers_bl
     row.discharge_date = r.invoice_vessel_ata
-    row.return_date = r.invoice_containers_empty_return_date_invoice
-    row.invoice_amount = r.invoice_containers_empty_return_overdue_amount_invoice
-    row.invoice_date = ''
-    if(r.invoice_containers_empty_return_invoice_date) {
-      row.invoice_date = moment(r.invoice_containers_empty_return_invoice_date).format('YYYY-MM-DD HH:ss')
-    }
     row.payer = r.user_name
+    let rcons = await tb_invoice_container.findAll({
+      where: {
+        overdue_invoice_containers_invoice_containers_id: r.invoice_containers_id,
+        overdue_invoice_containers_receipt_date: {
+          [Op.ne]: null
+        }
+      },
+      order: [['overdue_invoice_containers_overdue_days', 'DESC'], ['overdue_invoice_containers_receipt_date', 'DESC']]
+    })
     row.receipt_date = ''
-    if(r.invoice_containers_empty_return_receipt_date) {
-      row.receipt_date = moment(r.invoice_containers_empty_return_receipt_date).format('YYYY-MM-DD HH:ss')
+    row.receipt_no = ''
+    if(rcons && rcons.length > 0) {
+      row.return_date = rcons[0].overdue_invoice_containers_return_date
+      row.invoice_amount = rcons[0].overdue_invoice_containers_overdue_amount
+      let ifile = await tb_uploadfile.findOne({
+        where: {
+          uploadfile_id: rcons[0].overdue_invoice_containers_invoice_uploadfile_id
+        }
+      })
+      if(ifile) {
+        row.invoice_date = moment(ifile.created_at).format('YYYY-MM-DD HH:ss')
+        let rfile = await tb_uploadfile.findOne({
+          where: {
+            uploadfile_index3: ifile.uploadfile_id
+          }
+        })
+        if(rfile) {
+          row.receipt_date = moment(rfile.created_at).format('YYYY-MM-DD HH:ss')
+          row.receipt_no = rfile.uploadfile_receipt_no
+          row.bank_reference_no = rfile.uploadfile_bank_reference_no
+          row.check_no = rfile.uploadfile_check_no
+        }
+      }
     }
-    row.receipt_no = r.invoice_containers_empty_return_date_receipt_no
     row.edi_return_date = r.invoice_containers_actually_return_date
     row.actual_overdue_days = r.invoice_containers_actually_return_overdue_days
     row.actual_amount = r.invoice_containers_actually_return_overdue_amount
@@ -227,9 +309,34 @@ exports.exportDemurrageAdminReportAct = async(req, res) => {
       row.balance = parseFloat(r.invoice_containers_empty_return_overdue_amount_invoice) - parseFloat(r.invoice_containers_actually_return_overdue_amount)
     }
     renderData.push(row)
+    if(rcons && rcons.length > 1) {
+      for(let i = 1; i < rcons.length; i++) {
+        let row = {}
+        row.return_date = rcons[i].overdue_invoice_containers_return_date
+        row.invoice_amount = rcons[i].overdue_invoice_containers_overdue_amount
+        let ifile = await tb_uploadfile.findOne({
+          where: {
+            uploadfile_id: rcons[i].overdue_invoice_containers_invoice_uploadfile_id
+          }
+        })
+        if(ifile) {
+          row.invoice_date = moment(ifile.created_at).format('YYYY-MM-DD HH:ss')
+          let rfile = await tb_uploadfile.findOne({
+            where: {
+              uploadfile_index3: ifile.uploadfile_id
+            }
+          })
+          if(rfile) {
+            row.receipt_date = moment(rfile.created_at).format('YYYY-MM-DD HH:ss')
+            row.receipt_no = rfile.uploadfile_receipt_no
+            row.bank_reference_no = rfile.uploadfile_bank_reference_no
+            row.check_no = rfile.uploadfile_check_no
+            renderData.push(row)
+          }
+        }
+      }
+    }
   }
-
   let filepath = await common.ejs2xlsx('DemurrageAdminTemplate.xlsx', renderData)
-
   res.sendFile(filepath)
 }

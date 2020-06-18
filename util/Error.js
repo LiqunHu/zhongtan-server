@@ -82,6 +82,7 @@ module.exports = {
   equipment_01: 'charge rule already exists',
   equipment_02: 'charge rule do not exist',
   equipment_03: 'container do not exist',
+  equipment_04: 'receipt container do not exist',
   edi_depot_01: 'Edit edi depot do not exist',
   edi_depot_02: 'edi depot name already exists',
 }

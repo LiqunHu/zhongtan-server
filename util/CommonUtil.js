@@ -550,6 +550,17 @@ const isNumber = value => {
   return typeof value === 'number' && !isNaN(value)
 }
 
+async function ejs2Html(templateFile, renderData) {
+  let data = JSON.parse(JSON.stringify(renderData))
+  if (!data) {
+    data = {}
+  }
+  data.basedir = path.join(__dirname, '../htmlTemplate')
+  let ejsFile = fs.readFileSync(path.join(__dirname, '../htmlTemplate/' + templateFile), 'utf8')
+  let html = ejs.render(ejsFile, { ejsData: data })
+  return html
+}
+
 module.exports = {
   docValidate: docValidate,
   reqTrans: reqTrans,
@@ -579,5 +590,6 @@ module.exports = {
   glbConfigId2Attr: glbConfigId2Attr,
   checkInvoiceState: checkInvoiceState,
   checkDoState: checkDoState,
-  isNumber: isNumber
+  isNumber: isNumber,
+  ejs2Html: ejs2Html
 }
