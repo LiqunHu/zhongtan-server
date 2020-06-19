@@ -122,7 +122,7 @@ const readEdiMail = (ediDepots) => {
                                     if(gate === '34') {
                                       // GATE IN
                                       container.invoice_containers_actually_return_edi_date = returnDate
-                                      container.invoice_containers_actually_return_date = moment(returnDate, edi.edi_depot_dmt_format).format('DD/MM/YYYY')
+                                      container.invoice_containers_actually_return_date = moment(returnDate.substring(0, 8), edi.edi_depot_dmt_format).format('DD/MM/YYYY')
 
                                       let vessel = await tb_vessel.findOne({
                                         where: {
@@ -197,7 +197,7 @@ const readEdiMail = (ediDepots) => {
                                     } else if(gate === '36') {
                                       // GATE OUT  
                                       container.invoice_containers_actually_gate_out_edi_date = returnDate
-                                      container.invoice_containers_actually_gate_out_date = moment(returnDate, edi.edi_depot_dmt_format).format('DD/MM/YYYY')
+                                      container.invoice_containers_actually_gate_out_date = moment(returnDate.substring(0, 8), edi.edi_depot_dmt_format).format('DD/MM/YYYY')
                                     }
                                   }
                                   await container.save()

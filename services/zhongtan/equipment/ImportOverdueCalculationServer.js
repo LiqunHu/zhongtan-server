@@ -114,13 +114,20 @@ exports.searchAct = async req => {
       } else if(d.invoice_containers_bl.indexOf('OOLU') >= 0) {
         charge_carrier  = 'OOCL'
       }
+      let con_size_type = await tb_container_size.findOne({
+        attributes: ['container_size_code', 'container_size_name'],
+        where: {
+          state : GLBConfig.ENABLE,
+          [Op.or]: [{ container_size_code: d.invoice_containers_size }, { container_size_name: d.invoice_containers_size }]
+        }
+      })
       let chargeRule = await tb_overdue_charge_rule.findOne({
         where: {
           state: GLBConfig.ENABLE,
           overdue_charge_cargo_type: d.invoice_masterbi_cargo_type,
           overdue_charge_discharge_port: discharge_port,
           overdue_charge_carrier: charge_carrier,
-          overdue_charge_container_size: d.invoice_containers_size,
+          overdue_charge_container_size: con_size_type? con_size_type.container_size_code : d.invoice_containers_size,
           overdue_charge_amount: '0'
         },
         order: [['overdue_charge_min_day']]
