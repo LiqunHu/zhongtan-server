@@ -13,11 +13,33 @@ const tb_vessel = model.zhongtan_invoice_vessel
 const tb_uploadfile = model.zhongtan_uploadfile
 
 exports.initAct = async () => {
+  let VESSEL_VOYAGE = []
+  let queryStr = `SELECT invoice_vessel_id, invoice_vessel_name, invoice_vessel_voyage FROM tbl_zhongtan_invoice_vessel WHERE state = '1' ORDER BY invoice_vessel_id DESC;`
+  let replacements = []
+  let vessels = await model.simpleSelect(queryStr, replacements)
+  if(vessels) {
+    for(let d of vessels) {
+      VESSEL_VOYAGE.push(d)
+    }
+  }
+
+  let CUSTOMER = []
+  queryStr = `SELECT user_id, user_name FROM tbl_common_user WHERE state = '1' AND user_type = ? ORDER BY user_name`
+  replacements = [GLBConfig.TYPE_CUSTOMER]
+  let deliverys = await model.simpleSelect(queryStr, replacements)
+  if(deliverys) {
+    for(let d of deliverys) {
+      CUSTOMER.push(d)
+    }
+  }
+
   let returnData = {
     TFINFO: GLBConfig.TFINFO,
     RECEIPT_TYPE_INFO: GLBConfig.RECEIPT_TYPE_INFO,
     CASH_BANK_INFO: GLBConfig.CASH_BANK_INFO,
-    RECEIPT_CURRENCY: GLBConfig.RECEIPT_CURRENCY
+    RECEIPT_CURRENCY: GLBConfig.RECEIPT_CURRENCY,
+    VESSEL_VOYAGE: VESSEL_VOYAGE,
+    CUSTOMER: CUSTOMER
   }
 
   return common.success(returnData)
