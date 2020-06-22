@@ -56,7 +56,8 @@ const readEdiMail = (ediDepots) => {
         }
         if(ediDepots && ediDepots.length > 0) {
           for(let edi of ediDepots) {
-            if(edi.edi_depot_sender_email) {
+            if(edi.edi_depot_sender_email && edi.edi_depot_cnt_regex 
+                  && edi.edi_depot_dmt_regex && edi.edi_depot_dmt_format && edi.edi_depot_gate_in_out_regex) {
               imap.search(['NEW', ['FROM', edi.edi_depot_sender_email]], function(err, results) {
                 if (err) {
                   imap.end()
@@ -119,6 +120,7 @@ const readEdiMail = (ediDepots) => {
                                     order: [['invoice_containers_id', 'DESC']]
                                   })
                                   if(container && returnDate) {
+                                    container.invoice_containers_depot_name = edi.edi_depot_name
                                     if(gate === '34') {
                                       // GATE IN
                                       container.invoice_containers_actually_return_edi_date = returnDate
@@ -191,7 +193,6 @@ const readEdiMail = (ediDepots) => {
                                           }
                                           container.invoice_containers_actually_return_overdue_days = diff > freeMaxDay ? diff - freeMaxDay : 0
                                           container.invoice_containers_actually_return_overdue_amount = overdueAmount
-                                          container.invoice_containers_depot_name = edi.edi_depot_name
                                         }
                                       }
                                     } else if(gate === '36') {
