@@ -39,6 +39,14 @@ exports.initAct = async () => {
     ICD = icds
   }
 
+  let DEPOT = []
+  queryStr = `SELECT edi_depot_id, edi_depot_name FROM tbl_zhongtan_edi_depot WHERE state = ? ORDER BY edi_depot_name`
+  replacements = [GLBConfig.ENABLE]
+  let depots = await model.simpleSelect(queryStr, replacements)
+  if(depots) {
+    DEPOT = depots
+  }
+
   let returnData = {
     TFINFO: GLBConfig.TFINFO,
     RECEIPT_TYPE_INFO: GLBConfig.RECEIPT_TYPE_INFO,
@@ -47,7 +55,8 @@ exports.initAct = async () => {
     RECEIPT_CURRENCY: GLBConfig.RECEIPT_CURRENCY,
     UPLOAD_STATE: GLBConfig.UPLOAD_STATE,
     DELIVER: DELIVER,
-    ICD: ICD
+    ICD: ICD,
+    DEPOT: DEPOT
   }
 
   return common.success(returnData)
@@ -384,6 +393,11 @@ exports.searchVoyageAct = async req => {
       if(!d.invoice_masterbi_delivery_to && d.customerINFO && d.customerINFO.length === 1) {
         d.invoice_masterbi_delivery_to = d.customerINFO[0].text
       }
+      // depot
+      if(!d.invoice_masterbi_do_return_depot) {
+        d.invoice_masterbi_do_return_depot = 'FANTUZZI'
+      }
+      d.invoice_masterbi_do_return_depot_disabled = await checkDoDepotState(d)
       // files
       d = await this.getMasterbiFiles(d)
       returnData.masterbl.rows.push(d)
@@ -536,6 +550,11 @@ exports.getMasterbiDataAct = async req => {
     if(!d.invoice_masterbi_delivery_to && d.customerINFO && d.customerINFO.length === 1) {
       d.invoice_masterbi_delivery_to = d.customerINFO[0].text
     }
+    // depot
+    if(!d.invoice_masterbi_do_return_depot) {
+      d.invoice_masterbi_do_return_depot = 'FANTUZZI'
+    }
+    d.invoice_masterbi_do_return_depot_disabled = await checkDoDepotState(d)
     // file info
     d = await this.getMasterbiFiles(d)
     returnData.rows.push(d)
@@ -686,6 +705,7 @@ exports.downloadDoAct = async req => {
     bl.invoice_masterbi_do_delivery_order_no = delivery_order_no
     bl.invoice_masterbi_do_fcl = doc.invoice_masterbi_do_fcl
     bl.invoice_masterbi_do_icd = doc.invoice_masterbi_do_icd
+    bl.invoice_masterbi_do_return_depot = doc.invoice_masterbi_do_return_depot
     await bl.save()
   }
 
@@ -718,6 +738,7 @@ exports.downloadDoAct = async req => {
   renderData.valid_to = bl.invoice_masterbi_valid_to ? moment(bl.invoice_masterbi_valid_to).format('DD/MM/YYYY') : ''
   renderData.delivery_to = bl.invoice_masterbi_do_icd
   renderData.fcl = bl.invoice_masterbi_do_fcl
+  renderData.depot = bl.invoice_masterbi_do_return_depot
   renderData.user_name = commonUser.user_name
   renderData.user_phone = commonUser.user_phone
   renderData.user_email = commonUser.user_email
@@ -1828,7 +1849,7 @@ exports.doEditVesselAct = async req => {
 
 const checkConditionDoState = async (bl, ves) => {
   let overdueCheck = false
-  let blacklistCheck = false
+  let blacklistCheck = true
   if(ves.invoice_vessel_ata) {
     let diff = moment().diff(moment(ves.invoice_vessel_ata, 'DD/MM/YYYY'), 'days') + 1
     if(bl.invoice_masterbi_cargo_type === 'IM' && diff > 14) {
@@ -1886,10 +1907,22 @@ const checkConditionDoState = async (bl, ves) => {
       }
     })
     if(customer) {
-      if(GLBConfig.ENABLE !== customer.user_blacklist) {
-        blacklistCheck = true
+      if(GLBConfig.ENABLE === customer.user_blacklist) {
+        blacklistCheck = false
       }
     }
   }
   return overdueCheck && blacklistCheck
+}
+
+const checkDoDepotState = async (bl) => {
+  let queryStr = `SELECT COUNT(1) AS count FROM tbl_zhongtan_invoice_containers WHERE invoice_containers_bl = ? AND invoice_vessel_id = ? 
+                    AND (invoice_containers_size IN (SELECT container_size_code FROM tbl_zhongtan_container_size WHERE state = '1' AND container_special_type = '1') 
+                    OR invoice_containers_size IN (SELECT container_size_name FROM tbl_zhongtan_container_size WHERE state = '1' AND container_special_type = '1'))`
+  let replacements = [bl.invoice_masterbi_bl, bl.invoice_vessel_id]
+  let items = await model.simpleSelect(queryStr, replacements)
+  if(items && items.count && parseInt(items.count) > 0) {
+    return true
+  }
+  return false
 }

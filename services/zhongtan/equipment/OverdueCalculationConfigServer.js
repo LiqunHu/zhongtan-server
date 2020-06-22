@@ -1,5 +1,6 @@
 const common = require('../../../util/CommonUtil')
 const GLBConfig = require('../../../util/GLBConfig')
+const moment = require('moment')
 const model = require('../../../app/model')
 
 const tb_overdue_charge_rule = model.zhongtan_overdue_charge_rule
@@ -64,11 +65,15 @@ exports.addAct = async req => {
 
   let discharge_ports = doc.overdue_charge_discharge_port_multiple
   let container_sizes = doc.overdue_charge_container_size_multiple
+  let overdue_charge_enabled_date = ''
+  if(doc.overdue_charge_enabled_date) {
+    overdue_charge_enabled_date = moment(doc.overdue_charge_enabled_date, 'YYYY-MM-DD').local().format('YYYY-MM-DD')
+  }
   for (let d of discharge_ports) {
     for(let c of container_sizes) {
       let queryStr = `select * from tbl_zhongtan_overdue_charge_rule where state = '1' and 
         overdue_charge_cargo_type = ? and overdue_charge_discharge_port = ? and overdue_charge_carrier = ? and overdue_charge_container_size = ? 
-        and ((overdue_charge_min_day <= ? and overdue_charge_max_day >= ?) and (overdue_charge_min_day <= ? and overdue_charge_max_day >= ?))`
+        and ((overdue_charge_min_day <= ? and overdue_charge_max_day >= ?) and (overdue_charge_min_day <= ? and overdue_charge_max_day >= ?)) and overdue_charge_enabled_date = ? `
       let replacements = [
         doc.overdue_charge_cargo_type,
         d,
@@ -78,6 +83,7 @@ exports.addAct = async req => {
         doc.overdue_charge_min_day,
         doc.overdue_charge_max_day,
         doc.overdue_charge_max_day,
+        overdue_charge_enabled_date
       ]
       let rules = await model.simpleSelect(queryStr, replacements)
       if(rules && rules.length > 0) {
@@ -96,7 +102,8 @@ exports.addAct = async req => {
         overdue_charge_min_day: doc.overdue_charge_min_day,
         overdue_charge_max_day: doc.overdue_charge_max_day,
         overdue_charge_amount: doc.overdue_charge_amount,
-        overdue_charge_currency: doc.overdue_charge_currency
+        overdue_charge_currency: doc.overdue_charge_currency,
+        overdue_charge_enabled_date: overdue_charge_enabled_date
       })
     }
   }
@@ -114,8 +121,12 @@ exports.modifyAct = async req => {
   })
 
   if(obj) {
+    let overdue_charge_enabled_date = ''
+    if(doc.new.overdue_charge_enabled_date) {
+      overdue_charge_enabled_date = moment(doc.new.overdue_charge_enabled_date, 'YYYY-MM-DD').local().format('YYYY-MM-DD')
+    }
     let queryStr = `select * from tbl_zhongtan_overdue_charge_rule where overdue_charge_rule_id != ? and state = '1' and 
-        overdue_charge_cargo_type = ? and overdue_charge_discharge_port = ? and overdue_charge_carrier = ? and overdue_charge_container_size = ? and ((overdue_charge_min_day <= ? and overdue_charge_max_day >= ?) or (overdue_charge_min_day <= ? and overdue_charge_max_day >= ?))`
+        overdue_charge_cargo_type = ? and overdue_charge_discharge_port = ? and overdue_charge_carrier = ? and overdue_charge_container_size = ? and ((overdue_charge_min_day <= ? and overdue_charge_max_day >= ?) or (overdue_charge_min_day <= ? and overdue_charge_max_day >= ?)) and overdue_charge_enabled_date = ?`
     let replacements = [
       doc.old.overdue_charge_rule_id,
       doc.new.overdue_charge_cargo_type,
@@ -126,6 +137,7 @@ exports.modifyAct = async req => {
       doc.new.overdue_charge_min_day,
       doc.new.overdue_charge_max_day,
       doc.new.overdue_charge_max_day,
+      overdue_charge_enabled_date
     ]
     let rules = await model.simpleSelect(queryStr, replacements)
     if(rules && rules.length > 0) {
@@ -140,6 +152,7 @@ exports.modifyAct = async req => {
     obj.overdue_charge_max_day = doc.new.overdue_charge_max_day
     obj.overdue_charge_amount = doc.new.overdue_charge_amount
     obj.overdue_charge_currency = doc.new.overdue_charge_currency
+    obj.overdue_charge_enabled_date = overdue_charge_enabled_date
     await obj.save()
     return common.success()
   } else {

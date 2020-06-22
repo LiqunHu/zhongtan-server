@@ -47,5 +47,10 @@ module.exports = db.defineModel('tbl_zhongtan_overdue_charge_rule', {
     type: db.STRING(10),
     defaultValue: 'USD',
     allowNull: false
+  },
+  overdue_charge_enabled_date: {
+    // 启用日期
+    type: db.STRING(20),
+    allowNull: true
   }
 })

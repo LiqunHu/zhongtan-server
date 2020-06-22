@@ -17,6 +17,8 @@ module.exports = async (req, res) => {
       ret = await srv.modifyAct(req)
     } else if (method === 'delete') {
       ret = await srv.deleteAct(req)
+    } else if (method === 'changeSpecial') {
+      ret = await srv.changeSpecialAct(req)
     }
     common.sendData(res, ret)
   } catch (error) {

@@ -98,3 +98,20 @@ exports.deleteAct = async req => {
     return common.error('container_size_01')
   }
 }
+
+exports.changeSpecialAct = async req => {
+  let doc = common.docValidate(req)
+  let obj = await tb_container_size.findOne({
+    where: {
+      container_size_id: doc.container_size_id,
+      state: GLBConfig.ENABLE
+    }
+  })
+  if (obj) {
+    obj.container_special_type = doc.container_special_type
+    await obj.save()
+    return common.success()
+  } else {
+    return common.error('operator_03')
+  }
+}

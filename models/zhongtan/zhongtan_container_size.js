@@ -17,5 +17,11 @@ module.exports = db.defineModel('tbl_zhongtan_container_size', {
     // 箱尺寸名称
     type: db.STRING(20),
     allowNull: false
+  },
+  container_special_type: {
+    // 是否特种箱型
+    type: db.STRING(5),
+    defaultValue: '0',
+    allowNull: false
   }
 })
