@@ -121,7 +121,13 @@ exports.searchAct = async req => {
     }
     d.container_size_type = containerSize
     // D/O state
-    d.invoice_masterbi_do_state = common.checkDoState(d) && await checkOverdueDoState(d)
+    // vessel info
+    let vessel = await tb_vessel.findOne({
+      where: {
+        invoice_vessel_id: d.invoice_vessel_id
+      }
+    })
+    d.invoice_masterbi_do_state = common.checkDoState(d) && await checkConditionDoState(d, vessel)
     // delivery to
     if(!d.invoice_masterbi_delivery_to && d.customerINFO && d.customerINFO.length === 1) {
       d.invoice_masterbi_delivery_to = d.customerINFO[0].text
@@ -332,9 +338,11 @@ exports.checkPasswordAct = async req => {
   return common.success()
 }
 
-const checkOverdueDoState = async (bl) => {
-  if(bl.invoice_vessel_ata) {
-    let diff = moment().diff(moment(bl.invoice_vessel_ata, 'DD/MM/YYYY'), 'days') + 1
+const checkConditionDoState = async (bl, ves) => {
+  let overdueCheck = false
+  let blacklistCheck = true
+  if(ves.invoice_vessel_ata) {
+    let diff = moment().diff(moment(ves.invoice_vessel_ata, 'DD/MM/YYYY'), 'days') + 1
     if(bl.invoice_masterbi_cargo_type === 'IM' && diff > 14) {
       // 进口的话14天
       let acount = await tb_container.count({
@@ -352,7 +360,7 @@ const checkOverdueDoState = async (bl) => {
           }
         }
       })
-      return acount === rcount
+      overdueCheck = acount === rcount
     } else if(bl.invoice_masterbi_cargo_type === 'TR') {
       // 过境的根据国家名称，然后分30天(BI,RW,SS,UG,MW,ZW)，40天(ZM)，55天（CD）
       let discharge_port = bl.invoice_masterbi_destination.substring(0, 2)
@@ -377,10 +385,23 @@ const checkOverdueDoState = async (bl) => {
             }
           }
         })
-        return acount === rcount
+        overdueCheck = acount === rcount
       } 
     }
-    return true
+    overdueCheck = true
   } 
-  return false
+
+  if(bl.invoice_masterbi_customer_id) {
+    let customer = await tb_user.findOne({
+      where: {
+        user_id: bl.invoice_masterbi_customer_id
+      }
+    })
+    if(customer) {
+      if(GLBConfig.ENABLE === customer.user_blacklist) {
+        blacklistCheck = false
+      }
+    }
+  }
+  return overdueCheck && blacklistCheck
 }

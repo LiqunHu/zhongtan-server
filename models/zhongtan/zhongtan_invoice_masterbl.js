@@ -471,8 +471,7 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_masterbl', {
   invoice_masterbi_bank_reference_no: {
     // bank reference no
     type: db.STRING(200),
-    defaultValue: '',
-    allowNull: false
+    allowNull: true
   },
   invoice_masterbi_do_return_depot: {
     type: db.STRING(20),
