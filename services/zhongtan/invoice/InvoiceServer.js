@@ -973,9 +973,7 @@ exports.depositDoAct = async req => {
       }
     }
     let fileInfo = await common.ejs2Pdf('deposit.ejs', renderData, 'zhongtan')
-    if(bl.invoice_masterbi_deposit_receipt_date) {
-      bl.invoice_masterbi_deposit_receipt_date = null
-    } else {
+    if(!bl.invoice_masterbi_deposit_receipt_date) {
       await tb_uploadfile.destroy({
         where: {
           api_name: 'RECEIPT-DEPOSIT',
