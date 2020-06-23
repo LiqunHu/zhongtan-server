@@ -14,7 +14,7 @@ const tb_uploadfile = model.zhongtan_uploadfile
 
 exports.initAct = async () => {
   let VESSEL_VOYAGE = []
-  let queryStr = `SELECT invoice_vessel_id, invoice_vessel_name, invoice_vessel_voyage FROM tbl_zhongtan_invoice_vessel WHERE state = '1' ORDER BY invoice_vessel_id DESC;`
+  let queryStr = `SELECT invoice_vessel_id, concat(invoice_vessel_name, ' / ', invoice_vessel_voyage) as invoice_vessel FROM tbl_zhongtan_invoice_vessel WHERE state = '1' ORDER BY invoice_vessel_id DESC;`
   let replacements = []
   let vessels = await model.simpleSelect(queryStr, replacements)
   if(vessels) {
@@ -616,4 +616,96 @@ exports.doUndoReleaseAct = async req => {
     }
   }
   return common.success()
+}
+
+exports.exportReceiptAct = async (req, res) => {
+  let doc = common.docValidate(req)
+  let queryStr = `SELECT a.*, b.invoice_vessel_ata, b.invoice_vessel_name, b.invoice_vessel_voyage 
+            FROM tbl_zhongtan_invoice_masterbl a LEFT JOIN tbl_zhongtan_invoice_vessel b ON a.invoice_vessel_id = b.invoice_vessel_id 
+            WHERE a.state = ? AND b.state = ? `
+  let replacements = [GLBConfig.ENABLE, GLBConfig.ENABLE]
+  if(doc.invoice_vessel_id) {
+    queryStr += ` AND a.invoice_vessel_id = ? `
+    replacements.push(doc.invoice_vessel_id)
+  }
+  if(doc.invoice_vessel_ata && doc.invoice_vessel_ata.length > 1 && doc.invoice_vessel_ata[0] && doc.invoice_vessel_ata[1]) {
+    queryStr += ' and STR_TO_DATE(b.invoice_vessel_ata, "%d/%m/%Y") >= ? and STR_TO_DATE(b.invoice_vessel_ata, "%d/%m/%Y") < ? '
+    replacements.push(doc.invoice_vessel_ata[0])
+    replacements.push(moment(doc.invoice_vessel_ata[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
+  }
+  let customer = {}
+  if(doc.invoice_customer_id) {
+    customer = await tb_user.findOne({
+      where: {
+        user_id: doc.invoice_customer_id
+      }
+    })
+    queryStr += ` AND (a.invoice_masterbi_customer_id = ? OR a.invoice_masterbi_delivery_to = ?) `
+    replacements.push(doc.invoice_customer_id)
+    replacements.push(customer.user_name.trim())
+  }
+  if(doc.invoice_do_date && doc.invoice_do_date.length > 1 && doc.invoice_do_date[0] && doc.invoice_do_date[1]) {
+    queryStr += ' and a.invoice_masterbi_do_date >= ? and a.invoice_masterbi_do_date < ? '
+    replacements.push(doc.invoice_do_date[0])
+    replacements.push(moment(doc.invoice_do_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
+  }
+  let result = await model.simpleSelect(queryStr, replacements)
+  let renderData = []
+  for (let r of result) {
+    let row = {}
+    row.bl = r.invoice_masterbi_bl
+    row.vessel = r.invoice_vessel_name + '/' + r.invoice_vessel_voyage
+    row.vessel_ata = r.invoice_vessel_ata
+    row.cargo = r.invoice_masterbi_cargo_type
+    row.bl_type = r.invoice_masterbi_bl_type
+    row.destination = r.invoice_masterbi_destination
+    row.delivery = r.invoice_masterbi_delivery
+    row.freight_terms = r.invoice_masterbi_freight
+    row.loading = r.invoice_masterbi_loading
+    row.containers_number = r.invoice_masterbi_container_no
+    row.exporter_name = r.invoice_masterbi_exporter_name
+    row.exporter_address = r.invoice_masterbi_exporter_address
+    row.consignee_name = r.invoice_masterbi_consignee_name
+    row.consignee_address = r.invoice_masterbi_consignee_address
+    row.notify_name = r.invoice_masterbi_notify_name
+    row.notify_address = r.invoice_masterbi_notify_address
+    row.do_release_party = r.invoice_masterbi_delivery_to ? r.invoice_masterbi_delivery_to.trim() : ''
+    if(doc.invoice_customer_id && doc.invoice_customer_id === r.invoice_masterbi_customer_id) { 
+      row.container_deposit_party = r.invoice_masterbi_customer_id ? customer.user_name.trim() : ''
+    } else if(r.invoice_masterbi_customer_id){
+      customer = await tb_user.findOne({
+        where: {
+          user_id: r.invoice_masterbi_customer_id
+        }
+      })
+      if(customer) {
+        row.container_deposit_party = customer.user_name.trim()
+      }
+    }
+    row.do_date = r.invoice_masterbi_do_date
+    if(r.invoice_masterbi_do_date) {
+      let file = await tb_uploadfile.findOne({
+        where: {
+          state: GLBConfig.ENABLE,
+          api_name: 'RECEIPT-DO',
+          uploadfile_index1: r.invoice_masterbi_id
+        },
+        order: [['uploadfile_id', 'DESC']]
+      })
+      if(file && file.user_id) {
+        let user = await tb_user.findOne({
+          where: {
+            user_id: file.user_id
+          }
+        })
+        if(user) {
+          row.do_user = user.user_name
+        }
+      }
+    }
+    row.empty_return_depot = r.invoice_masterbi_do_return_depot
+    renderData.push(row)
+  }
+  let filepath = await common.ejs2xlsx('exportReceiptTemplate.xlsx', renderData)
+  res.sendFile(filepath)
 }
