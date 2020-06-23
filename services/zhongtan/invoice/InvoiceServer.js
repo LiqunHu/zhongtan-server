@@ -184,7 +184,8 @@ exports.uploadImportAct = async req => {
       let vessel = await tb_vessel.findOne({
         where: {
           invoice_vessel_name: vesslInfoJS[0]['VESSEL NAME'],
-          invoice_vessel_voyage: vesslInfoJS[0]['VOYAGE NUM']
+          invoice_vessel_voyage: vesslInfoJS[0]['VOYAGE NUM'],
+          invoice_vessel_code: vesslInfoJS[0]['VESSEL CODE']
         }
       })
 
