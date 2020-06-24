@@ -477,4 +477,9 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_masterbl', {
     type: db.STRING(20),
     allowNull: true
   },
+  invoice_masterbi_do_disabled: {
+    type: db.STRING(10),
+    defaultValue: '0',
+    allowNull: false
+  },
 })

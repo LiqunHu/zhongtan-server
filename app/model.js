@@ -46,6 +46,13 @@ module.exports.simpleSelect = async (queryStr, replacements) => {
   })
 }
 
+module.exports.simpleUpdate = async (queryStr, replacements) => {
+  return await dbHandle.query(queryStr, {
+    replacements: replacements,
+    type: dbHandle.QueryTypes.UPDATE
+  })
+}
+
 // 分页查询函数 pageDoc 有offset limit 两个字段
 module.exports.queryWithCount = async (pageDoc, queryStr, replacements) => {
   let cnt = queryStr.indexOf('from') + 5

@@ -119,12 +119,13 @@ let genEquipmentInvoiceSeq = async () => {
   }
 }
 
-let genEquipmentReceiptSeq = async () => {
+let genEquipmentReceiptSeq = async (charge_carrier) => {
   try {
-    let queryRst = await sequelize.query("select nextval('equipmentReceiptSeq') num", {
+    let seq_name = charge_carrier + 'EquipmentReceiptSeq'
+    let queryRst = await sequelize.query("select nextval('" + seq_name + "') num", {
       type: sequelize.QueryTypes.SELECT
     }) 
-    let currentIndex = moment().format('YYYY') + '-' + ('000000' + queryRst[0].num).slice(-6)
+    let currentIndex = moment().format('YYYYMMDD') + '-' + ('000000' + queryRst[0].num).slice(-6)
     return currentIndex
   } catch (error) {
     logger.error(error)

@@ -7,13 +7,11 @@ const MailParser = require('mailparser').MailParser
 const config = require('../app/config')
 const model = require('../app/model')
 const GLBConfig = require('../util/GLBConfig')
-const Op = model.Op
+const cal_config_srv = require('../services/zhongtan/equipment/OverdueCalculationConfigServer')
 
 const tb_invoice_containers = model.zhongtan_invoice_containers
 const tb_vessel = model.zhongtan_invoice_vessel
 const tb_bl = model.zhongtan_invoice_masterbl
-const tb_overdue_charge_rule = model.zhongtan_overdue_charge_rule
-const tb_container_size = model.zhongtan_container_size
 
 const transporter = nodemailer.createTransport(config.mailConfig)
 
@@ -156,55 +154,12 @@ const readEdiMail = (ediDepots) => {
                                         } else if(container.invoice_containers_bl.indexOf('OOLU') >= 0) {
                                           charge_carrier  = 'OOCL'
                                         }
-      
-                                        let con_size_type = await tb_container_size.findOne({
-                                          attributes: ['container_size_code', 'container_size_name'],
-                                          where: {
-                                            state : GLBConfig.ENABLE,
-                                            [Op.or]: [{ container_size_code: container.invoice_containers_size }, { container_size_name: container.invoice_containers_size }]
-                                          }
-                                        })
-                                        if(con_size_type) {
-                                          let chargeRules = await tb_overdue_charge_rule.findAll({
-                                            where: {
-                                              state: GLBConfig.ENABLE,
-                                              overdue_charge_cargo_type: bl.invoice_masterbi_cargo_type,
-                                              overdue_charge_discharge_port: discharge_port,
-                                              overdue_charge_carrier: charge_carrier,
-                                              overdue_charge_container_size: con_size_type.container_size_code
-                                            },
-                                            order: [['overdue_charge_min_day', 'DESC']]
-                                          })
-        
-                                          if(chargeRules && chargeRules.length  > 0) {
-                                            let diff = moment(container.invoice_containers_actually_return_date, 'DD/MM/YYYY').diff(moment(vessel.invoice_vessel_ata, 'DD/MM/YYYY'), 'days') + 1 // Calendar day Cover First Day
-                                            let overdueAmount = 0
-                                            let freeMaxDay = 0
-                                            for(let c of chargeRules) {
-                                              let charge = parseInt(c.overdue_charge_amount)
-                                              let min = parseInt(c.overdue_charge_min_day)
-                                              let max = parseInt(c.overdue_charge_max_day)
-                                              if(diff >= min) {
-                                                if(c.overdue_charge_max_day) {
-                                                  if(diff > max) {
-                                                    overdueAmount = overdueAmount + charge * (max - min + 1)
-                                                  } else {
-                                                    overdueAmount = overdueAmount + charge * (diff - min + 1)
-                                                  }
-                                                } else {
-                                                  overdueAmount = overdueAmount + charge * (diff - min + 1)
-                                                }
-                                              }
-                                              if(charge === 0) {
-                                                if(max > freeMaxDay) {
-                                                  freeMaxDay = max
-                                                }
-                                              }
-                                            }
-                                            container.invoice_containers_actually_return_overdue_days = diff > freeMaxDay ? diff - freeMaxDay : 0
-                                            container.invoice_containers_actually_return_overdue_amount = overdueAmount
-                                          }
-                                        }
+                                        let free_days = await cal_config_srv.queryContainerFreeDays(bl.invoice_masterbi_cargo_type, discharge_port, charge_carrier, container.invoice_containers_size, vessel.invoice_vessel_ata)
+                                        let cal_result = await cal_config_srv.demurrageCalculation(free_days, vessel.invoice_vessel_ata, container.invoice_containers_actually_return_date, bl.invoice_masterbi_cargo_type, discharge_port, charge_carrier, container.invoice_containers_size, vessel.invoice_vessel_ata)
+                                        if(cal_result.diff_days !== -1) {
+                                          container.invoice_containers_actually_return_overdue_days = cal_result.overdue_days
+                                          container.invoice_containers_actually_return_overdue_amount = cal_result.overdue_amount
+                                        } 
                                       } else if(gate === '36') {
                                         // GATE OUT  
                                         container.invoice_containers_actually_gate_out_edi_date = returnDate

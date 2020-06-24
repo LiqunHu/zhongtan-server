@@ -1,5 +1,7 @@
 const ediMail = require('./ediMail')
+const demurrageReceipt = require('./demurrageReceipt')
 
 module.exports = {
-  readEdiMail: ediMail.readEdiMail 
+  readEdiMail: ediMail.readEdiMail,
+  resetDemurrageReceiptSeq: demurrageReceipt.resetDemurrageReceiptSeq 
 }

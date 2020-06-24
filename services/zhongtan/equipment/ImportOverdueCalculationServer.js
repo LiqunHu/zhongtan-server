@@ -5,12 +5,12 @@ const GLBConfig = require('../../../util/GLBConfig')
 const model = require('../../../app/model')
 const seq = require('../../../util/Sequence')
 const mailer = require('../../../util/Mail')
+const cal_config_srv = require('./OverdueCalculationConfigServer')
 const Op = model.Op
 
 const tb_user = model.common_user
 const tb_vessel = model.zhongtan_invoice_vessel
 const tb_bl = model.zhongtan_invoice_masterbl
-const tb_overdue_charge_rule = model.zhongtan_overdue_charge_rule
 const tb_container_size = model.zhongtan_container_size
 const tb_container = model.zhongtan_invoice_containers
 const tb_invoice_container = model.zhongtan_overdue_invoice_containers
@@ -114,36 +114,13 @@ exports.searchAct = async req => {
       } else if(d.invoice_containers_bl.indexOf('OOLU') >= 0) {
         charge_carrier  = 'OOCL'
       }
-      let con_size_type = await tb_container_size.findOne({
-        attributes: ['container_size_code', 'container_size_name'],
-        where: {
-          state : GLBConfig.ENABLE,
-          [Op.or]: [{ container_size_code: d.invoice_containers_size }, { container_size_name: d.invoice_containers_size }]
-        }
-      })
-      let chargeRule = await tb_overdue_charge_rule.findOne({
-        where: {
-          state: GLBConfig.ENABLE,
-          overdue_charge_cargo_type: d.invoice_masterbi_cargo_type,
-          overdue_charge_discharge_port: discharge_port,
-          overdue_charge_carrier: charge_carrier,
-          overdue_charge_container_size: con_size_type? con_size_type.container_size_code : d.invoice_containers_size,
-          overdue_charge_amount: '0'
-        },
-        order: [['overdue_charge_min_day']]
-      })
-      if(chargeRule && chargeRule.overdue_charge_max_day) {
-        d.invoice_containers_empty_return_overdue_static_free_days = parseInt(chargeRule.overdue_charge_max_day)
-        if(d.invoice_containers_empty_return_overdue_free_days) {
-          d.invoice_containers_empty_return_overdue_free_days = parseInt(d.invoice_containers_empty_return_overdue_free_days)
-        } else {
-          d.invoice_containers_empty_return_overdue_free_days = parseInt(chargeRule.overdue_charge_max_day)
-        }
+      // cargo_type, discharge_port, carrier, container_type, enabled_date
+      d.invoice_containers_empty_return_overdue_static_free_days = await cal_config_srv.queryContainerFreeDays(d.invoice_masterbi_cargo_type, discharge_port, charge_carrier, d.invoice_containers_size, d.invoice_vessel_ata)
+      if(d.invoice_containers_empty_return_overdue_free_days) {
+        d.invoice_containers_empty_return_overdue_free_days = parseInt(d.invoice_containers_empty_return_overdue_free_days)
       } else {
-        d.invoice_containers_empty_return_overdue_static_free_days = 0
-        d.invoice_containers_empty_return_overdue_free_days = 0
+        d.invoice_containers_empty_return_overdue_free_days = parseInt(d.invoice_containers_empty_return_overdue_static_free_days)
       }
-
       let rcount = await tb_invoice_container.count({
         where: {
           overdue_invoice_containers_invoice_containers_id: d.invoice_containers_id,
@@ -192,81 +169,13 @@ exports.calculationAct = async req => {
     charge_carrier  = 'OOCL'
   }
 
-  let con_size_type = await tb_container_size.findOne({
-    attributes: ['container_size_code', 'container_size_name'],
-    where: {
-      state : GLBConfig.ENABLE,
-      [Op.or]: [{ container_size_code: doc.invoice_containers_size }, { container_size_name: doc.invoice_containers_size }]
-    }
-  })
-  if(!con_size_type) {
+  // free_days, discharge_date, return_date, cargo_type, discharge_port, carrier, container_type, enabled_date
+  let cal_result = await cal_config_srv.demurrageCalculation(free_days, doc.invoice_vessel_ata, doc.return_date, 
+    doc.invoice_masterbi_cargo_type, discharge_port, charge_carrier, doc.invoice_containers_size, doc.invoice_vessel_ata)
+  if(cal_result.diff_days === -1) {
     return common.error('equipment_02')
-  }
-  let chargeRules = await tb_overdue_charge_rule.findAll({
-    where: {
-      state: GLBConfig.ENABLE,
-      overdue_charge_cargo_type: doc.invoice_masterbi_cargo_type,
-      overdue_charge_discharge_port: discharge_port,
-      overdue_charge_carrier: charge_carrier,
-      overdue_charge_container_size: con_size_type.container_size_code
-    },
-    order: [['overdue_charge_min_day', 'DESC']]
-  })
-  if(chargeRules && chargeRules.length  > 0) {
-    let diff = moment(doc.return_date, 'DD/MM/YYYY').diff(moment(doc.invoice_vessel_ata, 'DD/MM/YYYY'), 'days') + 1 // Calendar day Cover First Day
-    let overdueAmount = 0
-    let freeMaxDay = 0
-    if(free_days == 0) {
-      for(let c of chargeRules) {
-        let charge = parseInt(c.overdue_charge_amount)
-        if(charge === 0) {
-          freeMaxDay = parseInt(c.overdue_charge_max_day)
-        }
-      }
-    } else {
-      freeMaxDay = free_days
-    }
-    if(diff <= freeMaxDay) {
-      let returnData = {
-        diff_days: 0,
-        overdue_amount: 0
-      }
-      return common.success(returnData)
-    } else {
-      for(let c of chargeRules) {
-        let charge = parseInt(c.overdue_charge_amount)
-        let min = parseInt(c.overdue_charge_min_day)
-        if(c.overdue_charge_max_day) {
-          let max = parseInt(c.overdue_charge_max_day)
-          if(freeMaxDay > max) {
-            continue
-          } else {
-            if(freeMaxDay >= min && freeMaxDay <= max) {
-              min = freeMaxDay + 1
-            }
-            if(diff > max) {
-              overdueAmount = overdueAmount + charge * (max - min + 1)
-            } else if((diff >= min)){
-              overdueAmount = overdueAmount + charge * (diff - min + 1)
-            }
-          }
-        } else {
-          if(freeMaxDay >= min) {
-            min = freeMaxDay + 1
-          } 
-          if(diff >= min) {
-            overdueAmount = overdueAmount + charge * (diff - min + 1)
-          }
-        }
-      }
-      let returnData = {
-        diff_days: diff - freeMaxDay,
-        overdue_amount: overdueAmount
-      }
-      return common.success(returnData)
-    }
   } else {
-    return common.error('equipment_02')
+    return cal_result
   }
 }
 

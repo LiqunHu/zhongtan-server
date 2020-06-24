@@ -45,6 +45,8 @@ module.exports = async (req, res) => {
       ret = await srv.checkPasswordAct(req)
     } else if (method === 'doEditVessel') {
       ret = await srv.doEditVesselAct(req)
+    } else if (method === 'changeDoDisabled') {
+      ret = await srv.changeDoDisabledAct(req)
     }
     
     common.sendData(res, ret)

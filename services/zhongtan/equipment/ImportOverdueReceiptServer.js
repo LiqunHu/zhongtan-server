@@ -116,7 +116,13 @@ exports.doReceiptAct = async req => {
       invoice_masterbi_id: invoice.uploadfile_index1
     }
   })
-  let receipt_no = await seq.genEquipmentReceiptSeq()
+  let charge_carrier = 'COSCO'
+  if(bl.invoice_masterbi_bl.indexOf('COS') >= 0) {
+    charge_carrier  = 'COSCO'
+  } else if(bl.invoice_masterbi_bl.indexOf('OOLU') >= 0) {
+    charge_carrier  = 'OOCL'
+  }
+  let receipt_no = await seq.genEquipmentReceiptSeq(charge_carrier)
   
   let renderData = {}
   renderData.overdue_invoice_receipt_no = receipt_no

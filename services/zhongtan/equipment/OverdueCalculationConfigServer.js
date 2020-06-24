@@ -2,6 +2,7 @@ const common = require('../../../util/CommonUtil')
 const GLBConfig = require('../../../util/GLBConfig')
 const moment = require('moment')
 const model = require('../../../app/model')
+const Op = model.Op
 
 const tb_overdue_charge_rule = model.zhongtan_overdue_charge_rule
 const tb_container_size = model.zhongtan_container_size
@@ -34,8 +35,12 @@ exports.searchAct = async req => {
   let replacements = []
 
   if(doc.search_data) {
+    if (doc.search_data.enabled_date) {
+      queryStr += ' and overdue_charge_enabled_date = ?'
+      replacements.push(doc.search_data.enabled_date)
+    }
     if (doc.search_data.overdue_charge_cargo_type) {
-      queryStr += ' and overdue_charge_cargo_type = ?'
+      queryStr += ' and overdue_charge_enabled_date = ?'
       replacements.push(doc.search_data.overdue_charge_cargo_type)
     }
     if (doc.search_data.overdue_charge_discharge_port) {
@@ -175,5 +180,147 @@ exports.deleteAct = async req => {
     return common.success()
   } else {
     return common.error('equipment_02')
+  }
+}
+
+/**
+ * 查询箱超期费规则
+ * @param {*} cargo_type 
+ * @param {*} discharge_port 
+ * @param {*} carrier 
+ * @param {*} container_type 
+ * @param {*} enabled_date 
+ */
+exports.queryDemurrageRules = async (cargo_type, discharge_port, carrier, container_type, enabled_date) => {
+  let con_size_type = await tb_container_size.findOne({
+    attributes: ['container_size_code', 'container_size_name'],
+    where: {
+      state : GLBConfig.ENABLE,
+      [Op.or]: [{ container_size_code: container_type }, { container_size_name: container_type }]
+    }
+  })
+  if(con_size_type) {
+    let queryStr = `SELECT overdue_charge_enabled_date FROM tbl_zhongtan_overdue_charge_rule WHERE state = '1' GROUP BY overdue_charge_enabled_date  ORDER BY overdue_charge_enabled_date DESC `
+    let replacements = []
+    let enabledDates = await model.simpleSelect(queryStr, replacements)
+    let baseEnabledDate = ''
+    if(enabledDates) {
+      if(enabled_date) {
+        for(let d of enabledDates) {
+          if(moment(enabled_date, 'DD/MM/YYYY').isAfter(moment(d.overdue_charge_enabled_date))) {
+            baseEnabledDate = d.overdue_charge_enabled_date
+            break
+          }
+        }
+      }
+    }
+    let type = con_size_type.container_size_code
+    queryStr = `SELECT * FROM tbl_zhongtan_overdue_charge_rule WHERE state = ? AND overdue_charge_cargo_type = ? 
+                      AND overdue_charge_discharge_port = ? AND overdue_charge_carrier = ? AND overdue_charge_container_size = ? `
+    replacements = [GLBConfig.ENABLE, cargo_type, discharge_port, carrier, type]
+    if(baseEnabledDate) {
+      queryStr += ` AND overdue_charge_enabled_date = ? `
+      replacements.push(baseEnabledDate)
+    } else {
+      queryStr += ` AND (overdue_charge_enabled_date IS NULL OR overdue_charge_enabled_date = '') `
+    }
+    queryStr += ` ORDER BY  overdue_charge_min_day DESC`
+    let chargeRules = await model.simpleSelect(queryStr, replacements)
+    if(chargeRules && chargeRules.length  > 0) {
+      return chargeRules
+    }
+  }
+  return []
+}
+/**
+ * 查询免用箱期
+ * @param {*} cargo_type 
+ * @param {*} discharge_port 
+ * @param {*} carrier 
+ * @param {*} container_type 
+ * @param {*} enabled_date 
+ */
+exports.queryContainerFreeDays = async (cargo_type, discharge_port, carrier, container_type, enabled_date) => {
+  let chargeRules = await this.queryDemurrageRules(cargo_type, discharge_port, carrier, container_type, enabled_date)
+  if(chargeRules && chargeRules.length  > 0) {
+    return chargeRules[chargeRules.length - 1].overdue_charge_max_day
+  }
+  return 0
+}
+
+/**
+ * 计算箱超期费
+ * @param {*} free_days 
+ * @param {*} discharge_date 
+ * @param {*} return_date 
+ * @param {*} cargo_type 
+ * @param {*} discharge_port 
+ * @param {*} carrier 
+ * @param {*} container_type 
+ * @param {*} enabled_date 
+ */
+exports.demurrageCalculation = async (free_days, discharge_date, return_date, cargo_type, discharge_port, carrier, container_type, enabled_date) => {
+  if(free_days) {
+    free_days = parseInt(free_days)
+  }
+  let chargeRules = await this.queryDemurrageRules(cargo_type, discharge_port, carrier, container_type, enabled_date)
+  if(chargeRules && chargeRules.length  > 0) {
+    let diff = moment(return_date, 'DD/MM/YYYY').diff(moment(discharge_date, 'DD/MM/YYYY'), 'days') + 1 // Calendar day Cover First Day
+    let overdueAmount = 0
+    let freeMaxDay = 0
+    if(free_days == 0) {
+      for(let c of chargeRules) {
+        let charge = parseInt(c.overdue_charge_amount)
+        if(charge === 0) {
+          freeMaxDay = parseInt(c.overdue_charge_max_day)
+        }
+      }
+    } else {
+      freeMaxDay = free_days
+    }
+    if(diff <= freeMaxDay) {
+      return {
+        diff_days: diff,
+        overdue_days: 0,
+        overdue_amount: 0
+      }
+    } else {
+      for(let c of chargeRules) {
+        let charge = parseInt(c.overdue_charge_amount)
+        let min = parseInt(c.overdue_charge_min_day)
+        if(c.overdue_charge_max_day) {
+          let max = parseInt(c.overdue_charge_max_day)
+          if(freeMaxDay > max) {
+            continue
+          } else {
+            if(freeMaxDay >= min && freeMaxDay <= max) {
+              min = freeMaxDay + 1
+            }
+            if(diff > max) {
+              overdueAmount = overdueAmount + charge * (max - min + 1)
+            } else if((diff >= min)){
+              overdueAmount = overdueAmount + charge * (diff - min + 1)
+            }
+          }
+        } else {
+          if(freeMaxDay >= min) {
+            min = freeMaxDay + 1
+          } 
+          if(diff >= min) {
+            overdueAmount = overdueAmount + charge * (diff - min + 1)
+          }
+        }
+      }
+      return {
+        diff_days: diff,
+        overdue_days: diff - freeMaxDay,
+        overdue_amount: overdueAmount
+      }
+    }
+  }
+  return {
+    diff_days: -1,
+    overdue_days: 0,
+    overdue_amount: 0
   }
 }
