@@ -40,7 +40,7 @@ exports.searchAct = async req => {
       replacements.push(doc.search_data.enabled_date)
     }
     if (doc.search_data.overdue_charge_cargo_type) {
-      queryStr += ' and overdue_charge_enabled_date = ?'
+      queryStr += ' and overdue_charge_cargo_type = ?'
       replacements.push(doc.search_data.overdue_charge_cargo_type)
     }
     if (doc.search_data.overdue_charge_discharge_port) {
