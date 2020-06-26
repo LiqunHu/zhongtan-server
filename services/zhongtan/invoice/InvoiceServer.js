@@ -854,7 +854,7 @@ exports.searchCustomerAct = async req => {
     replacements.push(moment().format('YYYY-MM-DD'))
     replacements.push(moment().format('YYYY-MM-DD'))
     replacements.push(moment().format('YYYY-MM-DD'))
-    let search_text = '%' + doc.search_text + '%'
+    let search_text = doc.search_text + '%'
     replacements.push(search_text)
     replacements.push(search_text)
     replacements.push(search_text)

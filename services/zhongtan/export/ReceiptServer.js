@@ -30,7 +30,7 @@ exports.searchCustomerAct = async req => {
                 where state = "1" and user_type = "${GLBConfig.TYPE_CUSTOMER}"  
                 and (user_username like ? or user_phone like ? or user_name like ?)`
     let replacements = []
-    let search_text = '%' + doc.search_text + '%'
+    let search_text = doc.search_text + '%'
     replacements.push(search_text)
     replacements.push(search_text)
     replacements.push(search_text)

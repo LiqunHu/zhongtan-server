@@ -207,7 +207,7 @@ exports.searchCustomerAct = async req => {
     let queryStr = `select a.user_id, a.user_name from tbl_common_user a where a.state = '1' and a.user_type = '${GLBConfig.TYPE_CUSTOMER}'  
                    and (a.user_username like ? or a.user_phone like ? or a.user_name like ?) ORDER BY a.user_username`
     let replacements = []
-    let search_text = '%' + doc.search_text + '%'
+    let search_text = doc.search_text + '%'
     replacements.push(search_text)
     replacements.push(search_text)
     replacements.push(search_text)
