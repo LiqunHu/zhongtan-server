@@ -85,7 +85,7 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_masterbl', {
   },
   invoice_masterbi_package_unit: {
     // Package Unit
-    type: db.STRING(10),
+    type: db.STRING(100),
     defaultValue: '',
     allowNull: false
   },
@@ -97,7 +97,7 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_masterbl', {
   },
   invoice_masterbi_gross_weight_unit: {
     // Gross Weight Unit
-    type: db.STRING(10),
+    type: db.STRING(100),
     defaultValue: '',
     allowNull: false
   },
@@ -109,7 +109,7 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_masterbl', {
   },
   invoice_masterbi_gross_volume_unit: {
     // Gross Volume Unit
-    type: db.STRING(10),
+    type: db.STRING(100),
     defaultValue: '',
     allowNull: false
   },
@@ -169,7 +169,7 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_masterbl', {
   },
   invoice_masterbi_exporter_name: {
     // Exporter Name
-    type: db.STRING(100),
+    type: db.STRING(1000),
     defaultValue: '',
     allowNull: false
   },
@@ -241,7 +241,7 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_masterbl', {
   },
   invoice_masterbi_shipping_mark: {
     // Shipping Mark
-    type: db.STRING(50),
+    type: db.STRING(2000),
     defaultValue: '',
     allowNull: false
   },
@@ -253,7 +253,7 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_masterbl', {
   },
   invoice_masterbi_net_weight_unit: {
     // Net Weight Unit
-    type: db.STRING(10),
+    type: db.STRING(100),
     defaultValue: '',
     allowNull: false
   },

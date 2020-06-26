@@ -115,16 +115,25 @@ exports.uploadImportAct = async req => {
           let measurement_unit = ''
           let freight = m['Freight Terms'] || ''
           if(m['PCS/QTY']) {
-            qty = m['PCS/QTY'].replace(/(\d+(\.\d+)?)/ig, '')
-            pcs = m['PCS/QTY'].replace(qty, '')
+            let pcsExec = /(\d+(\.\d+)?)/i.exec(m['PCS/QTY'])
+            if(pcsExec && pcsExec.length > 0) {
+              pcs = pcsExec[0]
+              qty = m['PCS/QTY'].replace(pcs, '').trim()
+            }
           }
           if(m['Weight']) {
-            weight_unit = m['Weight'].replace(/(\d+(\.\d+)?)/ig, '')
-            weight = m['Weight'].replace(weight_unit, '')
+            let weightExec = /(\d+(\.\d+)?)/i.exec(m['Weight'])
+            if(weightExec && weightExec.length > 0) {
+              weight = weightExec[0]
+              weight_unit = m['Weight'].replace(weight, '').trim()
+            }
           }
           if(m['Measurement']) {
-            measurement_unit = m['Measurement'].replace(/(\d+(\.\d+)?)/ig, '')
-            measurement = m['Measurement'].replace(measurement_unit, '')
+            let measurementExec = /(\d+(\.\d+)?)/i.exec(m['Measurement'])
+            if(measurementExec && measurementExec.length > 0) {
+              measurement = measurementExec[0]
+              measurement_unit = m['Measurement'].replace(measurement, '').trim()
+            }
           }
           if(m['Freight Terms']) {
             freight = m['Freight Terms']
