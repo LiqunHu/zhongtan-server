@@ -1046,7 +1046,11 @@ exports.depositDoAct = async req => {
       } else {
         renderData.check_cash = 'Cheque/ ' + bl.invoice_masterbi_check_no
       }
-      renderData.sum_fee = parseFloat(bl.invoice_masterbi_receipt_amount.replace(/,/g, '') || 0)
+      if(bl.invoice_masterbi_receipt_amount) {
+        renderData.sum_fee = parseFloat(bl.invoice_masterbi_receipt_amount.toString().replace(/,/g, '') || 0)
+      } else {
+        renderData.sum_fee = parseFloat('0'.replace(/,/g, '') || 0)
+      }
       renderData.sum_fee_str = numberToText(renderData.sum_fee)
       let fileInfo = await common.ejs2Pdf('receipta.ejs', renderData, 'zhongtan')
       await tb_uploadfile.destroy({
