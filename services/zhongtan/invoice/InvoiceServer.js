@@ -398,6 +398,8 @@ exports.searchVoyageAct = async req => {
         containerSize = containerSize + c.invoice_containers_size + ' * ' + c.invoice_containers_count + '    '
       }
       d.container_size_type = containerSize
+      // Invoice state
+      d.invoice_masterbi_invoice_state = await checkConditionInvoiceState(d)
       // D/O state overdue check
       d.invoice_masterbi_do_state = common.checkDoState(d) && await checkConditionDoState(d, vessel)
       // delivery to
@@ -555,6 +557,8 @@ exports.getMasterbiDataAct = async req => {
       containerSize = containerSize + c.invoice_containers_size + ' * ' + c.invoice_containers_count + '    '
     }
     d.container_size_type = containerSize
+    // Invoice state
+    d.invoice_masterbi_invoice_state = await checkConditionInvoiceState(d)
     // D/O state
     d.invoice_masterbi_do_state = common.checkDoState(d) && await checkConditionDoState(d, vessel)
     // delivery to
@@ -717,6 +721,7 @@ exports.downloadDoAct = async req => {
     bl.invoice_masterbi_do_fcl = doc.invoice_masterbi_do_fcl
     bl.invoice_masterbi_do_icd = doc.invoice_masterbi_do_icd
     bl.invoice_masterbi_do_return_depot = doc.invoice_masterbi_do_return_depot
+    bl.invoice_masterbi_do_release_date = new Date()
     await bl.save()
   }
 
@@ -780,7 +785,9 @@ exports.downloadDoAct = async req => {
     user_id: user.user_id,
     uploadfile_index1: bl.invoice_masterbi_id,
     uploadfile_name: fileInfo.name,
-    uploadfile_url: fileInfo.url
+    uploadfile_url: fileInfo.url,
+    uploadfil_release_date: new Date(),
+    uploadfil_release_user_id: user.user_id
   })
   return common.success({ url: fileInfo.url })
 }
@@ -863,7 +870,8 @@ exports.searchCustomerAct = async req => {
       returnData.customerINFO.push({
         id: s.user_id,
         text: s.user_name,
-        fixed: s.fixed_deposit_id
+        fixed: s.fixed_deposit_id,
+        balcklist: s.user_blacklist
       })
     }
     return common.success(returnData)
@@ -1770,7 +1778,7 @@ exports.searchFixedDepositAct = async req => {
       }
     }
   }
-  
+  renderData.invoice_masterbi_customer_blacklist = true
   if(doc.invoice_masterbi_customer_id) {
     queryStr = `select * from tbl_zhongtan_customer_fixed_deposit where state = '1' 
                     AND fixed_deposit_customer_id = ? AND deposit_work_state = ? AND ((deposit_begin_date <= ? AND deposit_long_term = ?) 
@@ -1785,6 +1793,15 @@ exports.searchFixedDepositAct = async req => {
       renderData.invoice_container_deposit_currency = fixedDeposits[0].deposit_currency ? fixedDeposits[0].deposit_currency : 'USD'
       renderData.invoice_masterbi_deposit_comment = fixedDeposits[0].fixed_deposit_type === 'GU' ? 'GUARANTEE LETTER NO.' + fixedDeposits[0].deposit_guarantee_letter_no : 'FIXED CONTAINER DEPOSIT/' + fixedDeposits[0].deposit_receipt_no
     }
+
+    let customer = await tb_user.findOne({
+      where: {
+        user_id: doc.invoice_masterbi_customer_id
+      }
+    })
+    if(customer) {
+      renderData.invoice_masterbi_customer_blacklist = GLBConfig.ENABLE === customer.user_blacklist
+    }
   }
   
   if(bl.invoice_masterbi_freight_charge && common.isNumber(bl.invoice_masterbi_freight_charge)) {
@@ -1793,6 +1810,8 @@ exports.searchFixedDepositAct = async req => {
     renderData.invoice_masterbi_of_fixed = '1'
     renderData.invoice_masterbi_of_currency = bl.invoice_masterbi_freight_currency ? bl.invoice_masterbi_freight_currency : 'USD'
   }
+
+
   return common.success(renderData)
 }
 
@@ -1922,4 +1941,21 @@ const checkDoDepotState = async (bl) => {
     return true
   }
   return false
+}
+
+const checkConditionInvoiceState = async (bl) => {
+  let blacklistCheck = true
+  if(bl.invoice_masterbi_customer_id) {
+    let customer = await tb_user.findOne({
+      where: {
+        user_id: bl.invoice_masterbi_customer_id
+      }
+    })
+    if(customer) {
+      if(GLBConfig.ENABLE === customer.user_blacklist) {
+        blacklistCheck = false
+      }
+    }
+  }
+  return blacklistCheck
 }
