@@ -723,7 +723,7 @@ exports.checkPasswordAct = async req => {
   } else {
     let adminUser = await tb_user.findOne({
       where: {
-        user_username: 'admin'
+        user_username: 'receiptauth'
       }
     })
     if(adminUser) {
