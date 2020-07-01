@@ -57,7 +57,7 @@ exports.addAct = async req => {
     let adduser = await tb_user.findOne({
       where: {
         state: GLBConfig.ENABLE,
-        [Op.or]: [{ user_phone: doc.user_phone }, { user_username: doc.user_username }]
+        [Op.or]: [{ user_phone: doc.user_phone.trim() }, { user_username: doc.user_username.trim() }]
       }
     })
     if (adduser) {
@@ -65,17 +65,17 @@ exports.addAct = async req => {
     }
     adduser = await tb_user.create({
       user_type: GLBConfig.TYPE_CUSTOMER,
-      user_username: doc.user_username,
-      user_email: doc.user_email,
-      user_phone: doc.user_phone,
+      user_username: doc.user_username.trim(),
+      user_email: doc.user_email.trim(),
+      user_phone: doc.user_phone ? doc.user_phone.trim() : '',
       user_password: GLBConfig.INITPASSWORD,
-      user_name: doc.user_name,
+      user_name: doc.user_name.trim(),
       user_gender: doc.user_gender,
-      user_address: doc.user_address,
+      user_address: doc.user_address.trim(),
       user_address1: doc.user_address1,
       user_address2: doc.user_address2,
       user_zipcode: doc.user_zipcode,
-      user_tin: doc.user_tin
+      user_tin: doc.user_tin ? doc.user_tin.trim() : ''
     })
 
     await tb_user_groups.create({
@@ -103,16 +103,16 @@ exports.modifyAct = async req => {
   })
   if (modiuser) {
     modiuser.user_email = doc.new.user_email
-    modiuser.user_phone = doc.new.user_phone
-    modiuser.user_name = doc.new.user_name
+    modiuser.user_phone = doc.new.user_phone ? doc.new.user_phone.trim() : ''
+    modiuser.user_name = doc.new.user_name.trim()
     modiuser.user_gender = doc.new.user_gender
     modiuser.user_avatar = doc.new.user_avatar
-    modiuser.user_address = doc.new.user_address
+    modiuser.user_address = doc.new.user_address.trim()
     modiuser.user_address1 = doc.new.user_address1
     modiuser.user_address2 = doc.new.user_address2
     modiuser.user_state = doc.new.user_state
     modiuser.user_zipcode = doc.new.user_zipcode
-    modiuser.user_tin = doc.new.user_tin
+    modiuser.user_tin = doc.new.user_tin ? doc.new.user_tin.trim() : ''
     await modiuser.save()
 
     let returnData = JSON.parse(JSON.stringify(modiuser))

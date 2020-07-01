@@ -25,7 +25,9 @@ module.exports = async (req, res) => {
       ret = await srv.doUndoReleaseAct(req)
     } else if (method === 'exportReceipt') {
       return await srv.exportReceiptAct(req, res)
-    } 
+    } else if (method === 'checkPassword') {
+      ret = await srv.checkPasswordAct(req)
+    }
     common.sendData(res, ret)
   } catch (error) {
     common.sendFault(res, error)

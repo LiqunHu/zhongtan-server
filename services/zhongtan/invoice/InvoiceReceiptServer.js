@@ -24,12 +24,17 @@ exports.initAct = async () => {
   }
 
   let CUSTOMER = []
+  let RECEIVES = []
   queryStr = `SELECT user_id, user_name FROM tbl_common_user WHERE state = '1' AND user_type = ? ORDER BY user_name`
   replacements = [GLBConfig.TYPE_CUSTOMER]
   let deliverys = await model.simpleSelect(queryStr, replacements)
   if(deliverys) {
     for(let d of deliverys) {
       CUSTOMER.push(d)
+      let dt = d.user_name.trim()
+      if(RECEIVES.indexOf(dt) < 0) {
+        RECEIVES.push(dt)
+      }
     }
   }
 
@@ -39,7 +44,8 @@ exports.initAct = async () => {
     CASH_BANK_INFO: GLBConfig.CASH_BANK_INFO,
     RECEIPT_CURRENCY: GLBConfig.RECEIPT_CURRENCY,
     VESSEL_VOYAGE: VESSEL_VOYAGE,
-    CUSTOMER: CUSTOMER
+    CUSTOMER: CUSTOMER,
+    RECEIVES: RECEIVES
   }
 
   return common.success(returnData)
@@ -708,4 +714,25 @@ exports.exportReceiptAct = async (req, res) => {
   }
   let filepath = await common.ejs2xlsx('exportReceiptTemplate.xlsx', renderData)
   res.sendFile(filepath)
+}
+
+exports.checkPasswordAct = async req => {
+  let doc = common.docValidate(req)
+  if(!doc.check_password) {
+    return common.error('auth_18')
+  } else {
+    let adminUser = await tb_user.findOne({
+      where: {
+        user_username: 'admin'
+      }
+    })
+    if(adminUser) {
+      if(adminUser.user_password !== doc.check_password) {
+        return common.error('auth_24')
+      }
+    } else {
+      return common.error('auth_18')
+    }
+  }
+  return common.success()
 }
