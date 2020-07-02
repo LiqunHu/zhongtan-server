@@ -47,6 +47,8 @@ module.exports = async (req, res) => {
       ret = await srv.doEditVesselAct(req)
     } else if (method === 'changeDoDisabled') {
       ret = await srv.changeDoDisabledAct(req)
+    } else if (method === 'changeCn') {
+      ret = await srv.changeCnAct(req)
     }
     
     common.sendData(res, ret)

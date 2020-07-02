@@ -686,13 +686,16 @@ exports.getMasterbiFiles = async d => {
 exports.getContainersDataAct = async req => {
   let doc = common.docValidate(req),
     returnData = {}
-
-  let queryStr = `select *
-  from
-  tbl_zhongtan_invoice_containers
-  WHERE
-    invoice_vessel_id = ?`
-  let replacements = [doc.invoice_vessel_id]
+  let queryStr = `select * from tbl_zhongtan_invoice_containers WHERE state = ?`
+  let replacements = [GLBConfig.ENABLE]
+  if(doc.invoice_vessel_id) {
+    queryStr += ` AND invoice_vessel_id = ?`
+    replacements.push(doc.invoice_vessel_id)
+  }
+  if(doc.bl) {
+    queryStr += ` AND invoice_containers_bl = ?`
+    replacements.push(doc.bl)
+  }
   let result = await model.queryWithCount(doc, queryStr, replacements)
   returnData.total = result.count
   returnData.rows = result.data
@@ -934,7 +937,7 @@ exports.depositDoAct = async req => {
     bl.invoice_masterbi_deposit = doc.invoice_masterbi_deposit
     bl.invoice_masterbi_deposit_date = curDate
     let fd = null
-    if(doc.invoice_masterbi_deposit_fixed && doc.invoice_masterbi_deposit_fixed === '1' && !doc.depositEdit) {
+    if(doc.invoice_masterbi_deposit_fixed && doc.invoice_masterbi_deposit_fixed === '1' && doc.invoice_masterbi_deposit_fixed_id && !doc.depositEdit) {
       if(bl.invoice_masterbi_deposit_release_date) {
         return common.error('import_09')
       }
@@ -967,7 +970,7 @@ exports.depositDoAct = async req => {
     renderData.invoice_deposit_currency = doc.invoice_container_deposit_currency
     renderData.invoice_masterbi_deposit_comment = doc.invoice_masterbi_deposit_comment
     renderData.containers = []
-    if(doc.invoice_masterbi_deposit_fixed && doc.invoice_masterbi_deposit_fixed === '1' && !doc.depositEdit) {
+    if(doc.invoice_masterbi_deposit_fixed && doc.invoice_masterbi_deposit_fixed === '1' && doc.invoice_masterbi_deposit_fixed_id && !doc.depositEdit) {
       // fixed container deposit
       renderData.containers.push({
         quantity: 'FIXED',
@@ -1003,7 +1006,7 @@ exports.depositDoAct = async req => {
     let uploadfile_state = 'PB' // TODO state PM => PB
     let uploadfil_release_date = null
     let uploadfil_release_user_id = null
-    if(doc.invoice_masterbi_deposit_fixed && doc.invoice_masterbi_deposit_fixed === '1' && !doc.depositEdit) {
+    if(doc.invoice_masterbi_deposit_fixed && doc.invoice_masterbi_deposit_fixed === '1' && doc.invoice_masterbi_deposit_fixed_id && !doc.depositEdit) {
       // fixed container deposit auto check=> release=> receipt=> receipt release
       uploadfile_state = 'AP'
       uploadfil_release_date = curDate
@@ -1022,7 +1025,7 @@ exports.depositDoAct = async req => {
       uploadfil_release_user_id: uploadfil_release_user_id
     })
 
-    if(doc.invoice_masterbi_deposit_fixed && doc.invoice_masterbi_deposit_fixed === '1' && !doc.depositEdit) {
+    if(doc.invoice_masterbi_deposit_fixed && doc.invoice_masterbi_deposit_fixed === '1' && doc.invoice_masterbi_deposit_fixed_id && !doc.depositEdit) {
       bl.invoice_masterbi_receipt_amount = bl.invoice_masterbi_deposit
       bl.invoice_masterbi_receipt_currency = fd.deposit_currency
       bl.invoice_masterbi_check_cash = fd.deposit_check_cash
@@ -1731,6 +1734,17 @@ exports.searchFixedDepositAct = async req => {
     }
   })
 
+  if(doc.invoice_masterbi_customer_id) {
+    let customer = await tb_user.findOne({
+      where: {
+        user_id: doc.invoice_masterbi_customer_id
+      }
+    })
+    if(customer) {
+      renderData.invoice_masterbi_customer_blacklist = GLBConfig.ENABLE === customer.user_blacklist
+    }
+  }
+
   let isTrCo = bl.invoice_masterbi_cargo_type === 'TR' && bl.invoice_masterbi_freight === 'COLLECT'
   let queryStr = `select * from tbl_zhongtan_invoice_default_fee where state = '1' AND fee_cargo_type = ? `
   let replacements = [doc.invoice_masterbi_cargo_type]
@@ -1782,7 +1796,10 @@ exports.searchFixedDepositAct = async req => {
       }
     }
   }
-  renderData.invoice_masterbi_customer_blacklist = true
+  if(doc.depositType === 'Container Deposit' && renderData.invoice_masterbi_deposit > 0) {
+    renderData.invoice_masterbi_deposit_fixed = '1'
+    return common.success(renderData)
+  }
   if(doc.invoice_masterbi_customer_id) {
     queryStr = `select * from tbl_zhongtan_customer_fixed_deposit where state = '1' 
                     AND fixed_deposit_customer_id = ? AND deposit_work_state = ? AND ((deposit_begin_date <= ? AND deposit_long_term = ?) 
@@ -1798,14 +1815,8 @@ exports.searchFixedDepositAct = async req => {
       renderData.invoice_masterbi_deposit_comment = fixedDeposits[0].fixed_deposit_type === 'GU' ? 'GUARANTEE LETTER NO.' + fixedDeposits[0].deposit_guarantee_letter_no : 'FIXED CONTAINER DEPOSIT/' + fixedDeposits[0].deposit_receipt_no
     }
 
-    let customer = await tb_user.findOne({
-      where: {
-        user_id: doc.invoice_masterbi_customer_id
-      }
-    })
-    if(customer) {
-      renderData.invoice_masterbi_customer_blacklist = GLBConfig.ENABLE === customer.user_blacklist
-    }
+    
+    
   }
   
   if(bl.invoice_masterbi_freight_charge && common.isNumber(bl.invoice_masterbi_freight_charge)) {
@@ -1888,6 +1899,37 @@ exports.changeDoDisabledAct = async req => {
   })
   bl.invoice_masterbi_do_disabled = doc.invoice_masterbi_do_disabled
   await bl.save()
+  return common.success()
+}
+
+exports.changeCnAct = async req => {
+  let doc = common.docValidate(req)
+
+  for (let c of doc.changeCn) {
+    let cn = await tb_container.findOne({
+      where: {
+        invoice_containers_id: c.invoice_containers_id
+      }
+    })
+    cn.invoice_containers_type = c.invoice_containers_type
+    cn.invoice_containers_no = c.invoice_containers_no
+    cn.invoice_containers_size = c.invoice_containers_size
+    cn.invoice_containers_seal1 = c.invoice_containers_seal1
+    cn.invoice_containers_seal2 = c.invoice_containers_seal2
+    cn.invoice_containers_seal3 = c.invoice_containers_seal3
+    cn.invoice_containers_freight_indicator = c.invoice_containers_freight_indicator
+    cn.invoice_containers_package_no = c.invoice_containers_package_no
+    cn.invoice_containers_package_unit = c.invoice_containers_package_unit
+    cn.invoice_containers_volumn = c.invoice_containers_volumn
+    cn.invoice_containers_volumn_unit = c.invoice_containers_volumn_unit
+    cn.invoice_containers_weight = c.invoice_containers_weight
+    cn.invoice_containers_weight_unit = c.invoice_containers_weight_unit
+    cn.invoice_containers_plug_reefer = c.invoice_containers_plug_reefer
+    cn.invoice_containers_min_temperature = c.invoice_containers_min_temperature
+    cn.invoice_containers_max_temperature = c.invoice_containers_max_temperature
+    await cn.save()
+  }
+
   return common.success()
 }
 
