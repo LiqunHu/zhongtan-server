@@ -275,10 +275,10 @@ exports.emptyInvoiceAct = async req => {
       let queryStr = `SELECT * FROM tbl_zhongtan_overdue_invoice_containers WHERE overdue_invoice_containers_invoice_containers_id= ? AND  overdue_invoice_containers_receipt_date IS NOT NULL AND overdue_invoice_containers_receipt_date != '' ORDER BY overdue_invoice_containers_overdue_days+0 DESC, overdue_invoice_containers_receipt_date DESC LIMIT 1`
       let replacements = [con.invoice_containers_id]
       let rcon = await model.simpleSelect(queryStr, replacements)
-      if(rcon) {
-        s.starting_date = moment(rcon.overdue_invoice_containers_return_date, 'DD/MM/YYYY').add(1, 'days').format('DD/MM/YYYY')
-        s.overdue_days = parseInt(con.invoice_containers_empty_return_overdue_days) - parseInt(rcon.overdue_invoice_containers_overdue_days)
-        s.overdue_amount = parseFloat(con.invoice_containers_empty_return_overdue_amount) - parseFloat(rcon.overdue_invoice_containers_overdue_amount) 
+      if(rcon && rcon.length > 0) {
+        s.starting_date = moment(rcon[0].overdue_invoice_containers_return_date, 'DD/MM/YYYY').add(1, 'days').format('DD/MM/YYYY')
+        s.overdue_days = parseInt(con.invoice_containers_empty_return_overdue_days) - parseInt(rcon[0].overdue_invoice_containers_overdue_days)
+        s.overdue_amount = parseFloat(con.invoice_containers_empty_return_overdue_amount) - parseFloat(rcon[0].overdue_invoice_containers_overdue_amount) 
       } else {
         s.starting_date = vessel.invoice_vessel_ata
         s.overdue_days = con.invoice_containers_empty_return_overdue_days
