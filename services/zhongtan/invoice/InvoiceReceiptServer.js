@@ -361,17 +361,26 @@ exports.downloadReceiptAct = async req => {
       invoice_masterbi_id: doc.invoice_masterbi_id
     }
   })
-
-  // if (!bl.invoice_masterbi_invoice_release_date) {
-  //   return common.error('import_07')
-  // }
-
   bl.invoice_masterbi_receipt_amount = doc.invoice_masterbi_receipt_amount
   bl.invoice_masterbi_receipt_currency = doc.invoice_masterbi_receipt_currency
   bl.invoice_masterbi_check_cash = doc.invoice_masterbi_check_cash
   bl.invoice_masterbi_check_no = doc.invoice_masterbi_check_no
   bl.invoice_masterbi_bank_reference_no = doc.invoice_masterbi_bank_reference_no
-  bl.invoice_masterbi_received_from = doc.invoice_masterbi_received_from
+  if(doc.invoice_masterbi_received_from) {
+    bl.invoice_masterbi_received_from = doc.invoice_masterbi_received_from
+  } else if(bl.invoice_masterbi_customer_id){
+    let customer = await tb_user.findOne({
+      where: {
+        user_id: bl.invoice_masterbi_customer_id
+      }
+    })
+    if(customer) {
+      bl.invoice_masterbi_received_from = customer.user_name
+    }
+  }
+  if(!doc.invoice_masterbi_received_from) {
+    return common.error('import_04')
+  }
   bl.invoice_masterbi_receipt_no = await seq.genInvoiceReceiptNo(bl.invoice_masterbi_carrier)
   if(doc.checkType === 'deposit') {
     if(bl.invoice_masterbi_deposit_receipt_date) {
