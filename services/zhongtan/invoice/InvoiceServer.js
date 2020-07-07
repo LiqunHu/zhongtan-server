@@ -927,13 +927,13 @@ exports.depositDoAct = async req => {
   replacements.push(GLBConfig.ENABLE)
   let continers = await model.simpleSelect(queryStr, replacements)
 
+  bl.invoice_masterbi_customer_id = doc.invoice_masterbi_customer_id
+  bl.invoice_masterbi_delivery_to = customer.user_name
+  bl.invoice_masterbi_carrier = doc.invoice_masterbi_carrier
   if (doc.depositType === 'Container Deposit') {
     if(!doc.invoice_masterbi_deposit) {
       return common.error('deposit_01')
     }
-    bl.invoice_masterbi_customer_id = doc.invoice_masterbi_customer_id
-    bl.invoice_masterbi_delivery_to = customer.user_name
-    bl.invoice_masterbi_carrier = doc.invoice_masterbi_carrier
     bl.invoice_masterbi_deposit = doc.invoice_masterbi_deposit
     bl.invoice_masterbi_deposit_date = curDate
     let fd = null
@@ -1022,7 +1022,8 @@ exports.depositDoAct = async req => {
       uploadfile_state: uploadfile_state, 
       uploadfile_amount_comment: doc.invoice_masterbi_deposit_comment,
       uploadfil_release_date: uploadfil_release_date,
-      uploadfil_release_user_id: uploadfil_release_user_id
+      uploadfil_release_user_id: uploadfil_release_user_id,
+      uploadfile_received_from: customer.user_name
     })
 
     if(doc.invoice_masterbi_deposit_fixed && doc.invoice_masterbi_deposit_fixed === '1' && doc.invoice_masterbi_deposit_fixed_id && !doc.depositEdit) {
@@ -1102,8 +1103,6 @@ exports.depositDoAct = async req => {
           return common.error('deposit_02')
         }
     }
-    bl.invoice_masterbi_customer_id = doc.invoice_masterbi_customer_id
-    bl.invoice_masterbi_carrier = doc.invoice_masterbi_carrier
     bl.invoice_masterbi_of = doc.invoice_masterbi_of
     bl.invoice_masterbi_bl_amendment = doc.invoice_masterbi_bl_amendment
     bl.invoice_masterbi_cod_charge = doc.invoice_masterbi_cod_charge
@@ -1384,7 +1383,8 @@ exports.depositDoAct = async req => {
       uploadfile_url: fileInfo.url,
       uploadfile_currency: doc.invoice_fee_currency,
       uploadfile_state: 'PB', // TODO state PM => PB
-      uploadfile_amount_comment: doc.invoice_fee_comment
+      uploadfile_amount_comment: doc.invoice_fee_comment,
+      uploadfile_received_from: customer.user_name
     })
     await bl.save()
     return common.success({ url: fileInfo.url })
@@ -1436,7 +1436,8 @@ exports.depositDoAct = async req => {
       uploadfile_url: fileInfo.url,
       uploadfile_currency: doc.invoice_masterbi_of_currency,
       uploadfile_state: 'PB', // TODO state PM => PB
-      uploadfile_amount_comment: doc.invoice_masterbi_of_comment
+      uploadfile_amount_comment: doc.invoice_masterbi_of_comment,
+      uploadfile_received_from: customer.user_name
     })
 
     return common.success({ url: fileInfo.url })

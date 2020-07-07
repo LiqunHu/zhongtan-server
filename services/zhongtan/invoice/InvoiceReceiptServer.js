@@ -229,6 +229,9 @@ exports.getMasterbiFiles = async d => {
       if(f.uploadfile_state === 'AP' || f.uploadfil_release_date) {
         d.invoice_masterbi_deposit_release_date = f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : moment(f.updated_at).format('DD/MM/YYYY HH:mm')
       }
+      if(f.uploadfile_received_from) {
+        d.invoice_masterbi_deposit_received_from = f.uploadfile_received_from
+      }
     } else if (f.api_name === 'RECEIPT-FEE') {
       filetype = 'Fee'
       d.files.push({
@@ -248,6 +251,9 @@ exports.getMasterbiFiles = async d => {
       d.invoice_fee_comment = f.uploadfile_amount_comment
       if(f.uploadfile_state === 'AP' || f.uploadfil_release_date) {
         d.invoice_masterbi_fee_release_date = f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : moment(f.updated_at).format('DD/MM/YYYY HH:mm')
+      }
+      if(f.uploadfile_received_from) {
+        d.invoice_masterbi_invoice_received_from = f.uploadfile_received_from
       }
     } else if (f.api_name === 'RECEIPT-OF') {
       filetype = 'Freight'
