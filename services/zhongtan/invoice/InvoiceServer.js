@@ -411,7 +411,9 @@ exports.searchVoyageAct = async req => {
       if(d.invoice_masterbi_delivery) {
         let delivery = await tb_user.findOne({
           where: {
-            user_name: d.invoice_masterbi_delivery_to
+            user_name: d.invoice_masterbi_delivery_to,
+            state: GLBConfig.ENABLE,
+            user_type: GLBConfig.TYPE_CUSTOMER
           }
         })
         if(delivery) {
@@ -583,7 +585,9 @@ exports.getMasterbiDataAct = async req => {
     if(d.invoice_masterbi_delivery) {
       let delivery = await tb_user.findOne({
         where: {
-          user_name: d.invoice_masterbi_delivery_to
+          user_name: d.invoice_masterbi_delivery_to,
+          state: GLBConfig.ENABLE,
+          user_type: GLBConfig.TYPE_CUSTOMER
         }
       })
       if(delivery) {
