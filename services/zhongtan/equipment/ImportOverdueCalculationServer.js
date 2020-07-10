@@ -366,6 +366,138 @@ exports.emptyInvoiceAct = async req => {
   }
 }
 
+exports.emptyReInvoiceAct = async req => {
+  let doc = common.docValidate(req), user = req.user, curDate = new Date()
+  let selection = doc.selection
+  let invoicePara = doc.invoicePara
+  if(selection && selection.length > 0) {
+    let row0 = selection[0]
+    let bl = await tb_bl.findOne({
+      where: {
+        invoice_masterbi_id: row0.invoice_masterbi_id
+      }
+    })
+  
+    let vessel = await tb_vessel.findOne({
+      where: {
+        invoice_vessel_id: row0.invoice_vessel_id
+      }
+    })
+  
+    let customer = await tb_user.findOne({
+      where: {
+        user_id: invoicePara.invoice_customer_id
+      }
+    })
+  
+    let commonUser = await tb_user.findOne({
+      where: {
+        user_id: user.user_id
+      }
+    })
+
+    let mergeCon = {}
+    for(let s of selection) {
+      let con = await tb_container.findOne({
+        where: {
+          invoice_containers_id: s.invoice_containers_id
+        }
+      })
+      con.invoice_containers_customer_id = customer.user_id
+      con.invoice_containers_empty_return_invoice_date = curDate
+      con.invoice_containers_empty_return_date_invoice = con.invoice_containers_empty_return_date
+      con.invoice_containers_empty_return_overdue_days_invoice = con.invoice_containers_empty_return_overdue_days
+      con.invoice_containers_empty_return_overdue_amount_invoice = con.invoice_containers_empty_return_overdue_amount
+      con.save()
+      s.invoice_containers_size = con.invoice_containers_size
+      s.invoice_containers_empty_return_date = con.invoice_containers_empty_return_date
+      s.invoice_containers_empty_return_overdue_days = con.invoice_containers_empty_return_overdue_days
+      s.invoice_containers_empty_return_overdue_amount = con.invoice_containers_empty_return_overdue_amount
+      s.starting_date = vessel.invoice_vessel_ata
+      s.overdue_days = con.invoice_containers_empty_return_overdue_days
+      s.overdue_amount = con.invoice_containers_empty_return_overdue_amount
+      if(mergeCon.hasOwnProperty(s.starting_date)) {
+        mergeCon[s.starting_date].push(s)
+      } else {
+        mergeCon[s.starting_date] = []
+        mergeCon[s.starting_date].push(s)
+      }
+    }
+    for(let key in mergeCon) {
+      let row0 = mergeCon[key][0]
+      let renderData = {}
+      renderData.customerName = customer.user_name
+      renderData.address = customer.user_address
+      renderData.destination = bl.invoice_masterbi_destination.substring(0, 2)
+      if(bl.invoice_masterbi_cargo_type === 'TR' || bl.invoice_masterbi_cargo_type === 'TRANSIT') {
+        renderData.cargoType = 'TRANSIT'
+      } else {
+        renderData.cargoType = 'LOCAL'
+      }
+      renderData.masterbiBl = bl.invoice_masterbi_bl
+      renderData.invoiceDate = moment().format('YYYY/MM/DD')
+      renderData.invoiceNo = await seq.genEquipmentInvoiceSeq()
+      renderData.vesselName = vessel.invoice_vessel_name
+      renderData.voyageNumber = vessel.invoice_vessel_voyage
+      renderData.dischargeDate = vessel.invoice_vessel_ata
+      renderData.startingDate = row0.starting_date
+      renderData.user_name = commonUser.user_name
+      renderData.user_phone = commonUser.user_phone
+      renderData.user_email = commonUser.user_email
+      let demurrageTotal = 0
+      renderData.containers = []
+      for(let s of mergeCon[key]) {
+        let conSize = await tb_container_size.findOne({
+          where: {
+            container_size_code: s.invoice_containers_size
+          }
+        })
+        renderData.containers.push({
+          'containerNo': s.invoice_containers_no,
+          'sizeType': conSize ? conSize.container_size_name : s.invoice_containers_size,
+          'returnDate': s.invoice_containers_empty_return_date,
+          'overdusDays': s.overdue_days,
+          'demurrage': formatCurrency(s.overdue_amount),
+        })
+        demurrageTotal += parseFloat(s.overdue_amount)
+      }
+      renderData.demurrageTotal = formatCurrency(demurrageTotal)
+      renderData.demurrageTotalStr = numberToText(demurrageTotal)
+      let fileInfo = await common.ejs2Pdf('demurrage.ejs', renderData, 'zhongtan')
+      let invoice_file = await tb_uploadfile.create({
+        api_name: 'OVERDUE-INVOICE',
+        user_id: user.user_id,
+        uploadfile_index1: bl.invoice_masterbi_id,
+        uploadfile_name: fileInfo.name,
+        uploadfile_url: fileInfo.url,
+        uploadfile_currency: 'USD',
+        uploadfile_state: 'PB', // TODO state PM => PB
+        uploadfile_amount: demurrageTotal,
+        uploadfile_customer_id: customer.user_id
+      })
+      
+      for(let s of mergeCon[key]) {
+        await tb_invoice_container.create({
+          overdue_invoice_containers_invoice_uploadfile_id: invoice_file.uploadfile_id,
+          overdue_invoice_containers_invoice_masterbi_id: s.invoice_masterbi_id,
+          overdue_invoice_containers_invoice_containers_id: s.invoice_containers_id,
+          overdue_invoice_containers_return_date: s.invoice_containers_empty_return_date,
+          overdue_invoice_containers_overdue_days: s.invoice_containers_empty_return_overdue_days,
+          overdue_invoice_containers_overdue_amount: s.invoice_containers_empty_return_overdue_amount,
+          overdue_invoice_containers_overdue_free_days: s.invoice_containers_empty_return_overdue_free_days,
+          overdue_invoice_containers_overdue_increase_days: s.overdue_days,
+          overdue_invoice_containers_overdue_invoice_amount: s.overdue_amount,
+          overdue_invoice_containers_overdue_discharge_date: vessel.invoice_vessel_ata,
+          overdue_invoice_containers_overdue_staring_date: s.starting_date
+        })
+      }
+    }
+    return common.success()
+  } else {
+    return common.error('equipment_03')
+  }
+}
+
 exports.checkPasswordAct = async req => {
   let doc = common.docValidate(req)
   if(!doc.check_password) {

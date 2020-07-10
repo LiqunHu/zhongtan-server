@@ -11,7 +11,10 @@ const tb_user = model.common_user
 const tb_user_groups = model.common_user_groups
 
 exports.initAct = async () => {
-  return common.success()
+  let returnData = {
+    USER_CUSTOMER_TYPE: GLBConfig.USER_CUSTOMER_TYPE
+  }
+  return common.success(returnData)
 }
 
 exports.searchAct = async req => {
@@ -75,6 +78,7 @@ exports.addAct = async req => {
       user_address1: doc.user_address1,
       user_address2: doc.user_address2,
       user_zipcode: doc.user_zipcode,
+      user_customer_type: doc.user_customer_type,
       user_tin: doc.user_tin ? doc.user_tin.trim() : ''
     })
 
@@ -112,6 +116,7 @@ exports.modifyAct = async req => {
     modiuser.user_address2 = doc.new.user_address2
     modiuser.user_state = doc.new.user_state
     modiuser.user_zipcode = doc.new.user_zipcode
+    modiuser.user_customer_type = doc.new.user_customer_type
     modiuser.user_tin = doc.new.user_tin ? doc.new.user_tin.trim() : ''
     await modiuser.save()
 

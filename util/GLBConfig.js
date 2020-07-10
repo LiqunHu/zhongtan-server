@@ -385,4 +385,9 @@ module.exports = {
   STORING_ORDER_EMAIL_SENDER: 'equipmentcontrol@sinotaship.com',
   STORING_ORDER_CARBON_COPY: 'DEMURRAGE@SINOTASHIP.COM',
   STORING_ORDER_BLIND_CARBON_COPY: '540301291@qq.com',
+  USER_CUSTOMER_TYPE: [
+    { id: '0', text: 'ALL', color: 'primary' },
+    { id: '1', text: 'AGENT', color: 'success'},
+    { id: '2', text: 'CONSIGNEE', color: 'warning'}
+  ],
 }

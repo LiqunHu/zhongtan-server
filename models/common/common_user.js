@@ -111,5 +111,11 @@ module.exports = db.defineModel('tbl_common_user', {
     type: db.STRING(10),
     defaultValue: '0',
     allowNull: false
+  },
+  user_customer_type: {
+    // 客户类型 0:ALL 1: agent 代理，2：consignee 收货人
+    type: db.STRING(5),
+    defaultValue: '0',
+    allowNull: false
   }
 })

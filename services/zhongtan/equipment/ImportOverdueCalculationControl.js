@@ -21,6 +21,8 @@ module.exports = async (req, res) => {
       ret = await srv.searchCustomerAct(req)
     } else if (method === 'emptyInvoice') {
       ret = await srv.emptyInvoiceAct(req)
+    } else if (method === 'emptyReInvoice') {
+      ret = await srv.emptyReInvoiceAct(req)
     } else if (method === 'checkPassword') {
       ret = await srv.checkPasswordAct(req)
     } else if (method === 'actuallyOverdueCopy') {

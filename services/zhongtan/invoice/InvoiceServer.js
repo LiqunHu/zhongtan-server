@@ -406,6 +406,19 @@ exports.searchVoyageAct = async req => {
       if(!d.invoice_masterbi_delivery_to && d.customerINFO && d.customerINFO.length === 1) {
         d.invoice_masterbi_delivery_to = d.customerINFO[0].text
       }
+      // 客户类型代理不可更改收货人
+      d.invoice_masterbi_delivery_to_customer_type = '0'
+      if(d.invoice_masterbi_delivery) {
+        let delivery = await tb_user.findOne({
+          where: {
+            user_name: d.invoice_masterbi_delivery_to
+          }
+        })
+        if(delivery) {
+          d.invoice_masterbi_delivery_to_customer_type= delivery.user_customer_type
+        }
+      }
+
       // depot
       if(!d.invoice_masterbi_do_return_depot) {
         d.invoice_masterbi_do_return_depot = 'FANTUZZI'
@@ -564,6 +577,18 @@ exports.getMasterbiDataAct = async req => {
     // delivery to
     if(!d.invoice_masterbi_delivery_to && d.customerINFO && d.customerINFO.length === 1) {
       d.invoice_masterbi_delivery_to = d.customerINFO[0].text
+    }
+    // 客户类型代理不可更改收货人
+    d.invoice_masterbi_delivery_to_customer_type = '0'
+    if(d.invoice_masterbi_delivery) {
+      let delivery = await tb_user.findOne({
+        where: {
+          user_name: d.invoice_masterbi_delivery_to
+        }
+      })
+      if(delivery) {
+        d.invoice_masterbi_delivery_to_customer_type= delivery.user_customer_type
+      }
     }
     // depot
     if(!d.invoice_masterbi_do_return_depot) {
@@ -927,13 +952,13 @@ exports.depositDoAct = async req => {
   replacements.push(GLBConfig.ENABLE)
   let continers = await model.simpleSelect(queryStr, replacements)
 
-  bl.invoice_masterbi_customer_id = doc.invoice_masterbi_customer_id
-  bl.invoice_masterbi_delivery_to = customer.user_name
-  bl.invoice_masterbi_carrier = doc.invoice_masterbi_carrier
   if (doc.depositType === 'Container Deposit') {
     if(!doc.invoice_masterbi_deposit) {
       return common.error('deposit_01')
     }
+    bl.invoice_masterbi_customer_id = doc.invoice_masterbi_customer_id
+    bl.invoice_masterbi_delivery_to = customer.user_name
+    bl.invoice_masterbi_carrier = doc.invoice_masterbi_carrier
     bl.invoice_masterbi_deposit = doc.invoice_masterbi_deposit
     bl.invoice_masterbi_deposit_date = curDate
     let fd = null
@@ -1102,6 +1127,11 @@ exports.depositDoAct = async req => {
         || doc.invoice_masterbi_tasac || doc.invoice_masterbi_printing || doc.invoice_masterbi_others)) {
           return common.error('deposit_02')
         }
+    }
+    if(!bl.invoice_masterbi_customer_id) {
+      bl.invoice_masterbi_customer_id = doc.invoice_masterbi_customer_id
+      bl.invoice_masterbi_delivery_to = customer.user_name
+      bl.invoice_masterbi_carrier = doc.invoice_masterbi_carrier
     }
     bl.invoice_masterbi_of = doc.invoice_masterbi_of
     bl.invoice_masterbi_bl_amendment = doc.invoice_masterbi_bl_amendment
