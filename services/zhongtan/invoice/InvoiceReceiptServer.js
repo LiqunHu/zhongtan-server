@@ -207,6 +207,22 @@ exports.getMasterbiFiles = async d => {
       WHERE a.uploadfile_index1 = ? order by created_at`
   let replacements = [d.invoice_masterbi_id]
   let files = await model.simpleSelect(queryStr, replacements)
+  let lastReceiptDeposit = await tb_uploadfile.findOne({
+    where: {
+      state: GLBConfig.ENABLE,
+      uploadfile_index1: d.invoice_masterbi_id,
+      uploadfile_acttype: 'deposit'
+    },
+    order: [['created_at', 'DESC']]
+  })
+  let lastReceiptFee= await tb_uploadfile.findOne({
+    where: {
+      state: GLBConfig.ENABLE,
+      uploadfile_index1: d.invoice_masterbi_id,
+      uploadfile_acttype: 'fee'
+    },
+    order: [['created_at', 'DESC']]
+  })
   for (let f of files) {
     let filetype = ''
     if (f.api_name === 'RECEIPT-DEPOSIT') {
@@ -228,6 +244,10 @@ exports.getMasterbiFiles = async d => {
       d.invoice_masterbi_deposit_comment = f.uploadfile_amount_comment
       if(f.uploadfile_state === 'AP' || f.uploadfil_release_date) {
         d.invoice_masterbi_deposit_release_date = f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : moment(f.updated_at).format('DD/MM/YYYY HH:mm')
+        if(lastReceiptDeposit && moment(f.created_at).isAfter(lastReceiptDeposit.created_at)) {
+          // 新审核deposit在最后一张收据之后
+          d.invoice_masterbi_deposit_receipt_date = null
+        }
       }
       if(f.uploadfile_received_from) {
         d.invoice_masterbi_deposit_received_from = f.uploadfile_received_from
@@ -251,6 +271,10 @@ exports.getMasterbiFiles = async d => {
       d.invoice_fee_comment = f.uploadfile_amount_comment
       if(f.uploadfile_state === 'AP' || f.uploadfil_release_date) {
         d.invoice_masterbi_fee_release_date = f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : moment(f.updated_at).format('DD/MM/YYYY HH:mm')
+        if(lastReceiptFee && moment(f.created_at).isAfter(lastReceiptFee.created_at)) {
+          // 新审核Fee在最后一张收据之后
+          d.invoice_masterbi_invoice_receipt_date = null
+        }
       }
       if(f.uploadfile_received_from) {
         d.invoice_masterbi_invoice_received_from = f.uploadfile_received_from
@@ -301,37 +325,37 @@ exports.getMasterbiFiles = async d => {
         release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
         release_user: f.user_name
       })
-      if(f.uploadfile_acttype === 'deposit') {
-        let rcount = await tb_uploadfile.count({
-          where: {
-            uploadfile_index1: d.invoice_masterbi_id,
-            api_name: 'RECEIPT-DEPOSIT',
-            uploadfil_release_date: {
-              [Op.gt]: f.created_at
-            }
-          }
-        })
-        if(rcount <= 0) {
-          d.invoice_masterbi_deposit_receipt_date = moment(f.created_at).format('DD/MM/YYYY HH:mm')
-        } else {
-          d.invoice_masterbi_invoice_receipt_date = null
-        }
-      } else if(f.uploadfile_acttype === 'fee') {
-        let rcount = await tb_uploadfile.count({
-          where: {
-            uploadfile_index1: d.invoice_masterbi_id,
-            api_name: 'RECEIPT-FEE',
-            uploadfil_release_date: {
-              [Op.gt]: f.created_at
-            }
-          }
-        })
-        if(rcount <= 0) {
-          d.invoice_masterbi_invoice_receipt_date = moment(f.created_at).format('DD/MM/YYYY HH:mm')
-        } else {
-          d.invoice_masterbi_invoice_receipt_date = null
-        }
-      }
+      // if(f.uploadfile_acttype === 'deposit') {
+      //   let rcount = await tb_uploadfile.count({
+      //     where: {
+      //       uploadfile_index1: d.invoice_masterbi_id,
+      //       api_name: 'RECEIPT-DEPOSIT',
+      //       uploadfil_release_date: {
+      //         [Op.gt]: f.created_at
+      //       }
+      //     }
+      //   })
+      //   if(rcount <= 0) {
+      //     d.invoice_masterbi_deposit_receipt_date = moment(f.created_at).format('DD/MM/YYYY HH:mm')
+      //   } else {
+      //     d.invoice_masterbi_invoice_receipt_date = null
+      //   }
+      // } else if(f.uploadfile_acttype === 'fee') {
+      //   let rcount = await tb_uploadfile.count({
+      //     where: {
+      //       uploadfile_index1: d.invoice_masterbi_id,
+      //       api_name: 'RECEIPT-FEE',
+      //       uploadfil_release_date: {
+      //         [Op.gt]: f.created_at
+      //       }
+      //     }
+      //   })
+      //   if(rcount <= 0) {
+      //     d.invoice_masterbi_invoice_receipt_date = moment(f.created_at).format('DD/MM/YYYY HH:mm')
+      //   } else {
+      //     d.invoice_masterbi_invoice_receipt_date = null
+      //   }
+      // }
     }
   }
   return d
@@ -389,26 +413,26 @@ exports.downloadReceiptAct = async req => {
   }
   bl.invoice_masterbi_receipt_no = await seq.genInvoiceReceiptNo(bl.invoice_masterbi_carrier)
   if(doc.checkType === 'deposit') {
-    if(bl.invoice_masterbi_deposit_receipt_date) {
-      await tb_uploadfile.destroy({
-        where: {
-          api_name: 'RECEIPT-RECEIPT',
-          uploadfile_index1: bl.invoice_masterbi_id,
-          uploadfile_acttype: doc.checkType
-        }
-      })
-    }
+    // if(bl.invoice_masterbi_deposit_receipt_date) {
+    //   await tb_uploadfile.destroy({
+    //     where: {
+    //       api_name: 'RECEIPT-RECEIPT',
+    //       uploadfile_index1: bl.invoice_masterbi_id,
+    //       uploadfile_acttype: doc.checkType
+    //     }
+    //   })
+    // }
     bl.invoice_masterbi_deposit_receipt_date = curDate
   } else if(doc.checkType === 'fee') {
-    if(bl.invoice_masterbi_invoice_receipt_date) {
-      await tb_uploadfile.destroy({
-        where: {
-          api_name: 'RECEIPT-RECEIPT',
-          uploadfile_index1: bl.invoice_masterbi_id,
-          uploadfile_acttype: doc.checkType
-        }
-      })
-    }
+    // if(bl.invoice_masterbi_invoice_receipt_date) {
+    //   await tb_uploadfile.destroy({
+    //     where: {
+    //       api_name: 'RECEIPT-RECEIPT',
+    //       uploadfile_index1: bl.invoice_masterbi_id,
+    //       uploadfile_acttype: doc.checkType
+    //     }
+    //   })
+    // }
     bl.invoice_masterbi_invoice_receipt_date = curDate
   }
   if(common.checkDoState(bl)) {

@@ -79,9 +79,12 @@ const readEdiMail = (ediDepots) => {
                     if(from) {
                       let edi = ''
                       for(let e of ediDepots) {
-                        if(from === e.edi_depot_sender_email) {
-                          edi = e
-                          break
+                        if(e && e.edi_depot_sender_email) {
+                          let ems = e.edi_depot_sender_email.split(';')
+                          if(ems.indexOf(from) >= 0) {
+                            edi = e
+                            break
+                          }
                         }
                       }
 
