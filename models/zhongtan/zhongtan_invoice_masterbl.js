@@ -217,7 +217,7 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_masterbl', {
   },
   invoice_masterbi_notify_name: {
     // Notify Name
-    type: db.STRING(100),
+    type: db.STRING(500),
     defaultValue: '',
     allowNull: false
   },
