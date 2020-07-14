@@ -80,6 +80,12 @@ exports.uploadImportAct = async req => {
       // 散货
       let bulkInfo = wb.Sheets['BULKSHIPMENT']
       if(!bulkInfo) {
+        let sheetNames = wb.SheetNames
+        if(sheetNames && sheetNames.length > 0) {
+          bulkInfo = wb.Sheets[sheetNames[0]]
+        }
+      }
+      if(!bulkInfo) {
         return common.error('import_12')
       }
       let bulkInfoJS = X.utils.sheet_to_json(bulkInfo, {})
@@ -91,10 +97,10 @@ exports.uploadImportAct = async req => {
       let vessel = await tb_vessel.findOne({
         where: {
           invoice_vessel_name: ves,
-          invoice_vessel_voyage: voy
+          invoice_vessel_voyage: voy,
+          state: GLBConfig.ENABLE
         }
       })
-
       if (vessel) {
         return common.error('import_01')
       } else {
@@ -1987,8 +1993,19 @@ const checkConditionDoState = async (bl, ves) => {
     })
     if(continers) {
       let diff = moment().diff(moment(ves.invoice_vessel_ata, 'DD/MM/YYYY'), 'days') + 1
+      let free_days = 0
       for(let c of continers) {
-        let free_days = await cal_config_srv.queryContainerFreeDays(bl.invoice_masterbi_cargo_type, discharge_port, charge_carrier, c.invoice_containers_size, ves.invoice_vessel_ata)
+        if(c.invoice_containers_empty_return_overdue_free_days) {
+          let temp_free_days = parseInt(c.invoice_containers_empty_return_overdue_free_days)
+          if(temp_free_days != 0 && temp_free_days > free_days) {
+            free_days = temp_free_days
+          }
+        }
+      }
+      for(let c of continers) {
+        if(free_days === 0) {
+          free_days = await cal_config_srv.queryContainerFreeDays(bl.invoice_masterbi_cargo_type, discharge_port, charge_carrier, c.invoice_containers_size, ves.invoice_vessel_ata)
+        }
         if(diff > parseInt(free_days) && !c.invoice_containers_empty_return_receipt_release_date) {
           overdueCheck = false 
           break
