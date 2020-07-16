@@ -259,9 +259,17 @@ exports.uploadImportAct = async req => {
               freight_currency = 'TZS'
             }
           }
+          let masterbi_bl = m['#M B/L No']
+          let masterbi_carrier = ''
+          if(masterbi_bl.indexOf('COS') >= 0) {
+            masterbi_carrier  = 'COSCO'
+          } else if(masterbi_bl.indexOf('OOLU') >= 0) {
+            masterbi_carrier  = 'OOCL'
+          }
           await tb_bl.create({
             invoice_vessel_id: vessel.invoice_vessel_id,
-            invoice_masterbi_bl: m['#M B/L No'],
+            invoice_masterbi_bl: masterbi_bl,
+            invoice_masterbi_carrier: masterbi_carrier,
             invoice_masterbi_cargo_type: m['Cargo Classification'],
             invoice_masterbi_bl_type: m['*B/L Type'],
             invoice_masterbi_destination: m['Place of Destination'],

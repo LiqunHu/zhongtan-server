@@ -11,6 +11,8 @@ module.exports = async (req, res) => {
       ret = await srv.initAct(req)
     } else if (method === 'search') {
       ret = await srv.searchAct(req)
+    } else if (method === 'exportData') {
+      return await srv.exportDataAct(req, res)
     }
     common.sendData(res, ret)
   } catch (error) {
