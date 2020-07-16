@@ -59,7 +59,7 @@ let genEdiInterchangeID = async () => {
     let queryRst = await sequelize.query("select nextval('ediInterchangeIDSeq') num", {
       type: sequelize.QueryTypes.SELECT
     }) 
-    let currentIndex = moment().format('YYYYMMDDHHmm') + ('00000' + queryRst[0].num).slice(-4)
+    let currentIndex = moment().format('YYYYMMDDHHmm') + ('0000' + queryRst[0].num).slice(-4)
     return currentIndex
   } catch (error) {
     logger.error(error)
@@ -72,7 +72,7 @@ let genEdiMessageIDSeq = async () => {
     let queryRst = await sequelize.query("select nextval('ediMessageIDSeq') num", {
       type: sequelize.QueryTypes.SELECT
     }) 
-    let currentIndex = moment().format('YYYYMMDD') + ('0000000' + queryRst[0].num).slice(-4)
+    let currentIndex = moment().format('YYYYMMDD') + ('000000' + queryRst[0].num).slice(-6)
     return currentIndex
   } catch (error) {
     logger.error(error)

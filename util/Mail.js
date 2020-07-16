@@ -168,6 +168,10 @@ const readEdiMail = (ediDepots) => {
                                         container.invoice_containers_actually_gate_out_edi_date = returnDate
                                         container.invoice_containers_actually_gate_out_date = moment(returnDate.substring(0, 8), edi.edi_depot_dmt_format).format('DD/MM/YYYY')
                                       }
+
+                                      if(container.invoice_containers_actually_gate_out_date && container.invoice_containers_actually_return_date) {
+                                        container.invoice_containers_storing_days = moment(container.invoice_containers_actually_gate_out_date, 'DD/MM/YYYY').diff(moment(container.invoice_containers_actually_return_date, 'DD/MM/YYYY'))
+                                      }
                                     }
                                     await container.save()
                                   }

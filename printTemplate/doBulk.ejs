@@ -96,14 +96,6 @@
               <b>
                 EMPTY RETURN ADDRESS CONTAINERS Term-in-Ref D&D Invoice Deposit Invoice Freight Invoice
               </b>
-              <br />
-              <div style="padding-left:100px;">
-              Prepared By: 
-              <span><%= ejsData.user_name %></span>
-              <span style="margin-left:30px;"><%= ejsData.user_phone %></span>
-              <span style="margin-left:30px;"><%= ejsData.user_email %></span>
-              </div>
-              <br />
             </td>
             <td class="b_left b_right b_bottom">
               FOR FURTHER INFORMATION CONTACT<br />
@@ -119,6 +111,16 @@
           </tr>
         </tbody>
       </table>
+      <div style="padding-top: 5px; padding-left: 3px;">
+        Prepared By: <%= ejsData.user_name %>
+        <% if (ejsData.user_phone) { %>
+          &nbsp;&nbsp;&nbsp;&nbsp;Tel:&nbsp;&nbsp;<%=ejsData.user_phone%>
+        <% } %>
+        </br>
+        <div style="padding-left:90px;">
+          <a href="<%=ejsData.user_email%>"><%=ejsData.user_email%></a>
+        </div>
+      </div>
     </div>
   </body>
   <style>

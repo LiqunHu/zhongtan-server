@@ -1722,7 +1722,7 @@ exports.createEditFile = async (bl, customer, vessel, continers, ediStatus) =>{
   }
   ediData.interchangeTime = curMoment.format('YYMMDD:HHmm')
   ediData.interchangeID = await seq.genEdiInterchangeID()
-  ediData.messageID = await seq.genEdiInterchangeID()
+  ediData.messageID = await seq.genEdiMessageIDSeq()
   ediData.ediName = ediData.interchangeID + '.edi'
   ediData.messageFunction = ediStatus // GLBConfig.EDI_MESSAGE_FUNCTION
   ediData.documentDateTime = curMoment.format('YYYYMMDDHHMM')
