@@ -234,4 +234,9 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_containers', {
     type: db.INTEGER,
     allowNull: true
   },
+  invoice_containers_current_overdue_days: {
+    // 未开票超期天数，每天定时计算
+    type: db.INTEGER,
+    allowNull: true
+  },
 })

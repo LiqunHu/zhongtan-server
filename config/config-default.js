@@ -88,7 +88,7 @@ const config = {
     // }
   },
   // schedule job
-  scheduleJobs: [{name: 'readEdiMail', rule: '0 0/5 * * * ?'}, {name: 'resetDemurrageReceiptSeq', rule: '0 0 0 1 * ?'}],
+  scheduleJobs: [{name: 'readEdiMail', rule: '0 0/5 * * * ?'}, {name: 'resetDemurrageReceiptSeq', rule: '0 0 0 1 * ?'}, {name: 'calculationCurrentOverdueDays', rule: '0 0 1 * * ?'}],
   // sms: {
   //   appid: '26763',
   //   appkey: '0d7e27433af7744451809fb2136ae834',
