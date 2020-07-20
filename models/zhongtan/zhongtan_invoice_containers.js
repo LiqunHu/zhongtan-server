@@ -239,4 +239,9 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_containers', {
     type: db.INTEGER,
     allowNull: true
   },
+  invoice_containers_empty_return_edit_flg: {
+    // 重新计算过超期
+    type: db.STRING(2),
+    allowNull: true
+  },
 })

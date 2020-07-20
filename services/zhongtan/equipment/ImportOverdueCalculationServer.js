@@ -187,11 +187,50 @@ exports.emptyReturnSaveAct = async req => {
     }
   })
   if(con) {
+    let old_free_days = con.invoice_containers_empty_return_overdue_free_days
     con.invoice_containers_empty_return_date = moment(doc.invoice_containers_empty_return_date, 'DD/MM/YYYY').format('DD/MM/YYYY')
     con.invoice_containers_empty_return_overdue_amount = doc.invoice_containers_empty_return_overdue_amount
     con.invoice_containers_empty_return_overdue_days = doc.invoice_containers_empty_return_overdue_days
     con.invoice_containers_empty_return_overdue_free_days = doc.invoice_containers_empty_return_overdue_free_days
+    con.invoice_containers_empty_return_edit_flg = GLBConfig.ENABLE
     await con.save()
+
+    if(old_free_days && parseInt(old_free_days) !== parseInt(doc.invoice_containers_empty_return_overdue_free_days)) {
+      // 修改了免箱期 同步修改其他免箱期不同的箱子
+      let queryStr = `SELECT * FROM tbl_zhongtan_invoice_containers WHERE invoice_vessel_id = ? AND invoice_containers_bl = ? 
+                      AND invoice_containers_id != ? AND IFNULL(invoice_containers_empty_return_overdue_free_days, '') != ?`
+      let replacements = [con.invoice_vessel_id, con.invoice_containers_bl, con.invoice_containers_id, doc.invoice_containers_empty_return_overdue_free_days]
+      let oCons = await model.simpleSelect(queryStr, replacements)
+      if(oCons) {
+        let discharge_port = doc.invoice_masterbi_destination.substring(0, 2)
+        let charge_carrier = 'COSCO'
+        if(doc.invoice_containers_bl.indexOf('COS') >= 0) {
+          charge_carrier  = 'COSCO'
+        } else if(doc.invoice_containers_bl.indexOf('OOLU') >= 0) {
+          charge_carrier  = 'OOCL'
+        }
+        for(let c of oCons) {
+          if(c.invoice_containers_empty_return_date) {
+            let cal_result = await cal_config_srv.demurrageCalculation(doc.invoice_containers_empty_return_overdue_free_days, doc.invoice_vessel_ata, c.invoice_containers_empty_return_date, 
+              doc.invoice_masterbi_cargo_type, discharge_port, charge_carrier, doc.invoice_containers_size, doc.invoice_vessel_ata)
+            if(cal_result) {
+              await tb_container.update(
+                  {'invoice_containers_empty_return_overdue_free_days': doc.invoice_containers_empty_return_overdue_free_days, 
+                  'invoice_containers_empty_return_overdue_days': cal_result.overdue_days, 
+                  'invoice_containers_empty_return_overdue_amount': cal_result.overdue_amount, 
+                  'invoice_containers_empty_return_edit_flg': GLBConfig.ENABLE}, 
+                  {'where': {'invoice_containers_id': c.invoice_containers_id}}
+                )
+            }
+          } else {
+            await tb_container.update(
+                {'invoice_containers_empty_return_overdue_free_days': doc.invoice_containers_empty_return_overdue_free_days}, 
+                {'where': {'invoice_containers_id': c.invoice_containers_id}}
+              )
+          }
+        }
+      }
+    }
     return common.success()
   } else {
     return common.error('equipment_03')
@@ -266,6 +305,7 @@ exports.emptyInvoiceAct = async req => {
       con.invoice_containers_empty_return_date_invoice = con.invoice_containers_empty_return_date
       con.invoice_containers_empty_return_overdue_days_invoice = con.invoice_containers_empty_return_overdue_days
       con.invoice_containers_empty_return_overdue_amount_invoice = con.invoice_containers_empty_return_overdue_amount
+      con.invoice_containers_empty_return_edit_flg = GLBConfig.DISABLE
       con.save()
       s.invoice_containers_size = con.invoice_containers_size
       s.invoice_containers_empty_return_date = con.invoice_containers_empty_return_date
@@ -408,6 +448,7 @@ exports.emptyReInvoiceAct = async req => {
       con.invoice_containers_empty_return_date_invoice = con.invoice_containers_empty_return_date
       con.invoice_containers_empty_return_overdue_days_invoice = con.invoice_containers_empty_return_overdue_days
       con.invoice_containers_empty_return_overdue_amount_invoice = con.invoice_containers_empty_return_overdue_amount
+      con.invoice_containers_empty_return_edit_flg = GLBConfig.DISABLE
       con.save()
       s.invoice_containers_size = con.invoice_containers_size
       s.invoice_containers_empty_return_date = con.invoice_containers_empty_return_date
