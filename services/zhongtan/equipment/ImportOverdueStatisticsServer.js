@@ -33,7 +33,7 @@ exports.searchAct = async req => {
   from tbl_zhongtan_invoice_containers a LEFT JOIN tbl_zhongtan_invoice_vessel b ON a.invoice_vessel_id = b.invoice_vessel_id AND b.state = '1' 
   LEFT JOIN tbl_zhongtan_invoice_masterbl c ON a.invoice_containers_bl = c.invoice_masterbi_bl AND c.state = '1' AND c.invoice_vessel_id = a.invoice_vessel_id 
   LEFT JOIN tbl_common_user d ON c.invoice_masterbi_customer_id = d.user_id
-  WHERE a.state = '1' and (a.invoice_containers_empty_return_invoice_date is null or a.invoice_containers_empty_return_receipt_date is null) 
+  WHERE a.state = '1' and (a.invoice_containers_empty_return_invoice_date is null or a.invoice_containers_empty_return_receipt_date is null or IFNULL(a.invoice_containers_empty_return_edit_flg, '') != '1') 
   AND CASE WHEN a.invoice_containers_empty_return_overdue_free_days IS NOT NULL AND a.invoice_containers_empty_return_overdue_free_days != '' THEN TIMESTAMPDIFF(DAY, STR_TO_DATE(b.invoice_vessel_ata, "%d/%m/%Y"), NOW()) > a.invoice_containers_empty_return_overdue_free_days+0 ELSE TIMESTAMPDIFF(DAY, STR_TO_DATE(b.invoice_vessel_ata, "%d/%m/%Y"), NOW()) > (SELECT overdue_charge_max_day
   FROM tbl_zhongtan_overdue_charge_rule
   WHERE overdue_charge_cargo_type = c.invoice_masterbi_cargo_type
@@ -102,7 +102,7 @@ exports.exportDataAct = async(req, res) => {
   from tbl_zhongtan_invoice_containers a LEFT JOIN tbl_zhongtan_invoice_vessel b ON a.invoice_vessel_id = b.invoice_vessel_id AND b.state = '1' 
   LEFT JOIN tbl_zhongtan_invoice_masterbl c ON a.invoice_containers_bl = c.invoice_masterbi_bl AND c.state = '1' AND c.invoice_vessel_id = a.invoice_vessel_id 
   LEFT JOIN tbl_common_user d ON c.invoice_masterbi_customer_id = d.user_id
-  WHERE a.state = '1' and (a.invoice_containers_empty_return_invoice_date is null or a.invoice_containers_empty_return_receipt_date is null) 
+  WHERE a.state = '1' and (a.invoice_containers_empty_return_invoice_date is null or a.invoice_containers_empty_return_receipt_date is null or IFNULL(a.invoice_containers_empty_return_edit_flg, '') != '1') 
   AND CASE WHEN a.invoice_containers_empty_return_overdue_free_days IS NOT NULL AND a.invoice_containers_empty_return_overdue_free_days != '' THEN TIMESTAMPDIFF(DAY, STR_TO_DATE(b.invoice_vessel_ata, "%d/%m/%Y"), NOW()) > a.invoice_containers_empty_return_overdue_free_days+0 ELSE TIMESTAMPDIFF(DAY, STR_TO_DATE(b.invoice_vessel_ata, "%d/%m/%Y"), NOW()) > (SELECT overdue_charge_max_day
   FROM tbl_zhongtan_overdue_charge_rule
   WHERE overdue_charge_cargo_type = c.invoice_masterbi_cargo_type
