@@ -758,6 +758,20 @@ exports.downloadDoAct = async req => {
     return common.error('do_01')
   }
 
+  let dc = await tb_user.findOne({
+    where: {
+      user_name: doc.invoice_masterbi_delivery_to,
+      state: GLBConfig.ENABLE,
+      user_type: GLBConfig.TYPE_CUSTOMER
+    }
+  })
+  if(!dc) {
+    return common.error('do_02')
+  }
+  if(dc.user_customer_type == GLBConfig.USER_CUSTOMER_TYPE_CONSIGNEE && dc.user_name != bl.invoice_masterbi_consignee_name) {
+    // Delivery To 是收货人，必须与舱单收货人名称一致
+    return common.error('do_03')
+  }
   let delivery_order_no = ('000000000000000' + bl.invoice_masterbi_id).slice(-8)
   if (!bl.invoice_masterbi_do_release_date) {
     bl.invoice_masterbi_delivery_to = doc.invoice_masterbi_delivery_to
@@ -1636,7 +1650,9 @@ exports.doCreateEdiAct = async req => {
 
   let customer = await tb_user.findOne({
     where: {
-      user_id: bl.invoice_masterbi_customer_id
+      user_name: bl.invoice_masterbi_delivery_to,
+      state: GLBConfig.ENABLE,
+      user_type: GLBConfig.TYPE_CUSTOMER
     }
   })
 
@@ -1652,7 +1668,11 @@ exports.doCreateEdiAct = async req => {
       invoice_containers_bl: bl.invoice_masterbi_bl
     }
   })
-  this.createEditFile(bl, customer, vessel, continers, '9')
+  if(customer) {
+    this.createEditFile(bl, customer, vessel, continers, '9')
+  } else {
+    return common.error('do_02')
+  }
 }
 
 exports.doReplaceEdiAct = async req => {
@@ -1668,7 +1688,9 @@ exports.doReplaceEdiAct = async req => {
 
   let customer = await tb_user.findOne({
     where: {
-      user_id: bl.invoice_masterbi_customer_id
+      user_name: bl.invoice_masterbi_delivery_to,
+      state: GLBConfig.ENABLE,
+      user_type: GLBConfig.TYPE_CUSTOMER
     }
   })
 
@@ -1685,7 +1707,12 @@ exports.doReplaceEdiAct = async req => {
     },
     order: [['invoice_containers_size', 'ASC']]
   })
-  this.createEditFile(bl, customer, vessel, continers, '5')
+
+  if(customer) {
+    this.createEditFile(bl, customer, vessel, continers, '5')
+  } else {
+    return common.error('do_02')
+  }
 }
 
 exports.doCancelEdiAct = async req => {
@@ -1701,7 +1728,9 @@ exports.doCancelEdiAct = async req => {
 
   let customer = await tb_user.findOne({
     where: {
-      user_id: bl.invoice_masterbi_customer_id
+      user_name: bl.invoice_masterbi_delivery_to,
+      state: GLBConfig.ENABLE,
+      user_type: GLBConfig.TYPE_CUSTOMER
     }
   })
 
@@ -1718,7 +1747,11 @@ exports.doCancelEdiAct = async req => {
     },
     order: [['invoice_containers_size', 'ASC']]
   })
-  this.createEditFile(bl, customer, vessel, continers, '1')
+  if(customer) {
+    this.createEditFile(bl, customer, vessel, continers, '1')
+  } else {
+    return common.error('do_02')
+  }
 }
 
 exports.createEditFile = async (bl, customer, vessel, continers, ediStatus) =>{
@@ -1748,7 +1781,7 @@ exports.createEditFile = async (bl, customer, vessel, continers, ediStatus) =>{
   ediData.portOfLoading = bl.invoice_masterbi_loading
   ediData.eta = moment(vessel.invoice_vessel_eta).format('YYYYMMDD')
   ediData.messageSender = 'COSCO'
-  ediData.consignee = bl.invoice_masterbi_consignee_name
+  ediData.consignee = customer.user_name
   ediData.tin = customer.user_tin
   var ediCs = []
   for(let c of continers) {
@@ -1770,7 +1803,7 @@ exports.createEditFile = async (bl, customer, vessel, continers, ediStatus) =>{
     filename : ediData.ediName,
     path: fileInfo
   }]
-  await mailer.sendEdiMail(GLBConfig.EDI_EMAIL_SENDER, GLBConfig.EDI_EMAIL_RECEIVER, GLBConfig.EDI_EMAIL_CARBON_COPY, GLBConfig.EDI_EMAIL_BLIND_CARBON_COPY, mailSubject, mailContent, mailHtml, attachments)
+  await mailer.sendEdiMail(GLBConfig.EDI_EMAIL_SENDER, GLBConfig.EDI_EMAIL_RECEIVER, GLBConfig.EDI_EMAIL_CARBON_COPY, '', mailSubject, mailContent, mailHtml, attachments)
 }
 
 exports.searchFixedDepositAct = async req => {

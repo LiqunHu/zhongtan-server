@@ -10,8 +10,7 @@ module.exports = db.defineModel('tbl_common_user', {
   },
   user_username: {
     type: db.STRING(100),
-    allowNull: false,
-    unique: true
+    allowNull: false
   },
   user_wx_openid: {
     type: db.STRING(200),
