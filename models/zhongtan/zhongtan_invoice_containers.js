@@ -230,7 +230,7 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_containers', {
     allowNull: true
   },
   invoice_containers_storing_days: {
-    // 使用天数
+    // 堆存天数
     type: db.INTEGER,
     allowNull: true
   },
@@ -242,6 +242,27 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_containers', {
   invoice_containers_empty_return_edit_flg: {
     // 重新计算过超期
     type: db.STRING(2),
+    allowNull: true
+  },
+  invoice_containers_gate_out_terminal_date: {
+    // 码头出场时间
+    type: db.STRING(20),
+    allowNull: true
+  },
+  invoice_containers_gate_in_terminal_date: {
+    // 码头进场时间
+    type: db.STRING(20),
+    allowNull: true
+  },
+  invoice_containers_gate_remark: {
+    // 场站备注
+    type: db.STRING(200),
+    defaultValue: 'SOUND',
+    allowNull: true
+  },
+  invoice_containers_detention_days: {
+    // 使用天数
+    type: db.INTEGER,
     allowNull: true
   },
 })
