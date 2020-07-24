@@ -1427,9 +1427,7 @@ exports.depositDoAct = async req => {
 
     renderData.sum_fee = formatCurrency(renderData.sum_fee)
     let fileInfo = await common.ejs2Pdf('fee.ejs', renderData, 'zhongtan')
-    if(bl.invoice_masterbi_invoice_receipt_date) {
-      bl.invoice_masterbi_invoice_receipt_date = null
-    } else {
+    if(!bl.invoice_masterbi_invoice_receipt_date) {
       await tb_uploadfile.destroy({
         where: {
           api_name: 'RECEIPT-FEE',

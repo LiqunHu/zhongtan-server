@@ -181,21 +181,37 @@ exports.calculationAct = async req => {
 
 exports.emptyReturnSaveAct = async req => {
   let doc = common.docValidate(req)
+
+  if(doc.invoice_containers_empty_return_date && doc.invoice_containers_empty_return_overdue_amount 
+    && doc.invoice_containers_empty_return_overdue_days && doc.invoice_containers_empty_return_overdue_free_days) {
+      // 保存计算超期费计算结果
+      
+  } else if(doc.invoice_containers_empty_return_overdue_free_days){
+    // 保存免箱期
+  }
   let con = await tb_container.findOne({
     where: {
       invoice_containers_id: doc.invoice_containers_id
     }
   })
   if(con) {
-    let old_free_days = con.invoice_containers_empty_return_overdue_free_days
-    con.invoice_containers_empty_return_date = moment(doc.invoice_containers_empty_return_date, 'DD/MM/YYYY').format('DD/MM/YYYY')
-    con.invoice_containers_empty_return_overdue_amount = doc.invoice_containers_empty_return_overdue_amount
-    con.invoice_containers_empty_return_overdue_days = doc.invoice_containers_empty_return_overdue_days
-    con.invoice_containers_empty_return_overdue_free_days = doc.invoice_containers_empty_return_overdue_free_days
-    con.invoice_containers_empty_return_edit_flg = GLBConfig.ENABLE
-    await con.save()
-
-    if(old_free_days && parseInt(old_free_days) !== parseInt(doc.invoice_containers_empty_return_overdue_free_days)) {
+    let old_free_days = con.invoice_containers_empty_return_overdue_free_days ? con.invoice_containers_empty_return_overdue_free_days : doc.invoice_containers_empty_return_overdue_static_free_days
+    if(doc.invoice_containers_empty_return_date && doc.invoice_containers_empty_return_overdue_amount 
+      && doc.invoice_containers_empty_return_overdue_days && doc.invoice_containers_empty_return_overdue_free_days) {
+        // 保存计算超期费计算结果
+      con.invoice_containers_empty_return_date = moment(doc.invoice_containers_empty_return_date, 'DD/MM/YYYY').format('DD/MM/YYYY')
+      con.invoice_containers_empty_return_overdue_amount = doc.invoice_containers_empty_return_overdue_amount
+      con.invoice_containers_empty_return_overdue_days = doc.invoice_containers_empty_return_overdue_days
+      con.invoice_containers_empty_return_overdue_free_days = doc.invoice_containers_empty_return_overdue_free_days
+      con.invoice_containers_empty_return_edit_flg = GLBConfig.ENABLE
+      await con.save()
+    } else if(doc.invoice_containers_empty_return_overdue_free_days){
+      // 保存免箱期
+      con.invoice_containers_empty_return_overdue_free_days = doc.invoice_containers_empty_return_overdue_free_days
+      await con.save()
+    }
+    if(old_free_days && doc.invoice_containers_empty_return_overdue_free_days && 
+      parseInt(old_free_days) !== parseInt(doc.invoice_containers_empty_return_overdue_free_days)) {
       // 修改了免箱期 同步修改其他免箱期不同的箱子
       let queryStr = `SELECT * FROM tbl_zhongtan_invoice_containers WHERE invoice_vessel_id = ? AND invoice_containers_bl = ? 
                       AND invoice_containers_id != ? AND IFNULL(invoice_containers_empty_return_overdue_free_days, '') != ?`
