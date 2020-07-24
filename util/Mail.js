@@ -166,7 +166,7 @@ const readEdiMail = (ediDepots) => {
 
                                         if(container.invoice_containers_actually_return_date && vessel.invoice_vessel_ata) {
                                           // 集装箱使用天数， gate in date - dischatge date
-                                          container.invoice_containers_detention_days = moment(container.invoice_containers_actually_return_date, 'DD/MM/YYYY').diff(moment(container.invoice_vessel_ata, 'DD/MM/YYYY'))
+                                          container.invoice_containers_detention_days = moment(container.invoice_containers_actually_return_date, 'DD/MM/YYYY').diff(moment(container.invoice_vessel_ata, 'DD/MM/YYYY'), 'days')
                                         }
                                       } else if(gate === '36') {
                                         // GATE OUT  
@@ -176,7 +176,7 @@ const readEdiMail = (ediDepots) => {
 
                                       if(container.invoice_containers_actually_gate_out_date && container.invoice_containers_actually_return_date) {
                                         // 集装箱堆存天数， gate out date - gate in date
-                                        container.invoice_containers_storing_days = moment(container.invoice_containers_actually_gate_out_date, 'DD/MM/YYYY').diff(moment(container.invoice_containers_actually_return_date, 'DD/MM/YYYY'))
+                                        container.invoice_containers_storing_days = moment(container.invoice_containers_actually_gate_out_date, 'DD/MM/YYYY').diff(moment(container.invoice_containers_actually_return_date, 'DD/MM/YYYY'), 'days')
                                       }
                                     }
                                     await container.save()
