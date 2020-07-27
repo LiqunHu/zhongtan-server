@@ -166,7 +166,7 @@ const readEdiMail = (ediDepots) => {
 
                                         if(container.invoice_containers_actually_return_date && vessel.invoice_vessel_ata) {
                                           // 集装箱使用天数， gate in date - dischatge date
-                                          container.invoice_containers_detention_days = moment(container.invoice_containers_actually_return_date, 'DD/MM/YYYY').diff(moment(container.invoice_vessel_ata, 'DD/MM/YYYY'), 'days')
+                                          container.invoice_containers_detention_days = moment(container.invoice_containers_actually_return_date, 'DD/MM/YYYY').diff(moment(vessel.invoice_vessel_ata, 'DD/MM/YYYY'), 'days')
                                         }
                                       } else if(gate === '36') {
                                         // GATE OUT  
