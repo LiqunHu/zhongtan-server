@@ -178,8 +178,8 @@ const readEdiMail = (ediDepots) => {
                                         // 集装箱堆存天数， gate out date - gate in date
                                         container.invoice_containers_storing_days = moment(container.invoice_containers_actually_gate_out_date, 'DD/MM/YYYY').diff(moment(container.invoice_containers_actually_return_date, 'DD/MM/YYYY'), 'days')
                                       }
+                                      await container.save()
                                     }
-                                    await container.save()
                                   }
                                 }
                               }
