@@ -202,7 +202,9 @@ exports.emptyReturnSaveAct = async req => {
       con.invoice_containers_empty_return_overdue_amount = doc.invoice_containers_empty_return_overdue_amount
       con.invoice_containers_empty_return_overdue_days = doc.invoice_containers_empty_return_overdue_days
       con.invoice_containers_empty_return_overdue_free_days = doc.invoice_containers_empty_return_overdue_free_days
-      con.invoice_containers_empty_return_edit_flg = GLBConfig.ENABLE
+      if(doc.invoice_containers_empty_return_overdue_amount && doc.invoice_containers_empty_return_overdue_days) {
+        con.invoice_containers_empty_return_edit_flg = GLBConfig.ENABLE
+      }
       await con.save()
     } else if(doc.invoice_containers_empty_return_overdue_free_days){
       // 保存免箱期
