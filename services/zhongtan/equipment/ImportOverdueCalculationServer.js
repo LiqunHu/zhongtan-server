@@ -196,8 +196,7 @@ exports.emptyReturnSaveAct = async req => {
   })
   if(con) {
     let old_free_days = con.invoice_containers_empty_return_overdue_free_days ? con.invoice_containers_empty_return_overdue_free_days : doc.invoice_containers_empty_return_overdue_static_free_days
-    if(doc.invoice_containers_empty_return_date && doc.invoice_containers_empty_return_overdue_amount 
-      && doc.invoice_containers_empty_return_overdue_days && doc.invoice_containers_empty_return_overdue_free_days) {
+    if(doc.invoice_containers_empty_return_date && doc.invoice_containers_empty_return_overdue_free_days) {
         // 保存计算超期费计算结果
       con.invoice_containers_empty_return_date = moment(doc.invoice_containers_empty_return_date, 'DD/MM/YYYY').format('DD/MM/YYYY')
       con.invoice_containers_empty_return_overdue_amount = doc.invoice_containers_empty_return_overdue_amount
