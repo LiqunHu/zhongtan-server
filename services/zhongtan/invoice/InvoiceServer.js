@@ -625,7 +625,7 @@ exports.getMasterbiFiles = async d => {
   d.files = []
   let queryStr = `SELECT a.*, b.user_name FROM tbl_zhongtan_uploadfile a
       left join tbl_common_user b on a.uploadfil_release_user_id = b.user_id
-      WHERE a.uploadfile_index1 = ?`
+      WHERE a.state = '1' and a.uploadfile_index1 = ?`
   let replacements = [d.invoice_masterbi_id]
   let files = await model.simpleSelect(queryStr, replacements)
   for (let f of files) {
