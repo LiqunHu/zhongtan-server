@@ -55,7 +55,7 @@ module.exports = db.defineModel('tbl_zhongtan_import_billlading_goods', {
   },
   import_billlading_goods_marks_num: {
     // marks
-    type: db.STRING(500),
+    type: db.STRING(5000),
     defaultValue: '',
     allowNull: false
   }

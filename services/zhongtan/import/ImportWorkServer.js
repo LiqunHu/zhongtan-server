@@ -7,6 +7,7 @@ const GLBConfig = require('../../../util/GLBConfig')
 const logger = require('../../../app/logger').createLogger(__filename)
 const common = require('../../../util/CommonUtil')
 const model = require('../../../app/model')
+const Op = model.Op
 
 const tb_user = model.common_user
 const tb_ship = model.zhongtan_import_ship
@@ -16,6 +17,8 @@ const tb_billlading_charges = model.zhongtan_import_billlading_charges
 const tb_billlading_sumcharges = model.zhongtan_import_billlading_sumcharges
 const tb_billlading_container = model.zhongtan_import_billlading_container
 const tb_shipinfo = model.zhongtan_import_shipinfo
+const tb_packaging = model.zhongtan_packaging
+
 
 exports.initAct = async () => {
   let returnData = {
@@ -506,6 +509,37 @@ exports.exportMBLAct = async (req, res) => {
 
     row.GDESC = dary.join(' ').replace(/\r\n/g, '')
     row.GRMARK = rmary.join(' ').replace(/\r\n/g, '')
+
+    // import_billlading_pod import_billlading_fnd import_billlading_pol转换
+    if(row.import_billlading_pod) {
+      let import_billlading_pod_temp = row.import_billlading_pod.replace(/[^a-zA-Z]/gi, '')
+      if(import_billlading_pod_temp.toUpperCase() === 'DARESSALAAM') {
+        row.import_billlading_pod = 'TZDAR'
+      }
+    }
+    if(row.import_billlading_fnd) {
+      let import_billlading_fnd_temp = row.import_billlading_fnd.replace(/[^a-zA-Z]/gi, '')
+      if(import_billlading_fnd_temp.toUpperCase() === 'DARESSALAAM') {
+        row.import_billlading_fnd = 'TZDAR'
+      }
+    }
+    if(row.import_billlading_pol) {
+      let import_billlading_pol_temp = row.import_billlading_pol.replace(/[^a-zA-Z]/gi, '')
+      if(import_billlading_pol_temp.toUpperCase() === 'SINGAPORE') {
+        row.import_billlading_pol = 'SGSIN'
+      }
+    }
+    if(row.import_billlading_total_unit) {
+      let packing = await tb_packaging.findOne({
+        where:{
+          state : GLBConfig.ENABLE,
+          [Op.or]: [{ packaging_kind: row.import_billlading_total_unit }, { packaging_kind_ak: row.import_billlading_total_unit }, { packaging_code: row.import_billlading_total_unit }]
+        }
+      })
+      if(packing && packing.packaging_code) {
+        row.import_billlading_total_unit = packing.packaging_code
+      }
+    }
     jsData.push(row)
   }
 
@@ -520,7 +554,7 @@ exports.exportMBLAct = async (req, res) => {
     'CCOUNT',
     'GDESC',
     'import_billlading_total_packno',
-    'PK',
+    'import_billlading_total_unit',
     'import_billlading_total_gross_weight_kg',
     'KG',
     'import_billlading_total_volume_cbm',
@@ -623,8 +657,7 @@ exports.exportCBLAct = async (req, res) => {
     'SB',
     'FUL',
     'import_billlading_container_package_cnt',
-    'PK',
-    'PK',
+    'import_billlading_container_cnt_unit',
     'import_billlading_container_tare_weight',
     'CBM',
     'import_billlading_container_weight',
