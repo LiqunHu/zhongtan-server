@@ -2,7 +2,6 @@ const _ = require('lodash')
 const moment = require('moment')
 const fs = require('fs')
 const convert = require('xml-js')
-const { Parser } = require('json2csv')
 const GLBConfig = require('../../../util/GLBConfig')
 const logger = require('../../../app/logger').createLogger(__filename)
 const common = require('../../../util/CommonUtil')
@@ -542,47 +541,8 @@ exports.exportMBLAct = async (req, res) => {
     }
     jsData.push(row)
   }
-
-  const fields = [
-    'import_billlading_no',
-    'IM',
-    'S',
-    'import_billlading_pod',
-    'import_billlading_fnd',
-    'import_billlading_fnd',
-    'import_billlading_pol',
-    'CCOUNT',
-    'GDESC',
-    'import_billlading_total_packno',
-    'import_billlading_total_unit',
-    'import_billlading_total_gross_weight_kg',
-    'KG',
-    'import_billlading_total_volume_cbm',
-    'CBM',
-    'SB',
-    'sa0',
-    'sa1',
-    'ca0',
-    'ca1',
-    'SB',
-    'na0',
-    'na1',
-    'SB',
-    'C',
-    'import_billlading_por',
-    'GRMARK',
-    'P'
-  ]
-  const opts = { fields, header: false }
-
-  const parser = new Parser(opts)
-  const csv = parser.parse(jsData)
-
-  res.type('csv')
-  res.set({
-    'Content-Disposition': 'attachment; filename=MBL_UPLOAD.csv'
-  })
-  res.send(csv)
+  let filepath = await common.ejs2xlsx('MBL_UPLOAD.xlsx', jsData)
+  res.sendFile(filepath)
 }
 
 exports.exportCBLAct = async (req, res) => {
@@ -645,36 +605,13 @@ exports.exportCBLAct = async (req, res) => {
       row.CBM = 'CBM'
       row.KG = 'KG'
       row.N = 'N'
+      if(row.import_billlading_container_seal) {
+        row.import_billlading_container_seal = '\t' + row.import_billlading_container_seal
+      }
     }
   }
-
-  const fields = [
-    'import_billlading_no',
-    'C',
-    'import_billlading_container_num',
-    'import_billlading_container_type',
-    'import_billlading_container_seal',
-    'SB',
-    'SB',
-    'FUL',
-    'import_billlading_container_package_cnt',
-    'import_billlading_container_cnt_unit',
-    'import_billlading_container_tare_weight',
-    'CBM',
-    'import_billlading_container_weight',
-    'KG',
-    'N'
-  ]
-  const opts = { fields, header: false }
-
-  const parser = new Parser(opts)
-  const csv = parser.parse(jsData)
-
-  res.type('csv')
-  res.set({
-    'Content-Disposition': 'attachment; filename=MBL_UPLOAD.csv'
-  })
-  res.send(csv)
+  let filepath = await common.ejs2xlsx('CBL_UPLOAD.xlsx', jsData)
+  res.sendFile(filepath)
 }
 
 exports.downloadBLAct = async (req, res) => {
