@@ -42,5 +42,7 @@ router.post('/equipment/ImportOverdueCalculationSearch/:method', services.Import
 router.post('/equipment/ImportOverdueStatistics/:method', services.ImportOverdueStatisticsControl)
 router.post('/equipment/ImportDemurrageStatisticsInvoice/:method', services.ImportDemurrageStatisticsInvoiceControl)
 router.post('/equipment/EmptyStockManagement/:method', services.EmptyStockManagementControl)
-
+router.post('/equipment/ContainerMNRLedgerInvoice/:method', services.ContainerMNRLedgerInvoiceControl)
+router.post('/equipment/ContainerMNRLedgerReceipt/:method', services.ContainerMNRLedgerReceiptControl)
+router.post('/equipment/ContainerMNRLedgerStatistics/:method', services.ContainerMNRLedgerStatisticsControl)
 module.exports = router

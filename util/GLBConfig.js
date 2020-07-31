@@ -392,5 +392,13 @@ module.exports = {
     { id: '0', text: 'ALL', color: 'primary' },
     { id: '1', text: 'AGENT', color: 'success'},
     { id: '2', text: 'CONSIGNEE', color: 'warning'}
+  ],
+  MNR_CARGO_TYPE: [
+    { id: 'LOCAL', text: 'LOCAL', color: 'primary' },
+    { id: 'TRANSIT', text: 'TRANSIT', color: 'warning'}
+  ],
+  MNR_DESCRIPTION: [
+    { id: 'MNR CHARGE', text: 'MNR CHARGE', color: 'primary' },
+    { id: 'TTL LOSS', text: 'TTL LOSS', color: 'warning'}
   ]
 }

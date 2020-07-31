@@ -12,6 +12,7 @@ const tb_uploadfile = model.zhongtan_uploadfile
 const tb_verification = model.zhongtan_invoice_verification_log
 const tb_fixed_deposit = model.zhongtan_customer_fixed_deposit
 const tb_invoice_container = model.zhongtan_overdue_invoice_containers
+const tb_mnr_ledger = model.zhongtan_container_mnr_ledger
 
 exports.initAct = async () => {
   let returnData = {
@@ -37,7 +38,8 @@ exports.searchAct = async req => {
     'RECEIPT-FEE',
     'GUARANTEE-LETTER',
     'FIXED-INVOICE',
-    'OVERDUE-INVOICE'
+    'OVERDUE-INVOICE',
+    'MNR-INVOICE'
   )`
   let replacements = []
   
@@ -139,6 +141,19 @@ exports.searchAct = async req => {
       row.receipt_type = 'Overdue Invoice'
       row.invoice_customer_name = r.overdue_invoice_customer_name
       row.overdue_invoice_amount = r.uploadfile_amount
+    } else if(r.api_name === 'MNR-INVOICE') {
+      row.receipt_type = 'MNR Invoice'
+      let mnr = await tb_mnr_ledger.findOne({
+        where: {
+          container_mnr_ledger_id: r.uploadfile_index1
+        }
+      })
+      if(mnr) {
+        row.container_mnr_ledger_id = mnr.container_mnr_ledger_id
+        row.invoice_customer_name = mnr.mnr_ledger_corresponding_payer
+        row.mnr_amount = r.uploadfile_amount
+        row.invoice_masterbi_bl = mnr.mnr_ledger_bl
+      }
     }
     returnData.rows.push(row)
   }
@@ -204,6 +219,17 @@ exports.approveAct = async req => {
         await con.save()
       }
     }
+  } else if(file.api_name === 'MNR-INVOICE') {
+    let mnr = await tb_mnr_ledger.findOne({
+      where: {
+        container_mnr_ledger_id: doc.container_mnr_ledger_id
+      }
+    })
+    if(mnr) {
+      mnr.mnr_ledger_invoice_amount = file.uploadfile_amount
+      await mnr.save()
+    }
+    
   } else {
     let bl = await tb_bl.findOne({
       where: {
@@ -257,22 +283,9 @@ exports.declineAct = async req => {
     fixedDeposit.updated_at = curDate
     await fixedDeposit.save()
   } else if(file.api_name === 'OVERDUE-INVOICE') {
-    // let containers = await tb_invoice_container.findAll({
-    //   where: {
-    //     overdue_invoice_containers_invoice_uploadfile_id: file.uploadfile_id
-    //   }
-    // })
-    // if(containers) {
-    //   for(let c of containers) {
-    //     let con = await tb_container.findOne({
-    //       where: {
-    //         invoice_containers_id: c.overdue_invoice_containers_invoice_containers_id
-    //       }
-    //     })
-    //     con.invoice_containers_empty_return_invoice_date = null
-    //     await con.save()
-    //   }
-    // }
+    //
+  } else if(file.api_name === 'MNR-INVOICE') {
+    //
   } else {
     let bl = await tb_bl.findOne({
       where: {
@@ -395,6 +408,35 @@ exports.getOverdueInvoiceDetailAct = async req => {
   }
 
   return common.success(returnData)
+}
+
+exports.getMNRInvoiceDetailAct = async req => {
+  let doc = common.docValidate(req)
+  let mnr = await tb_mnr_ledger.findOne({
+    where: {
+      container_mnr_ledger_id: doc.container_mnr_ledger_id
+    }
+  })
+  if(mnr) {
+    let containers = [{
+      mnr_ledger_container_no: mnr.mnr_ledger_container_no,
+      mnr_ledger_dv_amount: mnr.mnr_ledger_dv_amount,
+      mnr_ledger_actual_charge_amount: mnr.mnr_ledger_actual_charge_amount,
+      mnr_ledger_loss_declaring_date: mnr.mnr_ledger_loss_declaring_date,
+      mnr_ledger_payment_date: mnr.mnr_ledger_payment_date,
+    }]
+    let returnData = {
+      invoice_vessel_name: mnr.mnr_ledger_vessel_name,
+      invoice_vessel_voyage: mnr.mnr_ledger_vessel_voyage,
+      invoice_masterbi_bl: mnr.mnr_ledger_bl,
+      container_size_type: mnr.mnr_ledger_container_size,
+      invoice_masterbi_destination: mnr.mnr_ledger_destination,
+      invoice_masterbi_cargo_type: mnr.mnr_ledger_cargo_type,
+      mnr_containers: containers
+    }
+    return common.success(returnData)
+  }
+  return common.success()
 }
 
 exports.getTimelineAct = async req => {

@@ -21,6 +21,8 @@ module.exports = async (req, res) => {
       ret = await srv.getTimelineAct(req)
     } else if(method === 'getOverdueInvoiceDetail') {
       ret = await srv.getOverdueInvoiceDetailAct(req)
+    } else if(method === 'getMNRInvoiceDetail') {
+      ret = await srv.getMNRInvoiceDetailAct(req)
     }
     
     common.sendData(res, ret)

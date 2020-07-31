@@ -6,8 +6,14 @@ const cal_config_srv = require('../services/zhongtan/equipment/OverdueCalculatio
 
 const resetDemurrageReceiptSeq = async () => {
   try{
+    // 超期费Receipt NO Seq
     let queryStr = `UPDATE seqmysql SET currentValue = 0 WHERE seqname IN ('COSCOEquipmentReceiptSeq', 'OOCLEquipmentReceiptSeq');`
     let replacements = []
+    await model.simpleUpdate(queryStr, replacements)
+
+    // 箱损Receipt No
+    queryStr = `UPDATE seqmysql SET currentValue = 0 WHERE seqname IN ('COSCOMNRReceiptSeq', 'OOCLMNRReceiptSeq');`
+    replacements = []
     await model.simpleUpdate(queryStr, replacements)
   } finally {
     // continue regardless of error
