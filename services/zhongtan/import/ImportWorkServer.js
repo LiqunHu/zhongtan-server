@@ -447,7 +447,7 @@ exports.exportMBLAct = async (req, res) => {
     )
   }
 
-  queryStr += ' order by created_at desc'
+  queryStr += ' order by import_billlading_no'
 
   let result = await model.simpleSelect(queryStr, replacements)
 
@@ -622,7 +622,7 @@ exports.exportCBLAct = async (req, res) => {
     )
   }
 
-  queryStr += ' order by created_at desc'
+  queryStr += ' order by import_billlading_no'
 
   let result = await model.simpleSelect(queryStr, replacements)
 
