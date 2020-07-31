@@ -631,7 +631,8 @@ exports.exportCBLAct = async (req, res) => {
     let container = await tb_billlading_container.findAll({
       where: {
         import_billlading_id: r.import_billlading_id
-      }
+      },
+      order: [['import_billlading_container_num', 'ASC']]
     })
     for (let c of container) {
       let row = JSON.parse(JSON.stringify(c))
