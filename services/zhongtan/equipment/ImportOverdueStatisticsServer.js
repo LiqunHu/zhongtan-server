@@ -29,23 +29,12 @@ exports.initAct = async () => {
 exports.searchAct = async req => {
   let doc = common.docValidate(req)
   let returnData = {}
-  let queryStr = ` SELECT a.*, b.invoice_vessel_name, b.invoice_vessel_voyage, b.invoice_vessel_ata, b.invoice_vessel_atd, b.invoice_vessel_eta, c.invoice_masterbi_id, c.invoice_masterbi_cargo_type, c.invoice_masterbi_destination, c.invoice_masterbi_carrier, d.user_name AS invoice_masterbi_deposit_party
+  let queryStr = ` SELECT a.*, b.invoice_vessel_name, b.invoice_vessel_voyage, b.invoice_vessel_ata, b.invoice_vessel_atd, b.invoice_vessel_eta, c.invoice_masterbi_id, c.invoice_masterbi_cargo_type, c.invoice_masterbi_destination, c.invoice_masterbi_carrier, d.user_name as invoice_masterbi_demurrage_party, e.user_name AS invoice_masterbi_deposit_party 
   from tbl_zhongtan_invoice_containers a LEFT JOIN tbl_zhongtan_invoice_vessel b ON a.invoice_vessel_id = b.invoice_vessel_id AND b.state = '1' 
   LEFT JOIN tbl_zhongtan_invoice_masterbl c ON a.invoice_containers_bl = c.invoice_masterbi_bl AND c.state = '1' AND c.invoice_vessel_id = a.invoice_vessel_id 
-  LEFT JOIN tbl_common_user d ON c.invoice_masterbi_customer_id = d.user_id
-  WHERE a.state = '1' and (a.invoice_containers_empty_return_invoice_date is null or a.invoice_containers_empty_return_receipt_date is null or IFNULL(a.invoice_containers_empty_return_edit_flg, '') != '1') 
-  AND CASE WHEN a.invoice_containers_empty_return_overdue_free_days IS NOT NULL AND a.invoice_containers_empty_return_overdue_free_days != '' THEN TIMESTAMPDIFF(DAY, STR_TO_DATE(b.invoice_vessel_ata, "%d/%m/%Y"), NOW()) > a.invoice_containers_empty_return_overdue_free_days+0 ELSE TIMESTAMPDIFF(DAY, STR_TO_DATE(b.invoice_vessel_ata, "%d/%m/%Y"), NOW()) > (SELECT overdue_charge_max_day
-  FROM tbl_zhongtan_overdue_charge_rule
-  WHERE overdue_charge_cargo_type = c.invoice_masterbi_cargo_type
-  AND overdue_charge_discharge_port = SUBSTR(c.invoice_masterbi_destination, 1, 2)
-  AND overdue_charge_carrier = c.invoice_masterbi_carrier
-  AND overdue_charge_container_size = a.invoice_containers_size
-  AND (
-  overdue_charge_amount = 0
-  OR overdue_charge_amount IS NULL
-  OR overdue_charge_amount = ''
-  )
-  AND ((overdue_charge_enabled_date IS NOT NULL AND STR_TO_DATE(overdue_charge_enabled_date, '%Y-%m-%d') <= STR_TO_DATE(b.invoice_vessel_ata, "%d/%m/%Y")) OR (overdue_charge_enabled_date IS NULL)) ORDER BY overdue_charge_enabled_date DESC LIMIT 1) END `
+  LEFT JOIN tbl_common_user d ON a.invoice_containers_customer_id = d.user_id 
+  LEFT JOIN tbl_common_user e ON c.invoice_masterbi_customer_id = e.user_id 
+  WHERE a.state = '1' `
   let replacements = []
   if(doc.search_data) {
     if (doc.search_data.ata_date && doc.search_data.ata_date.length > 1) {
@@ -76,6 +65,42 @@ exports.searchAct = async req => {
           queryStr += ' and a.invoice_containers_current_overdue_days+0 <= ?'
           replacements.push(ranges[1])
         }
+      }
+    }
+    if (doc.search_data.is_overdue) {
+      if(doc.search_data.is_overdue === '1') {
+        queryStr += ` AND CASE WHEN a.invoice_containers_empty_return_overdue_free_days IS NOT NULL AND a.invoice_containers_empty_return_overdue_free_days != '' THEN TIMESTAMPDIFF(DAY, STR_TO_DATE(b.invoice_vessel_ata, "%d/%m/%Y"), NOW()) > a.invoice_containers_empty_return_overdue_free_days+0 ELSE TIMESTAMPDIFF(DAY, STR_TO_DATE(b.invoice_vessel_ata, "%d/%m/%Y"), NOW()) > (SELECT overdue_charge_max_day
+          FROM tbl_zhongtan_overdue_charge_rule
+          WHERE overdue_charge_cargo_type = c.invoice_masterbi_cargo_type
+          AND overdue_charge_discharge_port = SUBSTR(c.invoice_masterbi_destination, 1, 2)
+          AND overdue_charge_carrier = c.invoice_masterbi_carrier
+          AND overdue_charge_container_size = a.invoice_containers_size
+          AND (
+          overdue_charge_amount = 0
+          OR overdue_charge_amount IS NULL
+          OR overdue_charge_amount = ''
+          )
+          AND ((overdue_charge_enabled_date IS NOT NULL AND STR_TO_DATE(overdue_charge_enabled_date, '%Y-%m-%d') <= STR_TO_DATE(b.invoice_vessel_ata, "%d/%m/%Y")) OR (overdue_charge_enabled_date IS NULL)) ORDER BY overdue_charge_enabled_date DESC LIMIT 1) END  `
+      } else {
+        queryStr += ` AND CASE WHEN a.invoice_containers_empty_return_overdue_free_days IS NOT NULL AND a.invoice_containers_empty_return_overdue_free_days != '' THEN TIMESTAMPDIFF(DAY, STR_TO_DATE(b.invoice_vessel_ata, "%d/%m/%Y"), NOW()) <= a.invoice_containers_empty_return_overdue_free_days+0 ELSE TIMESTAMPDIFF(DAY, STR_TO_DATE(b.invoice_vessel_ata, "%d/%m/%Y"), NOW()) <= (SELECT overdue_charge_max_day
+          FROM tbl_zhongtan_overdue_charge_rule
+          WHERE overdue_charge_cargo_type = c.invoice_masterbi_cargo_type
+          AND overdue_charge_discharge_port = SUBSTR(c.invoice_masterbi_destination, 1, 2)
+          AND overdue_charge_carrier = c.invoice_masterbi_carrier
+          AND overdue_charge_container_size = a.invoice_containers_size
+          AND (
+          overdue_charge_amount = 0
+          OR overdue_charge_amount IS NULL
+          OR overdue_charge_amount = ''
+          )
+          AND ((overdue_charge_enabled_date IS NOT NULL AND STR_TO_DATE(overdue_charge_enabled_date, '%Y-%m-%d') <= STR_TO_DATE(b.invoice_vessel_ata, "%d/%m/%Y")) OR (overdue_charge_enabled_date IS NULL)) ORDER BY overdue_charge_enabled_date DESC LIMIT 1) END  `
+      }
+    }
+    if (doc.search_data.is_invoice) {
+      if(doc.search_data.is_invoice === '1') {
+        queryStr += ` and (a.invoice_containers_empty_return_invoice_date is not null or a.invoice_containers_empty_return_receipt_date is not null ) `
+      } else {
+        queryStr += ` and (a.invoice_containers_empty_return_invoice_date is null or a.invoice_containers_empty_return_receipt_date is null or IFNULL(a.invoice_containers_empty_return_edit_flg, '') != '1')  `
       }
     }
   }
@@ -98,23 +123,12 @@ exports.searchAct = async req => {
 
 exports.exportDataAct = async(req, res) => {
   let doc = common.docValidate(req)
-  let queryStr = ` SELECT a.*, b.invoice_vessel_name, b.invoice_vessel_voyage, b.invoice_vessel_ata, b.invoice_vessel_atd, b.invoice_vessel_eta, c.invoice_masterbi_id, c.invoice_masterbi_cargo_type, c.invoice_masterbi_destination, c.invoice_masterbi_carrier, d.user_name AS invoice_masterbi_deposit_party
+  let queryStr = ` SELECT a.*, b.invoice_vessel_name, b.invoice_vessel_voyage, b.invoice_vessel_ata, b.invoice_vessel_atd, b.invoice_vessel_eta, c.invoice_masterbi_id, c.invoice_masterbi_cargo_type, c.invoice_masterbi_destination, c.invoice_masterbi_carrier, d.user_name as invoice_masterbi_demurrage_party, e.user_name AS invoice_masterbi_deposit_party 
   from tbl_zhongtan_invoice_containers a LEFT JOIN tbl_zhongtan_invoice_vessel b ON a.invoice_vessel_id = b.invoice_vessel_id AND b.state = '1' 
   LEFT JOIN tbl_zhongtan_invoice_masterbl c ON a.invoice_containers_bl = c.invoice_masterbi_bl AND c.state = '1' AND c.invoice_vessel_id = a.invoice_vessel_id 
-  LEFT JOIN tbl_common_user d ON c.invoice_masterbi_customer_id = d.user_id
-  WHERE a.state = '1' and (a.invoice_containers_empty_return_invoice_date is null or a.invoice_containers_empty_return_receipt_date is null or IFNULL(a.invoice_containers_empty_return_edit_flg, '') != '1') 
-  AND CASE WHEN a.invoice_containers_empty_return_overdue_free_days IS NOT NULL AND a.invoice_containers_empty_return_overdue_free_days != '' THEN TIMESTAMPDIFF(DAY, STR_TO_DATE(b.invoice_vessel_ata, "%d/%m/%Y"), NOW()) > a.invoice_containers_empty_return_overdue_free_days+0 ELSE TIMESTAMPDIFF(DAY, STR_TO_DATE(b.invoice_vessel_ata, "%d/%m/%Y"), NOW()) > (SELECT overdue_charge_max_day
-  FROM tbl_zhongtan_overdue_charge_rule
-  WHERE overdue_charge_cargo_type = c.invoice_masterbi_cargo_type
-  AND overdue_charge_discharge_port = SUBSTR(c.invoice_masterbi_destination, 1, 2)
-  AND overdue_charge_carrier = c.invoice_masterbi_carrier
-  AND overdue_charge_container_size = a.invoice_containers_size
-  AND (
-  overdue_charge_amount = 0
-  OR overdue_charge_amount IS NULL
-  OR overdue_charge_amount = ''
-  )
-  AND ((overdue_charge_enabled_date IS NOT NULL AND STR_TO_DATE(overdue_charge_enabled_date, '%Y-%m-%d') <= STR_TO_DATE(b.invoice_vessel_ata, "%d/%m/%Y")) OR (overdue_charge_enabled_date IS NULL)) ORDER BY overdue_charge_enabled_date DESC LIMIT 1) END `
+  LEFT JOIN tbl_common_user d ON a.invoice_containers_customer_id = d.user_id 
+  LEFT JOIN tbl_common_user e ON c.invoice_masterbi_customer_id = e.user_id 
+  WHERE a.state = '1' `
   let replacements = []
   if(doc.search_data) {
     if (doc.search_data.ata_date && doc.search_data.ata_date.length > 1) {
@@ -147,11 +161,52 @@ exports.exportDataAct = async(req, res) => {
         }
       }
     }
+    if (doc.search_data.is_overdue) {
+      if(doc.search_data.is_overdue === '1') {
+        queryStr += ` AND CASE WHEN a.invoice_containers_empty_return_overdue_free_days IS NOT NULL AND a.invoice_containers_empty_return_overdue_free_days != '' THEN TIMESTAMPDIFF(DAY, STR_TO_DATE(b.invoice_vessel_ata, "%d/%m/%Y"), NOW()) > a.invoice_containers_empty_return_overdue_free_days+0 ELSE TIMESTAMPDIFF(DAY, STR_TO_DATE(b.invoice_vessel_ata, "%d/%m/%Y"), NOW()) > (SELECT overdue_charge_max_day
+          FROM tbl_zhongtan_overdue_charge_rule
+          WHERE overdue_charge_cargo_type = c.invoice_masterbi_cargo_type
+          AND overdue_charge_discharge_port = SUBSTR(c.invoice_masterbi_destination, 1, 2)
+          AND overdue_charge_carrier = c.invoice_masterbi_carrier
+          AND overdue_charge_container_size = a.invoice_containers_size
+          AND (
+          overdue_charge_amount = 0
+          OR overdue_charge_amount IS NULL
+          OR overdue_charge_amount = ''
+          )
+          AND ((overdue_charge_enabled_date IS NOT NULL AND STR_TO_DATE(overdue_charge_enabled_date, '%Y-%m-%d') <= STR_TO_DATE(b.invoice_vessel_ata, "%d/%m/%Y")) OR (overdue_charge_enabled_date IS NULL)) ORDER BY overdue_charge_enabled_date DESC LIMIT 1) END  `
+      } else {
+        queryStr += ` AND CASE WHEN a.invoice_containers_empty_return_overdue_free_days IS NOT NULL AND a.invoice_containers_empty_return_overdue_free_days != '' THEN TIMESTAMPDIFF(DAY, STR_TO_DATE(b.invoice_vessel_ata, "%d/%m/%Y"), NOW()) <= a.invoice_containers_empty_return_overdue_free_days+0 ELSE TIMESTAMPDIFF(DAY, STR_TO_DATE(b.invoice_vessel_ata, "%d/%m/%Y"), NOW()) <= (SELECT overdue_charge_max_day
+          FROM tbl_zhongtan_overdue_charge_rule
+          WHERE overdue_charge_cargo_type = c.invoice_masterbi_cargo_type
+          AND overdue_charge_discharge_port = SUBSTR(c.invoice_masterbi_destination, 1, 2)
+          AND overdue_charge_carrier = c.invoice_masterbi_carrier
+          AND overdue_charge_container_size = a.invoice_containers_size
+          AND (
+          overdue_charge_amount = 0
+          OR overdue_charge_amount IS NULL
+          OR overdue_charge_amount = ''
+          )
+          AND ((overdue_charge_enabled_date IS NOT NULL AND STR_TO_DATE(overdue_charge_enabled_date, '%Y-%m-%d') <= STR_TO_DATE(b.invoice_vessel_ata, "%d/%m/%Y")) OR (overdue_charge_enabled_date IS NULL)) ORDER BY overdue_charge_enabled_date DESC LIMIT 1) END  `
+      }
+    }
+    if (doc.search_data.is_invoice) {
+      if(doc.search_data.is_invoice === '1') {
+        queryStr += ` and (a.invoice_containers_empty_return_invoice_date is not null or a.invoice_containers_empty_return_receipt_date is not null ) `
+      } else {
+        queryStr += ` and (a.invoice_containers_empty_return_invoice_date is null or a.invoice_containers_empty_return_receipt_date is null or IFNULL(a.invoice_containers_empty_return_edit_flg, '') != '1')  `
+      }
+    }
   }
   queryStr = queryStr + ' ORDER BY b.invoice_vessel_id DESC, a.invoice_containers_bl, a.invoice_containers_no'
   let result = await model.simpleSelect(queryStr, replacements)
   let renderData = []
   for (let r of result) {
+    if(r.invoice_containers_empty_return_overdue_free_days) {
+      r.invoice_containers_free_days = r.invoice_containers_empty_return_overdue_free_days
+    } else {
+      r.invoice_containers_free_days = await cal_config_srv.queryContainerFreeDays(r.invoice_masterbi_cargo_type, r.invoice_masterbi_destination.substring(0, 2), r.invoice_masterbi_carrier, r.invoice_containers_size, r.invoice_vessel_ata)
+    }
     renderData.push(r)
   }
 

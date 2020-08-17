@@ -25,7 +25,14 @@ exports.searchAct = async req => {
   let doc = common.docValidate(req)
   let returnData = {}
 
-  let queryStr = `SELECT a.*, b.invoice_vessel_name, b.invoice_vessel_voyage, b.invoice_vessel_ata, b.invoice_vessel_atd, b.invoice_vessel_eta, c.invoice_masterbi_id, c.invoice_masterbi_cargo_type, c.invoice_masterbi_destination, d.user_name from tbl_zhongtan_invoice_containers a LEFT JOIN tbl_zhongtan_invoice_vessel b ON a.invoice_vessel_id = b.invoice_vessel_id AND b.state = '1' LEFT JOIN tbl_zhongtan_invoice_masterbl c ON a.invoice_containers_bl = c.invoice_masterbi_bl AND c.state = '1' AND c.invoice_vessel_id = a.invoice_vessel_id LEFT JOIN tbl_common_user d on a.invoice_containers_customer_id = d.user_id WHERE a.state = '1' and (a.invoice_containers_empty_return_invoice_date is not null or a.invoice_containers_empty_return_receipt_date is not null)`
+  let queryStr = `SELECT a.*, b.invoice_vessel_name, b.invoice_vessel_voyage, b.invoice_vessel_ata, b.invoice_vessel_atd, b.invoice_vessel_eta, 
+  c.invoice_masterbi_id, c.invoice_masterbi_cargo_type, c.invoice_masterbi_destination, d.user_name as invoice_masterbi_demurrage_party, e.user_name AS invoice_masterbi_deposit_party 
+  from tbl_zhongtan_invoice_containers a 
+  LEFT JOIN tbl_zhongtan_invoice_vessel b ON a.invoice_vessel_id = b.invoice_vessel_id AND b.state = '1' 
+  LEFT JOIN tbl_zhongtan_invoice_masterbl c ON a.invoice_containers_bl = c.invoice_masterbi_bl AND c.state = '1' AND c.invoice_vessel_id = a.invoice_vessel_id 
+  LEFT JOIN tbl_common_user d ON a.invoice_containers_customer_id = d.user_id 
+  LEFT JOIN tbl_common_user e ON c.invoice_masterbi_customer_id = e.user_id 
+  WHERE a.state = '1' and (a.invoice_containers_empty_return_invoice_date is not null or a.invoice_containers_empty_return_receipt_date is not null)`
   let replacements = []
   if(doc.search_data) {
     if (doc.search_data.ata_date && doc.search_data.ata_date.length > 1) {
@@ -87,7 +94,14 @@ exports.searchAct = async req => {
 exports.exportDemurrageReportAct = async(req, res) => {
   let doc = common.docValidate(req)
 
-  let queryStr = `SELECT a.*, b.invoice_vessel_name, b.invoice_vessel_voyage, b.invoice_vessel_ata, b.invoice_vessel_atd, b.invoice_vessel_eta, c.invoice_masterbi_id, c.invoice_masterbi_cargo_type, c.invoice_masterbi_destination, d.user_name from tbl_zhongtan_invoice_containers a LEFT JOIN tbl_zhongtan_invoice_vessel b ON a.invoice_vessel_id = b.invoice_vessel_id AND b.state = '1' LEFT JOIN tbl_zhongtan_invoice_masterbl c ON a.invoice_containers_bl = c.invoice_masterbi_bl AND c.state = '1' AND c.invoice_vessel_id = a.invoice_vessel_id LEFT JOIN tbl_common_user d on a.invoice_containers_customer_id = d.user_id WHERE a.state = '1' and (a.invoice_containers_empty_return_invoice_date is not null or a.invoice_containers_empty_return_receipt_date is not null)`
+  let queryStr = `SELECT a.*, b.invoice_vessel_name, b.invoice_vessel_voyage, b.invoice_vessel_ata, b.invoice_vessel_atd, b.invoice_vessel_eta, 
+  c.invoice_masterbi_id, c.invoice_masterbi_cargo_type, c.invoice_masterbi_destination, d.user_name as invoice_masterbi_demurrage_party, e.user_name AS invoice_masterbi_deposit_party  
+  from tbl_zhongtan_invoice_containers a 
+  LEFT JOIN tbl_zhongtan_invoice_vessel b ON a.invoice_vessel_id = b.invoice_vessel_id AND b.state = '1' 
+  LEFT JOIN tbl_zhongtan_invoice_masterbl c ON a.invoice_containers_bl = c.invoice_masterbi_bl AND c.state = '1' AND c.invoice_vessel_id = a.invoice_vessel_id 
+  LEFT JOIN tbl_common_user d ON a.invoice_containers_customer_id = d.user_id 
+  LEFT JOIN tbl_common_user e ON c.invoice_masterbi_customer_id = e.user_id 
+  WHERE a.state = '1' and (a.invoice_containers_empty_return_invoice_date is not null or a.invoice_containers_empty_return_receipt_date is not null)`
   let replacements = []
   if(doc.search_data) {
     if (doc.search_data.ata_date && doc.search_data.ata_date.length > 1) {
@@ -178,6 +192,8 @@ exports.exportDemurrageReportAct = async(req, res) => {
         }
       }
     }
+    row.invoice_masterbi_demurrage_party = r.invoice_masterbi_demurrage_party
+    row.invoice_masterbi_deposit_party = r.invoice_masterbi_deposit_party
     renderData.push(row)
     if(rcons && rcons.length > 1) {
       for(let i = 1; i < rcons.length; i++) {
@@ -216,7 +232,14 @@ exports.exportDemurrageReportAct = async(req, res) => {
 exports.exportDemurrageAdminReportAct = async(req, res) => {
   let doc = common.docValidate(req)
 
-  let queryStr = `SELECT a.*, b.invoice_vessel_name, b.invoice_vessel_voyage, b.invoice_vessel_ata, b.invoice_vessel_atd, b.invoice_vessel_eta, c.invoice_masterbi_id, c.invoice_masterbi_cargo_type, c.invoice_masterbi_destination, d.user_name from tbl_zhongtan_invoice_containers a LEFT JOIN tbl_zhongtan_invoice_vessel b ON a.invoice_vessel_id = b.invoice_vessel_id AND b.state = '1' LEFT JOIN tbl_zhongtan_invoice_masterbl c ON a.invoice_containers_bl = c.invoice_masterbi_bl AND c.state = '1' AND c.invoice_vessel_id = a.invoice_vessel_id LEFT JOIN tbl_common_user d on a.invoice_containers_customer_id = d.user_id WHERE a.state = '1' and (a.invoice_containers_empty_return_invoice_date is not null or a.invoice_containers_empty_return_receipt_date is not null)`
+  let queryStr = `SELECT a.*, b.invoice_vessel_name, b.invoice_vessel_voyage, b.invoice_vessel_ata, b.invoice_vessel_atd, b.invoice_vessel_eta, 
+  c.invoice_masterbi_id, c.invoice_masterbi_cargo_type, c.invoice_masterbi_destination, d.user_name as invoice_masterbi_demurrage_party, e.user_name AS invoice_masterbi_deposit_party 
+  from tbl_zhongtan_invoice_containers a 
+  LEFT JOIN tbl_zhongtan_invoice_vessel b ON a.invoice_vessel_id = b.invoice_vessel_id AND b.state = '1' 
+  LEFT JOIN tbl_zhongtan_invoice_masterbl c ON a.invoice_containers_bl = c.invoice_masterbi_bl AND c.state = '1' AND c.invoice_vessel_id = a.invoice_vessel_id 
+  LEFT JOIN tbl_common_user d ON a.invoice_containers_customer_id = d.user_id 
+  LEFT JOIN tbl_common_user e ON c.invoice_masterbi_customer_id = e.user_id 
+  WHERE a.state = '1' and (a.invoice_containers_empty_return_invoice_date is not null or a.invoice_containers_empty_return_receipt_date is not null)`
   let replacements = []
   if(doc.search_data) {
     if (doc.search_data.ata_date && doc.search_data.ata_date.length > 1) {
@@ -308,6 +331,8 @@ exports.exportDemurrageAdminReportAct = async(req, res) => {
     if(r.invoice_containers_empty_return_overdue_amount_invoice && r.invoice_containers_actually_return_overdue_amount) {
       row.balance = parseFloat(r.invoice_containers_empty_return_overdue_amount_invoice) - parseFloat(r.invoice_containers_actually_return_overdue_amount)
     }
+    row.invoice_masterbi_demurrage_party = r.invoice_masterbi_demurrage_party
+    row.invoice_masterbi_deposit_party = r.invoice_masterbi_deposit_party
     renderData.push(row)
     if(rcons && rcons.length > 1) {
       for(let i = 1; i < rcons.length; i++) {
