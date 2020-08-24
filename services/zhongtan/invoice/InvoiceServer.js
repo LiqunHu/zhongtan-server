@@ -238,103 +238,107 @@ exports.uploadImportAct = async req => {
         })
 
         for (let m of masterBIJS) {
-          let masterbi_freight = m['Freight Terms'] || ''
-          if(masterbi_freight) {
-            if(masterbi_freight.toUpperCase().indexOf('PREPAID') != -1) {
-              masterbi_freight = 'PREPAID'
-            } else if(masterbi_freight.toUpperCase().indexOf('COLLECT') != -1) {
-              masterbi_freight = 'COLLECT'
+          if(m['#M B/L No']) {
+            let masterbi_freight = m['Freight Terms'] || ''
+            if(masterbi_freight) {
+              if(masterbi_freight.toUpperCase().indexOf('PREPAID') != -1) {
+                masterbi_freight = 'PREPAID'
+              } else if(masterbi_freight.toUpperCase().indexOf('COLLECT') != -1) {
+                masterbi_freight = 'COLLECT'
+              }
             }
-          }
-          let freight_charge = m['Freight Charge'] || ''
-          if(!freight_charge || isNaN(Number(freight_charge))) {
-            freight_charge = ''
-          }
+            let freight_charge = m['Freight Charge'] || ''
+            if(!freight_charge || isNaN(Number(freight_charge))) {
+              freight_charge = ''
+            }
 
-          let freight_currency = m['Freight Currency'] || ''
-          if(freight_currency) {
-            if(masterbi_freight.toUpperCase().indexOf('USD') != -1) {
-              freight_currency = 'USD'
-            } else if(masterbi_freight.toUpperCase().indexOf('TZS') != -1) {
-              freight_currency = 'TZS'
+            let freight_currency = m['Freight Currency'] || ''
+            if(freight_currency) {
+              if(masterbi_freight.toUpperCase().indexOf('USD') != -1) {
+                freight_currency = 'USD'
+              } else if(masterbi_freight.toUpperCase().indexOf('TZS') != -1) {
+                freight_currency = 'TZS'
+              }
             }
+            let masterbi_bl = m['#M B/L No']
+            let masterbi_carrier = ''
+            if(masterbi_bl.indexOf('COS') >= 0) {
+              masterbi_carrier  = 'COSCO'
+            } else if(masterbi_bl.indexOf('OOLU') >= 0) {
+              masterbi_carrier  = 'OOCL'
+            }
+            await tb_bl.create({
+              invoice_vessel_id: vessel.invoice_vessel_id,
+              invoice_masterbi_bl: masterbi_bl,
+              invoice_masterbi_carrier: masterbi_carrier,
+              invoice_masterbi_cargo_type: m['Cargo Classification'],
+              invoice_masterbi_bl_type: m['*B/L Type'],
+              invoice_masterbi_destination: m['Place of Destination'],
+              invoice_masterbi_delivery: m['Place of Delivery'],
+              invoice_masterbi_freight: masterbi_freight,
+              invoice_masterbi_loading: m['Port of Loading'],
+              invoice_masterbi_container_no: m['Number of Containers'],
+              invoice_masterbi_goods_description: m['Description of Goods'],
+              invoice_masterbi_package_no: m['Number of Package'],
+              invoice_masterbi_package_unit: m['Package Unit'],
+              invoice_masterbi_gross_weight: m['Gross Weight'],
+              invoice_masterbi_gross_weight_unit: m['Gross Weight Unit'],
+              invoice_masterbi_gross_volume: m['Gross Volume'],
+              invoice_masterbi_gross_volume_unit: m['Gross Volume Unit'],
+              invoice_masterbi_invoice_value: m['Invoice Value'] || '',
+              invoice_masterbi_invoice_currency: m['Invoice Currency'] || '',
+              invoice_masterbi_freight_charge: freight_charge,
+              invoice_masterbi_freight_currency: freight_currency,
+              invoice_masterbi_imdg: m['IMDG Code'] || '',
+              invoice_masterbi_packing_type: m['Packing Type'] || '',
+              invoice_masterbi_forwarder_code: m['Forwarder Code'] || '',
+              invoice_masterbi_forwarder_name: m['Forwarder Name'] || '',
+              invoice_masterbi_forwarder_tel: m['Forwarder Tel'] || '',
+              invoice_masterbi_exporter_name: m['Exporter Name'] || '',
+              invoice_masterbi_exporter_tel: m['Exporter Tel'] || '',
+              invoice_masterbi_exporter_address: m['Exporter Address'] || '',
+              invoice_masterbi_exporter_tin: m['Exporter TIN'] || '',
+              invoice_masterbi_consignee_name: m['Consignee Name'] || '',
+              invoice_masterbi_consignee_tel: m['Consignee Tel'] || '',
+              invoice_masterbi_consignee_address: m['Consignee Address'] || '',
+              invoice_masterbi_consignee_tin: m['Consignee TIN'] || '',
+              invoice_masterbi_notify_name: m['Notify Name'] || '',
+              invoice_masterbi_notify_tel: m['Notify Tel'] || '',
+              invoice_masterbi_notify_address: m['Notify Address'] || '',
+              invoice_masterbi_notify_tin: m['Notify TIN'] || '',
+              invoice_masterbi_shipping_mark: m['Shipping Mark'] || '',
+              invoice_masterbi_net_weight: m['Net Weight'] || '',
+              invoice_masterbi_net_weight_unit: m['Net Weight Unit'] || '',
+              invoice_masterbi_line_code: m['LineAgent Code'] || '',
+              invoice_masterbi_terminal_code: m['TerminalCode'] || '',
+              invoice_masterbi_vessel_type: 'Container'
+            })
           }
-          let masterbi_bl = m['#M B/L No']
-          let masterbi_carrier = ''
-          if(masterbi_bl.indexOf('COS') >= 0) {
-            masterbi_carrier  = 'COSCO'
-          } else if(masterbi_bl.indexOf('OOLU') >= 0) {
-            masterbi_carrier  = 'OOCL'
-          }
-          await tb_bl.create({
-            invoice_vessel_id: vessel.invoice_vessel_id,
-            invoice_masterbi_bl: masterbi_bl,
-            invoice_masterbi_carrier: masterbi_carrier,
-            invoice_masterbi_cargo_type: m['Cargo Classification'],
-            invoice_masterbi_bl_type: m['*B/L Type'],
-            invoice_masterbi_destination: m['Place of Destination'],
-            invoice_masterbi_delivery: m['Place of Delivery'],
-            invoice_masterbi_freight: masterbi_freight,
-            invoice_masterbi_loading: m['Port of Loading'],
-            invoice_masterbi_container_no: m['Number of Containers'],
-            invoice_masterbi_goods_description: m['Description of Goods'],
-            invoice_masterbi_package_no: m['Number of Package'],
-            invoice_masterbi_package_unit: m['Package Unit'],
-            invoice_masterbi_gross_weight: m['Gross Weight'],
-            invoice_masterbi_gross_weight_unit: m['Gross Weight Unit'],
-            invoice_masterbi_gross_volume: m['Gross Volume'],
-            invoice_masterbi_gross_volume_unit: m['Gross Volume Unit'],
-            invoice_masterbi_invoice_value: m['Invoice Value'] || '',
-            invoice_masterbi_invoice_currency: m['Invoice Currency'] || '',
-            invoice_masterbi_freight_charge: freight_charge,
-            invoice_masterbi_freight_currency: freight_currency,
-            invoice_masterbi_imdg: m['IMDG Code'] || '',
-            invoice_masterbi_packing_type: m['Packing Type'] || '',
-            invoice_masterbi_forwarder_code: m['Forwarder Code'] || '',
-            invoice_masterbi_forwarder_name: m['Forwarder Name'] || '',
-            invoice_masterbi_forwarder_tel: m['Forwarder Tel'] || '',
-            invoice_masterbi_exporter_name: m['Exporter Name'] || '',
-            invoice_masterbi_exporter_tel: m['Exporter Tel'] || '',
-            invoice_masterbi_exporter_address: m['Exporter Address'] || '',
-            invoice_masterbi_exporter_tin: m['Exporter TIN'] || '',
-            invoice_masterbi_consignee_name: m['Consignee Name'] || '',
-            invoice_masterbi_consignee_tel: m['Consignee Tel'] || '',
-            invoice_masterbi_consignee_address: m['Consignee Address'] || '',
-            invoice_masterbi_consignee_tin: m['Consignee TIN'] || '',
-            invoice_masterbi_notify_name: m['Notify Name'] || '',
-            invoice_masterbi_notify_tel: m['Notify Tel'] || '',
-            invoice_masterbi_notify_address: m['Notify Address'] || '',
-            invoice_masterbi_notify_tin: m['Notify TIN'] || '',
-            invoice_masterbi_shipping_mark: m['Shipping Mark'] || '',
-            invoice_masterbi_net_weight: m['Net Weight'] || '',
-            invoice_masterbi_net_weight_unit: m['Net Weight Unit'] || '',
-            invoice_masterbi_line_code: m['LineAgent Code'] || '',
-            invoice_masterbi_terminal_code: m['TerminalCode'] || '',
-            invoice_masterbi_vessel_type: 'Container'
-          })
         }
 
         for (let c of containersJS) {
-          await tb_container.create({
-            invoice_vessel_id: vessel.invoice_vessel_id,
-            invoice_containers_bl: c['#M B/L No'],
-            invoice_containers_type: c['Type Of Container'],
-            invoice_containers_no: c['Container No'],
-            invoice_containers_size: c['Container Size'],
-            invoice_containers_seal1: c['Seal No.1'],
-            invoice_containers_seal2: c['Seal No.2'] || '',
-            invoice_containers_seal3: c['Seal No.3'] || '',
-            invoice_containers_freight_indicator: c['Freight Indicator'] || '',
-            invoice_containers_package_no: c['No Of Package'] || '',
-            invoice_containers_package_unit: c['Package Unit'] || '',
-            invoice_containers_volumn: c['Volumn'] || '',
-            invoice_containers_volumn_unit: c['Volumn Unit'] || '',
-            invoice_containers_weight: c['Weight'] || '',
-            invoice_containers_weight_unit: c['Weight Unit'] || '',
-            invoice_containers_plug_reefer: c['Plug type of reefer'] || '',
-            invoice_containers_min_temperature: c['Minimum Temperature'] || '',
-            invoice_containers_max_temperature: c['Maximum Temperature'] | ''
-          })
+          if(c['#M B/L No'] && c['Container No']) {
+            await tb_container.create({
+              invoice_vessel_id: vessel.invoice_vessel_id,
+              invoice_containers_bl: c['#M B/L No'],
+              invoice_containers_type: c['Type Of Container'],
+              invoice_containers_no: c['Container No'],
+              invoice_containers_size: c['Container Size'],
+              invoice_containers_seal1: c['Seal No.1'],
+              invoice_containers_seal2: c['Seal No.2'] || '',
+              invoice_containers_seal3: c['Seal No.3'] || '',
+              invoice_containers_freight_indicator: c['Freight Indicator'] || '',
+              invoice_containers_package_no: c['No Of Package'] || '',
+              invoice_containers_package_unit: c['Package Unit'] || '',
+              invoice_containers_volumn: c['Volumn'] || '',
+              invoice_containers_volumn_unit: c['Volumn Unit'] || '',
+              invoice_containers_weight: c['Weight'] || '',
+              invoice_containers_weight_unit: c['Weight Unit'] || '',
+              invoice_containers_plug_reefer: c['Plug type of reefer'] || '',
+              invoice_containers_min_temperature: c['Minimum Temperature'] || '',
+              invoice_containers_max_temperature: c['Maximum Temperature'] | ''
+            })
+          }
         }
       }
     }
