@@ -82,7 +82,7 @@ exports.searchVoyageAct = async req => {
       if (d.invoice_masterbi_tasac && d.invoice_masterbi_tasac_receipt 
         && parseFloat(d.invoice_masterbi_tasac) > parseFloat(d.invoice_masterbi_tasac_receipt)) {
           d.invoice_masterbi_tasac = parseFloat(d.invoice_masterbi_tasac) - parseFloat(d.invoice_masterbi_tasac_receipt)
-      } else {
+      } else if(d.invoice_masterbi_tasac && d.invoice_masterbi_tasac_receipt ){
         d.invoice_masterbi_tasac = ''
       }
       d.invoice_masterbi_do_release_date_fmt = moment(d.invoice_masterbi_do_release_date).format('DD/MM/YYYY hh:mm')
@@ -194,7 +194,7 @@ exports.getMasterbiDataAct = async req => {
     if (d.invoice_masterbi_tasac && d.invoice_masterbi_tasac_receipt 
       && parseFloat(d.invoice_masterbi_tasac) > parseFloat(d.invoice_masterbi_tasac_receipt)) {
         d.invoice_masterbi_tasac = parseFloat(d.invoice_masterbi_tasac) - parseFloat(d.invoice_masterbi_tasac_receipt)
-    } else {
+    } else if(d.invoice_masterbi_tasac && d.invoice_masterbi_tasac_receipt ){
       d.invoice_masterbi_tasac = ''
     }
     d.invoice_masterbi_do_release_date_fmt = moment(d.invoice_masterbi_do_release_date).format('DD/MM/YYYY hh:mm')
