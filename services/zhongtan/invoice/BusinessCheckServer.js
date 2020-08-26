@@ -202,6 +202,30 @@ exports.approveAct = async req => {
       fixedDeposit.deposit_invoice_release_date = curDate
     }
     await fixedDeposit.save()
+
+    // 多保函更新
+    let otherFiles = await tb_uploadfile.findAll({
+      where: {
+        uploadfile_index1: file.uploadfile_index1,
+        uploadfile_state: 'PB'
+      }
+    })
+    if(otherFiles) {
+      for(let f of otherFiles) {
+        await tb_verification.create({
+          invoice_masterbi_id: f.uploadfile_index1,
+          uploadfile_id: f.uploadfile_id,
+          user_id: user.user_id,
+          api_name: f.api_name,
+          uploadfile_state_pre: f.uploadfile_state,
+          uploadfile_state: 'AP'
+        })
+        f.uploadfile_state = 'AP'
+        f.uploadfil_release_date = curDate
+        f.uploadfil_release_user_id = user.user_id
+        await f.save()
+      }
+    }
   } else if(file.api_name === 'OVERDUE-INVOICE') {
     let containers = await tb_invoice_container.findAll({
       where: {

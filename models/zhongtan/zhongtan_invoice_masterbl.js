@@ -346,6 +346,12 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_masterbl', {
     defaultValue: '',
     allowNull: false
   },
+  invoice_masterbi_tasac_receipt: {
+    // TASAC RECEIPT AMOUNT
+    type: db.STRING(50),
+    defaultValue: '',
+    allowNull: false
+  },
   invoice_masterbi_printing: {
     // BILL PRINGTING FEE
     type: db.STRING(50),

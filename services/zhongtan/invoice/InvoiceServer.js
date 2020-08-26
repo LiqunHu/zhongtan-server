@@ -1335,26 +1335,36 @@ exports.depositDoAct = async req => {
       renderData.sum_fee += parseFloat(bl.invoice_masterbi_amendment)
     }
     if (bl.invoice_masterbi_tasac) {
-      let fee = { type: 'TASAC FEE', amount: formatCurrency(bl.invoice_masterbi_tasac), containers: []}
-      if(doc.invoice_masterbi_tasac_necessary) {
-        if(doc.invoice_masterbi_tasac_type ==='BL') {
-          fee.containers.push({
-            quantity: '1',
-            cnty_type: '',
-            standard: 'B/L'
-          })
-        } else {
-          for(let c of continers) {
+      let masterbi_tasac = ''
+      if (bl.invoice_masterbi_tasac_receipt) {
+        if(parseFloat(bl.invoice_masterbi_tasac) > parseFloat(bl.invoice_masterbi_tasac_receipt)) {
+          masterbi_tasac = parseFloat(bl.invoice_masterbi_tasac) - parseFloat(bl.invoice_masterbi_tasac_receipt)
+        }
+      } else {
+        masterbi_tasac = bl.invoice_masterbi_tasac
+      }
+      if(parseFloat(masterbi_tasac) > 0 ) {
+        let fee = { type: 'TASAC FEE', amount: formatCurrency(masterbi_tasac), containers: []}
+        if(doc.invoice_masterbi_tasac_necessary) {
+          if(doc.invoice_masterbi_tasac_type ==='BL') {
             fee.containers.push({
-              quantity: c.invoice_containers_count,
-              cnty_type: c.invoice_containers_size,
-              standard: ''
+              quantity: '1',
+              cnty_type: '',
+              standard: 'B/L'
             })
+          } else {
+            for(let c of continers) {
+              fee.containers.push({
+                quantity: c.invoice_containers_count,
+                cnty_type: c.invoice_containers_size,
+                standard: ''
+              })
+            }
           }
         }
+        renderData.fee.push(fee)
+        renderData.sum_fee += parseFloat(masterbi_tasac)
       }
-      renderData.fee.push(fee)
-      renderData.sum_fee += parseFloat(bl.invoice_masterbi_tasac)
     }
     if (bl.invoice_masterbi_printing) {
       let fee = { type: 'B/L PRINTING FEE', amount: formatCurrency(bl.invoice_masterbi_printing), containers: []}

@@ -79,7 +79,12 @@ exports.searchVoyageAct = async req => {
           text: d.user_name
         }
       ]
-      
+      if (d.invoice_masterbi_tasac && d.invoice_masterbi_tasac_receipt 
+        && parseFloat(d.invoice_masterbi_tasac) > parseFloat(d.invoice_masterbi_tasac_receipt)) {
+          d.invoice_masterbi_tasac = parseFloat(d.invoice_masterbi_tasac) - parseFloat(d.invoice_masterbi_tasac_receipt)
+      } else {
+        d.invoice_masterbi_tasac = ''
+      }
       d.invoice_masterbi_do_release_date_fmt = moment(d.invoice_masterbi_do_release_date).format('DD/MM/YYYY hh:mm')
       d.invoice_masterbi_invoice_release_date_fmt = moment(d.invoice_masterbi_invoice_release_date).format('DD/MM/YYYY hh:mm')
       d.invoice_masterbi_receipt_release_date_fmt = moment(d.invoice_masterbi_receipt_release_date).format('DD/MM/YYYY hh:mm')
@@ -186,6 +191,12 @@ exports.getMasterbiDataAct = async req => {
         text: d.user_name
       }
     ]
+    if (d.invoice_masterbi_tasac && d.invoice_masterbi_tasac_receipt 
+      && parseFloat(d.invoice_masterbi_tasac) > parseFloat(d.invoice_masterbi_tasac_receipt)) {
+        d.invoice_masterbi_tasac = parseFloat(d.invoice_masterbi_tasac) - parseFloat(d.invoice_masterbi_tasac_receipt)
+    } else {
+      d.invoice_masterbi_tasac = ''
+    }
     d.invoice_masterbi_do_release_date_fmt = moment(d.invoice_masterbi_do_release_date).format('DD/MM/YYYY hh:mm')
     d.invoice_masterbi_invoice_release_date_fmt = moment(d.invoice_masterbi_invoice_release_date).format('DD/MM/YYYY hh:mm')
     d.invoice_masterbi_receipt_release_date_fmt = moment(d.invoice_masterbi_receipt_release_date).format('DD/MM/YYYY hh:mm')
@@ -433,6 +444,9 @@ exports.downloadReceiptAct = async req => {
     //     }
     //   })
     // }
+    if(bl.invoice_masterbi_tasac) {
+      bl.invoice_masterbi_tasac_receipt = bl.invoice_masterbi_tasac
+    }
     bl.invoice_masterbi_invoice_receipt_date = curDate
   }
   if(common.checkDoState(bl)) {
