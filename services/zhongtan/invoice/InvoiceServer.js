@@ -1117,6 +1117,9 @@ exports.depositDoAct = async req => {
         renderData.sum_fee = parseFloat('0'.replace(/,/g, '') || 0)
       }
       renderData.sum_fee_str = numberToText(renderData.sum_fee)
+      renderData.user_name = commonUser.user_name
+      renderData.user_phone = commonUser.user_phone
+      renderData.user_email = commonUser.user_email
       let fileInfo = await common.ejs2Pdf('receipta.ejs', renderData, 'zhongtan')
       await tb_uploadfile.destroy({
         where: {

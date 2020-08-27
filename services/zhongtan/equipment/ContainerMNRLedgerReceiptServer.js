@@ -123,6 +123,13 @@ exports.searchAct = async req => {
 exports.receiptAct = async req => {
   let doc = common.docValidate(req), user = req.user, curDate = new Date()
   let file_id = doc.uploadfile_id
+
+  let commonUser = await tb_user.findOne({
+    where: {
+      user_id: user.user_id
+    }
+  })
+
   let invoice = await tb_uploadfile.findOne({
     where: {
       uploadfile_id: file_id
@@ -158,6 +165,9 @@ exports.receiptAct = async req => {
   }
   renderData.sum_fee = parseFloat(invoice.uploadfile_amount.replace(/,/g, '') || 0)
   renderData.sum_fee_str = numberToText(renderData.sum_fee)
+  renderData.user_name = commonUser.user_name
+  renderData.user_phone = commonUser.user_phone
+  renderData.user_email = commonUser.user_email
   let fileInfo = await common.ejs2Pdf('mnrReceipt.ejs', renderData, 'zhongtan')
   await tb_uploadfile.create({
     api_name: 'MNR-RECEIPT',

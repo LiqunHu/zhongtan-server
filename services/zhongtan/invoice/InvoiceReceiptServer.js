@@ -397,6 +397,12 @@ exports.downloadReceiptAct = async req => {
     return common.error('import_06')
   }
 
+  let commonUser = await tb_user.findOne({
+    where: {
+      user_id: user.user_id
+    }
+  })
+  
   let bl = await tb_bl.findOne({
     where: {
       invoice_masterbi_id: doc.invoice_masterbi_id
@@ -465,6 +471,9 @@ exports.downloadReceiptAct = async req => {
   }
   renderData.sum_fee = parseFloat(bl.invoice_masterbi_receipt_amount.replace(/,/g, '') || 0)
   renderData.sum_fee_str = numberToText(renderData.sum_fee)
+  renderData.user_name = commonUser.user_name
+  renderData.user_phone = commonUser.user_phone
+  renderData.user_email = commonUser.user_email
   let fileInfo = await common.ejs2Pdf('receipta.ejs', renderData, 'zhongtan')
   await tb_uploadfile.create({
     api_name: 'RECEIPT-RECEIPT',

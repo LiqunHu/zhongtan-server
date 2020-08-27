@@ -134,6 +134,12 @@ exports.receiptAct = async req => {
     return common.error('import_04')
   }
 
+  let commonUser = await tb_user.findOne({
+    where: {
+      user_id: user.user_id
+    }
+  })
+  
   theDeposit.deposit_check_cash_no = doc.deposit_check_cash_no
   theDeposit.deposit_bank_reference_no = doc.deposit_bank_reference_no
   theDeposit.deposit_receipt_no = await seq.genFixedReceiptSeq()
@@ -157,6 +163,9 @@ exports.receiptAct = async req => {
   } else {
     renderData.fixed_deposit_check_cash = 'Cheque/ ' + theDeposit.deposit_check_cash_no
   }
+  renderData.user_name = commonUser.user_name
+  renderData.user_phone = commonUser.user_phone
+  renderData.user_email = commonUser.user_email
   let fileInfo = await common.ejs2Pdf('fixedReceipt.ejs', renderData, 'zhongtan')
 
   await tb_uploadfile.destroy({
