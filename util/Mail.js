@@ -157,7 +157,12 @@ const readEdiMail = (ediDepots) => {
                                         } else if(container.invoice_containers_bl.indexOf('OOLU') >= 0) {
                                           charge_carrier  = 'OOCL'
                                         }
-                                        let free_days = await cal_config_srv.queryContainerFreeDays(bl.invoice_masterbi_cargo_type, discharge_port, charge_carrier, container.invoice_containers_size, vessel.invoice_vessel_ata)
+                                        let free_days = 0
+                                        if(container.invoice_containers_empty_return_overdue_free_days) {
+                                          free_days = parseInt(container.invoice_containers_empty_return_overdue_free_days)
+                                        } else {
+                                          free_days = await cal_config_srv.queryContainerFreeDays(bl.invoice_masterbi_cargo_type, discharge_port, charge_carrier, container.invoice_containers_size, vessel.invoice_vessel_ata)
+                                        }
                                         let cal_result = await cal_config_srv.demurrageCalculation(free_days, vessel.invoice_vessel_ata, container.invoice_containers_actually_return_date, bl.invoice_masterbi_cargo_type, discharge_port, charge_carrier, container.invoice_containers_size, vessel.invoice_vessel_ata)
                                         if(cal_result.diff_days !== -1) {
                                           container.invoice_containers_actually_return_overdue_days = cal_result.overdue_days

@@ -419,7 +419,11 @@ exports.searchVoyageAct = async req => {
       // Invoice state
       d.invoice_masterbi_invoice_state = await checkConditionInvoiceState(d)
       // D/O state overdue check
-      d.invoice_masterbi_do_state = common.checkDoState(d) && await checkConditionDoState(d, vessel)
+      let doCondition = await checkConditionDoState(d, vessel)
+      d.invoice_masterbi_do_state = common.checkDoState(d) && doCondition.check
+      if(doCondition.msg) {
+        d.invoice_masterbi_do_state_message = doCondition.msg
+      }
       // delivery to
       if(!d.invoice_masterbi_delivery_to && d.customerINFO && d.customerINFO.length === 1) {
         d.invoice_masterbi_delivery_to = d.customerINFO[0].text
@@ -593,7 +597,11 @@ exports.getMasterbiDataAct = async req => {
     // Invoice state
     d.invoice_masterbi_invoice_state = await checkConditionInvoiceState(d)
     // D/O state
-    d.invoice_masterbi_do_state = common.checkDoState(d) && await checkConditionDoState(d, vessel)
+    let doCondition = await checkConditionDoState(d, vessel)
+    d.invoice_masterbi_do_state = common.checkDoState(d) && doCondition.check
+    if(doCondition.msg) {
+      d.invoice_masterbi_do_state_message = doCondition.msg
+    }
     // delivery to
     if(!d.invoice_masterbi_delivery_to && d.customerINFO && d.customerINFO.length === 1) {
       d.invoice_masterbi_delivery_to = d.customerINFO[0].text
@@ -2062,6 +2070,11 @@ const checkConditionDoState = async (bl, ves) => {
         if(free_days === 0) {
           free_days = await cal_config_srv.queryContainerFreeDays(bl.invoice_masterbi_cargo_type, discharge_port, charge_carrier, c.invoice_containers_size, ves.invoice_vessel_ata)
         }
+        if(c.invoice_containers_empty_return_receipt_release_date && c.invoice_containers_empty_return_date_receipt 
+          && moment(c.invoice_containers_empty_return_date_receipt, 'DD/MM/YYYY').isBefore(moment())) {
+            overdueCheck = false 
+            break
+        }
         if(diff > parseInt(free_days) && !c.invoice_containers_empty_return_receipt_release_date) {
           overdueCheck = false 
           break
@@ -2082,7 +2095,21 @@ const checkConditionDoState = async (bl, ves) => {
       }
     }
   }
-  return overdueCheck && blacklistCheck && (bl.invoice_masterbi_do_disabled !== GLBConfig.ENABLE)
+  if (overdueCheck && blacklistCheck && (bl.invoice_masterbi_do_disabled !== GLBConfig.ENABLE)) {
+    return {check: true, msg: ''}
+  } else {
+    let msg = ''
+    if(!overdueCheck) {
+      msg = 'OVERDUE/'
+    }
+    if(!blacklistCheck) {
+      msg = 'BLACKLIST/'
+    }
+    if(!(bl.invoice_masterbi_do_disabled !== GLBConfig.ENABLE)) {
+      msg = 'DO DISABLED'
+    }
+    return {check: false, msg: msg}
+  }
 }
 
 const checkDoDepotState = async (bl) => {

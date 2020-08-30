@@ -107,19 +107,21 @@ exports.searchAct = async req => {
         }
       }
 
-      let discharge_port = d.invoice_masterbi_destination.substring(0, 2)
-      let charge_carrier = 'COSCO'
-      if(d.invoice_containers_bl.indexOf('COS') >= 0) {
-        charge_carrier  = 'COSCO'
-      } else if(d.invoice_containers_bl.indexOf('OOLU') >= 0) {
-        charge_carrier  = 'OOCL'
-      }
-      // cargo_type, discharge_port, carrier, container_type, enabled_date
-      d.invoice_containers_empty_return_overdue_static_free_days = await cal_config_srv.queryContainerFreeDays(d.invoice_masterbi_cargo_type, discharge_port, charge_carrier, d.invoice_containers_size, d.invoice_vessel_ata)
-      if(d.invoice_containers_empty_return_overdue_free_days) {
-        d.invoice_containers_empty_return_overdue_free_days = parseInt(d.invoice_containers_empty_return_overdue_free_days)
-      } else {
-        d.invoice_containers_empty_return_overdue_free_days = parseInt(d.invoice_containers_empty_return_overdue_static_free_days)
+      if(d.invoice_masterbi_destination) {
+        let discharge_port = d.invoice_masterbi_destination.substring(0, 2)
+        let charge_carrier = 'COSCO'
+        if(d.invoice_containers_bl.indexOf('COS') >= 0) {
+          charge_carrier  = 'COSCO'
+        } else if(d.invoice_containers_bl.indexOf('OOLU') >= 0) {
+          charge_carrier  = 'OOCL'
+        }
+        // cargo_type, discharge_port, carrier, container_type, enabled_date
+        d.invoice_containers_empty_return_overdue_static_free_days = await cal_config_srv.queryContainerFreeDays(d.invoice_masterbi_cargo_type, discharge_port, charge_carrier, d.invoice_containers_size, d.invoice_vessel_ata)
+        if(d.invoice_containers_empty_return_overdue_free_days) {
+          d.invoice_containers_empty_return_overdue_free_days = parseInt(d.invoice_containers_empty_return_overdue_free_days)
+        } else {
+          d.invoice_containers_empty_return_overdue_free_days = parseInt(d.invoice_containers_empty_return_overdue_static_free_days)
+        }
       }
       let rcount = await tb_invoice_container.count({
         where: {
@@ -195,15 +197,33 @@ exports.emptyReturnSaveAct = async req => {
     }
   })
   if(con) {
+    let discharge_port = doc.invoice_masterbi_destination.substring(0, 2)
+    let charge_carrier = 'COSCO'
+    if(doc.invoice_containers_bl.indexOf('COS') >= 0) {
+      charge_carrier  = 'COSCO'
+    } else if(doc.invoice_containers_bl.indexOf('OOLU') >= 0) {
+      charge_carrier  = 'OOCL'
+    }
     let old_free_days = con.invoice_containers_empty_return_overdue_free_days ? con.invoice_containers_empty_return_overdue_free_days : doc.invoice_containers_empty_return_overdue_static_free_days
-    if(doc.invoice_containers_empty_return_date && doc.invoice_containers_empty_return_overdue_free_days) {
-        // 保存计算超期费计算结果
-      con.invoice_containers_empty_return_date = moment(doc.invoice_containers_empty_return_date, 'DD/MM/YYYY').format('DD/MM/YYYY')
-      con.invoice_containers_empty_return_overdue_amount = doc.invoice_containers_empty_return_overdue_amount
-      con.invoice_containers_empty_return_overdue_days = doc.invoice_containers_empty_return_overdue_days
+    if((doc.invoice_containers_empty_return_date || con.invoice_containers_actually_return_date) && doc.invoice_containers_empty_return_overdue_free_days) {
       con.invoice_containers_empty_return_overdue_free_days = doc.invoice_containers_empty_return_overdue_free_days
-      if(doc.invoice_containers_empty_return_overdue_amount && doc.invoice_containers_empty_return_overdue_days) {
-        con.invoice_containers_empty_return_edit_flg = GLBConfig.ENABLE
+      // 保存计算超期费计算结果
+      if(doc.invoice_containers_empty_return_date) {
+        con.invoice_containers_empty_return_date = moment(doc.invoice_containers_empty_return_date, 'DD/MM/YYYY').format('DD/MM/YYYY')
+        con.invoice_containers_empty_return_overdue_amount = doc.invoice_containers_empty_return_overdue_amount
+        con.invoice_containers_empty_return_overdue_days = doc.invoice_containers_empty_return_overdue_days
+        if(doc.invoice_containers_empty_return_overdue_amount && doc.invoice_containers_empty_return_overdue_days) {
+          con.invoice_containers_empty_return_edit_flg = GLBConfig.ENABLE
+        }
+      }
+      if(con.invoice_containers_actually_return_date) {
+        // 以获取到实际进场时间，重新计算
+        let cal_result = await cal_config_srv.demurrageCalculation(con.invoice_containers_empty_return_overdue_free_days, 
+          doc.invoice_vessel_ata, con.invoice_containers_actually_return_date, doc.invoice_masterbi_cargo_type, discharge_port, charge_carrier, con.invoice_containers_size, doc.invoice_vessel_ata)
+        if(cal_result.diff_days !== -1) {
+          con.invoice_containers_actually_return_overdue_days = cal_result.overdue_days
+          con.invoice_containers_actually_return_overdue_amount = cal_result.overdue_amount
+        } 
       }
       await con.save()
     } else if(doc.invoice_containers_empty_return_overdue_free_days){
@@ -219,25 +239,33 @@ exports.emptyReturnSaveAct = async req => {
       let replacements = [con.invoice_vessel_id, con.invoice_containers_bl, con.invoice_containers_id, doc.invoice_containers_empty_return_overdue_free_days]
       let oCons = await model.simpleSelect(queryStr, replacements)
       if(oCons) {
-        let discharge_port = doc.invoice_masterbi_destination.substring(0, 2)
-        let charge_carrier = 'COSCO'
-        if(doc.invoice_containers_bl.indexOf('COS') >= 0) {
-          charge_carrier  = 'COSCO'
-        } else if(doc.invoice_containers_bl.indexOf('OOLU') >= 0) {
-          charge_carrier  = 'OOCL'
-        }
         for(let c of oCons) {
-          if(c.invoice_containers_empty_return_date) {
-            let cal_result = await cal_config_srv.demurrageCalculation(doc.invoice_containers_empty_return_overdue_free_days, doc.invoice_vessel_ata, c.invoice_containers_empty_return_date, 
-              doc.invoice_masterbi_cargo_type, discharge_port, charge_carrier, doc.invoice_containers_size, doc.invoice_vessel_ata)
-            if(cal_result) {
-              await tb_container.update(
-                  {'invoice_containers_empty_return_overdue_free_days': doc.invoice_containers_empty_return_overdue_free_days, 
-                  'invoice_containers_empty_return_overdue_days': cal_result.overdue_days, 
-                  'invoice_containers_empty_return_overdue_amount': cal_result.overdue_amount, 
-                  'invoice_containers_empty_return_edit_flg': GLBConfig.ENABLE}, 
-                  {'where': {'invoice_containers_id': c.invoice_containers_id}}
-                )
+          if(c.invoice_containers_empty_return_date || c.invoice_containers_actually_return_date) {
+            let oc = await tb_container.findOne({
+              where: {
+                invoice_containers_id: c.invoice_containers_id
+              }
+            })
+            if(oc) {
+              if(oc.invoice_containers_empty_return_date) {
+                oc.invoice_containers_empty_return_overdue_free_days = doc.invoice_containers_empty_return_overdue_free_days
+                let cal_result = await cal_config_srv.demurrageCalculation(oc.invoice_containers_empty_return_overdue_free_days, doc.invoice_vessel_ata, oc.invoice_containers_empty_return_date, 
+                  doc.invoice_masterbi_cargo_type, discharge_port, charge_carrier, oc.invoice_containers_size, doc.invoice_vessel_ata)
+                if(cal_result) {
+                  oc.invoice_containers_empty_return_overdue_days = cal_result.overdue_days
+                  oc.invoice_containers_empty_return_overdue_amount = cal_result.overdue_amount
+                  oc.invoice_containers_empty_return_edit_flg = GLBConfig.ENABLE
+                }
+              }
+              if(oc.invoice_containers_actually_return_date) {
+                let cal_result = await cal_config_srv.demurrageCalculation(oc.invoice_containers_empty_return_overdue_free_days, 
+                  doc.invoice_vessel_ata, oc.invoice_containers_actually_return_date, doc.invoice_masterbi_cargo_type, discharge_port, charge_carrier, oc.invoice_containers_size, doc.invoice_vessel_ata)
+                if(cal_result.diff_days !== -1) {
+                  oc.invoice_containers_actually_return_overdue_days = cal_result.overdue_days
+                  oc.invoice_containers_actually_return_overdue_amount = cal_result.overdue_amount
+                } 
+              }
+              oc.save()
             }
           } else {
             await tb_container.update(
