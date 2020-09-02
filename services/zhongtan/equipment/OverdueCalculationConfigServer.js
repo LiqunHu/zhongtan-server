@@ -200,34 +200,42 @@ exports.queryDemurrageRules = async (cargo_type, discharge_port, carrier, contai
     }
   })
   if(con_size_type) {
-    let queryStr = `SELECT overdue_charge_enabled_date FROM tbl_zhongtan_overdue_charge_rule WHERE state = '1' GROUP BY overdue_charge_enabled_date  ORDER BY overdue_charge_enabled_date DESC `
-    let replacements = []
-    let enabledDates = await model.simpleSelect(queryStr, replacements)
-    let baseEnabledDate = ''
-    if(enabledDates) {
-      if(enabled_date) {
+    let type = con_size_type.container_size_code
+    let queryStr = `SELECT * FROM tbl_zhongtan_overdue_charge_rule WHERE state = ? AND overdue_charge_cargo_type = ? 
+                      AND overdue_charge_discharge_port = ? AND overdue_charge_carrier = ? AND overdue_charge_container_size = ? ORDER BY overdue_charge_enabled_date DESC, overdue_charge_min_day DESC `
+    let replacements = [GLBConfig.ENABLE, cargo_type, discharge_port, carrier, type]
+    let allChargeRules = await model.simpleSelect(queryStr, replacements)
+    if(allChargeRules) {
+      let enabledDates = []
+      for(let a of allChargeRules) {
+        if(a.overdue_charge_enabled_date && enabledDates.indexOf(a.overdue_charge_enabled_date) < 0) {
+          enabledDates.push(a.overdue_charge_enabled_date)
+        }
+      }
+      let baseEnabledDate = ''
+      if(enabled_date && enabledDates.length > 0) {
         for(let d of enabledDates) {
-          if(moment(enabled_date, 'DD/MM/YYYY').isAfter(moment(d.overdue_charge_enabled_date))) {
-            baseEnabledDate = d.overdue_charge_enabled_date
+          if(moment(enabled_date, 'DD/MM/YYYY').isAfter(moment(d))) {
+            baseEnabledDate = d
             break
           }
         }
       }
-    }
-    let type = con_size_type.container_size_code
-    queryStr = `SELECT * FROM tbl_zhongtan_overdue_charge_rule WHERE state = ? AND overdue_charge_cargo_type = ? 
-                      AND overdue_charge_discharge_port = ? AND overdue_charge_carrier = ? AND overdue_charge_container_size = ? `
-    replacements = [GLBConfig.ENABLE, cargo_type, discharge_port, carrier, type]
-    if(baseEnabledDate) {
-      queryStr += ` AND overdue_charge_enabled_date = ? `
-      replacements.push(baseEnabledDate)
-    } else {
-      queryStr += ` AND (overdue_charge_enabled_date IS NULL OR overdue_charge_enabled_date = '') `
-    }
-    queryStr += ` ORDER BY  overdue_charge_min_day DESC`
-    let chargeRules = await model.simpleSelect(queryStr, replacements)
-    if(chargeRules && chargeRules.length  > 0) {
-      return chargeRules
+      let retChargeRules = []
+      if(baseEnabledDate) {
+        for(let a of allChargeRules) {
+          if(a.overdue_charge_enabled_date && moment(baseEnabledDate).isSame(moment(a.overdue_charge_enabled_date))) {
+            retChargeRules.push(a)
+          }
+        }
+      } else {
+        for(let a of allChargeRules) {
+          if(!a.overdue_charge_enabled_date) {
+            retChargeRules.push(a)
+          }
+        }
+      }
+      return retChargeRules
     }
   }
   return []
