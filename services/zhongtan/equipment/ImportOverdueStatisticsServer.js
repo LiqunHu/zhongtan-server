@@ -100,7 +100,7 @@ exports.searchAct = async req => {
       if(doc.search_data.is_invoice === '1') {
         queryStr += ` and (a.invoice_containers_empty_return_invoice_date is not null or a.invoice_containers_empty_return_receipt_date is not null ) `
       } else {
-        queryStr += ` and (a.invoice_containers_empty_return_invoice_date is null or a.invoice_containers_empty_return_receipt_date is null or IFNULL(a.invoice_containers_empty_return_edit_flg, '') != '1')  `
+        queryStr += ` and (a.invoice_containers_empty_return_invoice_date is null and a.invoice_containers_empty_return_receipt_date is null )  `
       }
     }
   }
@@ -194,7 +194,7 @@ exports.exportDataAct = async(req, res) => {
       if(doc.search_data.is_invoice === '1') {
         queryStr += ` and (a.invoice_containers_empty_return_invoice_date is not null or a.invoice_containers_empty_return_receipt_date is not null ) `
       } else {
-        queryStr += ` and (a.invoice_containers_empty_return_invoice_date is null or a.invoice_containers_empty_return_receipt_date is null or IFNULL(a.invoice_containers_empty_return_edit_flg, '') != '1')  `
+        queryStr += ` and (a.invoice_containers_empty_return_invoice_date is null and a.invoice_containers_empty_return_receipt_date is null )  `
       }
     }
   }
