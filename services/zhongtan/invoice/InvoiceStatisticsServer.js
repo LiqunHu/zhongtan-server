@@ -79,14 +79,16 @@ exports.searchAct = async req => {
     queryStr += ' and a.invoice_masterbi_bl like ? '
     replacements.push('%' + doc.bl + '%')
   }
-  if(doc.do_status && doc.do_status === GLBConfig.ENABLE) {
-    queryStr += ` and a.invoice_masterbi_do_date IS NOT NULL and a.invoice_masterbi_do_date <> '' `
+  if(doc.do_status && doc.do_status === '1') {
+    queryStr += ` and a.invoice_masterbi_do_date IS NOT NULL and  a.invoice_masterbi_do_date <> '' `
     if(doc.do_date && doc.do_date.length > 1 && doc.do_date[0] && doc.do_date[1]) {
       queryStr += ' and a.invoice_masterbi_do_date >= ? and a.invoice_masterbi_do_date < ? '
       replacements.push(doc.do_date[0])
       replacements.push(moment(doc.do_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
     }
-  } else if(doc.do_status && doc.do_status === GLBConfig.DISABLE){
+  } else if(doc.do_status && doc.do_status === '2') {
+    queryStr += ` and (a.invoice_masterbi_do_date IS NULL or  a.invoice_masterbi_do_date = '') `
+  } else if(doc.do_status && doc.do_status === '3') {
     queryStr += ` and (a.invoice_masterbi_do_date IS NULL or a.invoice_masterbi_do_date = '') 
                   and ((a.invoice_masterbi_deposit_date IS NOT NULL and a.invoice_masterbi_deposit_date <> '') 
                         or (a.invoice_masterbi_fee_date IS NOT NULL and a.invoice_masterbi_fee_date <> '') 
@@ -106,6 +108,10 @@ exports.searchAct = async req => {
       replacements.push(doc.receipt_date[0])
       replacements.push(moment(doc.receipt_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
     }
+  } else if(doc.do_status && doc.do_status === '4'){
+    queryStr += ` and (a.invoice_masterbi_do_date IS NULL or a.invoice_masterbi_do_date = '') 
+                  and (a.invoice_masterbi_deposit_date IS NULL or a.invoice_masterbi_deposit_date = '' 
+                        or a.invoice_masterbi_fee_date IS NULL or a.invoice_masterbi_fee_date = '') `
   }
   queryStr += ' ORDER BY STR_TO_DATE(v.invoice_vessel_ata, "%d/%m/%Y") desc, a.invoice_masterbi_bl'
   let result = await model.queryWithCount(doc, queryStr, replacements)
@@ -275,14 +281,16 @@ exports.exportAct = async (req, res) => {
     queryStr += ' and a.invoice_masterbi_bl like ? '
     replacements.push('%' + doc.bl + '%')
   }
-  if(doc.do_status && doc.do_status === GLBConfig.ENABLE) {
+  if(doc.do_status && doc.do_status === '1') {
     queryStr += ` and a.invoice_masterbi_do_date IS NOT NULL and  a.invoice_masterbi_do_date <> '' `
     if(doc.do_date && doc.do_date.length > 1 && doc.do_date[0] && doc.do_date[1]) {
       queryStr += ' and a.invoice_masterbi_do_date >= ? and a.invoice_masterbi_do_date < ? '
       replacements.push(doc.do_date[0])
       replacements.push(moment(doc.do_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
     }
-  } else if(doc.do_status && doc.do_status === GLBConfig.DISABLE){
+  } else if(doc.do_status && doc.do_status === '2') {
+    queryStr += ` and (a.invoice_masterbi_do_date IS NULL or  a.invoice_masterbi_do_date = '') `
+  } else if(doc.do_status && doc.do_status === '3') {
     queryStr += ` and (a.invoice_masterbi_do_date IS NULL or a.invoice_masterbi_do_date = '') 
                   and ((a.invoice_masterbi_deposit_date IS NOT NULL and a.invoice_masterbi_deposit_date <> '') 
                         or (a.invoice_masterbi_fee_date IS NOT NULL and a.invoice_masterbi_fee_date <> '') 
@@ -302,6 +310,10 @@ exports.exportAct = async (req, res) => {
       replacements.push(doc.receipt_date[0])
       replacements.push(moment(doc.receipt_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
     }
+  } else if(doc.do_status && doc.do_status === '4'){
+    queryStr += ` and (a.invoice_masterbi_do_date IS NULL or a.invoice_masterbi_do_date = '') 
+                  and (a.invoice_masterbi_deposit_date IS NULL or a.invoice_masterbi_deposit_date = '' 
+                        or a.invoice_masterbi_fee_date IS NULL or a.invoice_masterbi_fee_date = '') `
   }
   queryStr += ' ORDER BY STR_TO_DATE(v.invoice_vessel_ata, "%d/%m/%Y") desc, a.invoice_masterbi_bl'
   let result = await model.simpleSelect(queryStr, replacements)
