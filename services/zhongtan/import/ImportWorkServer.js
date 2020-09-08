@@ -17,7 +17,7 @@ const tb_billlading_sumcharges = model.zhongtan_import_billlading_sumcharges
 const tb_billlading_container = model.zhongtan_import_billlading_container
 const tb_shipinfo = model.zhongtan_import_shipinfo
 const tb_packaging = model.zhongtan_packaging
-
+const tb_container_size = model.zhongtan_container_size
 
 exports.initAct = async () => {
   let returnData = {
@@ -586,6 +586,14 @@ exports.exportCBLAct = async (req, res) => {
 
   let result = await model.simpleSelect(queryStr, replacements)
 
+  let typeSizes = await tb_container_size.findAll({
+    attributes: ['container_size_code', 'container_size_name'],
+    where: {
+      state : GLBConfig.ENABLE
+    },
+    order: [['container_size_code', 'ASC']]
+  })
+
   let jsData = []
   for (let r of result) {
     let container = await tb_billlading_container.findAll({
@@ -596,6 +604,16 @@ exports.exportCBLAct = async (req, res) => {
     })
     for (let c of container) {
       let row = JSON.parse(JSON.stringify(c))
+      if(row.import_billlading_container_type) {
+        if(typeSizes) {
+          for(let t of typeSizes) {
+            if(t.container_size_code === row.import_billlading_container_type || t.container_size_name === row.import_billlading_container_type) {
+              row.import_billlading_container_type = t.container_size_code
+              break
+            }
+          }
+        }
+      }
       row.import_billlading_no = r.import_billlading_no
       row.C = 'C'
       jsData.push(row)

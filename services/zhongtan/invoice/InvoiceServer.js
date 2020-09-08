@@ -2038,6 +2038,36 @@ exports.changeCnAct = async req => {
   return common.success()
 }
 
+exports.deleteMasterblAct = async req => {
+  let doc = common.docValidate(req)
+  let bl = await tb_bl.findOne({
+    where: {
+      invoice_masterbi_id: doc.invoice_masterbi_id
+    }
+  })
+
+  await tb_container.destroy({
+    where: {
+      invoice_vessel_id: bl.invoice_vessel_id,
+      invoice_containers_bl: bl.invoice_masterbi_bl
+    }
+  })
+
+  await tb_uploadfile.destroy({
+    where: {
+      uploadfile_index1: bl.invoice_masterbi_id
+    }
+  })
+
+  await tb_bl.destroy({
+    where: {
+      invoice_masterbi_id: bl.invoice_masterbi_id
+    }
+  })
+
+  return common.success()
+}
+
 const checkConditionDoState = async (bl, ves) => {
   let overdueCheck = true
   let blacklistCheck = true

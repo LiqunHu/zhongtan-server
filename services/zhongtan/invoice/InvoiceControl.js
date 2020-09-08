@@ -49,6 +49,8 @@ module.exports = async (req, res) => {
       ret = await srv.changeDoDisabledAct(req)
     } else if (method === 'changeCn') {
       ret = await srv.changeCnAct(req)
+    } else if (method === 'deleteMasterbl') {
+      ret = await srv.deleteMasterblAct(req)
     }
     
     common.sendData(res, ret)

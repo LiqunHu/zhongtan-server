@@ -60,7 +60,7 @@ exports.addAct = async req => {
     let adduser = await tb_user.findOne({
       where: {
         state: GLBConfig.ENABLE,
-        [Op.or]: [{ user_phone: doc.user_phone }, { user_username: doc.user_username.trim() }]
+        [Op.or]: [{ user_phone: doc.user_phone }, { user_username: doc.user_username.trim() }, { user_name: doc.user_name.trim() }]
       }
     })
     if (adduser) {
