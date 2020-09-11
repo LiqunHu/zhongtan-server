@@ -9,13 +9,13 @@ module.exports = db.defineModel('tbl_zhongtan_icd', {
   },
   icd_name: {
     // 堆场名称
-    type: db.STRING(20),
+    type: db.STRING(50),
     defaultValue: '',
     allowNull: false
   },
   icd_code: {
     // 堆场代码
-    type: db.STRING(20),
+    type: db.STRING(50),
     allowNull: false
   },
   icd_email: {
