@@ -1935,7 +1935,13 @@ exports.createEditFile = async (bl, customer, vessel, continers, ediStatus) =>{
   ediData.portOfLoading = bl.invoice_masterbi_loading
   ediData.eta = moment(vessel.invoice_vessel_eta).format('YYYYMMDD')
   ediData.messageSender = 'COSCO'
-  ediData.consignee = customer.user_name
+  if(bl.invoice_masterbi_consignee_name) {
+    if(bl.invoice_masterbi_consignee_name.length > 35) {
+      ediData.consignee = bl.invoice_masterbi_consignee_name.substring(1, 36)
+    } else {
+      ediData.consignee = bl.invoice_masterbi_consignee_name
+    }
+  }
   ediData.tin = customer.user_tin
   var ediCs = []
   for(let c of continers) {
