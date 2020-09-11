@@ -385,6 +385,7 @@ module.exports = {
   STORING_ORDER_EMAIL_SENDER: 'equipmentcontrol@sinotaship.com',
   STORING_ORDER_CARBON_COPY: 'DEMURRAGE@SINOTASHIP.COM',
   STORING_ORDER_BLIND_CARBON_COPY: '540301291@qq.com',
+  ICD_EDI_EMAIL_SENDER: 'OPERATIONS@SINOTASHIP.COM',
   USER_CUSTOMER_TYPE_ALL: '0',
   USER_CUSTOMER_TYPE_AGENT: '1',
   USER_CUSTOMER_TYPE_CONSIGNEE: '2',
@@ -400,5 +401,9 @@ module.exports = {
   MNR_DESCRIPTION: [
     { id: 'MNR CHARGE', text: 'MNR CHARGE', color: 'primary' },
     { id: 'TTL LOSS', text: 'TTL LOSS', color: 'warning'}
+  ],
+  ICD_EDI_TYPE: [
+    { id: 'EMAIL', text: 'EMAIL', color: 'success' },
+    { id: 'FILE', text: 'FILE', color: 'primary'}
   ]
 }

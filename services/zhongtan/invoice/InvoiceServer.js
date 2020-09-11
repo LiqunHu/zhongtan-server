@@ -17,6 +17,7 @@ const tb_container = model.zhongtan_invoice_containers
 const tb_uploadfile = model.zhongtan_uploadfile
 const tb_fee_config = model.zhongtan_invoice_fixed_fee_config
 const tb_fixed_deposit = model.zhongtan_customer_fixed_deposit
+const tb_icd = model.zhongtan_icd
 
 exports.initAct = async () => {
   let DELIVER = []
@@ -430,7 +431,7 @@ exports.searchVoyageAct = async req => {
       }
       // 客户类型代理不可更改收货人
       d.invoice_masterbi_delivery_to_customer_type = '0'
-      if(d.invoice_masterbi_delivery) {
+      if(d.invoice_masterbi_delivery_to) {
         let delivery = await tb_user.findOne({
           where: {
             user_name: d.invoice_masterbi_delivery_to,
@@ -450,6 +451,19 @@ exports.searchVoyageAct = async req => {
       d.invoice_masterbi_do_return_depot_disabled = await checkDoDepotState(d)
       // files
       d = await this.getMasterbiFiles(d)
+
+      // Place of delivery
+      if(!d.invoice_masterbi_do_icd && d.invoice_masterbi_delivery) {
+        let icd = await tb_icd.findOne({
+          where: {
+            state : GLBConfig.ENABLE,
+            [Op.or]: [{ icd_name: d.invoice_masterbi_delivery }, { icd_code: d.invoice_masterbi_delivery }]
+          }
+        })
+        if(icd) {
+          d.invoice_masterbi_do_icd = icd.icd_name
+        }
+      }
       returnData.masterbl.rows.push(d)
     }
 
@@ -608,7 +622,7 @@ exports.getMasterbiDataAct = async req => {
     }
     // 客户类型代理不可更改收货人
     d.invoice_masterbi_delivery_to_customer_type = '0'
-    if(d.invoice_masterbi_delivery) {
+    if(d.invoice_masterbi_delivery_to) {
       let delivery = await tb_user.findOne({
         where: {
           user_name: d.invoice_masterbi_delivery_to,
@@ -627,6 +641,19 @@ exports.getMasterbiDataAct = async req => {
     d.invoice_masterbi_do_return_depot_disabled = await checkDoDepotState(d)
     // file info
     d = await this.getMasterbiFiles(d)
+
+    // Place of delivery
+    if(!d.invoice_masterbi_do_icd && d.invoice_masterbi_delivery) {
+      let icd = await tb_icd.findOne({
+        where: {
+          state : GLBConfig.ENABLE,
+          [Op.or]: [{ icd_name: d.invoice_masterbi_delivery }, { icd_code: d.invoice_masterbi_delivery }]
+        }
+      })
+      if(icd) {
+        d.invoice_masterbi_do_icd = icd.icd_name
+      }
+    }
     returnData.rows.push(d)
   }
 
@@ -1586,7 +1613,17 @@ exports.changeblAct = async req => {
         invoice_masterbi_id: b.invoice_masterbi_id
       }
     })
-
+    if(b.invoice_masterbi_delivery && bl.invoice_masterbi_delivery !== b.invoice_masterbi_delivery) {
+      let icd = await tb_icd.findOne({
+        where: {
+          state : GLBConfig.ENABLE,
+          [Op.or]: [{ icd_name: b.invoice_masterbi_delivery }, { icd_code: b.invoice_masterbi_delivery }]
+        }
+      })
+      if(icd) {
+        bl.invoice_masterbi_do_icd = icd.icd_name
+      }
+    }
     bl.invoice_masterbi_cargo_type = b.invoice_masterbi_cargo_type
     bl.invoice_masterbi_bl_type = b.invoice_masterbi_bl_type
     bl.invoice_masterbi_destination = b.invoice_masterbi_destination
@@ -1657,84 +1694,166 @@ exports.deleteVoyageAct = async req => {
 }
 
 exports.doCreateEdiAct = async req => {
-  let doc = common.docValidate(req)
+  let doc = common.docValidate(req), user = req.user
   let bl = await tb_bl.findOne({
     where: {
       invoice_masterbi_id: doc.invoice_masterbi_id
     }
   })
-  if(!bl.invoice_masterbi_do_delivery_order_no) {
-    let delivery_order_no = ('000000000000000' + bl.invoice_masterbi_id).slice(-8)
-    bl.invoice_masterbi_do_delivery_order_no = delivery_order_no
-  }
-  bl.invoice_masterbi_do_edi_state = '9' // GLBConfig.EDI_MESSAGE_FUNCTION
-  bl.invoice_masterbi_do_edi_create_time = new Date()
-  await bl.save()
 
-  let customer = await tb_user.findOne({
-    where: {
-      user_name: bl.invoice_masterbi_delivery_to,
-      state: GLBConfig.ENABLE,
-      user_type: GLBConfig.TYPE_CUSTOMER
-    }
-  })
+  if(bl.invoice_masterbi_do_icd) {
+    let icd = await tb_icd.findOne({
+      where: {
+        state : GLBConfig.ENABLE,
+        [Op.or]: [{ icd_name: bl.invoice_masterbi_do_icd }, { icd_code: bl.invoice_masterbi_do_icd }]
+      }
+    })
+    let customer = await tb_user.findOne({
+      where: {
+        user_name: bl.invoice_masterbi_delivery_to,
+        state: GLBConfig.ENABLE,
+        user_type: GLBConfig.TYPE_CUSTOMER
+      }
+    })
+  
+    let vessel = await tb_vessel.findOne({
+      where: {
+        invoice_vessel_id: bl.invoice_vessel_id
+      }
+    })
+  
+    let continers = await tb_container.findAll({
+      where: {
+        invoice_vessel_id: bl.invoice_vessel_id,
+        invoice_containers_bl: bl.invoice_masterbi_bl
+      }
+    })
 
-  let vessel = await tb_vessel.findOne({
-    where: {
-      invoice_vessel_id: bl.invoice_vessel_id
-    }
-  })
+    let commonUser = await tb_user.findOne({
+      where: {
+        user_id: user.user_id
+      }
+    })
 
-  let continers = await tb_container.findAll({
-    where: {
-      invoice_vessel_id: bl.invoice_vessel_id,
-      invoice_containers_bl: bl.invoice_masterbi_bl
+    if(customer) {
+      if(!bl.invoice_masterbi_do_delivery_order_no) {
+        let delivery_order_no = ('000000000000000' + bl.invoice_masterbi_id).slice(-8)
+        bl.invoice_masterbi_do_delivery_order_no = delivery_order_no
+      }
+      bl.invoice_masterbi_do_edi_state = '9' // GLBConfig.EDI_MESSAGE_FUNCTION
+      bl.invoice_masterbi_do_edi_create_time = new Date()
+      await bl.save()
+
+      if(icd && icd.icd_edi_type === 'EMAIL') {
+        // 发送放货确认至堆场
+        if(icd.icd_email) {
+          let renderData = {}
+          renderData.icdName = icd.icd_name
+          renderData.doNo = bl.invoice_masterbi_do_delivery_order_no
+          renderData.billNo = bl.invoice_masterbi_bl
+          renderData.vessel = vessel.invoice_vessel_name
+          renderData.voyage = vessel.invoice_vessel_voyage
+          renderData.deliveryTo = bl.invoice_masterbi_delivery_to
+          renderData.validTo = bl.invoice_masterbi_valid_to
+          renderData.validToStr = moment(bl.invoice_masterbi_valid_to).format('MMM DD, YYYY')
+          renderData.fcl = bl.invoice_masterbi_do_fcl
+          renderData.user_name = commonUser.user_name
+          renderData.user_phone = commonUser.user_phone
+          renderData.user_email = commonUser.user_email
+          let html = await common.ejs2Html('LadenRelease.ejs', renderData)
+          let mailSubject = 'DELIVERY ORDER - B/L#' + bl.invoice_masterbi_bl
+          let mailContent = ''
+          let mailHtml = html
+          let attachments = []
+          await mailer.sendEdiMail(GLBConfig.ICD_EDI_EMAIL_SENDER, icd.icd_email.split(';'), GLBConfig.ICD_EDI_EMAIL_SENDER, GLBConfig.STORING_ORDER_BLIND_CARBON_COPY, mailSubject, mailContent, mailHtml, attachments)
+        }
+      } else {
+        // 发送edi文件
+        this.createEditFile(bl, customer, vessel, continers, '9')
+      }
+    } else {
+      return common.error('do_02')
     }
-  })
-  if(customer) {
-    this.createEditFile(bl, customer, vessel, continers, '9')
-  } else {
-    return common.error('do_02')
   }
 }
 
 exports.doReplaceEdiAct = async req => {
-  let doc = common.docValidate(req)
+  let doc = common.docValidate(req), user = req.user
   let bl = await tb_bl.findOne({
     where: {
       invoice_masterbi_id: doc.invoice_masterbi_id
     }
   })
-  bl.invoice_masterbi_do_edi_state = '5' // GLBConfig.EDI_MESSAGE_FUNCTION
-  bl.invoice_masterbi_do_edi_cancel_time = new Date()
-  await bl.save()
 
-  let customer = await tb_user.findOne({
-    where: {
-      user_name: bl.invoice_masterbi_delivery_to,
-      state: GLBConfig.ENABLE,
-      user_type: GLBConfig.TYPE_CUSTOMER
+  if(bl.invoice_masterbi_do_icd) {
+    let icd = await tb_icd.findOne({
+      where: {
+        state : GLBConfig.ENABLE,
+        [Op.or]: [{ icd_name: bl.invoice_masterbi_do_icd }, { icd_code: bl.invoice_masterbi_do_icd }]
+      }
+    })
+
+    let customer = await tb_user.findOne({
+      where: {
+        user_name: bl.invoice_masterbi_delivery_to,
+        state: GLBConfig.ENABLE,
+        user_type: GLBConfig.TYPE_CUSTOMER
+      }
+    })
+  
+    let vessel = await tb_vessel.findOne({
+      where: {
+        invoice_vessel_id: bl.invoice_vessel_id
+      }
+    })
+  
+    let continers = await tb_container.findAll({
+      where: {
+        invoice_vessel_id: bl.invoice_vessel_id,
+        invoice_containers_bl: bl.invoice_masterbi_bl
+      },
+      order: [['invoice_containers_size', 'ASC']]
+    })
+
+    let commonUser = await tb_user.findOne({
+      where: {
+        user_id: user.user_id
+      }
+    })
+    if(customer) {
+      bl.invoice_masterbi_do_edi_state = '5' // GLBConfig.EDI_MESSAGE_FUNCTION
+      bl.invoice_masterbi_do_edi_cancel_time = new Date()
+      await bl.save()
+
+      if(icd && icd.icd_edi_type === 'EMAIL') {
+        // 发送放货确认至堆场
+        if(icd.icd_email) {
+          let renderData = {}
+          renderData.icdName = icd.icd_name
+          renderData.doNo = bl.invoice_masterbi_do_delivery_order_no
+          renderData.billNo = bl.invoice_masterbi_bl
+          renderData.vessel = vessel.invoice_vessel_name
+          renderData.voyage = vessel.invoice_vessel_voyage
+          renderData.deliveryTo = bl.invoice_masterbi_delivery_to
+          renderData.validTo = bl.invoice_masterbi_valid_to
+          renderData.validToStr = moment(bl.invoice_masterbi_valid_to).format('MMM DD, YYYY')
+          renderData.fcl = bl.invoice_masterbi_do_fcl
+          renderData.user_name = commonUser.user_name
+          renderData.user_phone = commonUser.user_phone
+          renderData.user_email = commonUser.user_email
+          let html = await common.ejs2Html('LadenRelease.ejs', renderData)
+          let mailSubject = 'DELIVERY ORDER - B/L#' + bl.invoice_masterbi_bl
+          let mailContent = ''
+          let mailHtml = html
+          let attachments = []
+          await mailer.sendEdiMail(GLBConfig.ICD_EDI_EMAIL_SENDER, icd.icd_email.split(';'), GLBConfig.ICD_EDI_EMAIL_SENDER, GLBConfig.STORING_ORDER_BLIND_CARBON_COPY, mailSubject, mailContent, mailHtml, attachments)
+        }
+      } else {
+        this.createEditFile(bl, customer, vessel, continers, '5')
+      }
+    } else {
+      return common.error('do_02')
     }
-  })
-
-  let vessel = await tb_vessel.findOne({
-    where: {
-      invoice_vessel_id: bl.invoice_vessel_id
-    }
-  })
-
-  let continers = await tb_container.findAll({
-    where: {
-      invoice_vessel_id: bl.invoice_vessel_id,
-      invoice_containers_bl: bl.invoice_masterbi_bl
-    },
-    order: [['invoice_containers_size', 'ASC']]
-  })
-
-  if(customer) {
-    this.createEditFile(bl, customer, vessel, continers, '5')
-  } else {
-    return common.error('do_02')
   }
 }
 
@@ -1745,35 +1864,47 @@ exports.doCancelEdiAct = async req => {
       invoice_masterbi_id: doc.invoice_masterbi_id
     }
   })
-  bl.invoice_masterbi_do_edi_state = '1' // GLBConfig.EDI_MESSAGE_FUNCTION
-  bl.invoice_masterbi_do_edi_cancel_time = new Date()
-  await bl.save()
 
-  let customer = await tb_user.findOne({
-    where: {
-      user_name: bl.invoice_masterbi_delivery_to,
-      state: GLBConfig.ENABLE,
-      user_type: GLBConfig.TYPE_CUSTOMER
+  if(bl.invoice_masterbi_do_icd) {
+    let icd = await tb_icd.findOne({
+      where: {
+        state : GLBConfig.ENABLE,
+        [Op.or]: [{ icd_name: bl.invoice_masterbi_do_icd }, { icd_code: bl.invoice_masterbi_do_icd }]
+      }
+    })
+
+    if(icd && icd.icd_edi_type !== 'EMAIL') {
+      bl.invoice_masterbi_do_edi_state = '1' // GLBConfig.EDI_MESSAGE_FUNCTION
+      bl.invoice_masterbi_do_edi_cancel_time = new Date()
+      await bl.save()
+
+      let customer = await tb_user.findOne({
+        where: {
+          user_name: bl.invoice_masterbi_delivery_to,
+          state: GLBConfig.ENABLE,
+          user_type: GLBConfig.TYPE_CUSTOMER
+        }
+      })
+
+      let vessel = await tb_vessel.findOne({
+        where: {
+          invoice_vessel_id: bl.invoice_vessel_id
+        }
+      })
+
+      let continers = await tb_container.findAll({
+        where: {
+          invoice_vessel_id: bl.invoice_vessel_id,
+          invoice_containers_bl: bl.invoice_masterbi_bl
+        },
+        order: [['invoice_containers_size', 'ASC']]
+      })
+      if(customer) {
+        this.createEditFile(bl, customer, vessel, continers, '1')
+      } else {
+        return common.error('do_02')
+      }
     }
-  })
-
-  let vessel = await tb_vessel.findOne({
-    where: {
-      invoice_vessel_id: bl.invoice_vessel_id
-    }
-  })
-
-  let continers = await tb_container.findAll({
-    where: {
-      invoice_vessel_id: bl.invoice_vessel_id,
-      invoice_containers_bl: bl.invoice_masterbi_bl
-    },
-    order: [['invoice_containers_size', 'ASC']]
-  })
-  if(customer) {
-    this.createEditFile(bl, customer, vessel, continers, '1')
-  } else {
-    return common.error('do_02')
   }
 }
 
@@ -1919,9 +2050,6 @@ exports.searchFixedDepositAct = async req => {
       renderData.invoice_container_deposit_currency = fixedDeposits[0].deposit_currency ? fixedDeposits[0].deposit_currency : 'USD'
       renderData.invoice_masterbi_deposit_comment = fixedDeposits[0].fixed_deposit_type === 'GU' ? 'GUARANTEE LETTER NO.' + fixedDeposits[0].deposit_guarantee_letter_no : 'FIXED CONTAINER DEPOSIT/' + fixedDeposits[0].deposit_receipt_no
     }
-
-    
-    
   }
   
   if(bl.invoice_masterbi_freight_charge && common.isNumber(bl.invoice_masterbi_freight_charge)) {
@@ -2088,6 +2216,7 @@ const checkConditionDoState = async (bl, ves) => {
     if(continers) {
       let diff = moment().diff(moment(ves.invoice_vessel_ata, 'DD/MM/YYYY'), 'days') + 1
       let free_days = 0
+      let return_date = ''
       for(let c of continers) {
         if(c.invoice_containers_empty_return_overdue_free_days) {
           let temp_free_days = parseInt(c.invoice_containers_empty_return_overdue_free_days)
@@ -2100,6 +2229,7 @@ const checkConditionDoState = async (bl, ves) => {
         if(free_days === 0) {
           free_days = await cal_config_srv.queryContainerFreeDays(bl.invoice_masterbi_cargo_type, discharge_port, charge_carrier, c.invoice_containers_size, ves.invoice_vessel_ata)
         }
+        return_date = c.invoice_containers_empty_return_date_receipt
         if(c.invoice_containers_empty_return_receipt_release_date && c.invoice_containers_empty_return_date_receipt 
           && moment(c.invoice_containers_empty_return_date_receipt, 'DD/MM/YYYY').isBefore(moment())) {
             overdueCheck = false 
@@ -2108,6 +2238,14 @@ const checkConditionDoState = async (bl, ves) => {
         if(diff > parseInt(free_days) && !c.invoice_containers_empty_return_receipt_release_date) {
           overdueCheck = false 
           break
+        }
+      }
+      if(!bl.invoice_masterbi_do_date && !bl.invoice_masterbi_valid_to) {
+        // 没有D/O并且滞期收据还箱日期为空
+        if(return_date) {
+          bl.invoice_masterbi_valid_to = moment(return_date, 'DD/MM/YYYY').format('YYYY-MM-DD')
+        } else if(free_days > 0) {
+          bl.invoice_masterbi_valid_to = moment(ves.invoice_vessel_ata, 'DD/MM/YYYY').add(free_days - 1, 'days').format('YYYY-MM-DD')
         }
       }
     }

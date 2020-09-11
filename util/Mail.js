@@ -168,6 +168,13 @@ const readEdiMail = (ediDepots) => {
                                           container.invoice_containers_actually_return_overdue_days = cal_result.overdue_days
                                           container.invoice_containers_actually_return_overdue_amount = cal_result.overdue_amount
                                         } 
+                                        
+                                        if(!container.invoice_containers_empty_return_date) {
+                                          // 没有计算过滞期费
+                                          container.invoice_containers_empty_return_date = container.invoice_containers_actually_return_date
+                                          container.invoice_containers_empty_return_overdue_days = container.invoice_containers_actually_return_overdue_days
+                                          container.invoice_containers_empty_return_overdue_amount = container.invoice_containers_actually_return_overdue_amount
+                                        }
 
                                         if(container.invoice_containers_actually_return_date && vessel.invoice_vessel_ata) {
                                           // 集装箱使用天数， gate in date - dischatge date

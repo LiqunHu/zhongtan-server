@@ -183,14 +183,6 @@ exports.calculationAct = async req => {
 
 exports.emptyReturnSaveAct = async req => {
   let doc = common.docValidate(req)
-
-  if(doc.invoice_containers_empty_return_date && doc.invoice_containers_empty_return_overdue_amount 
-    && doc.invoice_containers_empty_return_overdue_days && doc.invoice_containers_empty_return_overdue_free_days) {
-      // 保存计算超期费计算结果
-      
-  } else if(doc.invoice_containers_empty_return_overdue_free_days){
-    // 保存免箱期
-  }
   let con = await tb_container.findOne({
     where: {
       invoice_containers_id: doc.invoice_containers_id
