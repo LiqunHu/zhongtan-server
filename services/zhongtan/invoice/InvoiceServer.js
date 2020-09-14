@@ -1736,40 +1736,45 @@ exports.doCreateEdiAct = async req => {
     })
 
     if(customer) {
-      if(!bl.invoice_masterbi_do_delivery_order_no) {
-        let delivery_order_no = ('000000000000000' + bl.invoice_masterbi_id).slice(-8)
-        bl.invoice_masterbi_do_delivery_order_no = delivery_order_no
-      }
-      bl.invoice_masterbi_do_edi_state = '9' // GLBConfig.EDI_MESSAGE_FUNCTION
-      bl.invoice_masterbi_do_edi_create_time = new Date()
-      await bl.save()
-
-      if(icd && icd.icd_edi_type === 'EMAIL') {
-        // 发送放货确认至堆场
-        if(icd.icd_email) {
-          let renderData = {}
-          renderData.icdName = icd.icd_name
-          renderData.doNo = bl.invoice_masterbi_do_delivery_order_no
-          renderData.billNo = bl.invoice_masterbi_bl
-          renderData.vessel = vessel.invoice_vessel_name
-          renderData.voyage = vessel.invoice_vessel_voyage
-          renderData.deliveryTo = bl.invoice_masterbi_delivery_to
-          renderData.validTo = bl.invoice_masterbi_valid_to
-          renderData.validToStr = moment(bl.invoice_masterbi_valid_to).format('MMM DD, YYYY')
-          renderData.fcl = bl.invoice_masterbi_do_fcl
-          renderData.user_name = commonUser.user_name
-          renderData.user_phone = commonUser.user_phone
-          renderData.user_email = commonUser.user_email
-          let html = await common.ejs2Html('LadenRelease.ejs', renderData)
-          let mailSubject = 'DELIVERY ORDER - B/L#' + bl.invoice_masterbi_bl
-          let mailContent = ''
-          let mailHtml = html
-          let attachments = []
-          await mailer.sendEdiMail(GLBConfig.ICD_EDI_EMAIL_SENDER, icd.icd_email.split(';'), GLBConfig.ICD_EDI_EMAIL_SENDER, GLBConfig.STORING_ORDER_BLIND_CARBON_COPY, mailSubject, mailContent, mailHtml, attachments)
+      if(icd) {
+        if(!bl.invoice_masterbi_do_delivery_order_no) {
+          let delivery_order_no = ('000000000000000' + bl.invoice_masterbi_id).slice(-8)
+          bl.invoice_masterbi_do_delivery_order_no = delivery_order_no
         }
+        if(icd.icd_edi_type === 'EMAIL') {
+          // 发送放货确认至堆场
+          if(icd.icd_email) {
+            let renderData = {}
+            renderData.icdName = icd.icd_name
+            renderData.doNo = bl.invoice_masterbi_do_delivery_order_no
+            renderData.billNo = bl.invoice_masterbi_bl
+            renderData.vessel = vessel.invoice_vessel_name
+            renderData.voyage = vessel.invoice_vessel_voyage
+            renderData.deliveryTo = bl.invoice_masterbi_delivery_to
+            renderData.validTo = bl.invoice_masterbi_valid_to
+            renderData.validToStr = moment(bl.invoice_masterbi_valid_to).format('MMM DD, YYYY')
+            renderData.fcl = bl.invoice_masterbi_do_fcl
+            renderData.user_name = commonUser.user_name
+            renderData.user_phone = commonUser.user_phone
+            renderData.user_email = commonUser.user_email
+            let html = await common.ejs2Html('LadenRelease.ejs', renderData)
+            let mailSubject = 'DELIVERY ORDER - B/L#' + bl.invoice_masterbi_bl
+            let mailContent = ''
+            let mailHtml = html
+            let attachments = []
+            await mailer.sendEdiMail(GLBConfig.ICD_EDI_EMAIL_SENDER, icd.icd_email.split(';'), GLBConfig.ICD_EDI_EMAIL_SENDER, GLBConfig.STORING_ORDER_BLIND_CARBON_COPY, mailSubject, mailContent, mailHtml, attachments)
+          } else {
+            return common.error('do_05')
+          }
+        } else {
+          // 发送edi文件
+          this.createEditFile(bl, customer, vessel, continers, '9')
+        }
+        bl.invoice_masterbi_do_edi_state = '9' // GLBConfig.EDI_MESSAGE_FUNCTION
+        bl.invoice_masterbi_do_edi_create_time = new Date()
+        await bl.save()
       } else {
-        // 发送edi文件
-        this.createEditFile(bl, customer, vessel, continers, '9')
+        return common.error('do_04')
       }
     } else {
       return common.error('do_02')
@@ -1821,35 +1826,40 @@ exports.doReplaceEdiAct = async req => {
       }
     })
     if(customer) {
-      bl.invoice_masterbi_do_edi_state = '5' // GLBConfig.EDI_MESSAGE_FUNCTION
-      bl.invoice_masterbi_do_edi_cancel_time = new Date()
-      await bl.save()
-
-      if(icd && icd.icd_edi_type === 'EMAIL') {
-        // 发送放货确认至堆场
-        if(icd.icd_email) {
-          let renderData = {}
-          renderData.icdName = icd.icd_name
-          renderData.doNo = bl.invoice_masterbi_do_delivery_order_no
-          renderData.billNo = bl.invoice_masterbi_bl
-          renderData.vessel = vessel.invoice_vessel_name
-          renderData.voyage = vessel.invoice_vessel_voyage
-          renderData.deliveryTo = bl.invoice_masterbi_delivery_to
-          renderData.validTo = bl.invoice_masterbi_valid_to
-          renderData.validToStr = moment(bl.invoice_masterbi_valid_to).format('MMM DD, YYYY')
-          renderData.fcl = bl.invoice_masterbi_do_fcl
-          renderData.user_name = commonUser.user_name
-          renderData.user_phone = commonUser.user_phone
-          renderData.user_email = commonUser.user_email
-          let html = await common.ejs2Html('LadenRelease.ejs', renderData)
-          let mailSubject = 'DELIVERY ORDER - B/L#' + bl.invoice_masterbi_bl
-          let mailContent = ''
-          let mailHtml = html
-          let attachments = []
-          await mailer.sendEdiMail(GLBConfig.ICD_EDI_EMAIL_SENDER, icd.icd_email.split(';'), GLBConfig.ICD_EDI_EMAIL_SENDER, GLBConfig.STORING_ORDER_BLIND_CARBON_COPY, mailSubject, mailContent, mailHtml, attachments)
+      if(icd) {
+        if(icd.icd_edi_type === 'EMAIL') {
+          // 发送放货确认至堆场
+          if(icd.icd_email) {
+            let renderData = {}
+            renderData.icdName = icd.icd_name
+            renderData.doNo = bl.invoice_masterbi_do_delivery_order_no
+            renderData.billNo = bl.invoice_masterbi_bl
+            renderData.vessel = vessel.invoice_vessel_name
+            renderData.voyage = vessel.invoice_vessel_voyage
+            renderData.deliveryTo = bl.invoice_masterbi_delivery_to
+            renderData.validTo = bl.invoice_masterbi_valid_to
+            renderData.validToStr = moment(bl.invoice_masterbi_valid_to).format('MMM DD, YYYY')
+            renderData.fcl = bl.invoice_masterbi_do_fcl
+            renderData.user_name = commonUser.user_name
+            renderData.user_phone = commonUser.user_phone
+            renderData.user_email = commonUser.user_email
+            let html = await common.ejs2Html('LadenRelease.ejs', renderData)
+            let mailSubject = 'DELIVERY ORDER - B/L#' + bl.invoice_masterbi_bl
+            let mailContent = ''
+            let mailHtml = html
+            let attachments = []
+            await mailer.sendEdiMail(GLBConfig.ICD_EDI_EMAIL_SENDER, icd.icd_email.split(';'), GLBConfig.ICD_EDI_EMAIL_SENDER, GLBConfig.STORING_ORDER_BLIND_CARBON_COPY, mailSubject, mailContent, mailHtml, attachments)
+          } else {
+            return common.error('do_05')
+          }
+        } else {
+          this.createEditFile(bl, customer, vessel, continers, '5')
         }
+        bl.invoice_masterbi_do_edi_state = '5' // GLBConfig.EDI_MESSAGE_FUNCTION
+        bl.invoice_masterbi_do_edi_cancel_time = new Date()
+        await bl.save()
       } else {
-        this.createEditFile(bl, customer, vessel, continers, '5')
+        return common.error('do_04')
       }
     } else {
       return common.error('do_02')

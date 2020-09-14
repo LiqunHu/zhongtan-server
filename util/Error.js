@@ -75,6 +75,8 @@ module.exports = {
   do_01: 'D/O delivery or valid must be input',
   do_02: 'D/O delivery to customer do not exist',
   do_03: 'D/O delivery to must same to consignee name',
+  do_04: 'D/O ICD do not exist',
+  do_05: 'D/O ICD EMAIL do not exist',
   container_size_01: 'Edit contaienr size do not exist',
   container_size_02: 'Contaienr size name or code already exists',
   container_type_01: 'Edit contaienr type do not exist',
