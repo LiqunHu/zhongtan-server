@@ -61,8 +61,7 @@ exports.searchAct = async req => {
   returnData.rows = []
   for(let r of result.data) {
     r.invoice_disabled = true
-    if(r.mnr_ledger_bl && r.mnr_ledger_container_no && r.mnr_ledger_container_size && r.mnr_ledger_destination 
-      && r.mnr_ledger_corresponding_payer_id && r.mnr_ledger_actual_charge_amount) {
+    if(r.mnr_ledger_bl && r.mnr_ledger_container_no && r.mnr_ledger_container_size && r.mnr_ledger_corresponding_payer_id && r.mnr_ledger_actual_charge_amount) {
       r.invoice_disabled = false
     }
     r.mnr_atts = await tb_uploadfile.findAll({
