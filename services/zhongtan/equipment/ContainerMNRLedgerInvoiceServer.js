@@ -60,17 +60,17 @@ exports.searchAct = async req => {
   returnData.total = result.count
   returnData.rows = []
   for(let r of result.data) {
-    r.invoice_disabled = true
-    if(r.mnr_ledger_bl && r.mnr_ledger_container_no && r.mnr_ledger_container_size && r.mnr_ledger_corresponding_payer_id && r.mnr_ledger_actual_charge_amount) {
-      r.invoice_disabled = false
-    }
     r.mnr_atts = await tb_uploadfile.findAll({
       where: {
         api_name: 'MNR-LEDGER',
         uploadfile_index1: r.container_mnr_ledger_id
       }
     })
-
+    r.invoice_disabled = true
+    if(r.mnr_ledger_bl && r.mnr_ledger_container_no && r.mnr_ledger_container_size 
+      && r.mnr_ledger_corresponding_payer_id && r.mnr_ledger_actual_charge_amount && r.mnr_atts && r.mnr_atts.length > 0) {
+      r.invoice_disabled = false
+    }
     queryStr = `SELECT a.*, b.user_name FROM tbl_zhongtan_uploadfile a
       left join tbl_common_user b on a.uploadfil_release_user_id = b.user_id
       WHERE a.uploadfile_index1 = ? and (api_name = ? or api_name = ?) order by a.uploadfile_id desc`
