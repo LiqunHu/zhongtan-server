@@ -2256,13 +2256,11 @@ const checkConditionDoState = async (bl, ves) => {
           break
         }
       }
-      if(!bl.invoice_masterbi_do_date && !bl.invoice_masterbi_valid_to) {
-        // 没有D/O并且滞期收据还箱日期为空
-        if(return_date) {
-          bl.invoice_masterbi_valid_to = moment(return_date, 'DD/MM/YYYY').format('YYYY-MM-DD')
-        } else if(free_days > 0) {
-          bl.invoice_masterbi_valid_to = moment(ves.invoice_vessel_ata, 'DD/MM/YYYY').add(free_days - 1, 'days').format('YYYY-MM-DD')
-        }
+      // 没有D/O并且滞期收据还箱日期为空
+      if(return_date) {
+        bl.invoice_masterbi_valid_to = moment(return_date, 'DD/MM/YYYY').format('YYYY-MM-DD')
+      } else if(free_days > 0) {
+        bl.invoice_masterbi_valid_to = moment(ves.invoice_vessel_ata, 'DD/MM/YYYY').add(free_days - 1, 'days').format('YYYY-MM-DD')
       }
     }
   } 
