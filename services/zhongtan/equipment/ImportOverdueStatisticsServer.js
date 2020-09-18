@@ -23,6 +23,12 @@ exports.initAct = async () => {
     '91-150',
     '151-',
   ]
+  let queryStr = `SELECT invoice_vessel_id, CONCAT(invoice_vessel_name, '/', invoice_vessel_voyage) AS vessel_info FROM tbl_zhongtan_invoice_vessel WHERE state = 1 ORDER BY invoice_vessel_name, invoice_vessel_voyage`
+  let replacements = []
+  returnData['VESSEL'] = await model.simpleSelect(queryStr, replacements)
+  queryStr = `SELECT user_id, user_name FROM tbl_common_user WHERE state = 1 AND user_type = '${GLBConfig.TYPE_CUSTOMER}' ORDER BY user_name`
+  replacements = []
+  returnData['CUSTOMER'] = await model.simpleSelect(queryStr, replacements)
   return common.success(returnData)
 }
 
@@ -50,9 +56,13 @@ exports.searchAct = async req => {
       queryStr += ' and a.invoice_containers_no like ? '
       replacements.push('%' + doc.search_data.invoice_containers_no + '%')
     }
-    if (doc.search_data.invoice_vessel_name) {
-      queryStr += ' and a.invoice_vessel_name like ? '
-      replacements.push('%' + doc.search_data.invoice_vessel_name + '%')
+    if (doc.search_data.vessel_id) {
+      queryStr += ' and a.invoice_vessel_id = ? '
+      replacements.push(doc.search_data.vessel_id)
+    }
+    if (doc.search_data.customer_id) {
+      queryStr += ' and a.invoice_containers_customer_id = ? '
+      replacements.push(doc.search_data.customer_id)
     }
     if (doc.search_data.free_days_range) {
       let ranges = doc.search_data.free_days_range.split('-')
@@ -144,9 +154,13 @@ exports.exportDataAct = async(req, res) => {
       queryStr += ' and a.invoice_containers_no like ? '
       replacements.push('%' + doc.search_data.invoice_containers_no + '%')
     }
-    if (doc.search_data.invoice_vessel_name) {
-      queryStr += ' and a.invoice_vessel_name like ? '
-      replacements.push('%' + doc.search_data.invoice_vessel_name + '%')
+    if (doc.search_data.vessel_id) {
+      queryStr += ' and a.invoice_vessel_id = ? '
+      replacements.push(doc.search_data.vessel_id)
+    }
+    if (doc.search_data.customer_id) {
+      queryStr += ' and a.invoice_containers_customer_id = ? '
+      replacements.push(doc.search_data.customer_id)
     }
     if (doc.search_data.free_days_range) {
       let ranges = doc.search_data.free_days_range.split('-')
