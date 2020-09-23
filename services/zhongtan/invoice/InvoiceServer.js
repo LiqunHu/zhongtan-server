@@ -380,8 +380,8 @@ exports.searchVoyageAct = async req => {
           text: d.user_name
         }
       ]
-      d.invoice_masterbi_do_release_date_fmt = moment(d.invoice_masterbi_do_release_date).format('DD/MM/YYYY hh:mm')
-      d.invoice_masterbi_invoice_release_date_fmt = moment(d.invoice_masterbi_invoice_release_date).format('DD/MM/YYYY hh:mm')
+      d.invoice_masterbi_do_release_date_fmt = moment(d.invoice_masterbi_do_release_date).local().format('DD/MM/YYYY hh:mm')
+      d.invoice_masterbi_invoice_release_date_fmt = moment(d.invoice_masterbi_invoice_release_date).local().format('DD/MM/YYYY hh:mm')
       // Carrier
       if(!d.invoice_masterbi_carrier) {
         if(d.invoice_masterbi_bl.indexOf('COS') >= 0) {
@@ -571,8 +571,8 @@ exports.getMasterbiDataAct = async req => {
         text: d.user_name
       }
     ]
-    d.invoice_masterbi_do_release_date_fmt = moment(d.invoice_masterbi_do_release_date).format('DD/MM/YYYY hh:mm')
-    d.invoice_masterbi_invoice_release_date_fmt = moment(d.invoice_masterbi_invoice_release_date).format('DD/MM/YYYY hh:mm')
+    d.invoice_masterbi_do_release_date_fmt = moment(d.invoice_masterbi_do_release_date).local().format('DD/MM/YYYY hh:mm')
+    d.invoice_masterbi_invoice_release_date_fmt = moment(d.invoice_masterbi_invoice_release_date).local().format('DD/MM/YYYY hh:mm')
     // Carrier
     if(!d.invoice_masterbi_carrier) {
       if(d.invoice_masterbi_bl.indexOf('COS') >= 0) {
@@ -678,7 +678,7 @@ exports.getMasterbiFiles = async d => {
         file_id: f.uploadfile_id,
         url: f.uploadfile_url,
         state: f.uploadfile_state,
-        release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
+        release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).local().format('DD/MM/YYYY HH:mm') : '',
         release_user: f.user_name
       })
       d.invoice_masterbi_deposit_state = f.uploadfile_state
@@ -687,7 +687,7 @@ exports.getMasterbiFiles = async d => {
       }
       d.invoice_masterbi_deposit_comment = f.uploadfile_amount_comment
       if(f.uploadfile_state === 'AP' || f.uploadfil_release_date) {
-        d.invoice_masterbi_deposit_release_date = f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : moment(f.updated_at).format('DD/MM/YYYY HH:mm')
+        d.invoice_masterbi_deposit_release_date = f.uploadfil_release_date ? moment(f.uploadfil_release_date).local().format('DD/MM/YYYY HH:mm') : moment(f.updated_at).local().format('DD/MM/YYYY HH:mm')
       }
     } else if (f.api_name === 'RECEIPT-FEE') {
       filetype = 'Fee'
@@ -698,7 +698,7 @@ exports.getMasterbiFiles = async d => {
         file_id: f.uploadfile_id,
         url: f.uploadfile_url,
         state: f.uploadfile_state,
-        release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
+        release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).local().format('DD/MM/YYYY HH:mm') : '',
         release_user: f.user_name
       })
       d.invoice_fee_state = f.uploadfile_state
@@ -707,7 +707,7 @@ exports.getMasterbiFiles = async d => {
       }
       d.invoice_fee_comment = f.uploadfile_amount_comment
       if(f.uploadfile_state === 'AP' || f.uploadfil_release_date) {
-        d.invoice_masterbi_fee_release_date = f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : moment(f.updated_at).format('DD/MM/YYYY HH:mm')
+        d.invoice_masterbi_fee_release_date = f.uploadfil_release_date ? moment(f.uploadfil_release_date).local().format('DD/MM/YYYY HH:mm') : moment(f.updated_at).local().format('DD/MM/YYYY HH:mm')
       }
     } else if (f.api_name === 'RECEIPT-OF') {
       filetype = 'Freight'
@@ -718,7 +718,7 @@ exports.getMasterbiFiles = async d => {
         file_id: f.uploadfile_id,
         url: f.uploadfile_url,
         state: f.uploadfile_state,
-        release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
+        release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).local().format('DD/MM/YYYY HH:mm') : '',
         release_user: f.user_name
       })
       d.invoice_ocean_freight_fee_state = f.uploadfile_state
@@ -727,7 +727,7 @@ exports.getMasterbiFiles = async d => {
       }
       d.invoice_masterbi_of_comment = f.uploadfile_amount_comment
       if(f.uploadfile_state === 'AP' || f.uploadfil_release_date) {
-        d.invoice_masterbi_fee_release_date = f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : moment(f.updated_at).format('DD/MM/YYYY HH:mm')
+        d.invoice_masterbi_fee_release_date = f.uploadfil_release_date ? moment(f.uploadfil_release_date).local().format('DD/MM/YYYY HH:mm') : moment(f.updated_at).local().format('DD/MM/YYYY HH:mm')
       }
     } else if (f.api_name === 'RECEIPT-DO') {
       filetype = 'DO'
@@ -738,7 +738,7 @@ exports.getMasterbiFiles = async d => {
         file_id: f.uploadfile_id,
         url: f.uploadfile_url,
         state: f.uploadfile_state,
-        release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
+        release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).local().format('DD/MM/YYYY HH:mm') : '',
         release_user: f.user_name,
         edi_state: d.invoice_masterbi_do_edi_state
       })
@@ -752,13 +752,13 @@ exports.getMasterbiFiles = async d => {
         file_id: f.uploadfile_id,
         url: f.uploadfile_url,
         state: f.uploadfile_state,
-        release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
+        release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).local().format('DD/MM/YYYY HH:mm') : '',
         release_user: f.user_name
       })
       if(f.uploadfile_acttype === 'deposit') {
-        d.invoice_masterbi_deposit_receipt_date = moment(f.created_at).format('DD/MM/YYYY HH:mm')
+        d.invoice_masterbi_deposit_receipt_date = moment(f.created_at).local().format('DD/MM/YYYY HH:mm')
       } else if(f.uploadfile_acttype === 'fee') {
-        d.invoice_masterbi_invoice_receipt_date = moment(f.created_at).format('DD/MM/YYYY HH:mm')
+        d.invoice_masterbi_invoice_receipt_date = moment(f.created_at).local().format('DD/MM/YYYY HH:mm')
       }
     }
   }
@@ -812,17 +812,15 @@ exports.downloadDoAct = async req => {
     return common.error('do_03')
   }
   let delivery_order_no = ('000000000000000' + bl.invoice_masterbi_id).slice(-8)
-  if (!bl.invoice_masterbi_do_release_date) {
-    bl.invoice_masterbi_delivery_to = doc.invoice_masterbi_delivery_to
-    bl.invoice_masterbi_do_date = moment().format('YYYY-MM-DD')
-    bl.invoice_masterbi_valid_to = doc.invoice_masterbi_valid_to ? moment(doc.invoice_masterbi_valid_to, 'YYYY-MM-DD').format('YYYY-MM-DD') : null
-    bl.invoice_masterbi_do_delivery_order_no = delivery_order_no
-    bl.invoice_masterbi_do_fcl = doc.invoice_masterbi_do_fcl
-    bl.invoice_masterbi_do_icd = doc.invoice_masterbi_do_icd
-    bl.invoice_masterbi_do_return_depot = doc.invoice_masterbi_do_return_depot
-    bl.invoice_masterbi_do_release_date = new Date()
-    await bl.save()
-  }
+  bl.invoice_masterbi_delivery_to = doc.invoice_masterbi_delivery_to
+  bl.invoice_masterbi_do_date = moment().local().format('YYYY-MM-DD')
+  bl.invoice_masterbi_valid_to = doc.invoice_masterbi_valid_to ? moment(doc.invoice_masterbi_valid_to, 'YYYY-MM-DD').local().format('YYYY-MM-DD') : null
+  bl.invoice_masterbi_do_delivery_order_no = delivery_order_no
+  bl.invoice_masterbi_do_fcl = doc.invoice_masterbi_do_fcl
+  bl.invoice_masterbi_do_icd = doc.invoice_masterbi_do_icd
+  bl.invoice_masterbi_do_return_depot = doc.invoice_masterbi_do_return_depot
+  bl.invoice_masterbi_do_release_date = new Date()
+  await bl.save()
 
   let vessel = await tb_vessel.findOne({
     where: {
@@ -847,10 +845,10 @@ exports.downloadDoAct = async req => {
   renderData.delivery_order_no = delivery_order_no
   renderData.invoice_vessel_name = vessel.invoice_vessel_name
   renderData.invoice_vessel_voyage = vessel.invoice_vessel_voyage
-  renderData.vessel_eta = vessel.invoice_vessel_eta ? moment(vessel.invoice_vessel_eta, 'DD-MM-YYYY').format('DD/MM/YYYY') : ''
-  renderData.vessel_atd = vessel.invoice_vessel_atd ? moment(vessel.invoice_vessel_atd, 'DD-MM-YYYY').format('DD/MM/YYYY') : ''
-  renderData.do_date = bl.invoice_masterbi_do_date ? moment(bl.invoice_masterbi_do_date).format('DD/MM/YYYY') : ''
-  renderData.valid_to = bl.invoice_masterbi_valid_to ? moment(bl.invoice_masterbi_valid_to).format('DD/MM/YYYY') : ''
+  renderData.vessel_eta = vessel.invoice_vessel_eta ? moment(vessel.invoice_vessel_eta, 'DD-MM-YYYY').local().format('DD/MM/YYYY') : ''
+  renderData.vessel_atd = vessel.invoice_vessel_atd ? moment(vessel.invoice_vessel_atd, 'DD-MM-YYYY').local().format('DD/MM/YYYY') : ''
+  renderData.do_date = bl.invoice_masterbi_do_date ? moment(bl.invoice_masterbi_do_date).local().format('DD/MM/YYYY') : ''
+  renderData.valid_to = bl.invoice_masterbi_valid_to ? moment(bl.invoice_masterbi_valid_to).local().format('DD/MM/YYYY') : ''
   renderData.delivery_to = bl.invoice_masterbi_do_icd
   renderData.fcl = bl.invoice_masterbi_do_fcl
   renderData.depot = bl.invoice_masterbi_do_return_depot
@@ -957,9 +955,9 @@ exports.searchCustomerAct = async req => {
                    where a.state = '1' and a.user_type = '${GLBConfig.TYPE_CUSTOMER}'  
                    and (a.user_username like ? or a.user_phone like ? or a.user_name like ?)`
     let replacements = []
-    replacements.push(moment().format('YYYY-MM-DD'))
-    replacements.push(moment().format('YYYY-MM-DD'))
-    replacements.push(moment().format('YYYY-MM-DD'))
+    replacements.push(moment().local().format('YYYY-MM-DD'))
+    replacements.push(moment().local().format('YYYY-MM-DD'))
+    replacements.push(moment().local().format('YYYY-MM-DD'))
     let search_text = doc.search_text + '%'
     replacements.push(search_text)
     replacements.push(search_text)
@@ -1051,7 +1049,7 @@ exports.depositDoAct = async req => {
     }
     
     let renderData = JSON.parse(JSON.stringify(bl))
-    renderData.deposit_date = moment(bl.invoice_masterbi_deposit_date).format('YYYY/MM/DD')
+    renderData.deposit_date = moment(bl.invoice_masterbi_deposit_date).local().format('YYYY/MM/DD')
     renderData.receipt_no = await seq.genReceiptNo()
     renderData.customer_name = customer.user_name
     renderData.address = customer.user_address
@@ -1138,7 +1136,7 @@ exports.depositDoAct = async req => {
         bl.invoice_masterbi_receipt_release_date = curDate
       }
       let renderData = JSON.parse(JSON.stringify(bl))
-      renderData.receipt_date = moment().format('MMM DD, YYYY')
+      renderData.receipt_date = moment().local().format('MMM DD, YYYY')
       if (bl.invoice_masterbi_check_cash === 'CASH') {
         renderData.check_cash = 'Cash'
       } else if (bl.invoice_masterbi_check_cash === 'TRANSFER') {
@@ -1222,7 +1220,7 @@ exports.depositDoAct = async req => {
     bl.invoice_masterbi_invoice_release_date = null
 
     let renderData = JSON.parse(JSON.stringify(bl))
-    renderData.fee_date = moment(bl.invoice_masterbi_fee_date).format('YYYY/MM/DD')
+    renderData.fee_date = moment(bl.invoice_masterbi_fee_date).local().format('YYYY/MM/DD')
     renderData.customer_name = customer.user_name
     renderData.address = customer.user_address
     renderData.address1 = customer.user_address1
@@ -1508,7 +1506,7 @@ exports.depositDoAct = async req => {
     await bl.save()
 
     let renderData = JSON.parse(JSON.stringify(bl))
-    renderData.fee_date = moment(bl.invoice_masterbi_of_date).format('YYYY/MM/DD')
+    renderData.fee_date = moment(bl.invoice_masterbi_of_date).local().format('YYYY/MM/DD')
     renderData.customer_name = customer.user_name
     renderData.address = customer.user_address
     renderData.address1 = customer.user_address1
@@ -1752,7 +1750,7 @@ exports.doCreateEdiAct = async req => {
             renderData.voyage = vessel.invoice_vessel_voyage
             renderData.deliveryTo = bl.invoice_masterbi_delivery_to
             renderData.validTo = bl.invoice_masterbi_valid_to
-            renderData.validToStr = moment(bl.invoice_masterbi_valid_to).format('MMM DD, YYYY')
+            renderData.validToStr = moment(bl.invoice_masterbi_valid_to).local().format('MMM DD, YYYY')
             renderData.fcl = bl.invoice_masterbi_do_fcl
             renderData.user_name = commonUser.user_name
             renderData.user_phone = commonUser.user_phone
@@ -1838,7 +1836,7 @@ exports.doReplaceEdiAct = async req => {
             renderData.voyage = vessel.invoice_vessel_voyage
             renderData.deliveryTo = bl.invoice_masterbi_delivery_to
             renderData.validTo = bl.invoice_masterbi_valid_to
-            renderData.validToStr = moment(bl.invoice_masterbi_valid_to).format('MMM DD, YYYY')
+            renderData.validToStr = moment(bl.invoice_masterbi_valid_to).local().format('MMM DD, YYYY')
             renderData.fcl = bl.invoice_masterbi_do_fcl
             renderData.user_name = commonUser.user_name
             renderData.user_phone = commonUser.user_phone
@@ -1933,7 +1931,7 @@ exports.createEditFile = async (bl, customer, vessel, continers, ediStatus) =>{
   ediData.documentDateTime = curMoment.format('YYYYMMDDHHMM')
   ediData.deliveryOrderNumber = bl.invoice_masterbi_do_delivery_order_no
   ediData.billOfLadingNo = bl.invoice_masterbi_bl
-  ediData.expiryDate = moment(bl.invoice_masterbi_valid_to).format('YYYYMMDD')
+  ediData.expiryDate = moment(bl.invoice_masterbi_valid_to).local().format('YYYYMMDD')
   ediData.effectiveDate = curMoment.format('YYYYMMDD')
   ediData.voyageNo = vessel.invoice_vessel_voyage
   ediData.carrierID = bl.invoice_masterbi_carrier
@@ -1943,7 +1941,7 @@ exports.createEditFile = async (bl, customer, vessel, continers, ediStatus) =>{
   ediData.deliveryPlace = bl.invoice_masterbi_delivery
   ediData.portFinalDestination = bl.invoice_masterbi_destination
   ediData.portOfLoading = bl.invoice_masterbi_loading
-  ediData.eta = moment(vessel.invoice_vessel_eta).format('YYYYMMDD')
+  ediData.eta = moment(vessel.invoice_vessel_eta).local().format('YYYYMMDD')
   ediData.messageSender = 'COSCO'
   if(bl.invoice_masterbi_consignee_name) {
     if(bl.invoice_masterbi_consignee_name.length > 35) {
@@ -2056,7 +2054,7 @@ exports.searchFixedDepositAct = async req => {
     queryStr = `select * from tbl_zhongtan_customer_fixed_deposit where state = '1' 
                     AND fixed_deposit_customer_id = ? AND deposit_work_state = ? AND ((deposit_begin_date <= ? AND deposit_long_term = ?) 
                     OR (deposit_begin_date <= ? AND deposit_expire_date >= ?)) ORDER BY created_at DESC LIMIT 1`
-    replacements = [doc.invoice_masterbi_customer_id, 'W', moment().format('YYYY-MM-DD'), GLBConfig.ENABLE, moment().format('YYYY-MM-DD'), moment().format('YYYY-MM-DD')]
+    replacements = [doc.invoice_masterbi_customer_id, 'W', moment().local().format('YYYY-MM-DD'), GLBConfig.ENABLE, moment().local().format('YYYY-MM-DD'), moment().local().format('YYYY-MM-DD')]
     let fixedDeposits = await model.simpleSelect(queryStr, replacements)
     if(fixedDeposits && fixedDeposits.length > 0) {
       renderData.invoice_masterbi_deposit = '0'
@@ -2258,9 +2256,9 @@ const checkConditionDoState = async (bl, ves) => {
       }
       // 没有D/O并且滞期收据还箱日期为空
       if(return_date) {
-        bl.invoice_masterbi_valid_to = moment(return_date, 'DD/MM/YYYY').format('YYYY-MM-DD')
+        bl.invoice_masterbi_valid_to = moment(return_date, 'DD/MM/YYYY').local().format('YYYY-MM-DD')
       } else if(free_days > 0 && !bl.invoice_masterbi_valid_to) {
-        bl.invoice_masterbi_valid_to = moment(ves.invoice_vessel_ata, 'DD/MM/YYYY').add(free_days - 1, 'days').format('YYYY-MM-DD')
+        bl.invoice_masterbi_valid_to = moment(ves.invoice_vessel_ata, 'DD/MM/YYYY').local().add(free_days - 1, 'days').format('YYYY-MM-DD')
       }
     }
   } 
