@@ -254,9 +254,13 @@ exports.exportDemurrageAdminReportAct = async(req, res) => {
       queryStr += ' and a.invoice_containers_no like ? '
       replacements.push('%' + doc.search_data.invoice_containers_no + '%')
     }
-    if (doc.search_data.invoice_vessel_name) {
-      queryStr += ' and b.invoice_vessel_name like ? '
-      replacements.push('%' + doc.search_data.invoice_vessel_name + '%')
+    if (doc.search_data.vessel_id) {
+      queryStr += ' and a.invoice_vessel_id = ? '
+      replacements.push(doc.search_data.vessel_id)
+    }
+    if (doc.search_data.customer_id) {
+      queryStr += ' and a.invoice_containers_customer_id = ? '
+      replacements.push(doc.search_data.customer_id)
     }
   }
   queryStr += ' ORDER BY b.invoice_vessel_id DESC, a.invoice_containers_bl, a.invoice_containers_no'

@@ -61,7 +61,8 @@ exports.searchAct = async req => {
       replacements.push(doc.search_data.vessel_id)
     }
     if (doc.search_data.customer_id) {
-      queryStr += ' and a.invoice_containers_customer_id = ? '
+      queryStr += ' and (a.invoice_containers_customer_id = ? or c.invoice_masterbi_customer_id = ? ) '
+      replacements.push(doc.search_data.customer_id)
       replacements.push(doc.search_data.customer_id)
     }
     if (doc.search_data.free_days_range) {
@@ -159,7 +160,8 @@ exports.exportDataAct = async(req, res) => {
       replacements.push(doc.search_data.vessel_id)
     }
     if (doc.search_data.customer_id) {
-      queryStr += ' and a.invoice_containers_customer_id = ? '
+      queryStr += ' and (a.invoice_containers_customer_id = ? or c.invoice_masterbi_customer_id = ? ) '
+      replacements.push(doc.search_data.customer_id)
       replacements.push(doc.search_data.customer_id)
     }
     if (doc.search_data.free_days_range) {
