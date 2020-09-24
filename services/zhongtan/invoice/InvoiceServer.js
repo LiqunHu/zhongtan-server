@@ -816,7 +816,7 @@ exports.downloadDoAct = async req => {
   bl.invoice_masterbi_do_date = moment().format('YYYY-MM-DD')
   if(doc.invoice_masterbi_valid_to) {
     if(doc.invoice_masterbi_valid_to.indexOf('T') >= 0) {
-      bl.invoice_masterbi_valid_to = moment(moment.utc(doc.invoice_masterbi_valid_to)).toDate().format('YYYY-MM-DD')
+      bl.invoice_masterbi_valid_to = moment(moment.utc(doc.invoice_masterbi_valid_to).toDate()).format('YYYY-MM-DD')
     } else {
       bl.invoice_masterbi_valid_to = moment(doc.invoice_masterbi_valid_to, 'YYYY-MM-DD').format('YYYY-MM-DD')
     }
