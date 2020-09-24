@@ -814,7 +814,15 @@ exports.downloadDoAct = async req => {
   let delivery_order_no = ('000000000000000' + bl.invoice_masterbi_id).slice(-8)
   bl.invoice_masterbi_delivery_to = doc.invoice_masterbi_delivery_to
   bl.invoice_masterbi_do_date = moment().format('YYYY-MM-DD')
-  bl.invoice_masterbi_valid_to = doc.invoice_masterbi_valid_to ? moment(doc.invoice_masterbi_valid_to, 'YYYY-MM-DD').local().format('YYYY-MM-DD') : null
+  if(doc.invoice_masterbi_valid_to) {
+    if(doc.invoice_masterbi_valid_to.indexOf('T') >= 0) {
+      bl.invoice_masterbi_valid_to = moment(moment.utc(doc.invoice_masterbi_valid_to)).toDate().format('YYYY-MM-DD')
+    } else {
+      bl.invoice_masterbi_valid_to = moment(doc.invoice_masterbi_valid_to, 'YYYY-MM-DD').format('YYYY-MM-DD')
+    }
+  } else {
+    bl.invoice_masterbi_valid_to = null
+  }
   bl.invoice_masterbi_do_delivery_order_no = delivery_order_no
   bl.invoice_masterbi_do_fcl = doc.invoice_masterbi_do_fcl
   bl.invoice_masterbi_do_icd = doc.invoice_masterbi_do_icd
