@@ -132,6 +132,11 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_containers', {
     type: db.STRING(50),
     allowNull: true
   },
+  invoice_containers_empty_return_overdue_deduction: {
+    // 还空减免金额
+    type: db.STRING(50),
+    allowNull: true
+  },
   invoice_containers_empty_return_date_invoice: {
     // 开票还空开票日期
     type: db.STRING(20),

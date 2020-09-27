@@ -42,6 +42,11 @@ module.exports = db.defineModel('tbl_zhongtan_overdue_invoice_containers', {
     type: db.STRING(50),
     allowNull: false
   },
+  overdue_invoice_containers_overdue_deduction: {
+    // 减免金额
+    type: db.STRING(50),
+    allowNull: true
+  },
   overdue_invoice_containers_receipt_date: {
     // 收据日期
     type: db.DATE,

@@ -472,7 +472,12 @@ exports.emptyReInvoiceAct = async req => {
         user_id: user.user_id
       }
     })
-
+    
+    let deduction = invoicePara.deduction
+    let splitDeduction = 0
+    if(deduction) {
+      splitDeduction = Math.ceil(deduction / selection.length)
+    }
     let mergeCon = {}
     for(let s of selection) {
       let con = await tb_container.findOne({
@@ -484,16 +489,23 @@ exports.emptyReInvoiceAct = async req => {
       con.invoice_containers_empty_return_invoice_date = curDate
       con.invoice_containers_empty_return_date_invoice = con.invoice_containers_empty_return_date
       con.invoice_containers_empty_return_overdue_days_invoice = con.invoice_containers_empty_return_overdue_days
-      con.invoice_containers_empty_return_overdue_amount_invoice = con.invoice_containers_empty_return_overdue_amount
+      if(deduction > splitDeduction) {
+        con.invoice_containers_empty_return_overdue_deduction = splitDeduction
+        deduction -= splitDeduction
+      } else {
+        con.invoice_containers_empty_return_overdue_deduction = deduction
+      }
+      con.invoice_containers_empty_return_overdue_amount_invoice = con.invoice_containers_empty_return_overdue_amount - con.invoice_containers_empty_return_overdue_deduction
       con.invoice_containers_empty_return_edit_flg = GLBConfig.DISABLE
       con.save()
       s.invoice_containers_size = con.invoice_containers_size
       s.invoice_containers_empty_return_date = con.invoice_containers_empty_return_date
       s.invoice_containers_empty_return_overdue_days = con.invoice_containers_empty_return_overdue_days
-      s.invoice_containers_empty_return_overdue_amount = con.invoice_containers_empty_return_overdue_amount
+      s.invoice_containers_empty_return_overdue_amount = con.invoice_containers_empty_return_overdue_amount_invoice
       s.starting_date = vessel.invoice_vessel_ata
       s.overdue_days = con.invoice_containers_empty_return_overdue_days
-      s.overdue_amount = con.invoice_containers_empty_return_overdue_amount
+      s.overdue_amount = con.invoice_containers_empty_return_overdue_amount_invoice
+      s.overdue_invoice_containers_overdue_deduction = con.invoice_containers_empty_return_overdue_deduction
       if(mergeCon.hasOwnProperty(s.starting_date)) {
         mergeCon[s.starting_date].push(s)
       } else {
@@ -566,7 +578,8 @@ exports.emptyReInvoiceAct = async req => {
           overdue_invoice_containers_overdue_increase_days: s.overdue_days,
           overdue_invoice_containers_overdue_invoice_amount: s.overdue_amount,
           overdue_invoice_containers_overdue_discharge_date: vessel.invoice_vessel_ata,
-          overdue_invoice_containers_overdue_staring_date: s.starting_date
+          overdue_invoice_containers_overdue_staring_date: s.starting_date,
+          overdue_invoice_containers_overdue_deduction: s.overdue_invoice_containers_overdue_deduction
         })
       }
     }
