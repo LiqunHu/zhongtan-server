@@ -4,6 +4,7 @@ const model = require('../../../app/model')
 const Op = model.Op
 
 const tb_icd = model.zhongtan_icd
+const tb_bl = model.zhongtan_invoice_masterbl
 
 exports.initAct = async () => {
   let returnData = {}
@@ -75,7 +76,21 @@ exports.modifyAct = async req => {
     if (updateIcd) {
       return common.error('icd_02')
     }
-
+    if(icd.icd_name !== doc.new.icd_name) {
+      // 如果名称修改，同步修改对应提单icd名称
+      let bls = await tb_bl.findAll({
+        where: {
+          state: GLBConfig.ENABLE,
+          invoice_masterbi_do_icd: icd.icd_name,
+        }
+      })
+      if(bls) {
+        for(let bl of bls) {
+          bl.invoice_masterbi_do_icd = doc.new.icd_name
+          bl.save()
+        }
+      }
+    }
     icd.icd_name = doc.new.icd_name
     icd.icd_code = doc.new.icd_code
     icd.icd_email = doc.new.icd_email

@@ -64,6 +64,45 @@ exports.initAct = async () => {
   return common.success(returnData)
 }
 
+exports.initDOAct = async () => {
+  let DELIVER = []
+  let queryStr = `SELECT user_name FROM tbl_common_user WHERE state = '1' AND user_type = ? ORDER BY user_name`
+  let replacements = [GLBConfig.TYPE_CUSTOMER]
+  let deliverys = await model.simpleSelect(queryStr, replacements)
+  if(deliverys) {
+    for(let d of deliverys) {
+      let dt = d.user_name.trim()
+      if(DELIVER.indexOf(dt) < 0) {
+        DELIVER.push(dt)
+      }
+    }
+  }
+
+  let ICD = []
+  queryStr = `SELECT icd_name, icd_code FROM tbl_zhongtan_icd WHERE state = ? ORDER BY icd_code`
+  replacements = [GLBConfig.ENABLE]
+  let icds = await model.simpleSelect(queryStr, replacements)
+  if(icds) {
+    ICD = icds
+  }
+
+  let DEPOT = []
+  queryStr = `SELECT edi_depot_id, edi_depot_name FROM tbl_zhongtan_edi_depot WHERE state = ? ORDER BY edi_depot_name`
+  replacements = [GLBConfig.ENABLE]
+  let depots = await model.simpleSelect(queryStr, replacements)
+  if(depots) {
+    DEPOT = depots
+  }
+
+  let returnData = {
+    DELIVER: DELIVER,
+    ICD: ICD,
+    DEPOT: DEPOT
+  }
+
+  return common.success(returnData)
+}
+
 exports.uploadImportAct = async req => {
   let doc = common.docValidate(req)
   for (let f of doc.upload_files) {

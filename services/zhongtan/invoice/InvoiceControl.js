@@ -9,6 +9,8 @@ module.exports = async (req, res) => {
     logger.debug(method)
     if (method === 'init') {
       ret = await srv.initAct(req)
+    }  else if (method === 'initDO') {
+      ret = await srv.initDOAct(req)
     } else if (method === 'uploadImport') {
       ret = await srv.uploadImportAct(req)
     } else if (method === 'upload') {
