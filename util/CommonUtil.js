@@ -412,7 +412,7 @@ const fs2Edi = async (renderData) => {
   ediTxt += 'NAD+MS+' + data.messageSender + ':172:20\'\r\n'
   ediLines++
   // line 16
-  ediTxt += 'NAD+CF+ ' + data.consignee + ':ZZZ:ZZZ\'\r\n'
+  ediTxt += 'NAD+CF+' + data.consignee + ':ZZZ:ZZZ\'\r\n'
   ediLines++
   // line 17
   // TIN
