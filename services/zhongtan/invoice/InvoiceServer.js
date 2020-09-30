@@ -2093,10 +2093,7 @@ exports.searchFixedDepositAct = async req => {
       }
     }
   }
-  if(doc.depositType === 'Container Deposit' && renderData.invoice_masterbi_deposit > 0) {
-    renderData.invoice_masterbi_deposit_fixed = '1'
-    return common.success(renderData)
-  }
+  
   if(doc.invoice_masterbi_customer_id) {
     queryStr = `select * from tbl_zhongtan_customer_fixed_deposit where state = '1' 
                     AND fixed_deposit_customer_id = ? AND deposit_work_state = ? AND ((deposit_begin_date <= ? AND deposit_long_term = ?) 
@@ -2110,16 +2107,21 @@ exports.searchFixedDepositAct = async req => {
       renderData.invoice_masterbi_deposit_fixed_id = fixedDeposits[0].fixed_deposit_id
       renderData.invoice_container_deposit_currency = fixedDeposits[0].deposit_currency ? fixedDeposits[0].deposit_currency : 'USD'
       renderData.invoice_masterbi_deposit_comment = fixedDeposits[0].fixed_deposit_type === 'GU' ? 'GUARANTEE LETTER NO.' + fixedDeposits[0].deposit_guarantee_letter_no : 'FIXED CONTAINER DEPOSIT/' + fixedDeposits[0].deposit_receipt_no
+      return common.success(renderData)
     }
   }
   
+  if(doc.depositType === 'Container Deposit' && renderData.invoice_masterbi_deposit > 0) {
+    renderData.invoice_masterbi_deposit_fixed = '1'
+    return common.success(renderData)
+  }
+
   if(bl.invoice_masterbi_freight_charge && common.isNumber(bl.invoice_masterbi_freight_charge)) {
     renderData.invoice_masterbi_of = bl.invoice_masterbi_freight_charge
     renderData.invoice_masterbi_of_necessary = ''
     renderData.invoice_masterbi_of_fixed = '1'
     renderData.invoice_masterbi_of_currency = bl.invoice_masterbi_freight_currency ? bl.invoice_masterbi_freight_currency : 'USD'
   }
-
 
   return common.success(renderData)
 }
