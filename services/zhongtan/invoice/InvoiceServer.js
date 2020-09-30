@@ -2042,18 +2042,26 @@ exports.searchFixedDepositAct = async req => {
     }
   }
 
+  let continers = await tb_container.findAll({
+    where: {
+      invoice_vessel_id: doc.invoice_vessel_id,
+      invoice_containers_bl: doc.invoice_masterbi_bl
+    },
+    order: [['invoice_containers_size', 'ASC']]
+  })
+
+  let hasFrozen = false
+  for(let c of continers) {
+    if(c.invoice_containers_size === '22R1' || c.invoice_containers_size === '42R1' || c.invoice_containers_size === '45R1') {
+      hasFrozen = true
+    }
+  }
+
   let isTrCo = bl.invoice_masterbi_cargo_type === 'TR' && bl.invoice_masterbi_freight === 'COLLECT'
   let queryStr = `select * from tbl_zhongtan_invoice_default_fee where state = '1' AND fee_cargo_type = ? `
   let replacements = [doc.invoice_masterbi_cargo_type]
   let defaultFees = await model.simpleSelect(queryStr, replacements)
   if(defaultFees) {
-    let continers = await tb_container.findAll({
-      where: {
-        invoice_vessel_id: doc.invoice_vessel_id,
-        invoice_containers_bl: doc.invoice_masterbi_bl
-      },
-      order: [['invoice_containers_size', 'ASC']]
-    })
     for(let f of defaultFees) {
       let column = ''
       let type = ''
@@ -2100,7 +2108,7 @@ exports.searchFixedDepositAct = async req => {
                     OR (deposit_begin_date <= ? AND deposit_expire_date >= ?)) ORDER BY created_at DESC LIMIT 1`
     replacements = [doc.invoice_masterbi_customer_id, 'W', moment().format('YYYY-MM-DD'), GLBConfig.ENABLE, moment().format('YYYY-MM-DD'), moment().format('YYYY-MM-DD')]
     let fixedDeposits = await model.simpleSelect(queryStr, replacements)
-    if(fixedDeposits && fixedDeposits.length > 0) {
+    if(fixedDeposits && fixedDeposits.length > 0 && !hasFrozen) {
       renderData.invoice_masterbi_deposit = '0'
       renderData.invoice_masterbi_deposit_necessary = ''
       renderData.invoice_masterbi_deposit_fixed = '1'
