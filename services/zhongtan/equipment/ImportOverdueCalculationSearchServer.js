@@ -35,11 +35,11 @@ exports.searchAct = async req => {
   if(doc.search_data && doc.search_data.date && doc.search_data.date.length > 1) {
     let start_date = doc.search_data.date[0]
     let end_date = doc.search_data.date[1]
-    queryStr += ` AND c.invoice_masterbi_id IN (SELECT u.uploadfile_index1 FROM tbl_zhongtan_uploadfile u WHERE u.api_name = 'OVERDUE-INVOICE' AND (u.uploadfile_receipt_no IS NULL OR u.uploadfile_receipt_no = '') AND u.created_at >= ? and u.created_at < ? ) `
+    queryStr += ` AND c.invoice_masterbi_id IN (SELECT u.uploadfile_index1 FROM tbl_zhongtan_uploadfile u WHERE u.api_name = 'OVERDUE-INVOICE' AND (u.uploadfile_receipt_no IS NULL OR u.uploadfile_receipt_no = '') AND NOT EXISTS(SELECT 1 FROM tbl_zhongtan_uploadfile su WHERE u.uploadfile_index1 = su.uploadfile_index1 AND su.api_name ='OVERDUE-RECEIPT') GROUP BY u.uploadfile_index1 HAVING MAX(u.created_at) >= ?  AND MAX(u.created_at) < ? ) `
     replacements.push(start_date)
     replacements.push(moment(end_date, 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
   } else {
-    queryStr += `AND c.invoice_masterbi_id IN (SELECT u.uploadfile_index1 FROM tbl_zhongtan_uploadfile u WHERE u.api_name = 'OVERDUE-INVOICE' AND (u.uploadfile_receipt_no IS NULL OR u.uploadfile_receipt_no = '')) `
+    queryStr += `AND c.invoice_masterbi_id IN (SELECT u.uploadfile_index1 FROM tbl_zhongtan_uploadfile u WHERE u.api_name = 'OVERDUE-INVOICE' AND (u.uploadfile_receipt_no IS NULL OR u.uploadfile_receipt_no = '') AND NOT EXISTS(SELECT 1 FROM tbl_zhongtan_uploadfile su WHERE u.uploadfile_index1 = su.uploadfile_index1 AND su.api_name ='OVERDUE-RECEIPT')) `
   }
   if(doc.search_data) {
     if (doc.search_data.invoice_containers_bl) {
@@ -124,11 +124,11 @@ exports.exportDataAct = async(req, res) => {
   if(doc.search_data && doc.search_data.date && doc.search_data.date.length > 1) {
     let start_date = doc.search_data.date[0]
     let end_date = doc.search_data.date[1]
-    queryStr += ` AND c.invoice_masterbi_id IN (SELECT u.uploadfile_index1 FROM tbl_zhongtan_uploadfile u WHERE u.api_name = 'OVERDUE-INVOICE' AND (u.uploadfile_receipt_no IS NULL OR u.uploadfile_receipt_no = '') AND u.created_at >= ? and u.created_at < ? ) `
+    queryStr += ` AND c.invoice_masterbi_id IN (SELECT u.uploadfile_index1 FROM tbl_zhongtan_uploadfile u WHERE u.api_name = 'OVERDUE-INVOICE' AND (u.uploadfile_receipt_no IS NULL OR u.uploadfile_receipt_no = '') AND NOT EXISTS(SELECT 1 FROM tbl_zhongtan_uploadfile su WHERE u.uploadfile_index1 = su.uploadfile_index1 AND su.api_name ='OVERDUE-RECEIPT') GROUP BY u.uploadfile_index1 HAVING MAX(u.created_at) >= ?  AND MAX(u.created_at) < ? ) `
     replacements.push(start_date)
     replacements.push(moment(end_date, 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
   } else {
-    queryStr += `AND c.invoice_masterbi_id IN (SELECT u.uploadfile_index1 FROM tbl_zhongtan_uploadfile u WHERE u.api_name = 'OVERDUE-INVOICE' AND (u.uploadfile_receipt_no IS NULL OR u.uploadfile_receipt_no = '')) `
+    queryStr += `AND c.invoice_masterbi_id IN (SELECT u.uploadfile_index1 FROM tbl_zhongtan_uploadfile u WHERE u.api_name = 'OVERDUE-INVOICE' AND (u.uploadfile_receipt_no IS NULL OR u.uploadfile_receipt_no = '') AND NOT EXISTS(SELECT 1 FROM tbl_zhongtan_uploadfile su WHERE u.uploadfile_index1 = su.uploadfile_index1 AND su.api_name ='OVERDUE-RECEIPT')) `
   }
   if(doc.search_data) {
     if (doc.search_data.invoice_containers_bl) {
