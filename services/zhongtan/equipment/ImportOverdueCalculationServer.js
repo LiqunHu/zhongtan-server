@@ -224,7 +224,8 @@ exports.emptyReturnSaveAct = async req => {
       await con.save()
     }
     if(old_free_days && doc.invoice_containers_empty_return_overdue_free_days && 
-      parseInt(old_free_days) !== parseInt(doc.invoice_containers_empty_return_overdue_free_days)) {
+      parseInt(old_free_days) !== parseInt(doc.invoice_containers_empty_return_overdue_free_days)
+      && !doc.free_days_single) {
       // 修改了免箱期 同步修改其他免箱期不同的箱子
       let queryStr = `SELECT * FROM tbl_zhongtan_invoice_containers WHERE invoice_vessel_id = ? AND invoice_containers_bl = ? 
                       AND invoice_containers_id != ? AND IFNULL(invoice_containers_empty_return_overdue_free_days, '') != ?`
@@ -381,7 +382,8 @@ exports.emptyInvoiceAct = async req => {
       }
       renderData.masterbiBl = bl.invoice_masterbi_bl
       renderData.invoiceDate = moment().format('YYYY/MM/DD')
-      renderData.invoiceNo = await seq.genEquipmentInvoiceSeq()
+      let invoiceNo = await seq.genEquipmentInvoiceSeq()
+      renderData.invoiceNo = invoiceNo
       renderData.vesselName = vessel.invoice_vessel_name
       renderData.voyageNumber = vessel.invoice_vessel_voyage
       renderData.dischargeDate = vessel.invoice_vessel_ata
@@ -418,7 +420,8 @@ exports.emptyInvoiceAct = async req => {
         uploadfile_currency: 'USD',
         uploadfile_state: 'PB', // TODO state PM => PB
         uploadfile_amount: demurrageTotal,
-        uploadfile_customer_id: customer.user_id
+        uploadfile_customer_id: customer.user_id,
+        uploadfile_invoice_no: invoiceNo
       })
       
       for(let s of mergeCon[key]) {
@@ -526,7 +529,8 @@ exports.emptyReInvoiceAct = async req => {
       }
       renderData.masterbiBl = bl.invoice_masterbi_bl
       renderData.invoiceDate = moment().format('YYYY/MM/DD')
-      renderData.invoiceNo = await seq.genEquipmentInvoiceSeq()
+      let invoiceNo = await seq.genEquipmentInvoiceSeq()
+      renderData.invoiceNo = invoiceNo
       renderData.vesselName = vessel.invoice_vessel_name
       renderData.voyageNumber = vessel.invoice_vessel_voyage
       renderData.dischargeDate = vessel.invoice_vessel_ata
@@ -563,7 +567,8 @@ exports.emptyReInvoiceAct = async req => {
         uploadfile_currency: 'USD',
         uploadfile_state: 'PB', // TODO state PM => PB
         uploadfile_amount: demurrageTotal,
-        uploadfile_customer_id: customer.user_id
+        uploadfile_customer_id: customer.user_id,
+        uploadfile_invoice_no: invoiceNo
       })
       
       for(let s of mergeCon[key]) {

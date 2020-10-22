@@ -456,6 +456,15 @@ exports.searchVoyageAct = async req => {
         containerSize = containerSize + c.invoice_containers_size + ' * ' + c.invoice_containers_count + '    '
       }
       d.container_size_type = containerSize
+      let scount = await tb_container.count({
+        where: {
+          invoice_containers_bl: d.invoice_masterbi_bl,
+          invoice_vessel_id: d.invoice_vessel_id,
+          state: GLBConfig.ENABLE,
+          invoice_containers_type: 'S'
+        }
+      })
+      d.container_has_soc = scount > 0
       // Invoice state
       d.invoice_masterbi_invoice_state = await checkConditionInvoiceState(d)
       // D/O state overdue check
@@ -572,6 +581,21 @@ exports.searchVoyageAct = async req => {
       }
     })
     row.invoice_receipt_release_rcount = rrcount
+
+    queryStr = `SELECT COUNT(DISTINCT invoice_containers_no) as count FROM tbl_zhongtan_invoice_containers WHERE invoice_vessel_id = ? AND state = ? AND invoice_containers_type = ? `
+    replacements = []
+    replacements.push(v.invoice_vessel_id)
+    replacements.push(GLBConfig.ENABLE)
+    replacements.push('S')
+    let scount = await model.simpleSelect(queryStr, replacements)
+    row.invoice_container_soc_count = scount[0].count
+
+    queryStr = `SELECT COUNT(DISTINCT invoice_containers_no) as count FROM tbl_zhongtan_invoice_containers WHERE invoice_vessel_id = ? AND state = ? `
+    replacements = []
+    replacements.push(v.invoice_vessel_id)
+    replacements.push(GLBConfig.ENABLE)
+    let ccount = await model.simpleSelect(queryStr, replacements)
+    row.invoice_container_count = ccount[0].count
     returnData.vessels.push(row)
   }
 
@@ -647,6 +671,15 @@ exports.getMasterbiDataAct = async req => {
       containerSize = containerSize + c.invoice_containers_size + ' * ' + c.invoice_containers_count + '    '
     }
     d.container_size_type = containerSize
+    let scount = await tb_container.count({
+      where: {
+        invoice_containers_bl: d.invoice_masterbi_bl,
+        invoice_vessel_id: d.invoice_vessel_id,
+        state: GLBConfig.ENABLE,
+        invoice_containers_type: 'S'
+      }
+    })
+    d.container_has_soc = scount > 0
     // Invoice state
     d.invoice_masterbi_invoice_state = await checkConditionInvoiceState(d)
     // D/O state
@@ -1164,9 +1197,9 @@ exports.depositDoAct = async req => {
       uploadfile_amount_comment: doc.invoice_masterbi_deposit_comment,
       uploadfil_release_date: uploadfil_release_date,
       uploadfil_release_user_id: uploadfil_release_user_id,
-      uploadfile_received_from: customer.user_name
+      uploadfile_received_from: customer.user_name,
+      uploadfile_invoice_no: 'CTS/' + renderData.invoice_masterbi_carrier + '/' + renderData.voyage_number + '/' + renderData.receipt_no
     })
-
     if(doc.invoice_masterbi_deposit_fixed && doc.invoice_masterbi_deposit_fixed === '1' && doc.invoice_masterbi_deposit_fixed_id && !doc.depositEdit) {
       bl.invoice_masterbi_receipt_amount = bl.invoice_masterbi_deposit
       bl.invoice_masterbi_receipt_currency = fd.deposit_currency
@@ -1541,7 +1574,8 @@ exports.depositDoAct = async req => {
       uploadfile_currency: doc.invoice_fee_currency,
       uploadfile_state: 'PB', // TODO state PM => PB
       uploadfile_amount_comment: doc.invoice_fee_comment,
-      uploadfile_received_from: customer.user_name
+      uploadfile_received_from: customer.user_name,
+      uploadfile_invoice_no: 'CTS/' + renderData.invoice_masterbi_carrier + '/' + renderData.voyage_number + '/' + renderData.receipt_no
     })
     await bl.save()
     return common.success({ url: fileInfo.url })
@@ -1594,7 +1628,8 @@ exports.depositDoAct = async req => {
       uploadfile_currency: doc.invoice_masterbi_of_currency,
       uploadfile_state: 'PB', // TODO state PM => PB
       uploadfile_amount_comment: doc.invoice_masterbi_of_comment,
-      uploadfile_received_from: customer.user_name
+      uploadfile_received_from: customer.user_name,
+      uploadfile_invoice_no: 'CTS/' + renderData.invoice_masterbi_carrier + '/' + renderData.voyage_number + '/' + renderData.receipt_no
     })
 
     return common.success({ url: fileInfo.url })
@@ -2086,7 +2121,7 @@ exports.searchFixedDepositAct = async req => {
           renderData[column] = 0
         }
         for(let c of continers) {
-          if(f.fee_container_size === c.invoice_containers_size) {
+          if(f.fee_container_size === c.invoice_containers_size && c.invoice_containers_type !== 'S') {
             renderData[column] += parseFloat(f.fee_amount)
           }
         }
@@ -2119,7 +2154,7 @@ exports.searchFixedDepositAct = async req => {
     }
   }
   
-  if(doc.depositType === 'Container Deposit' && renderData.invoice_masterbi_deposit > 0) {
+  if(doc.depositType === 'Container Deposit' && renderData.invoice_masterbi_deposit >= 0) {
     renderData.invoice_masterbi_deposit_fixed = '1'
     return common.success(renderData)
   }
@@ -2267,6 +2302,18 @@ exports.deleteMasterblAct = async req => {
   return common.success()
 }
 
+exports.changeContainersTypeAct = async req => {
+  let doc = common.docValidate(req)
+  let con = await tb_container.findOne({
+    where: {
+      invoice_containers_id: doc.invoice_containers_id
+    }
+  })
+  con.invoice_containers_type = doc.invoice_containers_type
+  await con.save()
+  return common.success()
+}
+
 const checkConditionDoState = async (bl, ves) => {
   let overdueCheck = true
   let blacklistCheck = true
@@ -2297,6 +2344,9 @@ const checkConditionDoState = async (bl, ves) => {
         }
       }
       for(let c of continers) {
+        if(c.invoice_containers_type === 'S') {
+          continue
+        }
         if(free_days === 0) {
           free_days = await cal_config_srv.queryContainerFreeDays(bl.invoice_masterbi_cargo_type, discharge_port, charge_carrier, c.invoice_containers_size, ves.invoice_vessel_ata)
         }
@@ -2314,7 +2364,7 @@ const checkConditionDoState = async (bl, ves) => {
       // 没有D/O并且滞期收据还箱日期为空
       if(return_date) {
         bl.invoice_masterbi_valid_to = moment(return_date, 'DD/MM/YYYY').format('YYYY-MM-DD')
-      } else if(free_days > 0 && !bl.invoice_masterbi_valid_to) {
+      } else if(free_days > 0) {
         bl.invoice_masterbi_valid_to = moment(ves.invoice_vessel_ata, 'DD/MM/YYYY').add(free_days - 1, 'days').format('YYYY-MM-DD')
       }
     }

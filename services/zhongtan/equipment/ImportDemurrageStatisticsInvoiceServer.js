@@ -95,6 +95,49 @@ exports.searchAct = async req => {
       if(d.invoice_containers_empty_return_overdue_amount && d.invoice_containers_actually_return_overdue_amount) {
         d.invoice_containers_actually_balance = parseFloat(d.invoice_containers_actually_balance) - parseFloat(d.invoice_containers_actually_return_overdue_amount)
       }
+      // 查询发票及收据列表
+      let rcons = await tb_invoice_container.findAll({
+        where: {
+          overdue_invoice_containers_invoice_containers_id: d.invoice_containers_id,
+          overdue_invoice_containers_receipt_date: {
+            [Op.ne]: null
+          }
+        },
+        order: [['overdue_invoice_containers_overdue_days', 'DESC'], ['overdue_invoice_containers_receipt_date', 'DESC']]
+      })
+      let invoice_data = []
+      let receipt_data = []
+      if(rcons) {
+        for(let i = 0; i < rcons.length; i++) {
+          let ifile = await tb_uploadfile.findOne({
+            where: {
+              uploadfile_id: rcons[i].overdue_invoice_containers_invoice_uploadfile_id
+            }
+          })
+          if(ifile) {
+            invoice_data.push({
+              invoice_no: ifile.uploadfile_invoice_no,
+              invoice_date: moment(ifile.created_at).format('YYYY-MM-DD HH:ss'),
+              invoice_amount: rcons[i].overdue_invoice_containers_overdue_invoice_amount
+            })
+            let rfile = await tb_uploadfile.findOne({
+              where: {
+                uploadfile_index3: ifile.uploadfile_id
+              }
+            })
+            if(rfile) {
+              receipt_data.push({
+                receipt_no: rfile.uploadfile_receipt_no,
+                receipt_date: moment(rfile.created_at).format('YYYY-MM-DD HH:ss'),
+                bank_reference_no: rfile.uploadfile_bank_reference_no,
+                check_no: rfile.uploadfile_check_no
+              })
+            }
+          }
+        }
+      }
+      d.invoice_data = invoice_data
+      d.receipt_data = receipt_data
     }
   }
   returnData.rows = result.data
@@ -194,6 +237,7 @@ exports.exportDemurrageReportAct = async(req, res) => {
         })
         if(ifile) {
           retRow.invoice_date = moment(ifile.created_at).format('YYYY-MM-DD HH:ss')
+          retRow.invoice_no = ifile.uploadfile_invoice_no
           let rfile = await tb_uploadfile.findOne({
             where: {
               uploadfile_index3: ifile.uploadfile_id
@@ -318,6 +362,7 @@ exports.exportDemurrageAdminReportAct = async(req, res) => {
         })
         if(ifile) {
           retRow.invoice_date = moment(ifile.created_at).format('YYYY-MM-DD HH:ss')
+          retRow.invoice_no = ifile.uploadfile_invoice_no
           let rfile = await tb_uploadfile.findOne({
             where: {
               uploadfile_index3: ifile.uploadfile_id

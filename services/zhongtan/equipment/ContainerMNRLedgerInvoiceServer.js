@@ -226,7 +226,8 @@ exports.invoiceAct = async req => {
     renderData.cargoType = mnr.mnr_ledger_cargo_type
     renderData.masterbiBl = mnr.mnr_ledger_bl
     renderData.invoiceDate = moment().format('YYYY/MM/DD')
-    renderData.invoiceNo = await seq.genMNRInvoiceSeq()
+    let invoiceNo = await seq.genMNRInvoiceSeq()
+    renderData.invoiceNo = invoiceNo
     renderData.vesselName = mnr.mnr_ledger_vessel_name
     renderData.voyageNumber = mnr.mnr_ledger_vessel_voyage
     renderData.arrivalDate = mnr.mnr_ledger_vessel_ata
@@ -255,13 +256,14 @@ exports.invoiceAct = async req => {
       uploadfile_currency: 'USD',
       uploadfile_state: 'PB', // TODO state PM => PB
       uploadfile_amount: mnr.mnr_ledger_actual_charge_amount,
-      uploadfile_customer_id: customer.user_id
+      uploadfile_customer_id: customer.user_id,
+      uploadfile_invoice_no: invoiceNo
     })
 
     mnr.mnr_ledger_reedit_flg = GLBConfig.DISABLE
     
     mnr.mnr_ledger_invoice_date = moment().format('YYYY-MM-DD HH:mm:ss')
-    mnr.mnr_ledger_invoice_no = renderData.invoiceNo
+    mnr.mnr_ledger_invoice_no = invoiceNo
     await mnr.save()
   }
   return common.success()

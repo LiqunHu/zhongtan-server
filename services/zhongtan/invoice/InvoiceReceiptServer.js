@@ -161,6 +161,20 @@ exports.searchVoyageAct = async req => {
       }
     })
     row.invoice_receipt_release_rcount = rrcount
+    queryStr = `SELECT COUNT(DISTINCT invoice_containers_no) as count FROM tbl_zhongtan_invoice_containers WHERE invoice_vessel_id = ? AND state = ? AND invoice_containers_type = ? `
+    replacements = []
+    replacements.push(v.invoice_vessel_id)
+    replacements.push(GLBConfig.ENABLE)
+    replacements.push('S')
+    let scount = await model.simpleSelect(queryStr, replacements)
+    row.invoice_container_soc_count = scount[0].count
+
+    queryStr = `SELECT COUNT(DISTINCT invoice_containers_no) as count FROM tbl_zhongtan_invoice_containers WHERE invoice_vessel_id = ? AND state = ? `
+    replacements = []
+    replacements.push(v.invoice_vessel_id)
+    replacements.push(GLBConfig.ENABLE)
+    let ccount = await model.simpleSelect(queryStr, replacements)
+    row.invoice_container_count = ccount[0].count
     returnData.vessels.push(row)
   }
 

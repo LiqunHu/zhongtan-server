@@ -30,7 +30,7 @@ exports.searchAct = async req => {
                   LEFT JOIN tbl_zhongtan_invoice_masterbl c ON a.invoice_containers_bl = c.invoice_masterbi_bl AND c.state = '1' AND c.invoice_vessel_id = a.invoice_vessel_id
                   LEFT JOIN tbl_common_user d ON a.invoice_containers_customer_id = d.user_id 
                   LEFT JOIN tbl_common_user e ON c.invoice_masterbi_customer_id = e.user_id 
-                  WHERE a.state = '1' `
+                  WHERE a.state = '1' AND a.invoice_containers_empty_return_overdue_amount != 0 `
   let replacements = []
   if(doc.search_data && doc.search_data.date && doc.search_data.date.length > 1) {
     let start_date = doc.search_data.date[0]
@@ -119,7 +119,7 @@ exports.exportDataAct = async(req, res) => {
                   LEFT JOIN tbl_zhongtan_invoice_masterbl c ON a.invoice_containers_bl = c.invoice_masterbi_bl AND c.state = '1' AND c.invoice_vessel_id = a.invoice_vessel_id
                   LEFT JOIN tbl_common_user d ON a.invoice_containers_customer_id = d.user_id 
                   LEFT JOIN tbl_common_user e ON c.invoice_masterbi_customer_id = e.user_id 
-                  WHERE a.state = '1' `
+                  WHERE a.state = '1' AND a.invoice_containers_empty_return_overdue_amount != 0 `
   let replacements = []
   if(doc.search_data && doc.search_data.date && doc.search_data.date.length > 1) {
     let start_date = doc.search_data.date[0]

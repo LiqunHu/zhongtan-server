@@ -113,4 +113,9 @@ module.exports = db.defineModel('tbl_zhongtan_uploadfile', {
     type: db.STRING(200),
     allowNull: true
   },
+  uploadfile_invoice_no: {
+    // 发票号
+    type: db.STRING(50),
+    allowNull: true
+  }
 })

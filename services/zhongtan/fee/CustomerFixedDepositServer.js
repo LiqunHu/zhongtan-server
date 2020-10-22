@@ -288,7 +288,8 @@ exports.invoiceAct = async req => {
     uploadfile_name: fileInfo.name,
     uploadfile_url: fileInfo.url,
     uploadfile_currency: theDeposit.deposit_currency,
-    uploadfile_state: 'PB'
+    uploadfile_state: 'PB',
+    uploadfile_invoice_no: 'CTS/' + renderData.fixed_deposit_carrier + '/' + renderData.fixed_deposit_number + '/' + renderData.fixed_deposit_invoice_no
   })
 
   return common.success()
