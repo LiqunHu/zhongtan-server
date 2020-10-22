@@ -410,7 +410,7 @@ exports.searchVoyageAct = async req => {
     let result = await model.queryWithCount(doc, queryStr, replacements)
     returnData.masterbl.total = result.count
     returnData.masterbl.rows = []
-
+    
     for (let b of result.data) {
       let d = JSON.parse(JSON.stringify(b))
       d.customerINFO = [
@@ -441,6 +441,15 @@ exports.searchVoyageAct = async req => {
       })
       d.invoice_vessel_name = vessel.invoice_vessel_name
       d.invoice_vessel_voyage = vessel.invoice_vessel_voyage
+      // 同样箱子
+      queryStr = `SELECT invoice_containers_bl FROM tbl_zhongtan_invoice_containers WHERE invoice_vessel_id = ? AND state = ? AND invoice_containers_no IN (
+        SELECT invoice_containers_no FROM tbl_zhongtan_invoice_containers WHERE invoice_vessel_id = ? AND state = ? GROUP BY invoice_containers_no HAVING COUNT(invoice_containers_no) > 1)`
+      replacements = []
+      replacements.push(d.invoice_vessel_id)
+      replacements.push(GLBConfig.ENABLE)
+      replacements.push(d.invoice_vessel_id)
+      replacements.push(GLBConfig.ENABLE)
+      let same = await model.simpleSelect(queryStr, replacements)
       // container info
       queryStr = `SELECT invoice_containers_size, COUNT(invoice_containers_size) AS invoice_containers_count 
       FROM tbl_zhongtan_invoice_containers WHERE invoice_containers_bl= ? AND invoice_vessel_id = ? AND state = ? 
@@ -510,6 +519,16 @@ exports.searchVoyageAct = async req => {
         })
         if(icd) {
           d.invoice_masterbi_do_icd = icd.icd_name
+        }
+      }
+
+      d.has_same_container_no = false
+      if(same && same.length > 0) {
+        for(let s of same) {
+          if(s.invoice_containers_bl === d.invoice_masterbi_bl) {
+            d.has_same_container_no = true
+            break
+          }
         }
       }
       returnData.masterbl.rows.push(d)
@@ -626,6 +645,15 @@ exports.getMasterbiDataAct = async req => {
   returnData.total = result.count
   returnData.rows = []
 
+  // 同样箱子
+  queryStr = `SELECT invoice_containers_bl FROM tbl_zhongtan_invoice_containers WHERE invoice_vessel_id = ? AND state = ? AND invoice_containers_no IN (
+    SELECT invoice_containers_no FROM tbl_zhongtan_invoice_containers WHERE invoice_vessel_id = ? AND state = ? GROUP BY invoice_containers_no HAVING COUNT(invoice_containers_no) > 1)`
+  replacements = []
+  replacements.push(doc.invoice_vessel_id)
+  replacements.push(GLBConfig.ENABLE)
+  replacements.push(doc.invoice_vessel_id)
+  replacements.push(GLBConfig.ENABLE)
+  let same = await model.simpleSelect(queryStr, replacements)
   for (let b of result.data) {
     let d = JSON.parse(JSON.stringify(b))
     d.customerINFO = [
@@ -724,6 +752,15 @@ exports.getMasterbiDataAct = async req => {
       })
       if(icd) {
         d.invoice_masterbi_do_icd = icd.icd_name
+      }
+    }
+    d.has_same_container_no = false
+    if(same && same.length > 0) {
+      for(let s of same) {
+        if(s.invoice_containers_bl === d.invoice_masterbi_bl) {
+          d.has_same_container_no = true
+          break
+        }
       }
     }
     returnData.rows.push(d)
@@ -852,7 +889,31 @@ exports.getContainersDataAct = async req => {
   }
   let result = await model.queryWithCount(doc, queryStr, replacements)
   returnData.total = result.count
-  returnData.rows = result.data
+  returnData.rows = []
+
+  if(result.data && result.data.length > 0) {
+    for (let b of result.data) {
+      let d = JSON.parse(JSON.stringify(b))
+      // 同样箱子
+      queryStr = `SELECT invoice_containers_no FROM tbl_zhongtan_invoice_containers WHERE invoice_vessel_id = ? AND state = ? 
+      GROUP BY invoice_containers_no HAVING COUNT(invoice_containers_no) > 1`
+      replacements = []
+      replacements.push(d.invoice_vessel_id)
+      replacements.push(GLBConfig.ENABLE)
+      let same = await model.simpleSelect(queryStr, replacements)
+      d.has_same_container_no = false
+      if(same && same.length > 0) {
+        for(let s of same) {
+          if(s.invoice_containers_no === d.invoice_containers_no) {
+            d.has_same_container_no = true
+            break
+          }
+        }
+      }
+      returnData.rows.push(d)
+    }
+  }
+  
 
   return common.success(returnData)
 }
@@ -2067,6 +2128,7 @@ exports.searchFixedDepositAct = async req => {
     }
   })
 
+  
   if(doc.invoice_masterbi_customer_id) {
     let customer = await tb_user.findOne({
       where: {
@@ -2093,9 +2155,16 @@ exports.searchFixedDepositAct = async req => {
     }
   }
 
+  // 同样箱子
+  let queryStr = `SELECT invoice_containers_no FROM tbl_zhongtan_invoice_containers WHERE invoice_vessel_id = ? AND state = ? GROUP BY invoice_containers_no HAVING COUNT(invoice_containers_no) > 1`
+  let replacements = []
+  replacements.push(bl.invoice_vessel_id)
+  replacements.push(GLBConfig.ENABLE)
+  let sameC = await model.simpleSelect(queryStr, replacements)
+
   let isTrCo = bl.invoice_masterbi_cargo_type === 'TR' && bl.invoice_masterbi_freight === 'COLLECT'
-  let queryStr = `select * from tbl_zhongtan_invoice_default_fee where state = '1' AND fee_cargo_type = ? `
-  let replacements = [doc.invoice_masterbi_cargo_type]
+  queryStr = `select * from tbl_zhongtan_invoice_default_fee where state = '1' AND fee_cargo_type = ? `
+  replacements = [doc.invoice_masterbi_cargo_type]
   let defaultFees = await model.simpleSelect(queryStr, replacements)
   if(defaultFees) {
     for(let f of defaultFees) {
@@ -2122,8 +2191,62 @@ exports.searchFixedDepositAct = async req => {
           renderData[column] = 0
         }
         for(let c of continers) {
-          if(f.fee_container_size === c.invoice_containers_size && c.invoice_containers_type !== 'S') {
-            renderData[column] += parseFloat(f.fee_amount)
+          if(f.fee_container_size === c.invoice_containers_size) {
+            let has_container = false
+            if(sameC && sameC.length > 0) {
+              for(let sc of sameC) {
+                if(c.invoice_containers_no === sc.invoice_containers_no) {
+                  has_container = true
+                }
+              }
+            }
+            let same = []
+            if(has_container) {
+              queryStr = `SELECT * FROM tbl_zhongtan_invoice_masterbl WHERE invoice_vessel_id = ? AND state = ? AND invoice_masterbi_bl != ? AND invoice_masterbi_bl IN (
+                SELECT invoice_containers_bl FROM tbl_zhongtan_invoice_containers WHERE invoice_vessel_id = ? AND state = ? AND invoice_containers_no = ?)`
+              replacements = []
+              replacements.push(bl.invoice_vessel_id)
+              replacements.push(GLBConfig.ENABLE)
+              replacements.push(bl.invoice_masterbi_bl)
+              replacements.push(bl.invoice_vessel_id)
+              replacements.push(GLBConfig.ENABLE)
+              replacements.push(c.invoice_containers_no)
+              same = await model.simpleSelect(queryStr, replacements)
+            }
+            if(column === 'invoice_masterbi_deposit') {
+              if(c.invoice_containers_type !== 'S') {
+                // SOC箱不计算箱押金
+                let has_deposit = false
+                if(same && same.length > 0) {
+                  for(let s of same) {
+                    if(s.invoice_masterbi_deposit >= 0 && s.invoice_masterbi_deposit_date) {
+                      // 已收箱押金
+                      has_deposit = true
+                      break
+                    }
+                  }
+                }
+                if(!has_deposit) {
+                  renderData[column] += parseFloat(f.fee_amount)
+                }
+              }
+            } else if(column === 'invoice_masterbi_tasac') {
+              let has_tasac = false
+              if(same && same.length > 0) {
+                for(let s of same) {
+                  if(s.invoice_masterbi_tasac >= 0 && s.invoice_masterbi_fee_date) {
+                    // 已收箱押金
+                    has_tasac = true
+                    break
+                  }
+                }
+              }
+              if(!has_tasac) {
+                renderData[column] += parseFloat(f.fee_amount)
+              }
+            }else {
+              renderData[column] += parseFloat(f.fee_amount)
+            }
           }
         }
       }
