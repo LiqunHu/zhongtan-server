@@ -443,31 +443,16 @@ exports.downloadReceiptAct = async req => {
     return common.error('import_04')
   }
   bl.invoice_masterbi_receipt_no = await seq.genInvoiceReceiptNo(bl.invoice_masterbi_carrier)
+  let receipt_type = ''
   if(doc.checkType === 'deposit') {
-    // if(bl.invoice_masterbi_deposit_receipt_date) {
-    //   await tb_uploadfile.destroy({
-    //     where: {
-    //       api_name: 'RECEIPT-RECEIPT',
-    //       uploadfile_index1: bl.invoice_masterbi_id,
-    //       uploadfile_acttype: doc.checkType
-    //     }
-    //   })
-    // }
     bl.invoice_masterbi_deposit_receipt_date = curDate
+    receipt_type = 'DEPOSIT'
   } else if(doc.checkType === 'fee') {
-    // if(bl.invoice_masterbi_invoice_receipt_date) {
-    //   await tb_uploadfile.destroy({
-    //     where: {
-    //       api_name: 'RECEIPT-RECEIPT',
-    //       uploadfile_index1: bl.invoice_masterbi_id,
-    //       uploadfile_acttype: doc.checkType
-    //     }
-    //   })
-    // }
     if(bl.invoice_masterbi_tasac) {
       bl.invoice_masterbi_tasac_receipt = bl.invoice_masterbi_tasac
     }
     bl.invoice_masterbi_invoice_receipt_date = curDate
+    receipt_type = 'INVOICE FEE'
   }
   if(common.checkDoState(bl)) {
     bl.invoice_masterbi_receipt_release_date = curDate
@@ -475,6 +460,7 @@ exports.downloadReceiptAct = async req => {
   await bl.save()
 
   let renderData = JSON.parse(JSON.stringify(bl))
+  renderData.receipt_type = receipt_type
   renderData.receipt_date = moment().format('MMM DD, YYYY')
   if (bl.invoice_masterbi_check_cash === 'CASH') {
     renderData.check_cash = 'Cash'

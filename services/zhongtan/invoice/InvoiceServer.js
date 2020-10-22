@@ -1216,6 +1216,7 @@ exports.depositDoAct = async req => {
         bl.invoice_masterbi_receipt_release_date = curDate
       }
       let renderData = JSON.parse(JSON.stringify(bl))
+      renderData.receipt_type = 'DEPOSIT'
       renderData.receipt_date = moment().format('MMM DD, YYYY')
       if (bl.invoice_masterbi_check_cash === 'CASH') {
         renderData.check_cash = 'Cash'
