@@ -1163,7 +1163,7 @@ exports.depositDoAct = async req => {
   let continers = await model.simpleSelect(queryStr, replacements)
 
   if (doc.depositType === 'Container Deposit') {
-    if(!doc.invoice_masterbi_deposit) {
+    if(!doc.invoice_masterbi_deposit && doc.invoice_masterbi_deposit < 0) {
       return common.error('deposit_01')
     }
     bl.invoice_masterbi_customer_id = doc.invoice_masterbi_customer_id
