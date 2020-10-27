@@ -561,6 +561,23 @@ async function ejs2Html(templateFile, renderData) {
   return html
 }
 
+// 过滤保留英文数字
+const fileterLNB = value => {
+  let p = /[^0-9a-zA-Z\s]/gi
+  if(value) {
+    return value.replace(p, '')
+  }
+  return value
+}
+// 只保留一个空格
+const fileterB = value => {
+  let p = /\s+/g
+  if(value) {
+    return value.replace(p, ' ')
+  }
+  return value
+}
+
 module.exports = {
   docValidate: docValidate,
   reqTrans: reqTrans,
@@ -591,5 +608,7 @@ module.exports = {
   checkInvoiceState: checkInvoiceState,
   checkDoState: checkDoState,
   isNumber: isNumber,
-  ejs2Html: ejs2Html
+  ejs2Html: ejs2Html,
+  fileterLNB: fileterLNB,
+  fileterB: fileterB
 }

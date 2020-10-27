@@ -993,6 +993,13 @@ exports.downloadDoAct = async req => {
   renderData.delivery_to = bl.invoice_masterbi_do_icd
   renderData.fcl = bl.invoice_masterbi_do_fcl
   renderData.depot = bl.invoice_masterbi_do_return_depot
+  let carrier = 'COSCO'
+  if(bl.invoice_masterbi_bl.indexOf('COS') >= 0) {
+    carrier  = 'COSCO'
+  } else if(bl.invoice_masterbi_bl.indexOf('OOLU') >= 0) {
+    carrier  = 'OOCL'
+  }
+  renderData.carrier = carrier
   renderData.user_name = commonUser.user_name
   renderData.user_phone = commonUser.user_phone
   renderData.user_email = commonUser.user_email
@@ -1910,7 +1917,7 @@ exports.doCreateEdiAct = async req => {
           }
         } else {
           // 发送edi文件
-          this.createEditFile(bl, customer, vessel, continers, '9')
+          this.createEditFile(commonUser, bl, customer, vessel, continers, '9')
         }
         bl.invoice_masterbi_do_edi_state = '9' // GLBConfig.EDI_MESSAGE_FUNCTION
         bl.invoice_masterbi_do_edi_create_time = new Date()
@@ -1995,7 +2002,7 @@ exports.doReplaceEdiAct = async req => {
             return common.error('do_05')
           }
         } else {
-          this.createEditFile(bl, customer, vessel, continers, '5')
+          this.createEditFile(commonUser, bl, customer, vessel, continers, '5')
         }
         bl.invoice_masterbi_do_edi_state = '5' // GLBConfig.EDI_MESSAGE_FUNCTION
         bl.invoice_masterbi_do_edi_cancel_time = new Date()
@@ -2010,7 +2017,7 @@ exports.doReplaceEdiAct = async req => {
 }
 
 exports.doCancelEdiAct = async req => {
-  let doc = common.docValidate(req)
+  let doc = common.docValidate(req), user = req.user
   let bl = await tb_bl.findOne({
     where: {
       invoice_masterbi_id: doc.invoice_masterbi_id
@@ -2052,7 +2059,12 @@ exports.doCancelEdiAct = async req => {
         order: [['invoice_containers_size', 'ASC']]
       })
       if(customer) {
-        this.createEditFile(bl, customer, vessel, continers, '1')
+        let commonUser = await tb_user.findOne({
+          where: {
+            user_id: user.user_id
+          }
+        })
+        this.createEditFile(commonUser, bl, customer, vessel, continers, '1')
       } else {
         return common.error('do_02')
       }
@@ -2060,7 +2072,7 @@ exports.doCancelEdiAct = async req => {
   }
 }
 
-exports.createEditFile = async (bl, customer, vessel, continers, ediStatus) =>{
+exports.createEditFile = async (commonUser, bl, customer, vessel, continers, ediStatus) =>{
   let ediData = {}
   let curMoment = moment()
   ediData.senderID = 'COS'
@@ -2087,11 +2099,15 @@ exports.createEditFile = async (bl, customer, vessel, continers, ediStatus) =>{
   ediData.portOfLoading = bl.invoice_masterbi_loading
   ediData.eta = moment(vessel.invoice_vessel_eta).format('YYYYMMDD')
   ediData.messageSender = 'COSCO'
-  if(bl.invoice_masterbi_consignee_name) {
-    if(bl.invoice_masterbi_consignee_name.length > 35) {
-      ediData.consignee = bl.invoice_masterbi_consignee_name.substring(1, 36)
+  let consignee_name = bl.invoice_masterbi_consignee_name
+  if(consignee_name) {
+    consignee_name = common.fileterLNB(consignee_name)
+    consignee_name = consignee_name.trim()
+    consignee_name = common.fileterB(consignee_name)
+    if(consignee_name > 35) {
+      ediData.consignee = consignee_name.substring(1, 36)
     } else {
-      ediData.consignee = bl.invoice_masterbi_consignee_name
+      ediData.consignee = consignee_name
     }
   }
   ediData.tin = customer.user_tin
@@ -2109,7 +2125,7 @@ exports.createEditFile = async (bl, customer, vessel, continers, ediStatus) =>{
   let fileInfo = await common.fs2Edi(ediData)
   
   let mailSubject = 'EDI ' + bl.invoice_masterbi_bl
-  let mailContent = ''
+  let mailContent = 'Send By: ' + commonUser.user_name + ' ' + commonUser.user_phone + ' ' + commonUser.user_email
   let mailHtml = ''
   let attachments = [{
     filename : ediData.ediName,
@@ -2455,6 +2471,7 @@ const checkConditionDoState = async (bl, ves) => {
         invoice_containers_bl: bl.invoice_masterbi_bl
       }
     })
+    let hasSOC = false
     if(continers) {
       let diff = moment().diff(moment(ves.invoice_vessel_ata, 'DD/MM/YYYY'), 'days') + 1
       let free_days = 0
@@ -2466,11 +2483,11 @@ const checkConditionDoState = async (bl, ves) => {
             free_days = temp_free_days
           }
         }
+        if(c.invoice_containers_type === 'S') {
+          hasSOC = true
+        }
       }
       for(let c of continers) {
-        if(c.invoice_containers_type === 'S') {
-          continue
-        }
         if(free_days === 0) {
           free_days = await cal_config_srv.queryContainerFreeDays(bl.invoice_masterbi_cargo_type, discharge_port, charge_carrier, c.invoice_containers_size, ves.invoice_vessel_ata)
         }
@@ -2485,11 +2502,16 @@ const checkConditionDoState = async (bl, ves) => {
           break
         }
       }
-      // 没有D/O并且滞期收据还箱日期为空
-      if(return_date) {
-        bl.invoice_masterbi_valid_to = moment(return_date, 'DD/MM/YYYY').format('YYYY-MM-DD')
-      } else if(free_days > 0) {
-        bl.invoice_masterbi_valid_to = moment(ves.invoice_vessel_ata, 'DD/MM/YYYY').add(free_days - 1, 'days').format('YYYY-MM-DD')
+      if(hasSOC) {
+        overdueCheck = true
+        bl.invoice_masterbi_valid_to = moment(ves.invoice_vessel_ata, 'DD/MM/YYYY').add(60, 'days').local().format('YYYY-MM-DD')
+      } else {
+        // 没有D/O并且滞期收据还箱日期为空
+        if(return_date) {
+          bl.invoice_masterbi_valid_to = moment(return_date, 'DD/MM/YYYY').local().format('YYYY-MM-DD')
+        } else if(free_days > 0) {
+          bl.invoice_masterbi_valid_to = moment(ves.invoice_vessel_ata, 'DD/MM/YYYY').add(free_days - 1, 'days').local().format('YYYY-MM-DD')
+        }
       }
     }
   } 
