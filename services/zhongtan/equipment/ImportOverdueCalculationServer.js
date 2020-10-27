@@ -471,7 +471,30 @@ exports.emptyInvoiceAct = async req => {
 
 exports.emptyReInvoiceAct = async req => {
   let doc = common.docValidate(req), user = req.user, curDate = new Date()
-  let selection = doc.selection
+  let selectAll = doc.selectAll
+  let selection = []
+  if(selectAll && doc.selection && doc.selection.length > 0) {
+    let sel0 = doc.selection[0]
+    let cons = await tb_container.findAll({
+      where: {
+        invoice_containers_bl: sel0.invoice_containers_bl,
+        invoice_vessel_id: sel0.invoice_vessel_id,
+        state: GLBConfig.ENABLE
+      }
+    })
+    for(let c of cons) {
+      if((c.invoice_containers_empty_return_receipt_date && c.invoice_containers_empty_return_overdue_amount && parseInt(c.invoice_containers_empty_return_overdue_amount) === 0) 
+                || (c.invoice_containers_empty_return_date && c.invoice_containers_empty_return_overdue_amount && parseInt(c.invoice_containers_empty_return_overdue_amount) > 0)) {
+        selection.push({
+          ...JSON.parse(JSON.stringify(c)),
+          invoice_masterbi_id: sel0.invoice_masterbi_id,
+          invoice_vessel_id: sel0.invoice_vessel_id
+        })
+      }
+    }
+  } else {
+    selection = doc.selection
+  }
   let invoicePara = doc.invoicePara
   if(selection && selection.length > 0) {
     let row0 = selection[0]
