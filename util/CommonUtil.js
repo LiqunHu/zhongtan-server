@@ -578,6 +578,26 @@ const fileterB = value => {
   return value
 }
 
+// 判断字符串数组aa是否包含bb
+const isContain = (aa, bb) => {
+  if(!(aa instanceof Array) || !(bb instanceof Array) || ((aa.length < bb.length))) {
+		return false
+	}
+	for(let b of bb) {
+    let has = false
+    for(let a of aa) {
+      if(b == a) {
+        has = true
+        break
+      }
+    }
+    if(!has) {
+      return false
+    }
+  }
+	return true
+}
+
 module.exports = {
   docValidate: docValidate,
   reqTrans: reqTrans,
@@ -610,5 +630,6 @@ module.exports = {
   isNumber: isNumber,
   ejs2Html: ejs2Html,
   fileterLNB: fileterLNB,
-  fileterB: fileterB
+  fileterB: fileterB,
+  isContain: isContain
 }

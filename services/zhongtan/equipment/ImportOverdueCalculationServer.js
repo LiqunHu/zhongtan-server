@@ -83,7 +83,7 @@ exports.searchAct = async req => {
       d.files = []
       let queryStr = `SELECT a.*, b.user_name FROM tbl_zhongtan_uploadfile a
           left join tbl_common_user b on a.uploadfil_release_user_id = b.user_id
-          WHERE a.uploadfile_index1 = ? AND a.api_name IN('OVERDUE-INVOICE', 'OVERDUE-RECEIPT') ORDER BY a.uploadfile_id DESC`
+          WHERE a.uploadfile_index1 = ? AND a.api_name IN('OVERDUE-INVOICE', 'OVERDUE-RECEIPT') AND a.state = '1' ORDER BY a.uploadfile_id DESC`
       let replacements = [d.invoice_masterbi_id]
       let files = await model.simpleSelect(queryStr, replacements)
       if(files) {
@@ -329,6 +329,75 @@ exports.emptyInvoiceAct = async req => {
   }
   let invoicePara = doc.invoicePara
   if(selection && selection.length > 0) {
+    let selContainerIds = []
+    for(let s of selection) {
+      selContainerIds.push(s.invoice_containers_id)
+    }
+    // 判断选择的箱子未开收据发票是否包含全部
+    let queryStr = ''
+    let replacements = []
+    let delFileId = []
+    let error = false
+    for(let s of selection) {
+      queryStr = `SELECT overdue_invoice_containers_invoice_uploadfile_id FROM tbl_zhongtan_overdue_invoice_containers WHERE  state = ? AND overdue_invoice_containers_invoice_containers_id = ? AND overdue_invoice_containers_receipt_date IS NULL`
+      replacements = [GLBConfig.ENABLE, s.invoice_containers_id]
+      let invoices = await model.simpleSelect(queryStr, replacements)
+      if(invoices && invoices.length > 0) {
+        for(let i of invoices) {
+          queryStr = `SELECT * FROM tbl_zhongtan_overdue_invoice_containers WHERE state = ? AND overdue_invoice_containers_invoice_uploadfile_id = ?`
+          replacements = [GLBConfig.ENABLE, i.overdue_invoice_containers_invoice_uploadfile_id]
+          let fileCons = await model.simpleSelect(queryStr, replacements)
+          if(fileCons && fileCons.length > 0) {
+            let fc = []
+            for(let f of fileCons) {
+              fc.push(f.overdue_invoice_containers_invoice_containers_id)
+            }
+            if(fc.length > 0) {
+              if(common.isContain(selContainerIds, fc)) {
+                if(delFileId.indexOf(i.overdue_invoice_containers_invoice_uploadfile_id) < 0) {
+                  delFileId.push(i.overdue_invoice_containers_invoice_uploadfile_id)
+                }
+              } else {
+                error = true
+              }
+            }
+          }
+          if(error) {
+            break
+          }
+        }
+      }
+      if(error) {
+        break
+      }
+    }
+    if(error) {
+      return common.error('equipment_05')
+    } else if(delFileId && delFileId.length > 0) {
+      for(let d of delFileId) {
+        let df = await tb_uploadfile.findOne({
+          where: {
+            uploadfile_id: d
+          }
+        })
+        if(df) {
+          df.state = GLBConfig.DISABLE
+          df.save()
+        }
+        let di = await tb_invoice_container.findAll({
+          where: {
+            overdue_invoice_containers_invoice_uploadfile_id: d
+          }
+        })
+        if(di) {
+          for(let i of di) {
+            i.state = GLBConfig.DISABLE
+            i.save()
+          }
+        }
+      }
+    }
+
     let row0 = selection[0]
     let bl = await tb_bl.findOne({
       where: {
@@ -373,8 +442,8 @@ exports.emptyInvoiceAct = async req => {
       s.invoice_containers_empty_return_overdue_days = con.invoice_containers_empty_return_overdue_days
       s.invoice_containers_empty_return_overdue_amount = con.invoice_containers_empty_return_overdue_amount
      
-      let queryStr = `SELECT * FROM tbl_zhongtan_overdue_invoice_containers WHERE overdue_invoice_containers_invoice_containers_id= ? AND  overdue_invoice_containers_receipt_date IS NOT NULL AND overdue_invoice_containers_receipt_date != '' ORDER BY overdue_invoice_containers_overdue_days+0 DESC, overdue_invoice_containers_receipt_date DESC LIMIT 1`
-      let replacements = [con.invoice_containers_id]
+      queryStr = `SELECT * FROM tbl_zhongtan_overdue_invoice_containers WHERE overdue_invoice_containers_invoice_containers_id= ? AND  overdue_invoice_containers_receipt_date IS NOT NULL AND overdue_invoice_containers_receipt_date != '' ORDER BY overdue_invoice_containers_overdue_days+0 DESC, overdue_invoice_containers_receipt_date DESC LIMIT 1`
+      replacements = [con.invoice_containers_id]
       let rcon = await model.simpleSelect(queryStr, replacements)
       if(rcon && rcon.length > 0) {
         s.starting_date = moment(rcon[0].overdue_invoice_containers_return_date, 'DD/MM/YYYY').add(1, 'days').format('DD/MM/YYYY')

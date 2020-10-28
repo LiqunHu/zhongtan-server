@@ -31,7 +31,7 @@ exports.searchAct = async req => {
     LEFT JOIN tbl_common_user e ON c.fixed_deposit_customer_id = e.user_id
     LEFT JOIN tbl_common_user f ON b.invoice_masterbi_customer_id = f.user_id
     LEFT JOIN tbl_common_user g ON a.uploadfile_customer_id = g.user_id
-  WHERE
+  WHERE a.state = '1' AND
   a.api_name IN(
     'RECEIPT-OF' ,
     'RECEIPT-DEPOSIT' ,
