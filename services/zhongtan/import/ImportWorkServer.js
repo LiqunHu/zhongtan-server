@@ -250,85 +250,102 @@ exports.uploadImportAct = async req => {
             import_billlading_total_volume_cft: common.df(gbl.G_DETAILS.G_DATAF.V_TXTBVOLUME),
             import_billlading_remark: formatInfo(gbl.G_DETAILS.G_DATAH, 'BL_REMARKS')
           })
-
-          if (_.isArray(gbl.G_DETAILS.G_DATAB)) {
-            for (let g of gbl.G_DETAILS.G_DATAB) {
+          if(gbl.G_DETAILS.G_DATAB) {
+            if (_.isArray(gbl.G_DETAILS.G_DATAB)) {
+              for (let g of gbl.G_DETAILS.G_DATAB) {
+                await tb_billlading_goods.create({
+                  import_billlading_id: bl.import_billlading_id,
+                  import_billlading_goods_description: common.df(g.DESCRIPTION),
+                  import_billlading_goods_package_number: common.df(g.IQTY),
+                  import_billlading_goods_package_unit: common.df(g.PACKUNIT),
+                  import_billlading_goods_gross_weight_kg: common.df(g.V_DBLMGROSSWT),
+                  import_billlading_goods_gross_weight_lb: common.df(g.V_DBLBGROSSWT),
+                  import_billlading_goods_volume_cbm: common.df(g.V_DBLMVOLUME),
+                  import_billlading_goods_volume_cft: common.df(g.V_DBLBVOLUME),
+                  import_billlading_goods_marks_num: common.df(g.MARKS_NUM)
+                })
+              }
+            } else {
               await tb_billlading_goods.create({
                 import_billlading_id: bl.import_billlading_id,
-                import_billlading_goods_description: common.df(g.DESCRIPTION),
-                import_billlading_goods_package_number: common.df(g.IQTY),
-                import_billlading_goods_package_unit: common.df(g.PACKUNIT),
-                import_billlading_goods_gross_weight_kg: common.df(g.V_DBLMGROSSWT),
-                import_billlading_goods_gross_weight_lb: common.df(g.V_DBLBGROSSWT),
-                import_billlading_goods_volume_cbm: common.df(g.V_DBLMVOLUME),
-                import_billlading_goods_volume_cft: common.df(g.V_DBLBVOLUME),
-                import_billlading_goods_marks_num: common.df(g.MARKS_NUM)
-              })
-            }
-          } else {
-            await tb_billlading_goods.create({
-              import_billlading_id: bl.import_billlading_id,
-              import_billlading_goods_description: common.df(gbl.G_DETAILS.G_DATAB.DESCRIPTION),
-              import_billlading_goods_package_number: common.df(gbl.G_DETAILS.G_DATAB.IQTY),
-              import_billlading_goods_package_unit: common.df(gbl.G_DETAILS.G_DATAB.PACKUNIT),
-              import_billlading_goods_gross_weight_kg: common.df(gbl.G_DETAILS.G_DATAB.V_DBLMGROSSWT),
-              import_billlading_goods_gross_weight_lb: common.df(gbl.G_DETAILS.G_DATAB.V_DBLBGROSSWT),
-              import_billlading_goods_volume_cbm: common.df(gbl.G_DETAILS.G_DATAB.V_DBLMVOLUME),
-              import_billlading_goods_volume_cft: common.df(gbl.G_DETAILS.G_DATAB.V_DBLBVOLUME),
-              import_billlading_goods_marks_num: common.df(gbl.G_DETAILS.G_DATAB.MARKS_NUM)
-            })
-          }
-
-          if (_.isArray(gbl.G_DETAILS.G_DATAD)) {
-            for (let d of gbl.G_DETAILS.G_DATAD) {
-              await tb_billlading_charges.create({
-                import_billlading_id: bl.import_billlading_id,
-                import_billlading_charges_type: common.df(d.ROWSURCHARGES_CHRG_TYPE),
-                import_billlading_charges_description: common.df(d.ROWSURCHARGES_DESCRIPTION),
-                import_billlading_charges_basis: common.df(d.ROWSURCHARGES_BASIS),
-                import_billlading_charges_rate: common.df(d.ROWSURCHARGES_RATE),
-                import_billlading_charges_pc: common.df(d.ROWSURCHARGES_PC_INDICATOR),
-                import_billlading_charges_ttl_ame: common.df(d.ROWSURCHARGES_TTL_AMT),
-                import_billlading_charges_pay_loc: common.df(d.ROWSURCHARGES_PYMT_LOC),
-                import_billlading_charges_currency: common.df(d.ROWSURCHARGES_CURRENCY)
-              })
-            }
-          } else {
-            if (gbl.G_DETAILS.G_DATAD) {
-              await tb_billlading_charges.create({
-                import_billlading_id: bl.import_billlading_id,
-                import_billlading_charges_type: common.df(gbl.G_DETAILS.G_DATAD.ROWSURCHARGES_CHRG_TYPE),
-                import_billlading_charges_description: common.df(gbl.G_DETAILS.G_DATAD.ROWSURCHARGES_DESCRIPTION),
-                import_billlading_charges_basis: common.df(gbl.G_DETAILS.G_DATAD.ROWSURCHARGES_BASIS),
-                import_billlading_charges_rate: common.df(gbl.G_DETAILS.G_DATAD.ROWSURCHARGES_RATE),
-                import_billlading_charges_pc: common.df(gbl.G_DETAILS.G_DATAD.ROWSURCHARGES_PC_INDICATOR),
-                import_billlading_charges_ttl_ame: common.df(gbl.G_DETAILS.G_DATAD.ROWSURCHARGES_TTL_AMT),
-                import_billlading_charges_pay_loc: common.df(gbl.G_DETAILS.G_DATAD.ROWSURCHARGES_PYMT_LOC),
-                import_billlading_charges_currency: common.df(gbl.G_DETAILS.G_DATAD.ROWSURCHARGES_CURRENCY)
+                import_billlading_goods_description: common.df(gbl.G_DETAILS.G_DATAB.DESCRIPTION),
+                import_billlading_goods_package_number: common.df(gbl.G_DETAILS.G_DATAB.IQTY),
+                import_billlading_goods_package_unit: common.df(gbl.G_DETAILS.G_DATAB.PACKUNIT),
+                import_billlading_goods_gross_weight_kg: common.df(gbl.G_DETAILS.G_DATAB.V_DBLMGROSSWT),
+                import_billlading_goods_gross_weight_lb: common.df(gbl.G_DETAILS.G_DATAB.V_DBLBGROSSWT),
+                import_billlading_goods_volume_cbm: common.df(gbl.G_DETAILS.G_DATAB.V_DBLMVOLUME),
+                import_billlading_goods_volume_cft: common.df(gbl.G_DETAILS.G_DATAB.V_DBLBVOLUME),
+                import_billlading_goods_marks_num: common.df(gbl.G_DETAILS.G_DATAB.MARKS_NUM)
               })
             }
           }
-
-          if (_.isArray(gbl.G_DETAILS.G_DATAG)) {
-            for (let g of gbl.G_DETAILS.G_DATAG) {
+          if(gbl.G_DETAILS.G_DATAD) {
+            if (_.isArray(gbl.G_DETAILS.G_DATAD)) {
+              for (let d of gbl.G_DETAILS.G_DATAD) {
+                await tb_billlading_charges.create({
+                  import_billlading_id: bl.import_billlading_id,
+                  import_billlading_charges_type: common.df(d.ROWSURCHARGES_CHRG_TYPE),
+                  import_billlading_charges_description: common.df(d.ROWSURCHARGES_DESCRIPTION),
+                  import_billlading_charges_basis: common.df(d.ROWSURCHARGES_BASIS),
+                  import_billlading_charges_rate: common.df(d.ROWSURCHARGES_RATE),
+                  import_billlading_charges_pc: common.df(d.ROWSURCHARGES_PC_INDICATOR),
+                  import_billlading_charges_ttl_ame: common.df(d.ROWSURCHARGES_TTL_AMT),
+                  import_billlading_charges_pay_loc: common.df(d.ROWSURCHARGES_PYMT_LOC),
+                  import_billlading_charges_currency: common.df(d.ROWSURCHARGES_CURRENCY)
+                })
+              }
+            } else {
+              if (gbl.G_DETAILS.G_DATAD) {
+                await tb_billlading_charges.create({
+                  import_billlading_id: bl.import_billlading_id,
+                  import_billlading_charges_type: common.df(gbl.G_DETAILS.G_DATAD.ROWSURCHARGES_CHRG_TYPE),
+                  import_billlading_charges_description: common.df(gbl.G_DETAILS.G_DATAD.ROWSURCHARGES_DESCRIPTION),
+                  import_billlading_charges_basis: common.df(gbl.G_DETAILS.G_DATAD.ROWSURCHARGES_BASIS),
+                  import_billlading_charges_rate: common.df(gbl.G_DETAILS.G_DATAD.ROWSURCHARGES_RATE),
+                  import_billlading_charges_pc: common.df(gbl.G_DETAILS.G_DATAD.ROWSURCHARGES_PC_INDICATOR),
+                  import_billlading_charges_ttl_ame: common.df(gbl.G_DETAILS.G_DATAD.ROWSURCHARGES_TTL_AMT),
+                  import_billlading_charges_pay_loc: common.df(gbl.G_DETAILS.G_DATAD.ROWSURCHARGES_PYMT_LOC),
+                  import_billlading_charges_currency: common.df(gbl.G_DETAILS.G_DATAD.ROWSURCHARGES_CURRENCY)
+                })
+              }
+            }
+          }
+          if(gbl.G_DETAILS.G_DATAG) {
+            if (_.isArray(gbl.G_DETAILS.G_DATAG)) {
+              for (let g of gbl.G_DETAILS.G_DATAG) {
+                await tb_billlading_sumcharges.create({
+                  import_billlading_id: bl.import_billlading_id,
+                  import_billlading_sumcharges_pc: common.df(g.V_TXTPCINDICATOR),
+                  import_billlading_sumcharges_currency: common.df(g.V_TXTCURRENCY),
+                  import_billlading_sumcharges_amt: common.df(g.V_TXTTTL_AMT)
+                })
+              }
+            } else {
               await tb_billlading_sumcharges.create({
                 import_billlading_id: bl.import_billlading_id,
-                import_billlading_sumcharges_pc: common.df(g.V_TXTPCINDICATOR),
-                import_billlading_sumcharges_currency: common.df(g.V_TXTCURRENCY),
-                import_billlading_sumcharges_amt: common.df(g.V_TXTTTL_AMT)
+                import_billlading_sumcharges_pc: common.df(gbl.G_DETAILS.G_DATAG.V_TXTPCINDICATOR),
+                import_billlading_sumcharges_currency: common.df(gbl.G_DETAILS.G_DATAG.V_TXTCURRENCY),
+                import_billlading_sumcharges_amt: common.df(gbl.G_DETAILS.G_DATAG.V_TXTTTL_AMT)
               })
             }
-          } else {
-            await tb_billlading_sumcharges.create({
-              import_billlading_id: bl.import_billlading_id,
-              import_billlading_sumcharges_pc: common.df(gbl.G_DETAILS.G_DATAG.V_TXTPCINDICATOR),
-              import_billlading_sumcharges_currency: common.df(gbl.G_DETAILS.G_DATAG.V_TXTCURRENCY),
-              import_billlading_sumcharges_amt: common.df(gbl.G_DETAILS.G_DATAG.V_TXTTTL_AMT)
-            })
           }
-
-          if (_.isArray(gbl.G_DETAILS.G_DATAI)) {
-            for (let i of gbl.G_DETAILS.G_DATAI) {
+          if(gbl.G_DETAILS.G_DATAI) {
+            if (_.isArray(gbl.G_DETAILS.G_DATAI)) {
+              for (let i of gbl.G_DETAILS.G_DATAI) {
+                await tb_billlading_container.create({
+                  import_billlading_id: bl.import_billlading_id,
+                  import_billlading_container_num: common.df(i.SCONTAINER_NUM),
+                  import_billlading_container_seal: common.df(i.SSEAL_ID),
+                  import_billlading_container_type: common.df(i.SCNTR_TYPE),
+                  import_billlading_container_package_cnt: common.df(i.NPIECE_CNT),
+                  import_billlading_container_cnt_unit: common.df(i.SPIECE_CNT_UNIT),
+                  import_billlading_container_traffic_mode: common.df(i.TRAFFICMODE),
+                  import_billlading_container_weight: common.df(i.CGO_WT),
+                  import_billlading_container_tare_weight: common.df(i.NCONVERTED_TARE_WT)
+                })
+              }
+            } else {
+              let i = gbl.G_DETAILS.G_DATAI
               await tb_billlading_container.create({
                 import_billlading_id: bl.import_billlading_id,
                 import_billlading_container_num: common.df(i.SCONTAINER_NUM),
@@ -341,19 +358,6 @@ exports.uploadImportAct = async req => {
                 import_billlading_container_tare_weight: common.df(i.NCONVERTED_TARE_WT)
               })
             }
-          } else {
-            let i = gbl.G_DETAILS.G_DATAI
-            await tb_billlading_container.create({
-              import_billlading_id: bl.import_billlading_id,
-              import_billlading_container_num: common.df(i.SCONTAINER_NUM),
-              import_billlading_container_seal: common.df(i.SSEAL_ID),
-              import_billlading_container_type: common.df(i.SCNTR_TYPE),
-              import_billlading_container_package_cnt: common.df(i.NPIECE_CNT),
-              import_billlading_container_cnt_unit: common.df(i.SPIECE_CNT_UNIT),
-              import_billlading_container_traffic_mode: common.df(i.TRAFFICMODE),
-              import_billlading_container_weight: common.df(i.CGO_WT),
-              import_billlading_container_tare_weight: common.df(i.NCONVERTED_TARE_WT)
-            })
           }
         }
       }
