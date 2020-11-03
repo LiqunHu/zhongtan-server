@@ -944,6 +944,10 @@ exports.downloadDoAct = async req => {
     // Delivery To 是收货人，必须与舱单收货人名称一致
     return common.error('do_03')
   }
+  if(bl.invoice_masterbi_bl.indexOf('OOLU') === 0 && doc.invoice_masterbi_do_return_depot === 'AFICD') {
+    // 临时限制，OOLU开头的提单不能选择AFICD堆场
+    return common.error('do_06')
+  }
   let delivery_order_no = ('000000000000000' + bl.invoice_masterbi_id).slice(-8)
   bl.invoice_masterbi_delivery_to = doc.invoice_masterbi_delivery_to
   bl.invoice_masterbi_do_date = moment().format('YYYY-MM-DD')
