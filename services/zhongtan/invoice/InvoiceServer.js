@@ -2125,7 +2125,7 @@ exports.createEditFile = async (commonUser, bl, customer, vessel, continers, edi
   let fileInfo = await common.fs2Edi(ediData)
   
   let mailSubject = 'EDI ' + bl.invoice_masterbi_bl
-  let mailContent = 'Send By: ' + commonUser.user_name + ' ' + commonUser.user_phone + ' ' + commonUser.user_email
+  let mailContent = '' //'Send By: ' + commonUser.user_name + ' ' + commonUser.user_phone + ' ' + commonUser.user_email
   let mailHtml = ''
   let attachments = [{
     filename : ediData.ediName,
