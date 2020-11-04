@@ -561,6 +561,14 @@ async function ejs2Html(templateFile, renderData) {
   return html
 }
 
+const fileterLN = value => {
+  let p = /[^0-9a-zA-Z]/gi
+  if(value) {
+    return value.replace(p, '')
+  }
+  return value
+}
+
 // 过滤保留英文数字
 const fileterLNB = value => {
   let p = /[^0-9a-zA-Z\s]/gi
@@ -569,6 +577,7 @@ const fileterLNB = value => {
   }
   return value
 }
+
 // 只保留一个空格
 const fileterB = value => {
   let p = /\s+/g
@@ -596,6 +605,34 @@ const isContain = (aa, bb) => {
     }
   }
 	return true
+}
+
+const valueFilter = (str, regex) => {
+  let reg = eval(regex)
+  let sr = reg.exec(str)
+  if(sr && sr.length > 1) {
+    return sr[1]
+  }
+  return ''
+}
+
+const jsonTrim = async (json) => {
+  let retJson = []
+  if(json) {
+    for(let v of json) {
+      let rj = {}
+      for(let k in v) {
+        let tk = k.trim()
+        let tv = v[k]
+        if(typeof(str)=='string') {
+          tv = v[k].trim()
+        }
+        rj[tk] = tv
+      }
+      retJson.push(rj)
+    }
+  }
+  return retJson
 }
 
 module.exports = {
@@ -629,7 +666,10 @@ module.exports = {
   checkDoState: checkDoState,
   isNumber: isNumber,
   ejs2Html: ejs2Html,
+  fileterLN: fileterLN,
   fileterLNB: fileterLNB,
   fileterB: fileterB,
-  isContain: isContain
+  isContain: isContain,
+  valueFilter: valueFilter,
+  jsonTrim: jsonTrim
 }

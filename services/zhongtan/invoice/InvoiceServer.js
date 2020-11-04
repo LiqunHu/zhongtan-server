@@ -128,7 +128,8 @@ exports.uploadImportAct = async req => {
       if(!bulkInfo) {
         return common.error('import_12')
       }
-      let bulkInfoJS = X.utils.sheet_to_json(bulkInfo, {})
+      let bulkInfoJSTemp= X.utils.sheet_to_json(bulkInfo, {})
+      let bulkInfoJS = await common.jsonTrim(bulkInfoJSTemp)
       if (!bulkInfoJS[0]['Ves/Voy']) {
         return common.error('import_03')
       }
@@ -228,10 +229,13 @@ exports.uploadImportAct = async req => {
       if(!vesselInfo || !masterBI || !containers) {
         return common.error('import_03')
       }
-
-      let vesslInfoJS = X.utils.sheet_to_json(vesselInfo, {})
-      let masterBIJS = X.utils.sheet_to_json(masterBI, {})
-      let containersJS = X.utils.sheet_to_json(containers, {})
+      
+      let vesslInfoJSTemp = X.utils.sheet_to_json(vesselInfo, {})
+      let masterBIJSTemp = X.utils.sheet_to_json(masterBI, {})
+      let containersJSTemp = X.utils.sheet_to_json(containers, {})
+      let vesslInfoJS = await common.jsonTrim(vesslInfoJSTemp)
+      let masterBIJS = await common.jsonTrim(masterBIJSTemp)
+      let containersJS = await common.jsonTrim(containersJSTemp)
 
       if (!(vesslInfoJS[0]['VESSEL NAME'] && vesslInfoJS[0]['VOYAGE NUM'])) {
         return common.error('import_03')
