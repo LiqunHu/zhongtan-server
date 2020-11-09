@@ -23,5 +23,11 @@ module.exports = db.defineModel('tbl_zhongtan_container_size', {
     type: db.STRING(5),
     defaultValue: '0',
     allowNull: false
-  }
+  },
+  container_size_full_name: {
+    // 箱尺寸英文名称
+    type: db.STRING(50),
+    defaultValue: '',
+    allowNull: false
+  },
 })

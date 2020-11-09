@@ -19,6 +19,7 @@ router.post('/configuration/EdiDepotConfig/:method', services.EdiDepotConfigCont
 router.post('/export/Booking/:method', services.BookingControl)
 router.post('/export/BookingWork/:method', services.BookingWorkControl)
 router.post('/export/Receipt/:method', services.ReceiptControl)
+router.post('/export/BookingLoad/:method', services.BookingLoadControl)
 
 router.post('/import/ImportWork/:method', services.ImportWorkControl)
 router.post('/invoice/Invoice/:method', services.InvoiceControl)

@@ -47,7 +47,8 @@ exports.addAct = async req => {
 
   let obj = await tb_container_size.create({
     container_size_name: doc.container_size_name,
-    container_size_code: doc.container_size_code
+    container_size_code: doc.container_size_code,
+    container_size_full_name: doc.container_size_full_name
   })
 
   return common.success(obj)
@@ -74,6 +75,7 @@ exports.modifyAct = async req => {
 
     obj.container_size_name = doc.new.container_size_name
     obj.container_size_code = doc.new.container_size_code
+    obj.container_size_full_name = doc.new.container_size_full_name
     await obj.save()
     return common.success(obj)
   } else {
