@@ -2518,6 +2518,12 @@ exports.createDepotEdiFile = async (email, bl) =>{
 const checkConditionDoState = async (bl, ves) => {
   let overdueCheck = true
   let blacklistCheck = true
+  let continers = await tb_container.findAll({
+    where: {
+      invoice_vessel_id: bl.invoice_vessel_id,
+      invoice_containers_bl: bl.invoice_masterbi_bl
+    }
+  })
   if(ves.invoice_vessel_ata) {
     let discharge_port = bl.invoice_masterbi_destination.substring(0, 2)
     let charge_carrier = 'COSCO'
@@ -2526,12 +2532,6 @@ const checkConditionDoState = async (bl, ves) => {
     } else if(bl.invoice_masterbi_bl.indexOf('OOLU') >= 0) {
       charge_carrier  = 'OOCL'
     }
-    let continers = await tb_container.findAll({
-      where: {
-        invoice_vessel_id: bl.invoice_vessel_id,
-        invoice_containers_bl: bl.invoice_masterbi_bl
-      }
-    })
     let hasSOC = false
     if(continers) {
       let diff = moment().diff(moment(ves.invoice_vessel_ata, 'DD/MM/YYYY'), 'days') + 1
@@ -2589,20 +2589,50 @@ const checkConditionDoState = async (bl, ves) => {
       }
     }
   }
-  if (overdueCheck && blacklistCheck && (bl.invoice_masterbi_do_disabled !== GLBConfig.ENABLE)) {
+  
+  let trLClchcek = true
+  if(bl.invoice_masterbi_cargo_type === 'TR' && bl.invoice_masterbi_lcl) {
+    let recepit = await tb_uploadfile.findOne({
+      where: {
+        api_name: 'RECEIPT-RECEIPT',
+        uploadfile_acttype: 'fee',
+        uploadfile_index1: bl.invoice_masterbi_id
+      },
+      order: [['uploadfile_id', 'DESC']]
+    })
+    let invoice = await tb_uploadfile.findOne({
+      where: {
+        api_name: 'RECEIPT-FEE',
+        uploadfile_index1: bl.invoice_masterbi_id
+      },
+      order: [['uploadfile_id', 'DESC']]
+    })
+    if(recepit && invoice) {
+      if(recepit.uploadfile_id < invoice.uploadfile_id) {
+        trLClchcek = false
+      }
+    } else {
+      trLClchcek = false
+    }
+  }
+
+  if (overdueCheck && blacklistCheck && (bl.invoice_masterbi_do_disabled !== GLBConfig.ENABLE) && trLClchcek) {
     return {check: true, msg: ''}
   } else {
-    let msg = ''
+    let msgs = []
     if(!overdueCheck) {
-      msg = 'OVERDUE/'
+      msgs.push('OVERDUE')
     }
     if(!blacklistCheck) {
-      msg = 'BLACKLIST/'
+      msgs.push('BLACKLIST')
     }
     if(!(bl.invoice_masterbi_do_disabled !== GLBConfig.ENABLE)) {
-      msg = 'DO DISABLED'
+      msgs.push('DO DISABLED')
     }
-    return {check: false, msg: msg}
+    if(!trLClchcek) {
+      msgs.push('TR LCL NO RECEIPT')
+    }
+    return {check: false, msg: msgs.join('/')}
   }
 }
 
