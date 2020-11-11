@@ -18,6 +18,7 @@ const tb_uploadfile = model.zhongtan_uploadfile
 const tb_fee_config = model.zhongtan_invoice_fixed_fee_config
 const tb_fixed_deposit = model.zhongtan_customer_fixed_deposit
 const tb_icd = model.zhongtan_icd
+const tb_edi_depot = model.zhongtan_edi_depot
 
 exports.initAct = async () => {
   let DELIVER = []
@@ -952,6 +953,7 @@ exports.downloadDoAct = async req => {
     // 临时限制，OOLU开头的提单不能选择AFICD堆场
     return common.error('do_06')
   }
+
   let delivery_order_no = ('000000000000000' + bl.invoice_masterbi_id).slice(-8)
   bl.invoice_masterbi_delivery_to = doc.invoice_masterbi_delivery_to
   bl.invoice_masterbi_do_date = moment().format('YYYY-MM-DD')
@@ -1042,6 +1044,19 @@ exports.downloadDoAct = async req => {
     uploadfil_release_date: new Date(),
     uploadfil_release_user_id: user.user_id
   })
+
+  if(bl.invoice_masterbi_do_return_depot) {
+    let depot = await tb_edi_depot.findOne({
+      where: {
+        state : GLBConfig.ENABLE,
+        edi_depot_name: bl.invoice_masterbi_do_return_depot
+      }
+    })
+    if(depot && depot.edi_depot_send_edi && depot.edi_depot_send_edi === GLBConfig.ENABLE && depot.edi_depot_send_edi_email) {
+      // D/O后发送EDI文件
+      this.createDepotEdiFile(depot.edi_depot_send_edi_email, bl)
+    }
+  }
   return common.success({ url: fileInfo.url })
 }
 
@@ -2462,6 +2477,43 @@ exports.changeContainersTypeAct = async req => {
   return common.success()
 }
 
+exports.createDepotEdiFile = async (email, bl) =>{
+  let ediData = {}
+  let curMoment = moment()
+  ediData.bl = bl.invoice_masterbi_bl
+  ediData.doNumber = bl.invoice_masterbi_do_delivery_order_no.replace(/\b(0+)/gi, '')
+  ediData.doDate = curMoment.format('YYYYMMDD')
+  ediData.doValid = moment(bl.invoice_masterbi_valid_to).format('YYYYMMDD')
+
+  let continers = await tb_container.findAll({
+    where: {
+      invoice_vessel_id: bl.invoice_vessel_id,
+      invoice_containers_bl: bl.invoice_masterbi_bl
+    }
+  })
+  var ediCs = []
+  for(let c of continers) {
+    let cc = {
+      containerNumber: c.invoice_containers_no,
+      containerTypeISOcode: c.invoice_containers_size,
+    }
+    ediCs.push(cc)
+  }
+  ediData.containers = ediCs
+  ediData.ediName = ediData.bl + '_' + curMoment.format('YYYYMMDDHHmmss') + '.txt'
+  // create edi file
+  let fileInfo = await common.depot2Edi(ediData)
+  
+  let mailSubject = 'EDI ' + bl.invoice_masterbi_bl
+  let mailContent = '' //'Send By: ' + commonUser.user_name + ' ' + commonUser.user_phone + ' ' + commonUser.user_email
+  let mailHtml = ''
+  let attachments = [{
+    filename : ediData.ediName,
+    path: fileInfo
+  }]
+  await mailer.sendEdiMail(email, GLBConfig.EDI_EMAIL_RECEIVER, GLBConfig.EDI_EMAIL_CARBON_COPY, '', mailSubject, mailContent, mailHtml, attachments)
+}
+
 const checkConditionDoState = async (bl, ves) => {
   let overdueCheck = true
   let blacklistCheck = true
@@ -2554,15 +2606,20 @@ const checkConditionDoState = async (bl, ves) => {
 }
 
 const checkDoDepotState = async (bl) => {
+  let doDepot = false
   let queryStr = `SELECT COUNT(1) AS count FROM tbl_zhongtan_invoice_containers WHERE invoice_containers_bl = ? AND invoice_vessel_id = ? 
                     AND (invoice_containers_size IN (SELECT container_size_code FROM tbl_zhongtan_container_size WHERE state = '1' AND container_special_type = '1') 
                     OR invoice_containers_size IN (SELECT container_size_name FROM tbl_zhongtan_container_size WHERE state = '1' AND container_special_type = '1'))`
   let replacements = [bl.invoice_masterbi_bl, bl.invoice_vessel_id]
   let items = await model.simpleSelect(queryStr, replacements)
   if(items && items.count && parseInt(items.count) > 0) {
-    return true
+    doDepot = true
+  } else {
+    if(bl.invoice_masterbi_do_date && bl.invoice_masterbi_do_return_depot === 'FANTUZZI') {
+      doDepot = true
+    }
   }
-  return false
+  return doDepot
 }
 
 const checkConditionInvoiceState = async (bl) => {

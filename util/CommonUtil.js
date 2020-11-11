@@ -355,7 +355,6 @@ const fs2Edi = async (renderData) => {
   if (!data) {
     data = {}
   }
-  logger.error(data)
   let ediLines = 0
   // line 1
   // let interchangeTime = curMoment.format('YYMMDD:HHmm')
@@ -635,6 +634,30 @@ const jsonTrim = async (json) => {
   return retJson
 }
 
+const depot2Edi = async (renderData) => {
+  let data = JSON.parse(JSON.stringify(renderData))
+  if (!data) {
+    data = {}
+  }
+  // line 1
+  let ediTxt = 'BL+' + data.bl + '\'\r\n'
+  // line 2
+  ediTxt += 'SON+' + data.doNumber + '+' + data.doDate + ':0000\'\r\n'
+  // line 3
+  if(data.containers) {
+    for (let c of data.containers) {
+      ediTxt += 'CNT+' + c.containerNumber + '+' + c.containerTypeISOcode + '+' + data.doValid + ':0000\'\r\n'
+    }
+  }
+  let filePath = path.join(process.cwd(), config.fileSys.filesDir, data.ediName)
+  fs.writeFile(filePath, ediTxt, function(err) {
+    if (err) {
+        throw err
+    }
+  })
+  return filePath
+}
+
 module.exports = {
   docValidate: docValidate,
   reqTrans: reqTrans,
@@ -671,5 +694,6 @@ module.exports = {
   fileterB: fileterB,
   isContain: isContain,
   valueFilter: valueFilter,
-  jsonTrim: jsonTrim
+  jsonTrim: jsonTrim,
+  depot2Edi: depot2Edi
 }
