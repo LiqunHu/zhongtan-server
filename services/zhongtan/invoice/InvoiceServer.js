@@ -2220,10 +2220,10 @@ exports.searchFixedDepositAct = async req => {
         column = fee_config.fee_column
         type = fee_config.fee_type
       }
-      renderData[column+'_necessary'] = f.is_necessary
       if(f.fee_type === 'BL') {
         renderData[column] = f.fee_amount
         renderData[column + '_type'] = 'BL'
+        renderData[column+'_necessary'] = f.is_necessary
       } else {
         renderData[column + '_type'] = 'CON'
         if(!renderData[column]) {
@@ -2231,6 +2231,7 @@ exports.searchFixedDepositAct = async req => {
         }
         for(let c of continers) {
           if(f.fee_container_size === c.invoice_containers_size) {
+            renderData[column+'_necessary'] = f.is_necessary
             let has_container = false
             if(sameC && sameC.length > 0) {
               for(let sc of sameC) {
