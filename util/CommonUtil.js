@@ -646,7 +646,7 @@ const depot2Edi = async (renderData) => {
   // line 3
   if(data.containers) {
     for (let c of data.containers) {
-      ediTxt += 'CNT+' + c.containerNumber + '+' + c.containerTypeISOcode + '+' + data.doValid + ':0000\'\r\n'
+      ediTxt += 'CNT+ ' + c.containerNumber + '+' + c.containerTypeISOcode + '+' + data.doValid + ':0000\'\r\n'
     }
   }
   let filePath = path.join(process.cwd(), config.fileSys.filesDir, data.ediName)

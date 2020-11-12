@@ -2512,7 +2512,7 @@ exports.createDepotEdiFile = async (email, bl) =>{
     filename : ediData.ediName,
     path: fileInfo
   }]
-  await mailer.sendEdiMail(GLBConfig.EDI_EMAIL_RECEIVER, email, GLBConfig.EDI_EMAIL_CARBON_COPY, '', mailSubject, mailContent, mailHtml, attachments)
+  await mailer.sendEdiMail(GLBConfig.EDI_EMAIL_SENDER, email, GLBConfig.EDI_EMAIL_CARBON_COPY, '', mailSubject, mailContent, mailHtml, attachments)
 }
 
 const checkConditionDoState = async (bl, ves) => {
