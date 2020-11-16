@@ -405,5 +405,10 @@ module.exports = {
   ICD_EDI_TYPE: [
     { id: 'EMAIL', text: 'EMAIL', color: 'success' },
     { id: 'FILE', text: 'FILE', color: 'primary'}
-  ]
+  ],
+  RELEASE_STATE: [
+    { id: 'PM', text: 'Pending at Commercial' },
+    { id: 'MD', text: 'Commercial Declined' },
+    { id: 'AP', text: 'Commercial Approved' }
+  ],
 }

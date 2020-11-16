@@ -20,6 +20,7 @@ router.post('/export/Booking/:method', services.BookingControl)
 router.post('/export/BookingWork/:method', services.BookingWorkControl)
 router.post('/export/Receipt/:method', services.ReceiptControl)
 router.post('/export/BookingLoad/:method', services.BookingLoadControl)
+router.post('/export/CommercialVerification/:method', services.CommercialVerificationControl)
 
 router.post('/import/ImportWork/:method', services.ImportWorkControl)
 router.post('/invoice/Invoice/:method', services.InvoiceControl)

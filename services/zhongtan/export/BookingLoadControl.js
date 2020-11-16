@@ -17,6 +17,18 @@ module.exports = async (req, res) => {
       ret = await srv.searchBlAct(req)
     } else if (method === 'searchContainer') {
       ret = await srv.searchContainerAct(req)
+    } else if (method === 'modifyVessel') {
+      ret = await srv.modifyVesselAct(req)
+    } else if (method === 'deleteVessel') {
+      ret = await srv.deleteVesselAct(req)
+    } else if (method === 'checkPassword') {
+      ret = await srv.checkPasswordAct(req)
+    } else if (method === 'getEmptyReleaseData') {
+      ret = await srv.getEmptyReleaseDataAct(req)
+    } else if (method === 'getEmptyReleaseAgents') {
+      ret = await srv.getEmptyReleaseAgentsAct(req)
+    } else if (method === 'emptyRelease') {
+      ret = await srv.emptyReleaseAct(req)
     } 
     
     common.sendData(res, ret)

@@ -2,7 +2,7 @@ const db = require('../../app/db')
 // 提单表
 
 module.exports = db.defineModel('tbl_zhongtan_export_masterbl', {
-  export_masterbi_id: {
+  export_masterbl_id: {
     type: db.IDNO,
     autoIncrement: true,
     primaryKey: true
@@ -12,76 +12,107 @@ module.exports = db.defineModel('tbl_zhongtan_export_masterbl', {
     type: db.IDNO,
     allowNull: false
   },
-  export_masterbi_bl: {
+  export_masterbl_bl_carrier: {
+    // CARRIER
+    type: db.STRING(20),
+    defaultValue: '',
+    allowNull: false
+  },
+  export_masterbl_bl: {
     // 提单号
     type: db.STRING(50),
     defaultValue: '',
     allowNull: false
   },
-  export_masterbi_cso_number: {
+  export_masterbl_cso_number: {
     // CSO号
     type: db.STRING(50),
     defaultValue: '',
     allowNull: false
   },
-  export_masterbi_shipper_company: {
+  export_masterbl_shipper_company: {
     // 发货人
     type: db.STRING(50),
     defaultValue: '',
     allowNull: false
   },
-  export_masterbi_forwarder_company: {
+  export_masterbl_forwarder_company: {
     // 货代
     type: db.STRING(50),
     defaultValue: '',
     allowNull: false
   },
-  export_masterbi_consignee_company: {
+  export_masterbl_consignee_company: {
     // 收货人
     type: db.STRING(50),
     defaultValue: '',
     allowNull: false
   },
-  export_masterbi_port_of_load: {
+  export_masterbl_port_of_load: {
     // 起运港默认TZDAR
     type: db.STRING(50),
     defaultValue: '',
     allowNull: false
   },
-  export_masterbi_port_of_discharge: {
+  export_masterbl_port_of_discharge: {
     // 卸货港
     type: db.STRING(50),
     defaultValue: '',
     allowNull: false
   },
-  export_masterbi_traffic_mode: {
+  export_masterbl_traffic_mode: {
     // 运输方式
     type: db.STRING(50),
     defaultValue: '',
     allowNull: false
   },
-  export_masterbi_container_quantity: {
+  export_masterbl_container_quantity: {
     // 箱总量
     type: db.STRING(50),
     defaultValue: '',
     allowNull: false
   },
-  export_masterbi_container_weight: {
+  export_masterbl_container_weight: {
     // 箱总重
     type: db.STRING(50),
     defaultValue: '',
     allowNull: false
   },
-  export_masterbi_cargo_nature: {
+  export_masterbl_cargo_nature: {
     // 货物属性
     type: db.STRING(50),
     defaultValue: '',
     allowNull: false
   },
-  export_masterbi_cargo_descriptions: {
+  export_masterbl_cargo_descriptions: {
     // 货物描述
     type: db.STRING(50),
     defaultValue: '',
     allowNull: false
+  },
+  export_masterbl_empty_release_agent: {
+    // 放箱代理
+    type: db.STRING(50),
+    allowNull: true
+  },
+  export_masterbl_empty_release_depot: {
+    // 放箱堆场
+    type: db.STRING(50),
+    allowNull: true
+  },
+  export_masterbl_empty_release_date: {
+    // 放箱日期
+    type: db.DATE,
+    allowNull: true
+  },
+  export_masterbl_empty_release_valid_to: {
+    // 放箱有效期
+    type: db.DATEONLY,
+    allowNull: true
+  },
+  export_masterbl_empty_release_approve_date: {
+    // 放箱审核日期
+    type: db.DATE,
+    allowNull: true
   }
 })

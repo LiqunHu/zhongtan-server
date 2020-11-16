@@ -277,6 +277,14 @@ const loginInit = async (user, session_token, type) => {
           auth_flag: '1',
           show_flag: '1'
         })
+
+        authApis.push({
+          api_name: '操作密码',
+          api_path: '/common/system/OperationPasswordControl',
+          api_function: 'OPERATIONPASSWORDCONTROL',
+          auth_flag: '1',
+          show_flag: '1'
+        })
       } else {
         let groupapis = await queryGroupApi(gids)
         for (let item of groupapis) {
@@ -370,6 +378,13 @@ const iterationMenu = async (user, groups, parent_id) => {
       menu_name: '用户维护',
       show_flag: '1',
       menu_path: '/common/system/OperatorControl'
+    })
+
+    return_list[0].sub_menu.push({
+      menu_type: GLBConfig.MTYPE_LEAF,
+      menu_name: '操作密码',
+      show_flag: '1',
+      menu_path: '/common/system/OperationPasswordControl'
     })
 
     return return_list

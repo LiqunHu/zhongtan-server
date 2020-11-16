@@ -54,7 +54,9 @@ exports.addAct = async req => {
     edi_depot_storing_order_email: doc.edi_depot_storing_order_email,
     edi_depot_gate_in_out_regex: doc.edi_depot_gate_in_out_regex,
     edi_depot_send_edi: doc.edi_depot_send_edi,
-    edi_depot_send_edi_email: doc.edi_depot_send_edi_email
+    edi_depot_send_edi_email: doc.edi_depot_send_edi_email,
+    edi_depot_empty_release: doc.edi_depot_empty_release,
+    edi_depot_empty_release_email: doc.edi_depot_empty_release_email
   })
 
   return common.success(obj)
@@ -88,6 +90,8 @@ exports.modifyAct = async req => {
     obj.edi_depot_gate_in_out_regex = doc.new.edi_depot_gate_in_out_regex
     obj.edi_depot_send_edi = doc.new.edi_depot_send_edi
     obj.edi_depot_send_edi_email = doc.new.edi_depot_send_edi_email
+    obj.edi_depot_empty_release = doc.new.edi_depot_empty_release
+    obj.edi_depot_empty_release_email = doc.new.edi_depot_empty_release_email
     await obj.save()
     return common.success(obj)
   } else {

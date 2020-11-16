@@ -61,4 +61,16 @@ module.exports = db.defineModel('tbl_zhongtan_edi_depot', {
     defaultValue: '',
     allowNull: false
   },
+  edi_depot_empty_release: {
+    // 是否发送放箱邮件
+    type: db.STRING(5),
+    defaultValue: '0',
+    allowNull: false
+  },
+  edi_depot_empty_release_email: {
+    // 发送放箱邮件的邮箱
+    type: db.STRING(500),
+    defaultValue: '',
+    allowNull: false
+  },
 })

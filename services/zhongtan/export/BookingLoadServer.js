@@ -3,11 +3,13 @@ const PDFParser = require('pdf2json')
 const GLBConfig = require('../../../util/GLBConfig')
 const common = require('../../../util/CommonUtil')
 const model = require('../../../app/model')
+const opSrv = require('../../common/system/OperationPasswordServer')
 
 const tb_vessel = model.zhongtan_export_vessel
 const tb_bl = model.zhongtan_export_masterbl
 const tb_container = model.zhongtan_export_container
 const tb_container_size = model.zhongtan_container_size
+const tb_verification = model.zhongtan_export_verification
 
 exports.uploadBookingAct = async req => {
   let doc = common.docValidate(req)
@@ -157,21 +159,21 @@ exports.uploadBookingAct = async req => {
           let bl = await tb_bl.findOne({
             where: {
               export_vessel_id: vessel.export_vessel_id,
-              export_masterbi_bl: bookingNumber,
+              export_masterbl_bl: bookingNumber,
               state: GLBConfig.ENABLE
             }
           })
           if (bl) {
-            bl.export_masterbi_shipper_company = shipperCompany
-            bl.export_masterbi_forwarder_company = forwarderCompany
-            bl.export_masterbi_consignee_company = consigneeCompany
-            bl.export_masterbi_port_of_load = 'TZDAR'
-            bl.export_masterbi_port_of_discharge = pod
-            bl.export_masterbi_traffic_mode = tracfficMode
-            bl.export_masterbi_container_quantity = quantity
-            bl.export_masterbi_container_weight = quantity * weight
-            bl.export_masterbi_cargo_nature = cargoNature
-            bl.export_masterbi_cargo_descriptions = cargoDescriptions
+            bl.export_masterbl_shipper_company = shipperCompany
+            bl.export_masterbl_forwarder_company = forwarderCompany
+            bl.export_masterbl_consignee_company = consigneeCompany
+            bl.export_masterbl_port_of_load = 'TZDAR'
+            bl.export_masterbl_port_of_discharge = pod
+            bl.export_masterbl_traffic_mode = tracfficMode
+            bl.export_masterbl_container_quantity = quantity
+            bl.export_masterbl_container_weight = quantity * weight
+            bl.export_masterbl_cargo_nature = cargoNature
+            bl.export_masterbl_cargo_descriptions = cargoDescriptions
             await bl.save()
 
             await tb_container.destroy({
@@ -192,17 +194,18 @@ exports.uploadBookingAct = async req => {
           } else {
             await tb_bl.create({
               export_vessel_id: vessel.export_vessel_id,
-              export_masterbi_bl: bookingNumber,
-              export_masterbi_shipper_company: shipperCompany,
-              export_masterbi_forwarder_company: forwarderCompany,
-              export_masterbi_consignee_company: consigneeCompany,
-              export_masterbi_port_of_load: 'TZDAR',
-              export_masterbi_port_of_discharge: pod,
-              export_masterbi_traffic_mode: tracfficMode,
-              export_masterbi_container_quantity: quantity,
-              export_masterbi_container_weight: quantity * weight,
-              export_masterbi_cargo_nature: cargoNature,
-              export_masterbi_cargo_descriptions: cargoDescriptions,
+              export_masterbl_bl_carrier: 'OOCL',
+              export_masterbl_bl: bookingNumber,
+              export_masterbl_shipper_company: shipperCompany,
+              export_masterbl_forwarder_company: forwarderCompany,
+              export_masterbl_consignee_company: consigneeCompany,
+              export_masterbl_port_of_load: 'TZDAR',
+              export_masterbl_port_of_discharge: pod,
+              export_masterbl_traffic_mode: tracfficMode,
+              export_masterbl_container_quantity: quantity,
+              export_masterbl_container_weight: quantity * weight,
+              export_masterbl_cargo_nature: cargoNature,
+              export_masterbl_cargo_descriptions: cargoDescriptions,
             })
             for(let i = 0; i < quantity; i++) {
               await tb_container.create({
@@ -406,22 +409,22 @@ exports.uploadBookingAct = async req => {
           let bl = await tb_bl.findOne({
             where: {
               export_vessel_id: vessel.export_vessel_id,
-              export_masterbi_bl: bookingNumber,
+              export_masterbl_bl: bookingNumber,
               state: GLBConfig.ENABLE
             }
           })
           if (bl) {
-            bl.export_masterbi_cso_number = csoNumber
-            bl.export_masterbi_shipper_company = shipper
-            bl.export_masterbi_forwarder_company = bookingParty ? bookingParty : forwarder
-            bl.export_masterbi_consignee_company = consignee
-            bl.export_masterbi_port_of_load = 'TZDAR'
-            bl.export_masterbi_port_of_discharge = pod
-            bl.export_masterbi_traffic_mode = tracfficMode
-            bl.export_masterbi_container_quantity = quantity
-            bl.export_masterbi_container_weight = quantity * cargoWeight
-            bl.export_masterbi_cargo_nature = cargoNature
-            bl.export_masterbi_cargo_descriptions = cargoDescription
+            bl.export_masterbl_cso_number = csoNumber
+            bl.export_masterbl_shipper_company = shipper
+            bl.export_masterbl_forwarder_company = bookingParty ? bookingParty : forwarder
+            bl.export_masterbl_consignee_company = consignee
+            bl.export_masterbl_port_of_load = 'TZDAR'
+            bl.export_masterbl_port_of_discharge = pod
+            bl.export_masterbl_traffic_mode = tracfficMode
+            bl.export_masterbl_container_quantity = quantity
+            bl.export_masterbl_container_weight = quantity * cargoWeight
+            bl.export_masterbl_cargo_nature = cargoNature
+            bl.export_masterbl_cargo_descriptions = cargoDescription
             await bl.save()
 
             await tb_container.destroy({
@@ -443,18 +446,19 @@ exports.uploadBookingAct = async req => {
           } else {
             await tb_bl.create({
               export_vessel_id: vessel.export_vessel_id,
-              export_masterbi_bl: bookingNumber,
-              export_masterbi_cso_number: csoNumber,
-              export_masterbi_shipper_company: shipper,
-              export_masterbi_forwarder_company: bookingParty ? bookingParty : forwarder,
-              export_masterbi_consignee_company: consignee,
-              export_masterbi_port_of_load: 'TZDAR',
-              export_masterbi_port_of_discharge: pod,
-              export_masterbi_traffic_mode: tracfficMode,
-              export_masterbi_container_quantity: quantity,
-              export_masterbi_container_weight: quantity * cargoWeight,
-              export_masterbi_cargo_nature: cargoNature,
-              export_masterbi_cargo_descriptions: cargoDescription,
+              export_masterbl_bl_carrier: 'COSCO',
+              export_masterbl_bl: bookingNumber,
+              export_masterbl_cso_number: csoNumber,
+              export_masterbl_shipper_company: shipper,
+              export_masterbl_forwarder_company: bookingParty ? bookingParty : forwarder,
+              export_masterbl_consignee_company: consignee,
+              export_masterbl_port_of_load: 'TZDAR',
+              export_masterbl_port_of_discharge: pod,
+              export_masterbl_traffic_mode: tracfficMode,
+              export_masterbl_container_quantity: quantity,
+              export_masterbl_container_weight: quantity * cargoWeight,
+              export_masterbl_cargo_nature: cargoNature,
+              export_masterbl_cargo_descriptions: cargoDescription,
             })
             for(let i = 0; i < quantity; i++) {
               await tb_container.create({
@@ -504,7 +508,7 @@ exports.searchVesselAct = async req => {
   let queryStr =  `SELECT * FROM tbl_zhongtan_export_vessel v `
   let replacements = []
   if(masterbi_bl) {
-    queryStr = queryStr + ` LEFT JOIN tbl_zhongtan_export_masterbl b ON v.export_vessel_id = b.export_vessel_id WHERE v.state = '1' AND b.state = '1' AND b.export_masterbi_bl = ? `
+    queryStr = queryStr + ` LEFT JOIN tbl_zhongtan_export_masterbl b ON v.export_vessel_id = b.export_vessel_id WHERE v.state = '1' AND b.state = '1' AND b.export_masterbl_bl = ? `
     replacements.push(masterbi_bl)
   } else {
     queryStr = queryStr + ` WHERE v.state = '1' `
@@ -549,7 +553,7 @@ exports.searchBlAct = async req => {
   let queryStr =  `select * from tbl_zhongtan_export_masterbl b WHERE b.export_vessel_id = ? AND b.state = ?`
   let replacements = [export_vessel_id, GLBConfig.ENABLE]
   if(masterbi_bl) {
-    queryStr = queryStr + ` AND b.export_masterbi_bl = ?`
+    queryStr = queryStr + ` AND b.export_masterbl_bl = ?`
     replacements.push(masterbi_bl)
   }
   let bls = await model.queryWithCount(doc, queryStr, replacements)
@@ -573,4 +577,170 @@ exports.searchContainerAct = async req => {
   returnData.total = cons.count
   returnData.rows = cons.data
   return returnData
+}
+
+exports.modifyVesselAct = async req => {
+  let doc = common.docValidate(req)
+  let vessel = await tb_vessel.findOne({
+    where: {
+      export_vessel_id: doc.export_vessel_id
+    }
+  })
+  if(vessel) {
+    vessel.export_vessel_name = doc.export_vessel_name
+    vessel.export_vessel_voyage = doc.export_vessel_voyage
+    vessel.export_vessel_etd = doc.export_vessel_etd
+    await vessel.save()
+  }
+  return common.success()
+}
+
+exports.deleteVesselAct = async req => {
+  let doc = common.docValidate(req)
+  let vessel = await tb_vessel.findOne({
+    where: {
+      state: GLBConfig.ENABLE,
+      export_vessel_id: doc.export_vessel_id
+    }
+  })
+  if(vessel) {
+    vessel.state = GLBConfig.DISABLE
+    await vessel.save()
+    let bls = await tb_bl.findAll({
+      where: {
+        state: GLBConfig.ENABLE,
+        export_vessel_id: doc.export_vessel_id
+      }
+    })
+    for(let b of bls) {
+      b.state = GLBConfig.DISABLE
+      await b.save()
+    }
+    let cons = await tb_container.findAll({
+      where: {
+        state: GLBConfig.ENABLE,
+        export_vessel_id: doc.export_vessel_id
+      }
+    })
+    for(let c of cons) {
+      c.state = GLBConfig.DISABLE
+      await c.save()
+    }
+  }
+  return common.success()
+}
+
+exports.checkPasswordAct = async req => {
+  let doc = common.docValidate(req)
+  let check = await opSrv.checkPassword(doc.page, doc.action, doc.checkPassword)
+  if(check) {
+    return common.success()
+  } else {
+    return common.error('auth_24')
+  }
+}
+
+exports.getEmptyReleaseDataAct = async req => {
+  let doc = common.docValidate(req)
+  let retData = {}
+  let bl = await tb_bl.findOne({
+    where: {
+      state: GLBConfig.ENABLE,
+      export_masterbl_id: doc.export_masterbl_id
+    }
+  })
+  if(bl) {
+    let queryStr = ''
+    let replacements = []
+    retData.masterbl_bl = JSON.parse(JSON.stringify(bl))
+    queryStr = `SELECT COUNT(1) AS quantity, COUNT(1) AS release_quantity, s.container_size_name AS container_type FROM tbl_zhongtan_export_container c 
+                      LEFT JOIN tbl_zhongtan_container_size s ON (c.export_container_size_type = s.container_size_code OR c.export_container_size_type = s.container_size_name) 
+                      WHERE c.export_vessel_id = ? AND c.export_container_bl = ? AND c.state = '1' GROUP BY s.container_size_name`
+    replacements = [bl.export_vessel_id, bl.export_masterbl_bl]
+    retData.quantitys = await model.simpleSelect(queryStr, replacements)
+    if(!retData.masterbl_bl.export_masterbl_empty_release_valid_to) {
+      retData.masterbl_bl.export_masterbl_empty_release_valid_to = moment().add(7, 'days').format('YYYY-MM-DD')
+    }
+    let agents = []
+    if(!retData.masterbl_bl.export_masterbl_empty_release_agent && retData.masterbl_bl.export_masterbl_forwarder_company) {
+      queryStr = `select a.user_id, a.user_name, a.user_blacklist, a.user_customer_type from tbl_common_user a where a.state = '1' and a.user_type = '${GLBConfig.TYPE_CUSTOMER}' and a.user_name = ? ORDER BY user_id DESC LIMIT 1`
+      replacements = [retData.masterbl_bl.export_masterbl_forwarder_company]
+      agents = await model.simpleSelect(queryStr, replacements)
+      if (agents && agents.length > 0) {
+        retData.masterbl_bl.export_masterbl_empty_release_agent = agents[0].user_id
+      }
+    } else if(retData.masterbl_bl.export_masterbl_empty_release_agent) {
+      queryStr = `select a.user_id, a.user_name, a.user_blacklist, a.user_customer_type from tbl_common_user a where a.state = '1' and a.user_type = '${GLBConfig.TYPE_CUSTOMER}' and a.user_id = ? `
+      replacements = [retData.masterbl_bl.export_masterbl_empty_release_agent]
+      agents = await model.simpleSelect(queryStr, replacements)
+    }
+    retData.agents = agents
+    retData.depots = []
+    queryStr = `SELECT edi_depot_id, edi_depot_name FROM tbl_zhongtan_edi_depot WHERE state = ? ORDER BY edi_depot_name`
+    replacements = [GLBConfig.ENABLE]
+    let depots = await model.simpleSelect(queryStr, replacements)
+    if(depots && depots.length > 0) {
+      retData.depots = depots
+    }
+  }
+  return common.success(retData)
+}
+
+exports.getEmptyReleaseAgentsAct = async req => {
+  let doc = common.docValidate(req)
+  let retData = {}
+  if(doc.query) {
+    let queryStr = `select a.user_id, a.user_name, a.user_blacklist, a.user_customer_type from tbl_common_user a where a.state = '1' and a.user_type = '${GLBConfig.TYPE_CUSTOMER}' and a.user_name LIKE ? ORDER BY user_name LIMIT 10`
+    let replacements = ['%' + doc.query + '%']
+    let agents = await model.simpleSelect(queryStr, replacements)
+    retData.agents = JSON.parse(JSON.stringify(agents))
+  }
+  return common.success(retData)
+}
+
+exports.emptyReleaseAct = async req => {
+  let doc = common.docValidate(req), user = req.user
+  let bl = await tb_bl.findOne({
+    where: {
+      state: GLBConfig.ENABLE,
+      export_masterbl_id: doc.export_masterbl_id
+    }
+  })
+  if(bl) {
+    let unRelease = await tb_verification.findAll({
+      where: {
+        state: GLBConfig.ENABLE,
+        export_masterbl_id: bl.export_masterbl_id,
+        export_verification_state: 'PM'
+      }
+    })
+    if(unRelease) {
+      for(let r of unRelease) {
+        r.state = GLBConfig.DISABLE
+        await r.save()
+      }
+    }
+    let quantity = ''
+    for(let q of doc.quantitys) {
+      quantity = quantity + q.release_quantity + 'x' + q.container_type + ';'
+    }
+    quantity = quantity.substring(0, quantity.length - 1)
+    await tb_verification.create({
+      export_masterbl_id: bl.export_masterbl_id,
+      export_verification_api_name: 'EMPTY RELEASE',
+      export_verification_bl: bl.export_masterbl_bl,
+      export_verification_depot: doc.export_masterbl_empty_release_depot,
+      export_verification_agent: doc.export_masterbl_empty_release_agent,
+      export_verification_quantity: quantity,
+      export_verification_valid_to: doc.export_masterbl_empty_release_valid_to,
+      export_verification_state: 'PM',
+      export_verification_create_user: user.user_id
+    })
+    bl.export_masterbl_empty_release_agent = doc.export_masterbl_empty_release_agent
+    bl.export_masterbl_empty_release_depot = doc.export_masterbl_empty_release_depot
+    bl.export_masterbl_empty_release_date = moment()
+    bl.export_masterbl_empty_release_valid_to = doc.export_masterbl_empty_release_valid_to
+    await bl.save()
+  }
+  return common.success()
 }
