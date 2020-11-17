@@ -73,6 +73,13 @@ exports.approveAct = async req => {
     verificatione.export_verification_review_user = user.user_id
     verificatione.export_verification_review_date = curDate
     await verificatione.save()
+    let bl = await tb_bl.findOne({
+      where: {
+        export_masterbl_id: verificatione.export_masterbl_id
+      }
+    })
+    bl.export_masterbl_empty_release_approve_date = curDate
+    await bl.save()
     if(verificatione.export_verification_api_name === 'EMPTY RELEASE') {
       // 发送放箱邮件
       if(verificatione.export_verification_depot) {
@@ -87,13 +94,6 @@ exports.approveAct = async req => {
               user_id: verificatione.export_verification_agent
             }
           })
-          let bl = await tb_bl.findOne({
-            where: {
-              export_masterbl_id: verificatione.export_masterbl_id
-            }
-          })
-          bl.export_masterbl_empty_release_approve_date = curDate
-          await bl.save()
           let vessel = await tb_vessel.findOne({
             where: {
               export_vessel_id: bl.export_vessel_id
