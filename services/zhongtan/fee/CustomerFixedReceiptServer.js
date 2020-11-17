@@ -249,3 +249,21 @@ exports.searchCustomerAct = async req => {
     return common.success()
   }
 }
+
+exports.invalidAct = async req => {
+  let doc = common.docValidate(req), user = req.user
+  let theDeposit = await tb_fixed_deposit.findOne({
+    where: {
+      fixed_deposit_id: doc.fixed_deposit_id,
+      state: GLBConfig.ENABLE
+    }
+  })
+  if(!theDeposit) {
+    return common.error('fee_04')
+  }
+  theDeposit.deposit_work_state = 'I'
+  theDeposit.deposit_invalid_date = new Date()
+  theDeposit.deposit_invalid_user_id = user.user_id
+  await theDeposit.save()
+  return common.success()
+}

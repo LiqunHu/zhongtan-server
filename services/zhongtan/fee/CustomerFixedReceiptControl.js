@@ -17,7 +17,9 @@ module.exports = async (req, res) => {
       ret = await srv.releaseAct(req)
     } else if (method === 'searchCustomer') {
       ret = await srv.searchCustomerAct(req)
-    }
+    } else if (method === 'invalid') {
+      ret = await srv.invalidAct(req)
+    } 
     common.sendData(res, ret)
   } catch (error) {
     common.sendFault(res, error)
