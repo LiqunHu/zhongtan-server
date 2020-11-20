@@ -270,4 +270,9 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_containers', {
     type: db.INTEGER,
     allowNull: true
   },
+  invoice_containers_edi_discharge_date: {
+    // 卸船日期
+    type: db.STRING(20),
+    allowNull: true
+  }
 })

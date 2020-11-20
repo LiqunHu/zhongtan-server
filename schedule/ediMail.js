@@ -1,7 +1,6 @@
 const model = require('../app/model')
 const mailer = require('../util/Mail')
 const GLBConfig = require('../util/GLBConfig')
-
 const tb_edi_depot = model.zhongtan_edi_depot
 
 const readEdiMail = async () => {
@@ -13,7 +12,7 @@ const readEdiMail = async () => {
     })
 
     if(ediDepots && ediDepots.length > 0) {
-      mailer.readEdiMail(ediDepots)
+      await mailer.readEdiMail(ediDepots)
     }
   } finally {
     // continue regardless of error

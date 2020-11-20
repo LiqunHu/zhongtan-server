@@ -546,7 +546,11 @@ const checkDoState = bl => {
 }
 
 const isNumber = value => {
-  return typeof value === 'number' && !isNaN(value)
+  var n = Number(value)
+  if (!isNaN(n)){
+    return true
+  }
+  return false
 }
 
 async function ejs2Html(templateFile, renderData) {

@@ -73,4 +73,22 @@ module.exports = db.defineModel('tbl_zhongtan_edi_depot', {
     defaultValue: '',
     allowNull: false
   },
+  edi_depot_is_wharf: {
+    // 码头
+    type: db.STRING(5),
+    defaultValue: '0',
+    allowNull: false
+  },
+  edi_depot_bl_regex: {
+    // 提单号正则
+    type: db.STRING(50),
+    defaultValue: '',
+    allowNull: false
+  },
+  edi_depot_carrier_regex: {
+    // 船代正则
+    type: db.STRING(50),
+    defaultValue: '',
+    allowNull: false
+  }
 })
