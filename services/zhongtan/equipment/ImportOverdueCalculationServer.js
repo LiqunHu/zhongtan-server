@@ -6,6 +6,7 @@ const model = require('../../../app/model')
 const seq = require('../../../util/Sequence')
 const mailer = require('../../../util/Mail')
 const cal_config_srv = require('./OverdueCalculationConfigServer')
+const opSrv = require('../../common/system/OperationPasswordServer')
 const Op = model.Op
 
 const tb_user = model.common_user
@@ -159,6 +160,8 @@ exports.searchAct = async req => {
 
 exports.calculationAct = async req => {
   let doc = common.docValidate(req)
+  let discharge_date = doc.discharge_date
+  let return_date = doc.return_date
   let free_days = 0
   if(doc.invoice_containers_empty_return_overdue_free_days) {
     free_days = parseInt(doc.invoice_containers_empty_return_overdue_free_days)
@@ -172,8 +175,8 @@ exports.calculationAct = async req => {
   }
 
   // free_days, discharge_date, return_date, cargo_type, discharge_port, carrier, container_type, enabled_date
-  let cal_result = await cal_config_srv.demurrageCalculation(free_days, doc.invoice_vessel_ata, doc.return_date, 
-    doc.invoice_masterbi_cargo_type, discharge_port, charge_carrier, doc.invoice_containers_size, doc.invoice_vessel_ata)
+  let cal_result = await cal_config_srv.demurrageCalculation(free_days, discharge_date, return_date, 
+    doc.invoice_masterbi_cargo_type, discharge_port, charge_carrier, doc.invoice_containers_size, discharge_date)
   if(cal_result.diff_days === -1) {
     return common.error('equipment_02')
   } else {
@@ -189,6 +192,11 @@ exports.emptyReturnSaveAct = async req => {
     }
   })
   if(con) {
+    let discharge_date = doc.invoice_vessel_ata
+    if(doc.invoice_containers_edi_discharge_date) {
+      discharge_date = doc.invoice_containers_edi_discharge_date
+    }
+    let return_date = doc.invoice_containers_empty_return_date
     let discharge_port = doc.invoice_masterbi_destination.substring(0, 2)
     let charge_carrier = 'COSCO'
     if(doc.invoice_containers_bl.indexOf('COS') >= 0) {
@@ -197,11 +205,12 @@ exports.emptyReturnSaveAct = async req => {
       charge_carrier  = 'OOCL'
     }
     let old_free_days = con.invoice_containers_empty_return_overdue_free_days ? con.invoice_containers_empty_return_overdue_free_days : doc.invoice_containers_empty_return_overdue_static_free_days
-    if((doc.invoice_containers_empty_return_date || con.invoice_containers_actually_return_date) && doc.invoice_containers_empty_return_overdue_free_days) {
+    if((return_date || con.invoice_containers_actually_return_date) && doc.invoice_containers_empty_return_overdue_free_days) {
       con.invoice_containers_empty_return_overdue_free_days = doc.invoice_containers_empty_return_overdue_free_days
+      con.invoice_containers_edi_discharge_date = discharge_date
       // 保存计算超期费计算结果
-      if(doc.invoice_containers_empty_return_date) {
-        con.invoice_containers_empty_return_date = moment(doc.invoice_containers_empty_return_date, 'DD/MM/YYYY').format('DD/MM/YYYY')
+      if(return_date) {
+        con.invoice_containers_empty_return_date = moment(return_date, 'DD/MM/YYYY').format('DD/MM/YYYY')
         con.invoice_containers_empty_return_overdue_amount = doc.invoice_containers_empty_return_overdue_amount
         con.invoice_containers_empty_return_overdue_days = doc.invoice_containers_empty_return_overdue_days
         if(doc.invoice_containers_empty_return_overdue_amount && doc.invoice_containers_empty_return_overdue_days) {
@@ -211,18 +220,24 @@ exports.emptyReturnSaveAct = async req => {
       if(con.invoice_containers_actually_return_date) {
         // 以获取到实际进场时间，重新计算
         let cal_result = await cal_config_srv.demurrageCalculation(con.invoice_containers_empty_return_overdue_free_days, 
-          doc.invoice_vessel_ata, con.invoice_containers_actually_return_date, doc.invoice_masterbi_cargo_type, discharge_port, charge_carrier, con.invoice_containers_size, doc.invoice_vessel_ata)
+          discharge_date, con.invoice_containers_actually_return_date, doc.invoice_masterbi_cargo_type, discharge_port, charge_carrier, con.invoice_containers_size, discharge_date)
         if(cal_result.diff_days !== -1) {
           con.invoice_containers_actually_return_overdue_days = cal_result.overdue_days
           con.invoice_containers_actually_return_overdue_amount = cal_result.overdue_amount
         } 
       }
       await con.save()
-    } else if(doc.invoice_containers_empty_return_overdue_free_days){
+    } else if(doc.invoice_containers_empty_return_overdue_free_days || doc.invoice_containers_edi_discharge_date){
       // 保存免箱期
-      con.invoice_containers_empty_return_overdue_free_days = doc.invoice_containers_empty_return_overdue_free_days
+      if(doc.invoice_containers_empty_return_overdue_free_days) {
+        con.invoice_containers_empty_return_overdue_free_days = doc.invoice_containers_empty_return_overdue_free_days
+      }
+      // 保存卸船时间
+      if(doc.invoice_containers_edi_discharge_date) {
+        con.invoice_containers_edi_discharge_date = doc.invoice_containers_edi_discharge_date
+      }
       await con.save()
-    }
+    } 
     if(old_free_days && doc.invoice_containers_empty_return_overdue_free_days && 
       parseInt(old_free_days) !== parseInt(doc.invoice_containers_empty_return_overdue_free_days)
       && !doc.free_days_single) {
@@ -240,10 +255,14 @@ exports.emptyReturnSaveAct = async req => {
               }
             })
             if(oc) {
+              let oc_discharge_date = doc.invoice_vessel_ata
+              if(oc.invoice_containers_edi_discharge_date) {
+                oc_discharge_date = oc.invoice_containers_edi_discharge_date
+              }
               if(oc.invoice_containers_empty_return_date) {
                 oc.invoice_containers_empty_return_overdue_free_days = doc.invoice_containers_empty_return_overdue_free_days
-                let cal_result = await cal_config_srv.demurrageCalculation(oc.invoice_containers_empty_return_overdue_free_days, doc.invoice_vessel_ata, oc.invoice_containers_empty_return_date, 
-                  doc.invoice_masterbi_cargo_type, discharge_port, charge_carrier, oc.invoice_containers_size, doc.invoice_vessel_ata)
+                let cal_result = await cal_config_srv.demurrageCalculation(oc.invoice_containers_empty_return_overdue_free_days, oc_discharge_date, oc.invoice_containers_empty_return_date, 
+                  doc.invoice_masterbi_cargo_type, discharge_port, charge_carrier, oc.invoice_containers_size, oc_discharge_date)
                 if(cal_result) {
                   oc.invoice_containers_empty_return_overdue_days = cal_result.overdue_days
                   oc.invoice_containers_empty_return_overdue_amount = cal_result.overdue_amount
@@ -252,7 +271,7 @@ exports.emptyReturnSaveAct = async req => {
               }
               if(oc.invoice_containers_actually_return_date) {
                 let cal_result = await cal_config_srv.demurrageCalculation(oc.invoice_containers_empty_return_overdue_free_days, 
-                  doc.invoice_vessel_ata, oc.invoice_containers_actually_return_date, doc.invoice_masterbi_cargo_type, discharge_port, charge_carrier, oc.invoice_containers_size, doc.invoice_vessel_ata)
+                  oc_discharge_date, oc.invoice_containers_actually_return_date, doc.invoice_masterbi_cargo_type, discharge_port, charge_carrier, oc.invoice_containers_size, oc_discharge_date)
                 if(cal_result.diff_days !== -1) {
                   oc.invoice_containers_actually_return_overdue_days = cal_result.overdue_days
                   oc.invoice_containers_actually_return_overdue_amount = cal_result.overdue_amount
@@ -269,6 +288,29 @@ exports.emptyReturnSaveAct = async req => {
         }
       }
     }
+    return common.success()
+  } else {
+    return common.error('equipment_03')
+  }
+}
+
+exports.ediCalculationSaveAct = async req => {
+  let doc = common.docValidate(req)
+  let con = await tb_container.findOne({
+    where: {
+      invoice_containers_id: doc.invoice_containers_id
+    }
+  })
+  if(con) {
+    if(doc.invoice_containers_edi_discharge_date) {
+      con.invoice_containers_edi_discharge_date = doc.invoice_containers_edi_discharge_date
+    }
+    if(doc.invoice_containers_actually_return_date) {
+      con.invoice_containers_actually_return_date = doc.invoice_containers_actually_return_date
+      con.invoice_containers_actually_return_overdue_days = doc.invoice_containers_actually_return_overdue_days
+      con.invoice_containers_actually_return_overdue_amount = doc.invoice_containers_actually_return_overdue_amount
+    }
+    await con.save()
     return common.success()
   } else {
     return common.error('equipment_03')
@@ -430,6 +472,10 @@ exports.emptyInvoiceAct = async req => {
           invoice_containers_id: s.invoice_containers_id
         }
       })
+      let discharge_date = vessel.invoice_vessel_ata
+      if(con.invoice_containers_edi_discharge_date) {
+        discharge_date = con.invoice_containers_edi_discharge_date
+      }
       con.invoice_containers_customer_id = customer.user_id
       con.invoice_containers_empty_return_invoice_date = curDate
       con.invoice_containers_empty_return_date_invoice = con.invoice_containers_empty_return_date
@@ -450,7 +496,7 @@ exports.emptyInvoiceAct = async req => {
         s.overdue_days = parseInt(con.invoice_containers_empty_return_overdue_days) - parseInt(rcon[0].overdue_invoice_containers_overdue_days)
         s.overdue_amount = parseFloat(con.invoice_containers_empty_return_overdue_amount) - parseFloat(rcon[0].overdue_invoice_containers_overdue_amount) 
       } else {
-        s.starting_date = vessel.invoice_vessel_ata
+        s.starting_date = discharge_date
         s.overdue_days = con.invoice_containers_empty_return_overdue_days
         s.overdue_amount = con.invoice_containers_empty_return_overdue_amount
       }
@@ -463,6 +509,10 @@ exports.emptyInvoiceAct = async req => {
     }
     for(let key in mergeCon) {
       let row0 = mergeCon[key][0]
+      let discharge_date = vessel.invoice_vessel_ata
+      if(row0.invoice_containers_edi_discharge_date) {
+        discharge_date = row0.invoice_containers_edi_discharge_date
+      }
       let renderData = {}
       renderData.customerName = customer.user_name
       renderData.address = customer.user_address
@@ -478,7 +528,7 @@ exports.emptyInvoiceAct = async req => {
       renderData.invoiceNo = invoiceNo
       renderData.vesselName = vessel.invoice_vessel_name
       renderData.voyageNumber = vessel.invoice_vessel_voyage
-      renderData.dischargeDate = vessel.invoice_vessel_ata
+      renderData.dischargeDate = discharge_date
       renderData.startingDate = row0.starting_date
       renderData.user_name = commonUser.user_name
       renderData.user_phone = commonUser.user_phone
@@ -517,6 +567,10 @@ exports.emptyInvoiceAct = async req => {
       })
       
       for(let s of mergeCon[key]) {
+        let discharge_date = vessel.invoice_vessel_ata
+        if(s.invoice_containers_edi_discharge_date) {
+          discharge_date = s.invoice_containers_edi_discharge_date
+        }
         await tb_invoice_container.create({
           overdue_invoice_containers_invoice_uploadfile_id: invoice_file.uploadfile_id,
           overdue_invoice_containers_invoice_masterbi_id: s.invoice_masterbi_id,
@@ -527,7 +581,7 @@ exports.emptyInvoiceAct = async req => {
           overdue_invoice_containers_overdue_free_days: s.invoice_containers_empty_return_overdue_free_days,
           overdue_invoice_containers_overdue_increase_days: s.overdue_days,
           overdue_invoice_containers_overdue_invoice_amount: s.overdue_amount,
-          overdue_invoice_containers_overdue_discharge_date: vessel.invoice_vessel_ata,
+          overdue_invoice_containers_overdue_discharge_date: discharge_date,
           overdue_invoice_containers_overdue_staring_date: s.starting_date
         })
       }
@@ -603,6 +657,10 @@ exports.emptyReInvoiceAct = async req => {
           invoice_containers_id: s.invoice_containers_id
         }
       })
+      let discharge_date = vessel.invoice_vessel_ata
+      if(con.invoice_containers_edi_discharge_date) {
+        discharge_date = con.invoice_containers_edi_discharge_date
+      }
       con.invoice_containers_customer_id = customer.user_id
       con.invoice_containers_empty_return_invoice_date = curDate
       con.invoice_containers_empty_return_date_invoice = con.invoice_containers_empty_return_date
@@ -620,7 +678,7 @@ exports.emptyReInvoiceAct = async req => {
       s.invoice_containers_empty_return_date = con.invoice_containers_empty_return_date
       s.invoice_containers_empty_return_overdue_days = con.invoice_containers_empty_return_overdue_days
       s.invoice_containers_empty_return_overdue_amount = con.invoice_containers_empty_return_overdue_amount_invoice
-      s.starting_date = vessel.invoice_vessel_ata
+      s.starting_date = discharge_date
       s.overdue_days = con.invoice_containers_empty_return_overdue_days
       s.overdue_amount = con.invoice_containers_empty_return_overdue_amount_invoice
       s.overdue_invoice_containers_overdue_deduction = con.invoice_containers_empty_return_overdue_deduction
@@ -633,6 +691,10 @@ exports.emptyReInvoiceAct = async req => {
     }
     for(let key in mergeCon) {
       let row0 = mergeCon[key][0]
+      let discharge_date = vessel.invoice_vessel_ata
+      if(row0.invoice_containers_edi_discharge_date) {
+        discharge_date = row0.invoice_containers_edi_discharge_date
+      }
       let renderData = {}
       renderData.customerName = customer.user_name
       renderData.address = customer.user_address
@@ -648,7 +710,7 @@ exports.emptyReInvoiceAct = async req => {
       renderData.invoiceNo = invoiceNo
       renderData.vesselName = vessel.invoice_vessel_name
       renderData.voyageNumber = vessel.invoice_vessel_voyage
-      renderData.dischargeDate = vessel.invoice_vessel_ata
+      renderData.dischargeDate = discharge_date
       renderData.startingDate = row0.starting_date
       renderData.user_name = commonUser.user_name
       renderData.user_phone = commonUser.user_phone
@@ -687,6 +749,10 @@ exports.emptyReInvoiceAct = async req => {
       })
       
       for(let s of mergeCon[key]) {
+        let discharge_date = vessel.invoice_vessel_ata
+        if(s.invoice_containers_edi_discharge_date) {
+          discharge_date = s.invoice_containers_edi_discharge_date
+        }
         await tb_invoice_container.create({
           overdue_invoice_containers_invoice_uploadfile_id: invoice_file.uploadfile_id,
           overdue_invoice_containers_invoice_masterbi_id: s.invoice_masterbi_id,
@@ -697,7 +763,7 @@ exports.emptyReInvoiceAct = async req => {
           overdue_invoice_containers_overdue_free_days: s.invoice_containers_empty_return_overdue_free_days,
           overdue_invoice_containers_overdue_increase_days: s.overdue_days,
           overdue_invoice_containers_overdue_invoice_amount: s.overdue_amount,
-          overdue_invoice_containers_overdue_discharge_date: vessel.invoice_vessel_ata,
+          overdue_invoice_containers_overdue_discharge_date: discharge_date,
           overdue_invoice_containers_overdue_staring_date: s.starting_date,
           overdue_invoice_containers_overdue_deduction: s.overdue_invoice_containers_overdue_deduction
         })
@@ -711,23 +777,12 @@ exports.emptyReInvoiceAct = async req => {
 
 exports.checkPasswordAct = async req => {
   let doc = common.docValidate(req)
-  if(!doc.check_password) {
-    return common.error('auth_18')
+  let check = await opSrv.checkPassword(doc.page, doc.action, doc.checkPassword)
+  if(check) {
+    return common.success()
   } else {
-    let adminUser = await tb_user.findOne({
-      where: {
-        user_username: 'admin'
-      }
-    })
-    if(adminUser) {
-      if(adminUser.user_password !== doc.check_password) {
-        return common.error('auth_24')
-      }
-    } else {
-      return common.error('auth_18')
-    }
+    return common.error('auth_24')
   }
-  return common.success()
 }
 
 exports.actuallyOverdueCopyAct = async req => {

@@ -31,6 +31,8 @@ module.exports = async (req, res) => {
       ret = await srv.containerInvoiceDetailAct(req)
     } else if (method === 'issuingStoringOrder') {
       ret = await srv.issuingStoringOrderAct(req)
+    } else if (method === 'ediCalculationSave') {
+      ret = await srv.ediCalculationSaveAct(req)
     } 
     
     common.sendData(res, ret)

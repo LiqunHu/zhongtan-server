@@ -124,7 +124,7 @@ exports.approveAct = async req => {
           let mailContent = ''
           let mailHtml = html
           let attachments = []
-          await mailer.sendEdiMail(GLBConfig.STORING_ORDER_CARBON_COPY, depot.edi_depot_empty_release_email.split(';'), GLBConfig.STORING_ORDER_CARBON_COPY, GLBConfig.STORING_ORDER_BLIND_CARBON_COPY, mailSubject, mailContent, mailHtml, attachments)
+          await mailer.sendEdiMail(GLBConfig.EMPTY_RELEASE_EMAIL_SENDER, depot.edi_depot_empty_release_email.split(';'), GLBConfig.EMPTY_RELEASE_CARBON_COPY, GLBConfig.STORING_ORDER_BLIND_CARBON_COPY, mailSubject, mailContent, mailHtml, attachments)
         }
       }
     }
