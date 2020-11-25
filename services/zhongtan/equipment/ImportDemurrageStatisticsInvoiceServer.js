@@ -210,6 +210,9 @@ exports.exportDemurrageReportAct = async(req, res) => {
     row.vessel_name = r.invoice_vessel_name
     row.vessel_voyage = r.invoice_vessel_voyage
     row.discharge_date = r.invoice_vessel_ata
+    if(r.invoice_containers_edi_discharge_date) {
+      row.discharge_date = r.invoice_containers_edi_discharge_date
+    }
     row.payer = r.user_name
     row.invoice_masterbi_demurrage_party = r.invoice_masterbi_demurrage_party
     row.invoice_masterbi_deposit_party = r.invoice_masterbi_deposit_party
@@ -328,6 +331,9 @@ exports.exportDemurrageAdminReportAct = async(req, res) => {
     row.vessel_name = r.invoice_vessel_name
     row.vessel_voyage = r.invoice_vessel_voyage
     row.discharge_date = r.invoice_vessel_ata
+    if(r.invoice_containers_edi_discharge_date) {
+      row.discharge_date = r.invoice_containers_edi_discharge_date
+    }
     row.payer = r.user_name
     row.edi_return_date = r.invoice_containers_actually_return_date
     row.actual_overdue_days = r.invoice_containers_actually_return_overdue_days

@@ -274,5 +274,11 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_containers', {
     // 卸船日期
     type: db.STRING(20),
     allowNull: true
+  },
+  invoice_containers_edi_read: {
+    // EDI读取标志
+    type: db.STRING(5),
+    defaultValue: '0',
+    allowNull: true
   }
 })

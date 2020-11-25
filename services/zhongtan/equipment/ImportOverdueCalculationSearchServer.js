@@ -148,7 +148,13 @@ exports.exportDataAct = async(req, res) => {
   let result = await model.simpleSelect(queryStr, replacements)
   let renderData = []
   for (let r of result) {
-    renderData.push(r)
+    let d = JSON.parse(JSON.stringify(r))
+    if(d.invoice_containers_edi_discharge_date) {
+      d.discharge_date = d.invoice_containers_edi_discharge_date
+    } else {
+      d.discharge_date = d.invoice_vessel_ata
+    }
+    renderData.push(d)
   }
 
   let filepath = await common.ejs2xlsx('OverdueSearchTemplate.xlsx', renderData)
@@ -165,16 +171,16 @@ exports.exportAdminDataAct = async(req, res) => {
                   LEFT JOIN tbl_zhongtan_invoice_masterbl c ON a.invoice_containers_bl = c.invoice_masterbi_bl AND c.state = '1' AND c.invoice_vessel_id = a.invoice_vessel_id
                   LEFT JOIN tbl_common_user d ON a.invoice_containers_customer_id = d.user_id 
                   LEFT JOIN tbl_common_user e ON c.invoice_masterbi_customer_id = e.user_id 
-                  WHERE a.state = '1' `
+                  WHERE a.state = '1' AND a.invoice_containers_empty_return_overdue_amount != 0 `
   let replacements = []
   if(doc.search_data && doc.search_data.date && doc.search_data.date.length > 1) {
     let start_date = doc.search_data.date[0]
     let end_date = doc.search_data.date[1]
-    queryStr += ` AND c.invoice_masterbi_id IN (SELECT u.uploadfile_index1 FROM tbl_zhongtan_uploadfile u WHERE u.api_name = 'OVERDUE-INVOICE' AND (u.uploadfile_receipt_no IS NULL OR u.uploadfile_receipt_no = '') AND u.created_at >= ? and u.created_at < ? ) `
+    queryStr += ` AND c.invoice_masterbi_id IN (SELECT u.uploadfile_index1 FROM tbl_zhongtan_uploadfile u WHERE u.api_name = 'OVERDUE-INVOICE' AND (u.uploadfile_receipt_no IS NULL OR u.uploadfile_receipt_no = '') AND NOT EXISTS(SELECT 1 FROM tbl_zhongtan_uploadfile su WHERE u.uploadfile_index1 = su.uploadfile_index1 AND su.api_name ='OVERDUE-RECEIPT') GROUP BY u.uploadfile_index1 HAVING MAX(u.created_at) >= ?  AND MAX(u.created_at) < ? ) `
     replacements.push(start_date)
     replacements.push(moment(end_date, 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
   } else {
-    queryStr += `AND c.invoice_masterbi_id IN (SELECT u.uploadfile_index1 FROM tbl_zhongtan_uploadfile u WHERE u.api_name = 'OVERDUE-INVOICE' AND (u.uploadfile_receipt_no IS NULL OR u.uploadfile_receipt_no = '')) `
+    queryStr += `AND c.invoice_masterbi_id IN (SELECT u.uploadfile_index1 FROM tbl_zhongtan_uploadfile u WHERE u.api_name = 'OVERDUE-INVOICE' AND (u.uploadfile_receipt_no IS NULL OR u.uploadfile_receipt_no = '') AND NOT EXISTS(SELECT 1 FROM tbl_zhongtan_uploadfile su WHERE u.uploadfile_index1 = su.uploadfile_index1 AND su.api_name ='OVERDUE-RECEIPT')) `
   }
   if(doc.search_data) {
     if (doc.search_data.invoice_containers_bl) {
@@ -194,7 +200,13 @@ exports.exportAdminDataAct = async(req, res) => {
   let result = await model.simpleSelect(queryStr, replacements)
   let renderData = []
   for (let r of result) {
-    renderData.push(r)
+    let d = JSON.parse(JSON.stringify(r))
+    if(d.invoice_containers_edi_discharge_date) {
+      d.discharge_date = d.invoice_containers_edi_discharge_date
+    } else {
+      d.discharge_date = d.invoice_vessel_ata
+    }
+    renderData.push(d)
   }
 
   let filepath = await common.ejs2xlsx('OverdueSearchAdminTemplate.xlsx', renderData)

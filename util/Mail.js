@@ -387,56 +387,62 @@ const updateContainerEdi = async (ediData) => {
         order: [['invoice_containers_id', 'DESC']]
       })
       if(incon) {
-        incon.invoice_containers_depot_name = ediData.depot
-        incon.invoice_containers_actually_return_edi_date = ediData.ediDate
-        incon.invoice_containers_actually_return_date = moment(ediData.ediDate.substring(0, 8), 'YYYYMMDD').format('DD/MM/YYYY')
+        if(incon.invoice_containers_edi_read && incon.invoice_containers_edi_read !== '0') {
+          // 已经读取过EDI文件
+          incon.invoice_containers_edi_read = (parseInt(incon.invoice_containers_edi_read) + 1) + ''
+        } else {
+          incon.invoice_containers_depot_name = ediData.depot
+          incon.invoice_containers_actually_return_edi_date = ediData.ediDate
+          incon.invoice_containers_actually_return_date = moment(ediData.ediDate.substring(0, 8), 'YYYYMMDD').format('DD/MM/YYYY')
+          incon.invoice_containers_edi_read = '1'
 
-        let bl = await tb_bl.findOne({
-          where: {
-            invoice_vessel_id: incon.invoice_vessel_id,
-            invoice_masterbi_bl: incon.invoice_containers_bl,
-            state : GLBConfig.ENABLE
-          }
-        })
-        let discharge_port = bl.invoice_masterbi_destination.substring(0, 2)
-        let charge_carrier = 'COSCO'
-        if(incon.invoice_containers_bl.indexOf('COS') >= 0) {
-          charge_carrier  = 'COSCO'
-        } else if(incon.invoice_containers_bl.indexOf('OOLU') >= 0) {
-          charge_carrier  = 'OOCL'
-        }
-        let discharge_date = incon.invoice_containers_edi_discharge_date
-        if(!incon.invoice_containers_edi_discharge_date) {
-          let vessel = await tb_vessel.findOne({
+          let bl = await tb_bl.findOne({
             where: {
-              invoice_vessel_id: incon.invoice_vessel_id
+              invoice_vessel_id: incon.invoice_vessel_id,
+              invoice_masterbi_bl: incon.invoice_containers_bl,
+              state : GLBConfig.ENABLE
             }
           })
-          discharge_date = vessel.invoice_vessel_ata
-        }
+          let discharge_port = bl.invoice_masterbi_destination.substring(0, 2)
+          let charge_carrier = 'COSCO'
+          if(incon.invoice_containers_bl.indexOf('COS') >= 0) {
+            charge_carrier  = 'COSCO'
+          } else if(incon.invoice_containers_bl.indexOf('OOLU') >= 0) {
+            charge_carrier  = 'OOCL'
+          }
+          let discharge_date = incon.invoice_containers_edi_discharge_date
+          if(!incon.invoice_containers_edi_discharge_date) {
+            let vessel = await tb_vessel.findOne({
+              where: {
+                invoice_vessel_id: incon.invoice_vessel_id
+              }
+            })
+            discharge_date = vessel.invoice_vessel_ata
+          }
 
-        let free_days = 0
-        if(incon.invoice_containers_empty_return_overdue_free_days) {
-          free_days = parseInt(incon.invoice_containers_empty_return_overdue_free_days)
-        } else {
-          free_days = await cal_config_srv.queryContainerFreeDays(bl.invoice_masterbi_cargo_type, discharge_port, charge_carrier, incon.invoice_containers_size, discharge_date)
-        }
-        let cal_result = await cal_config_srv.demurrageCalculation(free_days, discharge_date, incon.invoice_containers_actually_return_date, bl.invoice_masterbi_cargo_type, discharge_port, charge_carrier, incon.invoice_containers_size, discharge_date)
-        if(cal_result.diff_days !== -1) {
-          incon.invoice_containers_actually_return_overdue_days = cal_result.overdue_days
-          incon.invoice_containers_actually_return_overdue_amount = cal_result.overdue_amount
-        } 
-        
-        if(!incon.invoice_containers_empty_return_date) {
-          // 没有计算过滞期费
-          incon.invoice_containers_empty_return_date = incon.invoice_containers_actually_return_date
-          incon.invoice_containers_empty_return_overdue_days = incon.invoice_containers_actually_return_overdue_days
-          incon.invoice_containers_empty_return_overdue_amount = incon.invoice_containers_actually_return_overdue_amount
-        }
+          let free_days = 0
+          if(incon.invoice_containers_empty_return_overdue_free_days) {
+            free_days = parseInt(incon.invoice_containers_empty_return_overdue_free_days)
+          } else {
+            free_days = await cal_config_srv.queryContainerFreeDays(bl.invoice_masterbi_cargo_type, discharge_port, charge_carrier, incon.invoice_containers_size, discharge_date)
+          }
+          let cal_result = await cal_config_srv.demurrageCalculation(free_days, discharge_date, incon.invoice_containers_actually_return_date, bl.invoice_masterbi_cargo_type, discharge_port, charge_carrier, incon.invoice_containers_size, discharge_date)
+          if(cal_result.diff_days !== -1) {
+            incon.invoice_containers_actually_return_overdue_days = cal_result.overdue_days
+            incon.invoice_containers_actually_return_overdue_amount = cal_result.overdue_amount
+          } 
+          
+          if(!incon.invoice_containers_empty_return_date) {
+            // 没有计算过滞期费
+            incon.invoice_containers_empty_return_date = incon.invoice_containers_actually_return_date
+            incon.invoice_containers_empty_return_overdue_days = incon.invoice_containers_actually_return_overdue_days
+            incon.invoice_containers_empty_return_overdue_amount = incon.invoice_containers_actually_return_overdue_amount
+          }
 
-        if(incon.invoice_containers_actually_return_date && discharge_date) {
-          // 集装箱使用天数， gate in date - dischatge date
-          incon.invoice_containers_detention_days = moment(incon.invoice_containers_actually_return_date, 'DD/MM/YYYY').diff(moment(discharge_date, 'DD/MM/YYYY'), 'days')
+          if(incon.invoice_containers_actually_return_date && discharge_date) {
+            // 集装箱使用天数， gate in date - dischatge date
+            incon.invoice_containers_detention_days = moment(incon.invoice_containers_actually_return_date, 'DD/MM/YYYY').diff(moment(discharge_date, 'DD/MM/YYYY'), 'days')
+          }
         }
         await incon.save()
       }

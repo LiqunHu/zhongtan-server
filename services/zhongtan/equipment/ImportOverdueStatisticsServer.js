@@ -223,6 +223,10 @@ exports.exportDataAct = async(req, res) => {
     } else {
       r.invoice_containers_free_days = await cal_config_srv.queryContainerFreeDays(r.invoice_masterbi_cargo_type, r.invoice_masterbi_destination.substring(0, 2), r.invoice_masterbi_carrier, r.invoice_containers_size, r.invoice_vessel_ata)
     }
+    r.discharge_date = r.invoice_vessel_ata
+    if(r.invoice_containers_edi_discharge_date) {
+      r.discharge_date = r.invoice_containers_edi_discharge_date
+    }
     renderData.push(r)
   }
 

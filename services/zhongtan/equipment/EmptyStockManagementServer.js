@@ -152,6 +152,10 @@ exports.exportEmptyStockAct = async(req, res) => {
     let row = {}
     row = JSON.parse(JSON.stringify(r))
     row.invoice_containers_bl_line = ''
+    row.discharge_date = r.invoice_vessel_ata
+    if(r.invoice_containers_edi_discharge_date) {
+      row.discharge_date = r.invoice_containers_edi_discharge_date
+    }
     if(r.invoice_containers_bl) {
       if(r.invoice_containers_bl.indexOf('COS') >= 0) {
         row.invoice_containers_bl_line = 'COSCO'

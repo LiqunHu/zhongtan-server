@@ -2534,7 +2534,6 @@ const checkConditionDoState = async (bl, ves) => {
     }
     let hasSOC = false
     if(continers) {
-      let diff = moment().diff(moment(ves.invoice_vessel_ata, 'DD/MM/YYYY'), 'days') + 1
       let free_days = 0
       let return_date = ''
       for(let c of continers) {
@@ -2549,6 +2548,11 @@ const checkConditionDoState = async (bl, ves) => {
         }
       }
       for(let c of continers) {
+        let discharge_date = ves.invoice_vessel_ata
+        if(c.invoice_containers_edi_discharge_date) {
+          discharge_date = c.invoice_containers_edi_discharge_date
+        }
+        let diff = moment().diff(moment(discharge_date, 'DD/MM/YYYY'), 'days') + 1
         if(free_days === 0) {
           free_days = await cal_config_srv.queryContainerFreeDays(bl.invoice_masterbi_cargo_type, discharge_port, charge_carrier, c.invoice_containers_size, ves.invoice_vessel_ata)
         }

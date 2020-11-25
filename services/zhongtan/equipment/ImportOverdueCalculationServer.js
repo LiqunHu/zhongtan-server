@@ -103,7 +103,8 @@ exports.searchAct = async req => {
             file_type: fileType,
             demurrage: f.uploadfile_amount,
             release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
-            release_user: f.user_name
+            release_user: f.user_name,
+            receipt_no: f.uploadfile_receipt_no
           })
         }
       }
