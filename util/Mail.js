@@ -410,14 +410,14 @@ const updateContainerEdi = async (ediData) => {
           } else if(incon.invoice_containers_bl.indexOf('OOLU') >= 0) {
             charge_carrier  = 'OOCL'
           }
-          let discharge_date = incon.invoice_containers_edi_discharge_date
-          if(!incon.invoice_containers_edi_discharge_date) {
-            let vessel = await tb_vessel.findOne({
-              where: {
-                invoice_vessel_id: incon.invoice_vessel_id
-              }
-            })
-            discharge_date = vessel.invoice_vessel_ata
+          let vessel = await tb_vessel.findOne({
+            where: {
+              invoice_vessel_id: incon.invoice_vessel_id
+            }
+          })
+          let discharge_date = vessel.invoice_vessel_ata
+          if(incon.invoice_containers_edi_discharge_date) {
+            discharge_date = incon.invoice_containers_edi_discharge_date
           }
 
           let free_days = 0
@@ -426,7 +426,7 @@ const updateContainerEdi = async (ediData) => {
           } else {
             free_days = await cal_config_srv.queryContainerFreeDays(bl.invoice_masterbi_cargo_type, discharge_port, charge_carrier, incon.invoice_containers_size, discharge_date)
           }
-          let cal_result = await cal_config_srv.demurrageCalculation(free_days, discharge_date, incon.invoice_containers_actually_return_date, bl.invoice_masterbi_cargo_type, discharge_port, charge_carrier, incon.invoice_containers_size, discharge_date)
+          let cal_result = await cal_config_srv.demurrageCalculation(free_days, discharge_date, incon.invoice_containers_actually_return_date, bl.invoice_masterbi_cargo_type, discharge_port, charge_carrier, incon.invoice_containers_size, vessel.invoice_vessel_ata)
           if(cal_result.diff_days !== -1) {
             incon.invoice_containers_actually_return_overdue_days = cal_result.overdue_days
             incon.invoice_containers_actually_return_overdue_amount = cal_result.overdue_amount

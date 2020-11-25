@@ -38,7 +38,11 @@ const calculationCurrentOverdueDays = async () => {
         free_days = await cal_config_srv.queryContainerFreeDays(d.invoice_masterbi_cargo_type, d.invoice_masterbi_destination.substring(0, 2), d.invoice_masterbi_carrier, d.invoice_containers_size, d.invoice_vessel_ata)
       }
       if(free_days > 0) {
-        let cal_result = await cal_config_srv.demurrageCalculation(free_days, d.invoice_vessel_ata, moment().format('DD/MM/YYYY'), d.invoice_masterbi_cargo_type, d.invoice_masterbi_destination.substring(0, 2), d.invoice_masterbi_carrier, d.invoice_containers_size, d.invoice_vessel_ata)
+        let discharge_date = d.invoice_vessel_ata
+        if(d.invoice_containers_edi_discharge_date) {
+          discharge_date = d.invoice_containers_edi_discharge_date
+        }
+        let cal_result = await cal_config_srv.demurrageCalculation(free_days, discharge_date, moment().format('DD/MM/YYYY'), d.invoice_masterbi_cargo_type, d.invoice_masterbi_destination.substring(0, 2), d.invoice_masterbi_carrier, d.invoice_containers_size, d.invoice_vessel_ata)
         if(cal_result.diff_days !== -1) {
           await tb_container.update({'invoice_containers_current_overdue_days': cal_result.overdue_days}, {'where': {'invoice_containers_id': d.invoice_containers_id}})
         } 

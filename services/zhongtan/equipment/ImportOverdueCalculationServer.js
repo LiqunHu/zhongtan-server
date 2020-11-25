@@ -177,7 +177,7 @@ exports.calculationAct = async req => {
 
   // free_days, discharge_date, return_date, cargo_type, discharge_port, carrier, container_type, enabled_date
   let cal_result = await cal_config_srv.demurrageCalculation(free_days, discharge_date, return_date, 
-    doc.invoice_masterbi_cargo_type, discharge_port, charge_carrier, doc.invoice_containers_size, discharge_date)
+    doc.invoice_masterbi_cargo_type, discharge_port, charge_carrier, doc.invoice_containers_size, doc.invoice_vessel_ata)
   if(cal_result.diff_days === -1) {
     return common.error('equipment_02')
   } else {
@@ -221,7 +221,7 @@ exports.emptyReturnSaveAct = async req => {
       if(con.invoice_containers_actually_return_date) {
         // 以获取到实际进场时间，重新计算
         let cal_result = await cal_config_srv.demurrageCalculation(con.invoice_containers_empty_return_overdue_free_days, 
-          discharge_date, con.invoice_containers_actually_return_date, doc.invoice_masterbi_cargo_type, discharge_port, charge_carrier, con.invoice_containers_size, discharge_date)
+          discharge_date, con.invoice_containers_actually_return_date, doc.invoice_masterbi_cargo_type, discharge_port, charge_carrier, con.invoice_containers_size, doc.invoice_vessel_ata)
         if(cal_result.diff_days !== -1) {
           con.invoice_containers_actually_return_overdue_days = cal_result.overdue_days
           con.invoice_containers_actually_return_overdue_amount = cal_result.overdue_amount
@@ -263,7 +263,7 @@ exports.emptyReturnSaveAct = async req => {
               if(oc.invoice_containers_empty_return_date) {
                 oc.invoice_containers_empty_return_overdue_free_days = doc.invoice_containers_empty_return_overdue_free_days
                 let cal_result = await cal_config_srv.demurrageCalculation(oc.invoice_containers_empty_return_overdue_free_days, oc_discharge_date, oc.invoice_containers_empty_return_date, 
-                  doc.invoice_masterbi_cargo_type, discharge_port, charge_carrier, oc.invoice_containers_size, oc_discharge_date)
+                  doc.invoice_masterbi_cargo_type, discharge_port, charge_carrier, oc.invoice_containers_size, doc.invoice_vessel_ata)
                 if(cal_result) {
                   oc.invoice_containers_empty_return_overdue_days = cal_result.overdue_days
                   oc.invoice_containers_empty_return_overdue_amount = cal_result.overdue_amount
