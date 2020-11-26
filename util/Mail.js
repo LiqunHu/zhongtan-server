@@ -228,64 +228,88 @@ const parserMailAttachment = async (ediDepots, parserData) => {
       }
     } else {
       let gate = ''
-      let containerNo = ''
-      let returnDate = ''
-      let carrier = ''
-      let billNo = ''
       let regGate = eval(edi.edi_depot_gate_in_out_regex)
       let gt = regGate.exec(ediStr)
       if(gt && gt.length > 1) {
         gate = gt[1]
       }
-      let regCN = eval(edi.edi_depot_cnt_regex)
-      let cn = regCN.exec(ediStr)
-      if(cn && cn.length > 1) {
-        containerNo = cn[1]
+      let datas = ediStr.split('\'')
+      let indexs = []
+      for(let i = 0; i < datas.length; i++) {
+        if(datas[i].indexOf('TDT+20') >= 0) {
+          indexs.push(i)
+        } 
       }
-
-      let regDTM = eval(edi.edi_depot_dmt_regex)
-      let dtm = regDTM.exec(ediStr)
-      if(dtm && dtm.length > 1) {
-        returnDate = dtm[1]
-      }
-      let regCAR = eval(edi.edi_depot_carrier_regex)
-      let car = regCAR.exec(ediStr)
-      if(car && car.length > 1) {
-        carrier = car[1]
-      }
-      let regBL = eval(edi.edi_depot_bl_regex)
-      let bl = regBL.exec(ediStr)
-      if(bl && bl.length > 1) {
-        billNo = bl[1]
-      }
-      try {
-        let ediData = {
-          depot: edi.edi_depot_name,
-          isWharf: edi.edi_depot_is_wharf,
-          ediType: gate,
-          containerNo: containerNo,
-          ediDate: returnDate,
-          carrier: carrier,
-          billNo: billNo
+      if(indexs) {
+        let ediContainers = []
+        if(indexs.length === 1) {
+          let item = datas.slice(indexs[0]).join('`')
+          ediContainers.push(item)
+        } else {
+          for(let ii = 0; ii < indexs.length - 1; ii++) {
+            let item = datas.slice(indexs[ii], indexs[ii + 1]).join('`')
+            ediContainers.push(item)
+          }
         }
-        await updateContainerEdi(ediData)
-        // 记录解析内容
-        await tb_email.create({
-          mail_depot_name: edi.edi_depot_name,
-          mail_send_from: parserData.from,
-          mail_send_time: parserData.sendTime,
-          mail_receive_time: parserData.receiveTime,
-          mail_send_subject: parserData.subject,
-          mail_send_attachment_name: parserData.attachmentName,
-          mail_send_attachment_content: parserData.attachmentContent,
-          mail_edi_type: gate,
-          mail_edi_bl: billNo,
-          mail_edi_container_no: containerNo,
-          mail_edi_time: returnDate
-        })
-      } finally {
-        //
+        if(ediContainers && ediContainers.length > 0) {
+          for(let e of ediContainers) {
+            let containerNo = ''
+            let returnDate = ''
+            let carrier = ''
+            let billNo = ''
+            let regCN = eval(edi.edi_depot_cnt_regex)
+            let cn = regCN.exec(e)
+            if(cn && cn.length > 1) {
+              containerNo = cn[1]
+            }
+
+            let regDTM = eval(edi.edi_depot_dmt_regex)
+            let dtm = regDTM.exec(e)
+            if(dtm && dtm.length > 1) {
+              returnDate = dtm[1]
+            }
+            let regCAR = eval(edi.edi_depot_carrier_regex)
+            let car = regCAR.exec(e)
+            if(car && car.length > 1) {
+              carrier = car[1]
+            }
+            let regBL = eval(edi.edi_depot_bl_regex)
+            let bl = regBL.exec(e)
+            if(bl && bl.length > 1) {
+              billNo = bl[1]
+            }
+            try {
+              let ediData = {
+                depot: edi.edi_depot_name,
+                isWharf: edi.edi_depot_is_wharf,
+                ediType: gate,
+                containerNo: containerNo,
+                ediDate: returnDate,
+                carrier: carrier,
+                billNo: billNo
+              }
+              await updateContainerEdi(ediData)
+              // 记录解析内容
+              await tb_email.create({
+                mail_depot_name: edi.edi_depot_name,
+                mail_send_from: parserData.from,
+                mail_send_time: parserData.sendTime,
+                mail_receive_time: parserData.receiveTime,
+                mail_send_subject: parserData.subject,
+                mail_send_attachment_name: parserData.attachmentName,
+                mail_send_attachment_content: parserData.attachmentContent,
+                mail_edi_type: gate,
+                mail_edi_bl: billNo,
+                mail_edi_container_no: containerNo,
+                mail_edi_time: returnDate
+              })
+            } finally {
+              //
+            }
+          }
+        }
       }
+      
     }
   }
 }
