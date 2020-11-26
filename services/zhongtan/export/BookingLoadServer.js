@@ -5,6 +5,7 @@ const common = require('../../../util/CommonUtil')
 const model = require('../../../app/model')
 const opSrv = require('../../common/system/OperationPasswordServer')
 
+const tb_user = model.common_user
 const tb_vessel = model.zhongtan_export_vessel
 const tb_bl = model.zhongtan_export_masterbl
 const tb_container = model.zhongtan_export_container
@@ -740,6 +741,29 @@ exports.emptyReleaseAct = async req => {
     bl.export_masterbl_empty_release_depot = doc.export_masterbl_empty_release_depot
     bl.export_masterbl_empty_release_date = moment()
     bl.export_masterbl_empty_release_valid_to = doc.export_masterbl_empty_release_valid_to
+    await bl.save()
+  }
+  return common.success()
+}
+
+exports.bookingDataSaveAct = async req => {
+  let doc = common.docValidate(req)
+  let bl = await tb_bl.findOne({
+    where: {
+      state: GLBConfig.ENABLE,
+      export_masterbl_id: doc.export_masterbl_id
+    }
+  })
+  if(bl) {
+    bl.export_masterbl_empty_release_agent = doc.export_masterbl_empty_release_agent
+    let user = await tb_user.findOne({
+      where: {
+        user_id: bl.export_masterbl_empty_release_agent
+      }
+    })
+    if(user) {
+      bl.export_masterbl_forwarder_company = user.user_name
+    }
     await bl.save()
   }
   return common.success()

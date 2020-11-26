@@ -29,6 +29,8 @@ module.exports = async (req, res) => {
       ret = await srv.getEmptyReleaseAgentsAct(req)
     } else if (method === 'emptyRelease') {
       ret = await srv.emptyReleaseAct(req)
+    } else if (method === 'bookingDataSave') {
+      ret = await srv.bookingDataSaveAct(req)
     } 
     
     common.sendData(res, ret)
