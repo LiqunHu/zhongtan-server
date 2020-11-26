@@ -174,10 +174,17 @@ exports.calculationAct = async req => {
   } else if(doc.invoice_containers_bl.indexOf('OOLU') >= 0) {
     charge_carrier  = 'OOCL'
   }
-
+  let queryStr = `SELECT v.* FROM tbl_zhongtan_invoice_masterbl b LEFT JOIN tbl_zhongtan_invoice_vessel v ON b.invoice_vessel_id = v.invoice_vessel_id WHERE b.state = '1' AND b.invoice_masterbi_bl = ? ORDER BY b.invoice_masterbi_id DESC LIMIT 1`
+  let replacements = []
+  replacements.push(doc.invoice_containers_bl)
+  let vessels = await model.simpleSelect(queryStr, replacements)
+  let invoice_vessel_ata = discharge_date
+  if(vessels && vessels.length > 0) {
+    invoice_vessel_ata = vessels[0].invoice_vessel_ata
+  }
   // free_days, discharge_date, return_date, cargo_type, discharge_port, carrier, container_type, enabled_date
   let cal_result = await cal_config_srv.demurrageCalculation(free_days, discharge_date, return_date, 
-    doc.invoice_masterbi_cargo_type, discharge_port, charge_carrier, doc.invoice_containers_size, doc.invoice_vessel_ata)
+    doc.invoice_masterbi_cargo_type, discharge_port, charge_carrier, doc.invoice_containers_size, invoice_vessel_ata)
   if(cal_result.diff_days === -1) {
     return common.error('equipment_02')
   } else {
