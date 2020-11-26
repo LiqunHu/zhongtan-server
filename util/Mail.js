@@ -155,8 +155,13 @@ const parserMailAttachment = async (ediDepots, parserData) => {
           ediContainers.push(item)
         } else {
           for(let ii = 0; ii < indexs.length - 1; ii++) {
-            let item = datas.slice(indexs[ii], indexs[ii + 1]).join('`')
+            let next = ii + 1
+            let item = datas.slice(indexs[ii], indexs[next]).join('`')
             ediContainers.push(item)
+            if(next >= indexs.length - 1) {
+              let lastItem = datas.slice(indexs[next]).join('`')
+              ediContainers.push(lastItem)
+            }
           }
         }
         if(ediContainers && ediContainers.length > 0) {
@@ -247,8 +252,13 @@ const parserMailAttachment = async (ediDepots, parserData) => {
           ediContainers.push(item)
         } else {
           for(let ii = 0; ii < indexs.length - 1; ii++) {
-            let item = datas.slice(indexs[ii], indexs[ii + 1]).join('`')
+            let next = ii + 1
+            let item = datas.slice(indexs[ii], indexs[next]).join('`')
             ediContainers.push(item)
+            if(next >= indexs.length - 1) {
+              let lastItem = datas.slice(indexs[next]).join('`')
+              ediContainers.push(lastItem)
+            }
           }
         }
         if(ediContainers && ediContainers.length > 0) {
