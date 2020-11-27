@@ -169,7 +169,7 @@ const defineModel = (name, attributes, params) => {
   )
 }
 
-const TYPES = ['STRING', 'INTEGER', 'BIGINT', 'TEXT', 'DOUBLE', 'DATEONLY', 'DATE', 'BOOLEAN', 'UUID', 'UUIDV1']
+const TYPES = ['STRING', 'INTEGER', 'BIGINT', 'TEXT', 'DOUBLE', 'DATEONLY', 'DATE', 'BOOLEAN', 'UUID', 'UUIDV1', 'JSON']
 
 let exp = {
   ID: Sequelize.STRING(30),

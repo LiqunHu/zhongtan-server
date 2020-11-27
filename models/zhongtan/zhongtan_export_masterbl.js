@@ -114,5 +114,10 @@ module.exports = db.defineModel('tbl_zhongtan_export_masterbl', {
     // 放箱审核日期
     type: db.DATE,
     allowNull: true
+  },
+  export_masterbl_agent_staff: {
+    // agent
+    type: db.JSON,
+    allowNull: true
   }
 })

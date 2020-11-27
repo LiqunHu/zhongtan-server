@@ -683,6 +683,18 @@ exports.getEmptyReleaseDataAct = async req => {
     if(depots && depots.length > 0) {
       retData.depots = depots
     }
+    let agent_staff = []
+    if(bl.export_masterbl_agent_staff) {
+      if(bl.export_masterbl_agent_staff.length > 1) {
+        agent_staff = bl.export_masterbl_agent_staff.slice(0, 2)
+      } else {
+        agent_staff = bl.export_masterbl_agent_staff
+        agent_staff.push({staff_name: '', staff_id: ''})
+      }
+    } else {
+      agent_staff = [{staff_name: '', staff_id: ''}, {staff_name: '', staff_id: ''}]
+    }
+    retData.agent_staff = agent_staff
   }
   return common.success(retData)
 }
@@ -741,6 +753,7 @@ exports.emptyReleaseAct = async req => {
     bl.export_masterbl_empty_release_depot = doc.export_masterbl_empty_release_depot
     bl.export_masterbl_empty_release_date = moment()
     bl.export_masterbl_empty_release_valid_to = doc.export_masterbl_empty_release_valid_to
+    bl.export_masterbl_agent_staff = doc.agentStaff
     await bl.save()
   }
   return common.success()

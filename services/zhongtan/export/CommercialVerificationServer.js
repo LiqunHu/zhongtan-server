@@ -110,6 +110,11 @@ exports.approveAct = async req => {
           renderData.carrier = bl.export_masterbl_bl_carrier
           renderData.quantity = verificatione.export_verification_quantity
           renderData.billNo = bl.export_masterbl_bl
+          if(bl.export_masterbl_agent_staff) {
+            renderData.agent_staff = bl.export_masterbl_agent_staff
+          } else {
+            renderData.agent_staff = [{staff_name: '', staff_id: ''}, {staff_name: '', staff_id: ''}]
+          }
           renderData.vessel = vessel.export_vessel_name
           renderData.voyage = vessel.export_vessel_voyage
           renderData.emptyReleaseParty = agent.user_name
