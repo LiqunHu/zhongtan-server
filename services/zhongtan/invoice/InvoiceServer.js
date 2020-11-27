@@ -2127,7 +2127,7 @@ exports.createEditFile = async (commonUser, bl, customer, vessel, continers, edi
     consignee_name = common.fileterLNB(consignee_name)
     consignee_name = consignee_name.trim()
     consignee_name = common.fileterB(consignee_name)
-    if(consignee_name > 35) {
+    if(consignee_name.length > 35) {
       ediData.consignee = consignee_name.substring(1, 36)
     } else {
       ediData.consignee = consignee_name
