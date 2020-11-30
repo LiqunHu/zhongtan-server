@@ -379,6 +379,22 @@ exports.emptyInvoiceAct = async req => {
   }
   let invoicePara = doc.invoicePara
   if(selection && selection.length > 0) {
+    // 判断删除不符合条件的开票箱子
+    for(let i = selection.length - 1; i>= 0; i--) {
+      let sc = await tb_container.findOne({
+        where: {
+          invoice_containers_id: selection[i].invoice_containers_id
+        }
+      })
+      if(sc) {
+        if((sc.invoice_containers_empty_return_overdue_amount_receipt && sc.invoice_containers_actually_return_overdue_amount && (parseInt(sc.invoice_containers_empty_return_overdue_amount_receipt) === parseInt(sc.invoice_containers_actually_return_overdue_amount)))
+        || (sc.invoice_containers_empty_return_overdue_amount_receipt && sc.invoice_containers_empty_return_overdue_amount && (parseInt(sc.invoice_containers_empty_return_overdue_amount_receipt) === parseInt(sc.invoice_containers_empty_return_overdue_amount)))) {
+          selection.splice(i, 1)
+        }
+      } else {
+        selection.splice(i, 1)
+      }
+    }
     let selContainerIds = []
     for(let s of selection) {
       selContainerIds.push(s.invoice_containers_id)
