@@ -33,6 +33,8 @@ module.exports = async (req, res) => {
       ret = await srv.issuingStoringOrderAct(req)
     } else if (method === 'ediCalculationSave') {
       ret = await srv.ediCalculationSaveAct(req)
+    } else if (method === 'getInvoiceSelection') {
+      ret = await srv.getInvoiceSelectionAct(req)
     } 
     
     common.sendData(res, ret)

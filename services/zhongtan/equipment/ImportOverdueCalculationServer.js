@@ -965,6 +965,80 @@ exports.issuingStoringOrderAct = async req => {
   }
 }
 
+exports.getInvoiceSelectionAct = async req => {
+  let doc = common.docValidate(req)
+  let action = doc.action
+  let selectAll = doc.selectAll
+  let selection = []
+  if(selectAll && doc.selection && doc.selection.length > 0) {
+    let sel0 = doc.selection[0]
+    let cons = await tb_container.findAll({
+      where: {
+        invoice_containers_bl: sel0.invoice_containers_bl,
+        invoice_vessel_id: sel0.invoice_vessel_id,
+        state: GLBConfig.ENABLE
+      }
+    })
+    for(let c of cons) {
+      if((c.invoice_containers_empty_return_receipt_date && c.invoice_containers_empty_return_overdue_amount && parseInt(c.invoice_containers_empty_return_overdue_amount) === 0) 
+                || (c.invoice_containers_empty_return_date && c.invoice_containers_empty_return_overdue_amount && parseInt(c.invoice_containers_empty_return_overdue_amount) > 0)) {
+        selection.push({
+          ...JSON.parse(JSON.stringify(c)),
+          invoice_masterbi_id: sel0.invoice_masterbi_id,
+          invoice_vessel_id: sel0.invoice_vessel_id
+        })
+      }
+    }
+  } else {
+    selection = doc.selection
+  }
+  if(selection && selection.length > 0) {
+    // 判断删除不符合条件的开票箱子
+    for(let i = selection.length - 1; i>= 0; i--) {
+      let sc = await tb_container.findOne({
+        where: {
+          invoice_containers_id: selection[i].invoice_containers_id
+        }
+      })
+      if(sc) {
+        if((sc.invoice_containers_empty_return_overdue_amount_receipt && sc.invoice_containers_actually_return_overdue_amount && (parseInt(sc.invoice_containers_empty_return_overdue_amount_receipt) === parseInt(sc.invoice_containers_actually_return_overdue_amount)))
+        || (sc.invoice_containers_empty_return_overdue_amount_receipt && sc.invoice_containers_empty_return_overdue_amount && (parseInt(sc.invoice_containers_empty_return_overdue_amount_receipt) === parseInt(sc.invoice_containers_empty_return_overdue_amount)))) {
+          selection.splice(i, 1)
+        }
+      } else {
+        selection.splice(i, 1)
+      }
+    }
+  }
+
+  let returnData = {}
+  let totalDemurrage = 0
+  if(selection && selection.length > 0) {
+    if(action === 'reinvoice') {
+      for(let s of selection) {
+        if(s.invoice_containers_empty_return_overdue_amount) {
+          totalDemurrage += parseInt(s.invoice_containers_empty_return_overdue_amount)
+        }
+      }
+    } else {
+      let queryStr = ''
+      let replacements = []
+      for(let s of selection) {
+        queryStr = `SELECT * FROM tbl_zhongtan_overdue_invoice_containers WHERE overdue_invoice_containers_invoice_containers_id= ? AND  overdue_invoice_containers_receipt_date IS NOT NULL AND overdue_invoice_containers_receipt_date != '' ORDER BY overdue_invoice_containers_overdue_days+0 DESC, overdue_invoice_containers_receipt_date DESC LIMIT 1`
+        replacements = [s.invoice_containers_id]
+        let rcon = await model.simpleSelect(queryStr, replacements)
+        if(rcon && rcon.length > 0) {
+          totalDemurrage += parseFloat(s.invoice_containers_empty_return_overdue_amount) - parseFloat(rcon[0].overdue_invoice_containers_overdue_amount) 
+        } else {
+          totalDemurrage += parseInt(s.invoice_containers_empty_return_overdue_amount)
+        }
+      }
+    }
+  }
+  returnData.totalDemurrage = totalDemurrage
+  return common.success(returnData)
+}
+
 function formatCurrency(num) {
   num = num.toString().replace(/[^\d.-]/g, '') //转成字符串并去掉其中除数字, . 和 - 之外的其它字符。
   if (isNaN(num)) num = '0' //是否非数字值

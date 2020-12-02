@@ -412,5 +412,5 @@ module.exports = {
     { id: 'AP', text: 'Commercial Approved' }
   ],
   EMPTY_RELEASE_EMAIL_SENDER: 'DEMURRAGE@SINOTASHIP.COM',
-  EMPTY_RELEASE_CARBON_COPY: 'export@sinotaship.com',
+  EMPTY_RELEASE_CARBON_COPY: 'export@sinotaship.com'
 }

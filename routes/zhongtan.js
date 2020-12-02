@@ -37,6 +37,7 @@ router.post('/web/Web/:method', services.WebControl)
 router.post('/fee/InvoiceDefaultFee/:method', services.InvoiceDefaultFeeControl)
 router.post('/fee/CustomerFixedDeposit/:method', services.CustomerFixedDepositControl)
 router.post('/fee/CustomerFixedReceipt/:method', services.CustomerFixedReceiptControl)
+router.post('/fee/ExportFeeData/:method', services.ExportFeeDataControl)
 
 router.post('/equipment/OverdueCalculationConfig/:method', services.OverdueCalculationConfigControl)
 router.post('/equipment/ImportOverdueCalculation/:method', services.ImportOverdueCalculationControl)
