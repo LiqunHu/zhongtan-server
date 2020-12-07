@@ -594,8 +594,8 @@ exports.searchVesselAct = async req => {
   let queryStr =  `SELECT * FROM tbl_zhongtan_export_vessel v `
   let replacements = []
   if(masterbi_bl) {
-    queryStr = queryStr + ` LEFT JOIN tbl_zhongtan_export_masterbl b ON v.export_vessel_id = b.export_vessel_id WHERE v.state = '1' AND b.state = '1' AND b.export_masterbl_bl = ? `
-    replacements.push(masterbi_bl)
+    queryStr = queryStr + ` LEFT JOIN tbl_zhongtan_export_masterbl b ON v.export_vessel_id = b.export_vessel_id WHERE v.state = '1' AND b.state = '1' AND b.export_masterbl_bl like ? `
+    replacements.push('%' + masterbi_bl + '%')
   } else {
     queryStr = queryStr + ` WHERE v.state = '1' `
   }

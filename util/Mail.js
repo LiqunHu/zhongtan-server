@@ -279,7 +279,7 @@ const parserMailAttachment = async (ediDepots, parserData) => {
               returnDate = dtm[1]
             }
             let regCAR = eval(edi.edi_depot_carrier_regex)
-            let car = regCAR.exec(e)
+            let car = regCAR.exec(ediStr)
             if(car && car.length > 1) {
               carrier = car[1]
             }
