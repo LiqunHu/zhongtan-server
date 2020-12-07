@@ -344,15 +344,15 @@ exports.uploadBookingAct = async req => {
         if(conIndexs && conIndexs.length > 0) {
           let conStr = []
           if(conIndexs.length === 1) {
-            let item = datas.slice(conIndexs[0]).join('`')
+            let item = datas.slice(conIndexs[0] > 0 ? conIndexs[0] -1 : conIndexs[0])
             conStr.push(item)
           } else {
             for(let ii = 0; ii < conIndexs.length - 1; ii++) {
               let next = ii + 1
-              let item = datas.slice(conIndexs[ii], conIndexs[next]).join('`')
+              let item = datas.slice(ii === 0 && conIndexs[ii] > 0 ? conIndexs[ii] -1 : conIndexs[ii], conIndexs[next])
               conStr.push(item)
               if(next >= conIndexs.length - 1) {
-                let lastItem = datas.slice(conIndexs[next]).join('`')
+                let lastItem = datas.slice(conIndexs[next])
                 conStr.push(lastItem)
               }
             }
@@ -360,18 +360,32 @@ exports.uploadBookingAct = async req => {
 
           if(conStr && conStr.length > 0) {
             for(let cs of conStr) {
-              regex = '/BOOKING\\s*QTY\\s*SIZE\\/TYPE\\s*:\\s*(.*)/i'
-              let sizeType = common.valueFilter(cs, regex).trim()
-              if(sizeType) {
-                quantity = sizeType.substring(0, sizeType.indexOf('X')).trim()
-                size = sizeType.substring(sizeType.indexOf('X') + 1, sizeType.indexOf('\'')).trim()
-                type = sizeType.substring(sizeType.indexOf('\'') + 1).trim()
+              if(cs) {
+                for(let c of cs) {
+                  regex = '/BOOKING\\s*QTY\\s*SIZE\\/TYPE\\s*:\\s*(.*)/i'
+                  let sizeType = common.valueFilter(c, regex).trim()
+                  if(sizeType) {
+                    quantity = sizeType.substring(0, sizeType.indexOf('X')).trim()
+                    size = sizeType.substring(sizeType.indexOf('X') + 1, sizeType.indexOf('\'')).trim()
+                    type = sizeType.substring(sizeType.indexOf('\'') + 1).trim()
+                    break
+                  }
+                }
+                for(let c of cs) {
+                  regex = '/SOC\\s*INDICATOR\\s*:\\s*(.*)/i'
+                  soc = common.valueFilter(c, regex).trim()
+                  if(soc) {
+                    break
+                  }
+                }
+                for(let c of cs) {
+                  regex = '/CARGO\\s*WEIGHT\\s*:\\s*([0-9]+)\\s/i'
+                  cargoWeight = common.valueFilter(c, regex).trim()
+                  if(cargoWeight) {
+                    break
+                  }
+                }
               }
-              regex = '/SOC\\s*INDICATOR\\s*:\\s*(.*)/i'
-              soc = common.valueFilter(cs, regex).trim()
-              
-              regex = '/CARGO\\s*WEIGHT\\s*:\\s*([0-9]+)\\s/i'
-              cargoWeight = common.valueFilter(cs, regex).trim()
 
               let ctnrType = ''
               if(sizeConfig) {
