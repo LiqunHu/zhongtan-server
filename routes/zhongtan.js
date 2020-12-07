@@ -21,6 +21,7 @@ router.post('/export/BookingWork/:method', services.BookingWorkControl)
 router.post('/export/Receipt/:method', services.ReceiptControl)
 router.post('/export/BookingLoad/:method', services.BookingLoadControl)
 router.post('/export/CommercialVerification/:method', services.CommercialVerificationControl)
+router.post('/export/ShipmentRelease/:method', services.ShipmentReleaseControl)
 
 router.post('/import/ImportWork/:method', services.ImportWorkControl)
 router.post('/invoice/Invoice/:method', services.InvoiceControl)

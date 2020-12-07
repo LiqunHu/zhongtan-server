@@ -293,28 +293,6 @@ exports.uploadBookingAct = async req => {
           }
         }
         
-        let sizeTypeInedx = datas.indexOf('TOTAL BOOKING CONTAINER QTY ')
-        if(sizeTypeInedx >= 0) {
-          let sizeTypeStr = datas[sizeTypeInedx] + datas[sizeTypeInedx + 1]
-          regex = '/TOTAL\\s*BOOKING\\s*CONTAINER\\s*QTY\\s*SIZE\\/TYPE\\s*:\\s*(.*)/i'
-          let sizeType = common.valueFilter(sizeTypeStr, regex).trim()
-          if(sizeType) {
-            quantity = sizeType.substring(0, sizeType.indexOf('X')).trim()
-            size = sizeType.substring(sizeType.indexOf('X') + 1, sizeType.indexOf('\'')).trim()
-            type = sizeType.substring(sizeType.indexOf('\'') + 1).trim()
-          }
-        } else {
-          regex = '/BOOKING\\s*QTY\\s*SIZE\\/TYPE\\s*:\\s*(.*)/i'
-          for(let d of datas) {
-            let sizeType = common.valueFilter(d, regex).trim()
-            if(sizeType) {
-              quantity = sizeType.substring(0, sizeType.indexOf('X')).trim()
-              size = sizeType.substring(sizeType.indexOf('X') + 1, sizeType.indexOf('\'')).trim()
-              type = sizeType.substring(sizeType.indexOf('\'') + 1).trim()
-              break
-            }
-          }
-        }
         regex = '/INTENDED\\s*VESSEL\\/VOYAGE\\s*:\\s*(.*)ETD/i'
         for(let d of datas) {
           let vesVoy = common.valueFilter(d, regex).trim()
@@ -354,20 +332,129 @@ exports.uploadBookingAct = async req => {
             break
           }
         }
-        regex = '/SOC\\s*INDICATOR\\s*:\\s*(.*)/i'
-        for(let d of datas) {
-          soc = common.valueFilter(d, regex).trim()
-          if(soc) {
-            break
-          }
+
+        let blCons = []
+        let conIndexs = []
+        for(let i = 0; i < datas.length; i++) {
+          let idx = datas[i].indexOf('BOOKING QTY SIZE/TYPE:')
+          if(idx >= 0) {
+            conIndexs.push(i)
+          } 
         }
-        regex = '/CARGO\\s*WEIGHT\\s*:\\s*([0-9]+)\\s/i'
-        for(let d of datas) {
-          cargoWeight = common.valueFilter(d, regex).trim()
-          if(cargoWeight) {
-            break
+        if(conIndexs && conIndexs.length > 0) {
+          let conStr = []
+          if(conIndexs.length === 1) {
+            let item = datas.slice(conIndexs[0]).join('`')
+            conStr.push(item)
+          } else {
+            for(let ii = 0; ii < conIndexs.length - 1; ii++) {
+              let next = ii + 1
+              let item = datas.slice(conIndexs[ii], conIndexs[next]).join('`')
+              conStr.push(item)
+              if(next >= conIndexs.length - 1) {
+                let lastItem = datas.slice(conIndexs[next]).join('`')
+                conStr.push(lastItem)
+              }
+            }
           }
+
+          if(conStr && conStr.length > 0) {
+            for(let cs of conStr) {
+              regex = '/BOOKING\\s*QTY\\s*SIZE\\/TYPE\\s*:\\s*(.*)/i'
+              let sizeType = common.valueFilter(cs, regex).trim()
+              if(sizeType) {
+                quantity = sizeType.substring(0, sizeType.indexOf('X')).trim()
+                size = sizeType.substring(sizeType.indexOf('X') + 1, sizeType.indexOf('\'')).trim()
+                type = sizeType.substring(sizeType.indexOf('\'') + 1).trim()
+              }
+              regex = '/SOC\\s*INDICATOR\\s*:\\s*(.*)/i'
+              soc = common.valueFilter(cs, regex).trim()
+              
+              regex = '/CARGO\\s*WEIGHT\\s*:\\s*([0-9]+)\\s/i'
+              cargoWeight = common.valueFilter(cs, regex).trim()
+
+              let ctnrType = ''
+              if(sizeConfig) {
+                let sizeType = common.fileterLN(size + type).toUpperCase()
+                for(let c of sizeConfig) {
+                  let fullName = c.container_size_full_name
+                  if(fullName) {
+                    fullName = common.fileterLN(fullName).toUpperCase()
+                  }
+                  if(fullName === sizeType || fullName + 'CONTAINER' === sizeType || fullName === sizeType + 'CONTAINER') {
+                    ctnrType = c.container_size_code
+                    break
+                  }
+                }
+              }
+              blCons.push({
+                ctnrType: ctnrType,
+                quantity: quantity,
+                soc: soc,
+                cargoWeight: cargoWeight
+              })
+            }
+          }
+        } else {
+          let sizeTypeInedx = datas.indexOf('TOTAL BOOKING CONTAINER QTY ')
+          if(sizeTypeInedx >= 0) {
+            let sizeTypeStr = datas[sizeTypeInedx] + datas[sizeTypeInedx + 1]
+            regex = '/TOTAL\\s*BOOKING\\s*CONTAINER\\s*QTY\\s*SIZE\\/TYPE\\s*:\\s*(.*)/i'
+            let sizeType = common.valueFilter(sizeTypeStr, regex).trim()
+            if(sizeType) {
+              quantity = sizeType.substring(0, sizeType.indexOf('X')).trim()
+              size = sizeType.substring(sizeType.indexOf('X') + 1, sizeType.indexOf('\'')).trim()
+              type = sizeType.substring(sizeType.indexOf('\'') + 1).trim()
+            }
+          } else {
+            regex = '/BOOKING\\s*QTY\\s*SIZE\\/TYPE\\s*:\\s*(.*)/i'
+            for(let d of datas) {
+              let sizeType = common.valueFilter(d, regex).trim()
+              if(sizeType) {
+                quantity = sizeType.substring(0, sizeType.indexOf('X')).trim()
+                size = sizeType.substring(sizeType.indexOf('X') + 1, sizeType.indexOf('\'')).trim()
+                type = sizeType.substring(sizeType.indexOf('\'') + 1).trim()
+                break
+              }
+            }
+          }
+          regex = '/SOC\\s*INDICATOR\\s*:\\s*(.*)/i'
+          for(let d of datas) {
+            soc = common.valueFilter(d, regex).trim()
+            if(soc) {
+              break
+            }
+          }
+          regex = '/CARGO\\s*WEIGHT\\s*:\\s*([0-9]+)\\s/i'
+          for(let d of datas) {
+            cargoWeight = common.valueFilter(d, regex).trim()
+            if(cargoWeight) {
+              break
+            }
+          }
+
+          let ctnrType = ''
+          if(sizeConfig) {
+            let sizeType = common.fileterLN(size + type).toUpperCase()
+            for(let c of sizeConfig) {
+              let fullName = c.container_size_full_name
+              if(fullName) {
+                fullName = common.fileterLN(fullName).toUpperCase()
+              }
+              if(fullName === sizeType || fullName + 'CONTAINER' === sizeType || fullName === sizeType + 'CONTAINER') {
+                ctnrType = c.container_size_code
+                break
+              }
+            }
+          }
+          blCons.push({
+            ctnrType: ctnrType,
+            quantity: quantity,
+            soc: soc,
+            cargoWeight: cargoWeight
+          })
         }
+        
         let vessel = await tb_vessel.findOne({
           where: {
             export_vessel_name: ves,
@@ -393,20 +480,14 @@ exports.uploadBookingAct = async req => {
           })
         }
         if(vessel) {
-          let ctnrType = ''
-          if(sizeConfig) {
-            let sizeType = common.fileterLN(size + type).toUpperCase()
-            for(let c of sizeConfig) {
-              let fullName = c.container_size_full_name
-              if(fullName) {
-                fullName = common.fileterLN(fullName).toUpperCase()
-              }
-              if(fullName === sizeType || fullName + 'CONTAINER' === sizeType || fullName === sizeType + 'CONTAINER') {
-                ctnrType = c.container_size_code
-                break
-              }
-            }
+          
+          let blQuantity = 0
+          let blWeight = 0
+          for(let bc of blCons) {
+            blQuantity = blQuantity + bc.quantity
+            blWeight = blWeight + bc.quantity * bc.cargoWeight
           }
+
           let bl = await tb_bl.findOne({
             where: {
               export_vessel_id: vessel.export_vessel_id,
@@ -422,8 +503,8 @@ exports.uploadBookingAct = async req => {
             bl.export_masterbl_port_of_load = 'TZDAR'
             bl.export_masterbl_port_of_discharge = pod
             bl.export_masterbl_traffic_mode = tracfficMode
-            bl.export_masterbl_container_quantity = quantity
-            bl.export_masterbl_container_weight = quantity * cargoWeight
+            bl.export_masterbl_container_quantity = blQuantity
+            bl.export_masterbl_container_weight = blWeight
             bl.export_masterbl_cargo_nature = cargoNature
             bl.export_masterbl_cargo_descriptions = cargoDescription
             await bl.save()
@@ -435,14 +516,16 @@ exports.uploadBookingAct = async req => {
               }
             })
 
-            for(let i = 0; i < quantity; i++) {
-              await tb_container.create({
-                export_vessel_id: vessel.export_vessel_id,
-                export_container_bl: bookingNumber,
-                export_container_soc_type: soc === 'Y' ? 'S' : 'C',
-                export_container_size_type: ctnrType,
-                export_container_cargo_weight: cargoWeight
-              })
+            for(let bc of blCons) {
+              for(let i = 0; i < bc.quantity; i++) {
+                await tb_container.create({
+                  export_vessel_id: vessel.export_vessel_id,
+                  export_container_bl: bookingNumber,
+                  export_container_soc_type: bc.soc === 'Y' ? 'S' : 'C',
+                  export_container_size_type: bc.ctnrType,
+                  export_container_cargo_weight: bc.cargoWeight
+                })
+              }
             }
           } else {
             await tb_bl.create({
@@ -456,19 +539,21 @@ exports.uploadBookingAct = async req => {
               export_masterbl_port_of_load: 'TZDAR',
               export_masterbl_port_of_discharge: pod,
               export_masterbl_traffic_mode: tracfficMode,
-              export_masterbl_container_quantity: quantity,
-              export_masterbl_container_weight: quantity * cargoWeight,
+              export_masterbl_container_quantity: blQuantity,
+              export_masterbl_container_weight: blWeight,
               export_masterbl_cargo_nature: cargoNature,
               export_masterbl_cargo_descriptions: cargoDescription,
             })
-            for(let i = 0; i < quantity; i++) {
-              await tb_container.create({
-                export_vessel_id: vessel.export_vessel_id,
-                export_container_bl: bookingNumber,
-                export_container_soc_type: soc === 'Y' ? 'S' : 'C',
-                export_container_size_type: ctnrType,
-                export_container_cargo_weight: cargoWeight
-              })
+            for(let bc of blCons) {
+              for(let i = 0; i < bc.quantity; i++) {
+                await tb_container.create({
+                  export_vessel_id: vessel.export_vessel_id,
+                  export_container_bl: bookingNumber,
+                  export_container_soc_type: bc.soc === 'Y' ? 'S' : 'C',
+                  export_container_size_type: bc.ctnrType,
+                  export_container_cargo_weight: bc.cargoWeight
+                })
+              }
             }
           }
         }
@@ -523,7 +608,7 @@ exports.searchVesselAct = async req => {
     queryStr = queryStr + ` AND v.export_vessel_name LIKE ? `
     replacements.push('%' + vessel_name + '%')
   }
-  queryStr = queryStr + ` ORDER BY v.export_vessel_id `
+  queryStr = queryStr + ` ORDER BY STR_TO_DATE(v.export_vessel_etd, "%d/%m/%Y") DESC `
   let vessels =  await model.simpleSelect(queryStr, replacements)
   if(vessels) {
     for(let v of vessels) {
@@ -554,8 +639,8 @@ exports.searchBlAct = async req => {
   let queryStr =  `select * from tbl_zhongtan_export_masterbl b WHERE b.export_vessel_id = ? AND b.state = ?`
   let replacements = [export_vessel_id, GLBConfig.ENABLE]
   if(masterbi_bl) {
-    queryStr = queryStr + ` AND b.export_masterbl_bl = ?`
-    replacements.push(masterbi_bl)
+    queryStr = queryStr + ` AND b.export_masterbl_bl LIKE ?`
+    replacements.push('%' + masterbi_bl + '%')
   }
   let bls = await model.queryWithCount(doc, queryStr, replacements)
   returnData.total = bls.count
@@ -571,8 +656,8 @@ exports.searchContainerAct = async req => {
   let queryStr =  `select * from tbl_zhongtan_export_container c WHERE c.export_vessel_id = ? AND c.state = ?`
   let replacements = [export_vessel_id, GLBConfig.ENABLE]
   if(masterbi_bl) {
-    queryStr = queryStr + ` AND c.export_container_bl = ?`
-    replacements.push(masterbi_bl)
+    queryStr = queryStr + ` AND c.export_container_bl LIKE ?`
+    replacements.push('%' + masterbi_bl + '%')
   }
   let cons = await model.queryWithCount(doc, queryStr, replacements)
   returnData.total = cons.count

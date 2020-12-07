@@ -412,5 +412,19 @@ module.exports = {
     { id: 'AP', text: 'Commercial Approved' }
   ],
   EMPTY_RELEASE_EMAIL_SENDER: 'DEMURRAGE@SINOTASHIP.COM',
-  EMPTY_RELEASE_CARBON_COPY: 'export@sinotaship.com'
+  EMPTY_RELEASE_CARBON_COPY: 'export@sinotaship.com;demurrage@sinotaship.com',
+  EXPORT_FEE_TYPE: [
+    { id: 'R', text: 'Receivable' }, // 应收
+    { id: 'P', text: 'Payable' }  // 应付
+  ],
+  EXPORT_FEE_STATUS: [
+    { id: 'NE', text: 'NEW' }, // 新建
+    { id: 'SA', text: 'SAVE' }, // 保存
+    { id: 'SU', text: 'SUBMIT' },  // 提交
+    { id: 'AP', text: 'APPROVE' },  // 审核
+    { id: 'DE', text: 'DECLINE' },  // 驳回
+    { id: 'UN', text: 'UNDO' },  // 撤回
+    { id: 'IN', text: 'INVOICE' },  // 开票
+    { id: 'RE', text: 'RECEIPT' }  // 收据
+  ],
 }
