@@ -26,22 +26,22 @@ module.exports = db.defineModel('tbl_zhongtan_export_verification', {
   export_verification_depot: {
     // 堆场
     type: db.STRING(20),
-    allowNull: false
+    allowNull: true
   },
   export_verification_agent: {
     // 代理
     type: db.STRING(50),
-    allowNull: false
+    allowNull: true
   },
   export_verification_quantity: {
     // 数量
     type: db.STRING(200),
-    allowNull: false
+    allowNull: true
   },
   export_verification_valid_to: {
     // 有效期
     type: db.DATEONLY,
-    allowNull: false
+    allowNull: true
   },
   export_verification_state: {
     // 审核状态
@@ -62,6 +62,16 @@ module.exports = db.defineModel('tbl_zhongtan_export_verification', {
   export_verification_create_user: {
     // 申请人
     type: db.STRING(50),
+    allowNull: true
+  },
+  export_verification_shipment_receivable: {
+    // 应收合计
+    type: db.STRING(20),
+    allowNull: true
+  },
+  export_verification_shipment_payable: {
+    // 应付合计
+    type: db.STRING(20),
     allowNull: true
   }
 })

@@ -549,7 +549,7 @@ exports.downloadCollectAct = async (req, res) => {
 
   for (let r of result) {
     let row = {}
-    row.date = moment(r.invoice_masterbi_receipt_release_date).format('YYYY/MM/DD')
+    row.date = moment(r.uploadfil_release_date).format('YYYY/MM/DD')
     row.invoice_masterbi_receipt_no = r.uploadfile_receipt_no
     row.invoice_masterbi_receipt_currency = r.uploadfile_currency
     row.sum_amount = r.uploadfile_amount
@@ -579,10 +579,8 @@ exports.downloadCollectAct = async (req, res) => {
     if (r.uploadfile_acttype === 'deposit') {
       row.invoice_masterbi_deposit = r.invoice_masterbi_deposit
     }
-    if (r.uploadfile_acttype === 'freight') {
-      row.invoice_masterbi_of = r.invoice_masterbi_of
-    }
     if (r.uploadfile_acttype === 'fee') {
+      row.invoice_masterbi_of = r.invoice_masterbi_of
       row.invoice_masterbi_bl_amendment = r.invoice_masterbi_bl_amendment
       row.invoice_masterbi_cod_charge = r.invoice_masterbi_cod_charge
       row.invoice_masterbi_transfer = r.invoice_masterbi_transfer
@@ -594,6 +592,7 @@ exports.downloadCollectAct = async (req, res) => {
       row.invoice_masterbi_others = r.invoice_masterbi_others
     }
     row.invoice_vessel_name = r.invoice_vessel_name
+    row.invoice_vessel_voyage = r.invoice_vessel_voyage
     renderData.push(row)
   }
 

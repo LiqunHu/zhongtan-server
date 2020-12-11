@@ -11,6 +11,11 @@ module.exports = db.defineModel('tbl_zhongtan_export_shipment_fee_log', {
     type: db.STRING(20),
     allowNull: false
   },
+  // 关联ID， SUBMIT 关联审核表， INVOICE和RECEIPT关联 文件
+  shipment_relation_id: {
+    type: db.STRING(20),
+    allowNull: false
+  },
   export_masterbl_id: {
     type: db.STRING(20),
     allowNull: false

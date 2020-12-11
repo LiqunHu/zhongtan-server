@@ -160,6 +160,33 @@ let genMNRReceiptSeq = async (charge_carrier) => {
   }
 }
 
+let genShipmentInvoiceSeq = async () => {
+  try {
+    let queryRst = await sequelize.query("select nextval('ShipmentInvoiceSeq') num", {
+      type: sequelize.QueryTypes.SELECT
+    }) 
+    let currentIndex = moment().format('YYYY') + '-' + ('000000' + queryRst[0].num).slice(-6)
+    return currentIndex
+  } catch (error) {
+    logger.error(error)
+    return error
+  }
+}
+
+let genShipmentReceiptSeq = async (charge_carrier) => {
+  try {
+    let seq_name = charge_carrier + 'ShipmentReceiptSeq'
+    let queryRst = await sequelize.query("select nextval('" + seq_name + "') num", {
+      type: sequelize.QueryTypes.SELECT
+    }) 
+    let currentIndex = charge_carrier + moment().format('YYYYMMDD') + '-' + ('000000' + queryRst[0].num).slice(-6)
+    return currentIndex
+  } catch (error) {
+    logger.error(error)
+    return error
+  }
+}
+
 module.exports = {
   genUserID: genUserID,
   genReceiptNo: genReceiptNo,
@@ -171,5 +198,7 @@ module.exports = {
   genEquipmentInvoiceSeq: genEquipmentInvoiceSeq,
   genEquipmentReceiptSeq: genEquipmentReceiptSeq,
   genMNRInvoiceSeq: genMNRInvoiceSeq,
-  genMNRReceiptSeq: genMNRReceiptSeq
+  genMNRReceiptSeq: genMNRReceiptSeq,
+  genShipmentInvoiceSeq: genShipmentInvoiceSeq,
+  genShipmentReceiptSeq: genShipmentReceiptSeq
 }

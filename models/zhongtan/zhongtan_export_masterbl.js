@@ -119,5 +119,11 @@ module.exports = db.defineModel('tbl_zhongtan_export_masterbl', {
     // agent
     type: db.JSON,
     allowNull: true
+  },
+  export_masterbl_cargo_type: {
+    // 放箱堆场
+    type: db.STRING(10),
+    defaultValue: 'LOCAL',
+    allowNull: false
   }
 })

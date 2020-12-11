@@ -867,14 +867,19 @@ exports.bookingDataSaveAct = async req => {
     }
   })
   if(bl) {
-    bl.export_masterbl_empty_release_agent = doc.export_masterbl_empty_release_agent
-    let user = await tb_user.findOne({
-      where: {
-        user_id: bl.export_masterbl_empty_release_agent
+    if(doc.export_masterbl_empty_release_agent) {
+      bl.export_masterbl_empty_release_agent = doc.export_masterbl_empty_release_agent
+      let user = await tb_user.findOne({
+        where: {
+          user_id: bl.export_masterbl_empty_release_agent
+        }
+      })
+      if(user) {
+        bl.export_masterbl_forwarder_company = user.user_name
       }
-    })
-    if(user) {
-      bl.export_masterbl_forwarder_company = user.user_name
+    }
+    if(doc.export_masterbl_cargo_type) {
+      bl.export_masterbl_cargo_type = doc.export_masterbl_cargo_type
     }
     await bl.save()
   }

@@ -43,30 +43,38 @@ exports.searchAct = async req => {
 
 exports.createAct = async req => {
   let doc = common.docValidate(req)
-  let oldFee = await tb_fee_data.findOne({
-    where: {
-      fee_data_code: doc.fee_data_code,
-      fee_data_container_size: doc.fee_data_container_size,
-      state: GLBConfig.ENABLE
+  if(doc.fee_data_container_size_create && doc.fee_data_container_size_create.length > 0) {
+    for(let cs of doc.fee_data_container_size_create) {
+      let oldFee = await tb_fee_data.findOne({
+        where: {
+          fee_data_code: doc.fee_data_code,
+          fee_data_container_size: cs,
+          state: GLBConfig.ENABLE
+        }
+      })
+      if(oldFee) {
+        return common.error('fee_01')
+      }
     }
-  })
-  if(oldFee) {
-    return common.error('fee_01')
-  } else {
-    await tb_fee_data.create({
-      fee_data_code: doc.fee_data_code,
-      fee_data_name: doc.fee_data_name,
-      fee_data_type: doc.fee_data_type,
-      fee_data_container_size: doc.fee_data_container_size,
-      fee_data_receivable: doc.fee_data_receivable,
-      fee_data_receivable_fixed: doc.fee_data_receivable_fixed,
-      fee_data_receivable_amount: doc.fee_data_receivable_amount,
-      fee_data_receivable_amount_currency: doc.fee_data_receivable_amount_currency,
-      fee_data_payable: doc.fee_data_payable,
-      fee_data_payable_fixed: doc.fee_data_payable_fixed,
-      fee_data_payable_amount: doc.fee_data_payable_amount,
-      fee_data_payable_amount_currency: doc.fee_data_payable_amount_currency,
-    })
+  }
+  if(doc.fee_data_container_size_create && doc.fee_data_container_size_create.length > 0) {
+    for(let cs of doc.fee_data_container_size_create) {
+      await tb_fee_data.create({
+        fee_data_code: doc.fee_data_code,
+        fee_data_name: doc.fee_data_name,
+        fee_data_transit: doc.fee_data_transit,
+        fee_data_type: doc.fee_data_type,
+        fee_data_container_size: cs,
+        fee_data_receivable: doc.fee_data_receivable,
+        fee_data_receivable_fixed: doc.fee_data_receivable_fixed,
+        fee_data_receivable_amount: doc.fee_data_receivable_amount,
+        fee_data_receivable_amount_currency: doc.fee_data_receivable_amount_currency,
+        fee_data_payable: doc.fee_data_payable,
+        fee_data_payable_fixed: doc.fee_data_payable_fixed,
+        fee_data_payable_amount: doc.fee_data_payable_amount,
+        fee_data_payable_amount_currency: doc.fee_data_payable_amount_currency,
+      })
+    }
   }
   return common.success()
 }
@@ -81,6 +89,7 @@ exports.updateAct = async req => {
   })
   if(updateFee) {
     updateFee.fee_data_name = doc.new.fee_data_name
+    updateFee.fee_data_transit = doc.new.fee_data_transit
     updateFee.fee_data_receivable = doc.new.fee_data_receivable
     updateFee.fee_data_receivable_fixed = doc.new.fee_data_receivable_fixed
     updateFee.fee_data_receivable_amount = doc.new.fee_data_receivable_amount

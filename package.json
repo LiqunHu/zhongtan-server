@@ -63,7 +63,8 @@
     "xlsx": "^0.15.4",
     "imap": "^0.8.19",
     "mailparser": "^2.7.7",
-    "pdf2json": "^1.2.0"
+    "pdf2json": "^1.2.0",
+    "decimal.js": "^10.2.1"
   },
   "devDependencies": {
     "rimraf": "^2.6.2",

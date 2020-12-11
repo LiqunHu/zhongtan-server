@@ -55,4 +55,10 @@ module.exports = db.defineModel('tbl_zhongtan_export_fee_data', {
     type: db.STRING(20),
     allowNull: true
   },
+  fee_data_transit: {
+    // 过境/本地
+    type: db.STRING(10),
+    defaultValue: '0',
+    allowNull: false
+  }
 })

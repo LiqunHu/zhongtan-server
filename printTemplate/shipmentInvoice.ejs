@@ -111,79 +111,123 @@
                     </tr>
                     <tr>
                         <td valign="middle" rowspan="1" colspan="11" align="center" >
-                            <div class="font_28" style="width:160px; border: 1px solid black; padding: 5px 10px; margin-top: 50px; margin-bottom: 20px;">INVOICE</div>
-                        </td>
-                    </tr>
-                    <tr class="b_top b_left">
-                        <td valign="middle"  rowspan="1" colspan="2" align="center" class="b_bottom">
-                            INVOICE No.
-                        </td>
-                        <td valign="middle" rowspan="1" colspan="5" class="b_right b_bottom" style="padding-left:20px;">
-                            CTS/<%=ejsData.fixed_deposit_carrier%>/<%=ejsData.fixed_deposit_number%>/<%=ejsData.fixed_deposit_invoice_no%>
-                        </td>
-                        <td valign="middle" rowspan="2" colspan="1"  align="left" class="b_bottom">
-                            Date
-                        </td>
-                        <td valign="middle" rowspan="2" colspan="3"  align="left" class="b_right b_bottom">
-                            <%=ejsData.fixed_deposit_date%>
+                            <div class="font_28">INVOICE</div>
                         </td>
                     </tr>
                     <tr>
-                        <td valign="top" rowspan="1" colspan="2" class="b_left b_bottom" style="font-weight:bold;">
-                            OUR TIN NO:
+                        <td valign="middle" rowspan="1" colspan="2">
+                            MESSRS          :
                         </td>
-                        <td valign="top" rowspan="1" colspan="5" class="b_right b_bottom" style="font-weight:bold;">
-                            100-193-671
-                        </td>
-                    </tr>
-                    <tr>
-                        <td valign="top" rowspan="1" colspan="11" class="b_left b_right">
-                            M/S.  <%=ejsData.fixed_deposit_customer_name%>
+                        <td valign="middle" rowspan="1" colspan="9">
+                            <%=ejsData.shipmentParty%>
                         </td>
                     </tr>
                     <tr>
-                        <td valign="top" rowspan="1" colspan="11" class="b_left b_right">
-                            <%=ejsData.fixed_deposit_customer_address%>
+                        <td valign="middle" rowspan="2" colspan="2">
+                            ADDRESS        :
+                        </td>
+                        <td valign="middle" rowspan="2" colspan="6">
+                            <%=ejsData.partyAddress%>
                         </td>
                     </tr>
                     <tr>
-                        <td valign="top" rowspan="1" colspan="11" class="b_left b_right b_bottom">
-                            <%=ejsData.fixed_deposit_customer_address1%>
+                        <td valign="middle" rowspan="1" colspan="3" align="right">
+                            <%=ejsData.cargoType%>
                         </td>
                     </tr>
                     <tr>
-                        <td valign="top" rowspan="1" colspan="11" class="b_left b_right" style="padding-top:20px; padding-bottom:30px;">
-                            Please pay the following money with respect to container deposit  of your cargo with COSCO Shipping and OOCL,
-                            in favour of M/s Chinese Tanzanian Joint Shipping Company.
+                        <td valign="middle" rowspan="1" colspan="2">
+                            DATE            :
+                        </td>
+                        <td valign="middle" rowspan="1" colspan="3" >
+                            <%=ejsData.invoiceDate%>
+                        </td>
+                        <td valign="middle" rowspan="1" colspan="4" align="right">
+                            INVOICE NUMBER:
+                        </td>
+                        <td valign="middle" rowspan="1" colspan="2" align="right">
+                            <%=ejsData.invoiceNo%>
                         </td>
                     </tr>
                     <tr>
-                        <td valign="middle" rowspan="1" colspan="8" align="center" class="b_left b_right b_top b_bottom">
-                            DESCRIPTION
+                        <td valign="middle" rowspan="1" colspan="2">
+                            RE: M.V:
                         </td>
-                        <td valign="middle" rowspan="1" colspan="3" align="center" class="b_right b_top b_bottom">
-                            AMOUNT IN USD
+                        <td valign="middle" rowspan="1" colspan="2">
+                            <%=ejsData.vesselName%>
+                        </td>
+                        <td valign="middle" rowspan="1" colspan="1">
+                            VOY
+                        </td>
+                        <td valign="middle" rowspan="1" colspan="2">
+                            <%=ejsData.voyageNumber%>
+                        </td>
+                        <td valign="middle" rowspan="1" colspan="2" align="right" >
+                            POD  :
+                        </td>
+                        <td valign="middle" rowspan="1" colspan="2" align="right" >
+                            <%=ejsData.portOfDischarge%>
                         </td>
                     </tr>
                     <tr>
-                        <td valign="middle" rowspan="1" colspan="8" align="center" class="b_left b_right b_bottom">
-                            FIXED CONTAINER DEPOSIT
+                        <td valign="middle" rowspan="1" colspan="2">
+                            B/L #
                         </td>
-                        <td valign="top" rowspan="1" colspan="3" align="right" class="b_right b_bottom">
-                            <%=ejsData.fixed_deposit_amount%>
+                        <td valign="middle" rowspan="1" colspan="5" align="center" >
+                            <%=ejsData.masterbiBl%>
+                        </td>
+                        <td valign="middle" rowspan="1" colspan="2" align="right" >
+                            Departure Date :
+                        </td>
+                        <td valign="middle" rowspan="1" colspan="2" align="right" >
+                            <%=ejsData.vesselEtd%>
                         </td>
                     </tr>
-                    <tr></tr>
-                    <tr></tr>
                     <tr>
-                        <td valign="top" rowspan="1" colspan="8" align="right" class="b_left b_right b_bottom">
-                            TOTAL<br/>
+                        <td valign="middle" rowspan="1" colspan="11">
+                            Export charges:
                         </td>
-                        <td valign="middle" rowspan="1" colspan="1" align="left" class="b_bottom">
-                            <%=ejsData.fixed_deposit_currency%>
+                    </tr>
+                    <tr class="b_top b_bottom b_left b_right">
+                        <td valign="middle"  rowspan="1" colspan="3" align="center" class="b_right">
+                            Description
                         </td>
-                        <td valign="top" rowspan="1" colspan="2" align="right" class="b_right b_bottom">
-                            <%=ejsData.fixed_deposit_amount_total%>
+                        <td valign="middle" rowspan="1" colspan="5" align="center" class="b_right">
+                            Charge Item
+                        </td>
+                        <td valign="middle" rowspan="1" colspan="3"  align="center" class="b_right">
+                            Charges In USD
+                        </td>
+                    </tr>
+                    <%for (var i = 0; i < ejsData.receivable.length; i++) {%>
+                        <tr class="b_bottom b_left b_right">
+                            <% if(i === 0) { %> 
+                                <td valign="middle"  rowspan="<%=ejsData.receivable.length%>" colspan="3" align="center" class="b_right">
+                                    <%= ejsData.containerSizeType %>
+                                </td>
+                            <% } %>
+                            <td valign="middle" rowspan="1" colspan="5"  align="center" class="b_right">
+                                <%= ejsData.receivable[i].fee_type %>
+                            </td>
+                            <td valign="middle" rowspan="1" colspan="3"  align="center" class="b_right">
+                                <%= ejsData.receivable[i].fee_amount %>
+                            </td>
+                        </tr>
+                    <%}-%>
+                    <tr class="b_top b_bottom b_left b_right">
+                        <td valign="middle" rowspan="1" colspan="3" align="center" class="b_right" style="font-weight:bold;">
+                            SUM
+                        </td>
+                        <td valign="middle" rowspan="1" colspan="8" align="right">
+                            <%=ejsData.totalReceivable%>
+                        </td>
+                    </tr>
+                    <tr class="b_top b_bottom b_left b_right">
+                        <td valign="middle" rowspan="1" colspan="3" align="center" class="b_right" style="font-weight:bold;">
+                            SAY
+                        </td>
+                        <td valign="middle" rowspan="1" colspan="8" align="right">
+                            <%=ejsData.totalReceivableStr%> US DOLLARS ONLY
                         </td>
                     </tr>
                     <tr>
