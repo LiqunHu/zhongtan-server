@@ -126,12 +126,25 @@ exports.searchAct = async req => {
               }
             })
             if(rfile) {
-              receipt_data.push({
-                receipt_no: rfile.uploadfile_receipt_no,
-                receipt_date: moment(rfile.created_at).format('YYYY-MM-DD HH:ss'),
-                bank_reference_no: rfile.uploadfile_bank_reference_no,
-                check_no: rfile.uploadfile_check_no
-              })
+              if (doc.search_data.receipt_date && doc.search_data.receipt_date.length > 1) {
+                if(moment(rfile.created_at).isBetween(moment(doc.search_data.receipt_date[0]), moment(doc.search_data.receipt_date[1]))) {
+                  receipt_data.push({
+                    receipt_no: rfile.uploadfile_receipt_no,
+                    receipt_date: moment(rfile.created_at).format('YYYY-MM-DD HH:ss'),
+                    bank_reference_no: rfile.uploadfile_bank_reference_no,
+                    check_no: rfile.uploadfile_check_no
+                  })
+                } else {
+                  continue
+                }
+              } else {
+                receipt_data.push({
+                  receipt_no: rfile.uploadfile_receipt_no,
+                  receipt_date: moment(rfile.created_at).format('YYYY-MM-DD HH:ss'),
+                  bank_reference_no: rfile.uploadfile_bank_reference_no,
+                  check_no: rfile.uploadfile_check_no
+                })
+              }
             }
           }
         }
@@ -247,10 +260,21 @@ exports.exportDemurrageReportAct = async(req, res) => {
             }
           })
           if(rfile) {
-            retRow.receipt_date = moment(rfile.created_at).format('YYYY-MM-DD HH:ss')
-            retRow.receipt_no = rfile.uploadfile_receipt_no
-            retRow.bank_reference_no = rfile.uploadfile_bank_reference_no
-            retRow.check_no = rfile.uploadfile_check_no
+            if (doc.search_data.receipt_date && doc.search_data.receipt_date.length > 1) {
+              if(moment(rfile.created_at).isBetween(moment(doc.search_data.receipt_date[0]), moment(doc.search_data.receipt_date[1]))) {
+                retRow.receipt_date = moment(rfile.created_at).format('YYYY-MM-DD HH:ss')
+                retRow.receipt_no = rfile.uploadfile_receipt_no
+                retRow.bank_reference_no = rfile.uploadfile_bank_reference_no
+                retRow.check_no = rfile.uploadfile_check_no
+              } else {
+                continue
+              }
+            } else {
+              retRow.receipt_date = moment(rfile.created_at).format('YYYY-MM-DD HH:ss')
+              retRow.receipt_no = rfile.uploadfile_receipt_no
+              retRow.bank_reference_no = rfile.uploadfile_bank_reference_no
+              retRow.check_no = rfile.uploadfile_check_no
+            }
           }
         }
         renderData.push(retRow)
@@ -375,10 +399,21 @@ exports.exportDemurrageAdminReportAct = async(req, res) => {
             }
           })
           if(rfile) {
-            retRow.receipt_date = moment(rfile.created_at).format('YYYY-MM-DD HH:ss')
-            retRow.receipt_no = rfile.uploadfile_receipt_no
-            retRow.bank_reference_no = rfile.uploadfile_bank_reference_no
-            retRow.check_no = rfile.uploadfile_check_no
+            if (doc.search_data.receipt_date && doc.search_data.receipt_date.length > 1) {
+              if(moment(rfile.created_at).isBetween(moment(doc.search_data.receipt_date[0]), moment(doc.search_data.receipt_date[1]))) {
+                retRow.receipt_date = moment(rfile.created_at).format('YYYY-MM-DD HH:ss')
+                retRow.receipt_no = rfile.uploadfile_receipt_no
+                retRow.bank_reference_no = rfile.uploadfile_bank_reference_no
+                retRow.check_no = rfile.uploadfile_check_no
+              } else {
+                continue
+              }
+            } else {
+              retRow.receipt_date = moment(rfile.created_at).format('YYYY-MM-DD HH:ss')
+              retRow.receipt_no = rfile.uploadfile_receipt_no
+              retRow.bank_reference_no = rfile.uploadfile_bank_reference_no
+              retRow.check_no = rfile.uploadfile_check_no
+            }
           }
         }
         renderData.push(retRow)
