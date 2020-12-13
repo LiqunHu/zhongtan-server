@@ -28,7 +28,7 @@ exports.searchAct = async req => {
                 LEFT JOIN tbl_common_user c ON a.export_verification_create_user = c.user_id
                 LEFT JOIN tbl_common_user d ON a.export_verification_agent = d.user_id
                 WHERE a.state = '1' AND a.export_verification_api_name IN (?)`
-  let api_name = ['SHIPMENT RELEASE']
+  let api_name = ['EMPTY RELEASE']
   let replacements = [api_name]
   if (doc.verification_state) {
     queryStr += ' AND a.export_verification_state = ?'
@@ -247,6 +247,7 @@ exports.verificationDetailAct = async req => {
   if(ver) {
     // 托单审核
     if(ver.export_verification_api_name === 'SHIPMENT RELEASE') {
+
       let bl = await tb_bl.findOne({
         where: {
           export_masterbl_id: ver.export_masterbl_id
@@ -305,42 +306,6 @@ exports.verificationDetailAct = async req => {
         let shipment_receiveable = []
         let shipment_payable = []
         for(let s of ver_shipment) {
-          s.this_submit_fee = GLBConfig.ENABLE
-          for(let fd of fds) {
-            if(fd.fee_data_code === s.fee_data_code) {
-              s.fee_data_name = fd.fee_data_name
-            }
-          }
-          if(s.shipment_fee_type === 'R') {
-            shipment_receiveable.push(s)
-          } else if(s.shipment_fee_type === 'P') {
-            shipment_payable.push(s)
-          }
-        }
-
-        queryStr = `SELECT
-                    fl.*, f.shipment_fee_type, 
-                    f.fee_data_code AS fee_data_code,
-                    f.shipment_fee_status AS shipment_fee_status_now,
-                    up.user_name AS shipment_party,
-                    us.user_name AS submit_user,
-                    uu.user_name AS undo_user,
-                    ua.user_name AS approve_user,
-                    ud.user_name AS decline_user
-                  FROM
-                    tbl_zhongtan_export_shipment_fee_log fl
-                    LEFT JOIN tbl_zhongtan_export_shipment_fee f ON fl.shipment_fee_id = f.shipment_fee_id
-                    LEFT JOIN tbl_common_user up ON f.shipment_fee_party = up.user_id 
-                    LEFT JOIN tbl_common_user us ON fl.shipment_fee_submit_by = us.user_id
-                    LEFT JOIN tbl_common_user uu ON fl.shipment_fee_undo_by = uu.user_id
-                    LEFT JOIN tbl_common_user ua ON fl.shipment_fee_approve_by = ua.user_id
-                    LEFT JOIN tbl_common_user ud ON fl.shipment_fee_decline_by = ud.user_id 
-                  WHERE
-                    fl.shipment_relation_id <> ? AND f.export_masterbl_id = ? AND fl.state = ? AND f.state = ? AND f.shipment_fee_status IN (?)`
-        replacements = [ver.export_verification_id, ver.export_masterbl_id, GLBConfig.ENABLE, GLBConfig.ENABLE, ['SU', 'AP', 'IN', 'RE']]
-        let other_ver_shipment = await model.simpleSelect(queryStr, replacements)
-        for(let s of other_ver_shipment) {
-          s.this_submit_fee = GLBConfig.DISABLE
           for(let fd of fds) {
             if(fd.fee_data_code === s.fee_data_code) {
               s.fee_data_name = fd.fee_data_name

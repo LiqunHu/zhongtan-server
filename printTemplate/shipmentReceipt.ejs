@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title></title>
+    <style>
+      @page {
+        size: A4 portrait;
+      }
+      .onepage {
+        size: A4 portrait;
+        padding: 10px 40px;
+      }
+      * {
+        margin: 0 auto;
+        margin: 0;
+        padding: 0;
+      }
+      table {
+        width: 100%;
+        table-layout: fixed;
+      }
+      body {
+        font-size: 15px;
+        /* font-family: 'arial narrow', '宋体'; */
+        font-weight: bold;
+      }
+      .headertable td {
+        padding-left: 6px;
+        line-height: 1;
+        word-break: break-all; /* 不会拉长表格的宽度,到点就换行 */
+        overflow: hidden;
+        /* text-overflow: ellipsis;*/
+      }
+      .bodytable {
+        padding-top: 10px;
+      }
+      .bodytable td {
+        line-height: 1.2;
+      }
+      .border {
+        border-bottom: 1px solid black;
+      }
+      .tar {
+        text-align: right;
+      }
+      .center {
+        text-align: center;
+        vertical-align: center;
+      }
+      .fstyle {
+        font-style: italic;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="onepage" style="page-break-before: always">
+      <table cellspacing="0" class="headertable">
+        <tr class="firstRow">
+          <td
+            valign="top"
+            style="word-break: break-all; padding-left: 40px;
+            padding-top: 10px;"
+            rowspan="3"
+          >
+            <img
+              style="height: 60px;"
+              src="data:image/png;base64,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"
+            />
+          </td>
+          <td valign="top" style="word-break: break-all;" colspan="6"></td>
+        </tr>
+        <tr>
+          <th valign="middle" colspan="6" style="font-size: 24px;">
+            CHINESE-TANZANIAN JOINT SHIPPING COMPANY
+          </th>
+        </tr>
+        <tr>
+          <th
+            valign="middle"
+            colspan="6"
+            style="word-break: break-all;font-size: 22px;"
+          >
+            中国-坦桑尼亚联合海运公司
+          </th>
+        </tr>
+        <tr>
+          <td valign="middle" colspan="1" width="-1"></td>
+          <td rowspan="1" valign="middle" colspan="2">
+            OUR&ensp;TIN&ensp;NO:100-193-671
+          </td>
+          <td
+            valign="middle"
+            style="word-break: break-all;font-size: 24px;"
+            colspan="2"
+            rowspan="2"
+            class="center"
+          >
+            RECEIPT
+          </td>
+          <td valign="middle" colspan="2" rowspan="2"></td>
+        </tr>
+      </table>
+
+      <table cellspacing="0" class="bodytable">
+        <tr>
+          <td valign="middle" colspan="3" style="word-break: break-all;">
+            P.O.BOX 696
+          </td>
+          <td class="tar">号码NO.</td>
+          <td colspan="2">
+            <span class="border"><%=ejsData.shipment_receipt_no%></span>
+          </td>
+        </tr>
+        <tr>
+          <td valign="middle" colspan="3" style="word-break: break-all;">
+            DAR ES SALAAM
+          </td>
+          <td
+            valign="middle"
+            colspan="1"
+            style="word-break: break-all;"
+            class="tar"
+          >
+            日期DATE:
+          </td>
+
+          <td colspan="2" valign="middle" colspan="1">
+            <span class="border"><%=ejsData.shipment_receipt_date%></span>
+          </td>
+        </tr>
+        <tr>
+          <td
+            valign="middle"
+            style="word-break: break-all;font-weight: 500;"
+            colspan="2"
+            class="fstyle"
+          >
+            Received from
+          </td>
+          <td
+            valign="middle"
+            style="word-break: break-all;line-height: 1.5;"
+            colspan="4"
+            class="border"
+          >
+            <span><%=ejsData.shipment_receipt_party%></span>
+          </td>
+        </tr>
+        <tr>
+          <td valign="middle" colspan="2">The sum of <%=ejsData.shipment_receipt_currency%></td>
+          <td
+            valign="middle"
+            colspan="4"
+            style="word-break: break-all;line-height: 1.5;"
+            class="border"
+          >
+            <span><%=ejsData.shipment_receipt_sum_fee_str%></span>
+          </td>
+        </tr>
+        <tr>
+          <td valign="middle" colspan="1" class="fstyle">Being</td>
+          <td
+            valign="middle"
+            colspan="3"
+            style="word-break: break-all;"
+            class="border"
+          >
+            <span><%=ejsData.shipment_receipt_bl%></span>
+          </td>
+          <td colspan="2">EXPORT CHARGES</td>
+        </tr>
+        <tr>
+          <td
+            valign="bottom"
+            style="word-break: break-all;"
+            colspan="1"
+            class="fstyle"
+          >
+            Cash&ensp;/&ensp;Cheque
+          </td>
+          <td
+            valign="bottom"
+            colspan="3"
+            style="word-break: break-all;"
+            class="border"
+          >
+            <span><%=ejsData.check_cash%></span>
+          </td>
+          <td
+            valign="bottom"
+            style="padding-left: 30px;"
+            class="fstyle"
+            colspan="2"
+          >
+            WITH THANKS
+          </td>
+        </tr>
+        <tr>
+          <td valign="bottom" colspan="3" rowspan="1"></td>
+          <td
+            valign="bottom"
+            colspan="2"
+            rowspan="1"
+            style="word-break: break-all;"
+          >
+            Signature of Cashier
+          </td>
+          <td valign="bottom" colspan="1" rowspan="1"></td>
+        </tr>
+        <tr>
+          <td valign="bottom" colspan="1" rowspan="1" class="fstyle"><%=ejsData.shipment_receipt_currency%></td>
+          <td
+            valign="bottom"
+            colspan="2"
+            rowspan="1"
+            style="word-break: break-all;"
+            class="border"
+          >
+            <span><%=ejsData.shipment_receipt_sum_fee%></span>
+          </td>
+          <td
+            valign="bottom"
+            colspan="2"
+            rowspan="1"
+            style="word-break: break-all;"
+          >
+            Signature of Chief Accountant
+          </td>
+          <td valign="bottom" colspan="1" rowspan="1" class="border"></td>
+        </tr>
+      </table>
+      <div style="padding-top: 10px; padding-left: 3px;">
+        Prepared By: <%= ejsData.user_name %>
+        <% if (ejsData.user_phone) { %>
+          &nbsp;&nbsp;&nbsp;&nbsp;Tel:&nbsp;&nbsp;<%=ejsData.user_phone%>
+        <% } %>
+        </br>
+        <div style="padding-left:90px;">
+          <a href="<%=ejsData.user_email%>"><%=ejsData.user_email%></a>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

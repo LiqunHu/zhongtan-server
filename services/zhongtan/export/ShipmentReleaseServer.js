@@ -200,7 +200,10 @@ exports.getBookingShipmentAct = async req => {
     replacements = [GLBConfig.ENABLE, GLBConfig.ENABLE, GLBConfig.ENABLE]
     let fixed_payable_fee = await model.simpleSelect(queryStr, replacements)
 
-    queryStr = `SELECT f.*, u.uploadfile_url FROM tbl_zhongtan_export_shipment_fee f LEFT JOIN tbl_zhongtan_uploadfile u ON f.shipment_fee_invoice_id = u.uploadfile_id AND u.state = ? AND u.api_name = ? WHERE f.state = ? AND f.shipment_fee_type = ? AND f.export_masterbl_id = ? ORDER BY f.shipment_fee_id`
+    queryStr = `SELECT f.*, u.uploadfile_url, c.user_name AS shipment_fee_submit_by_user FROM tbl_zhongtan_export_shipment_fee f 
+                LEFT JOIN tbl_zhongtan_uploadfile u ON f.shipment_fee_invoice_id = u.uploadfile_id AND u.state = ? AND u.api_name = ? 
+                LEFT JOIN tbl_common_user c ON f.shipment_fee_submit_by = c.user_id
+                WHERE f.state = ? AND f.shipment_fee_type = ? AND f.export_masterbl_id = ? ORDER BY f.shipment_fee_id`
     replacements = [GLBConfig.ENABLE, 'SHIPMENT-INVOICE', GLBConfig.ENABLE, 'R', doc.export_masterbl_id]
     let shipment_receivable = await model.simpleSelect(queryStr, replacements)
     if(shipment_receivable && shipment_receivable.length > 0) {
@@ -254,6 +257,9 @@ exports.getBookingShipmentAct = async req => {
       let totalReceivable = 0
       for(let sr of shipment_receivable) {
         let disabled = await setShipmentFeeDisabled(sr)
+        if(sr.shipment_fee_submit_at) {
+          sr.shipment_fee_submit_at = moment(sr.shipment_fee_submit_at).format('YYYY-MM-DD HH:mm:ss')
+        }
         returnData.shipment_receivable.push(JSON.parse((JSON.stringify(sr) + JSON.stringify(disabled)).replace(/}{/, ',')))
         if(totalStatus.indexOf(sr.shipment_fee_status) >= 0) {
           totalReceivable = new Decimal(totalReceivable).plus(new Decimal(sr.shipment_fee_amount))
@@ -261,7 +267,9 @@ exports.getBookingShipmentAct = async req => {
       }
       returnData.totalReceivable = totalReceivable
     }
-    queryStr = `SELECT * FROM tbl_zhongtan_export_shipment_fee WHERE state = ? AND shipment_fee_type = ? AND export_masterbl_id = ? ORDER BY shipment_fee_id`
+    queryStr = `SELECT f.*, c.user_name AS shipment_fee_submit_by_user FROM tbl_zhongtan_export_shipment_fee f
+                LEFT JOIN tbl_common_user c ON f.shipment_fee_submit_by = c.user_id
+                WHERE f.state = ? AND f.shipment_fee_type = ? AND f.export_masterbl_id = ? ORDER BY f.shipment_fee_id`
     replacements = [GLBConfig.ENABLE, 'P', doc.export_masterbl_id]
     let shipment_payable = await model.simpleSelect(queryStr, replacements)
     if(shipment_payable && shipment_payable.length > 0) {
@@ -315,6 +323,9 @@ exports.getBookingShipmentAct = async req => {
       let totalPayable = 0
       for(let sr of shipment_payable) {
         let disabled = await setShipmentFeeDisabled(sr)
+        if(sr.shipment_fee_submit_at) {
+          sr.shipment_fee_submit_at = moment(sr.shipment_fee_submit_at).format('YYYY-MM-DD HH:mm:ss')
+        }
         returnData.shipment_payable.push(JSON.parse((JSON.stringify(sr) + JSON.stringify(disabled)).replace(/}{/, ',')))
         if(totalStatus.indexOf(sr.shipment_fee_status) >= 0) {
           totalPayable = new Decimal(totalPayable).plus(new Decimal(sr.shipment_fee_amount))
@@ -815,7 +826,7 @@ exports.invoiceShipmentAct = async req => {
           if(totalReceivable > 0) {
             renderData.totalReceivableStr = numberToText(totalReceivable)
           } else {
-            renderData.totalReceivableStr = 'NEGATIVE ' + numberToText(new Decimal(totalReceivable).absoluteValue())
+            renderData.totalReceivableStr = 'MINUS ' + numberToText(new Decimal(totalReceivable).absoluteValue())
           }
           renderData.user_name = commonUser.user_name
           renderData.user_phone = commonUser.user_phone
@@ -832,7 +843,9 @@ exports.invoiceShipmentAct = async req => {
             uploadfile_state: 'AP', // TODO state PM => PB
             uploadfile_amount: totalReceivable,
             uploadfile_customer_id: invoices[0].shipment_fee_party,
-            uploadfile_invoice_no: invoiceNo
+            uploadfile_invoice_no: invoiceNo,
+            uploadfil_release_date: curDate,
+            uploadfil_release_user_id: user.user_id
           })
           for(let i of invoices) {
             let sf = await tb_shipment_fee.findOne({
