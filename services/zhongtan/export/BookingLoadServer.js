@@ -22,7 +22,7 @@ exports.uploadBookingAct = async req => {
   for (let f of doc.upload_files) {
     let pdfData = await pdf2jsonParser(f.response.info.path)
     if(pdfData) {
-      if(pdfData.indexOf('OOCL') >= 0) {
+      if(pdfData.indexOf('OOCL - Booking') >= 0) {
         // OOCL
         let regex = ''
         let bookingNumber = '' //提单号，自动加前缀
