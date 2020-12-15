@@ -81,9 +81,9 @@ exports.uploadBookingAct = async req => {
               etd = moment(day + ' ' + month + ' ' + cfdMoment.year() + 1, 'DD MMM YYYY').format('DD/MM/YYYY')
             }
           }
-          let vIndex = datas.indexOf('Container Information')
-          if(vIndex >= 0) {
-            let podStr = datas[vIndex - 2]
+          let pIndex = datas.indexOf('Container Information')
+          if(pIndex >= 0) {
+            let podStr = datas[pIndex - 2]
             let podReg = /\((Mon)?(Tue)?(Wed)?(Thu)?(Fri)?(Sat)?(Sun)?\)(.+)\((Mon)?(Tue)?(Wed)?(Thu)?(Fri)?(Sat)?(Sun)?\)/
             let podMatchs = podStr.match(podReg)
             if(podMatchs && podMatchs.length > 7) {
@@ -92,19 +92,27 @@ exports.uploadBookingAct = async req => {
                 pod = podMat.split(/\d+/)[0]
               }
             }
+          }
 
-            let vesStr = datas[vIndex - 4] + ' ' + datas[vIndex - 3]
+          let vIndex = datas.findIndex((item) => {
+              return item.indexOf('EAX4') >= 0
+          })
+          if(vIndex >= 0) {
+            let vesStr = datas[vIndex]
+            if(!/[^a-zA-Z0-9\s]/.exec(datas[vIndex-1])) {
+              vesStr = datas[vIndex-1] + ' ' + vesStr
+            }
             vesStr = vesStr.substring(0, vesStr.indexOf('EAX4'))
             let vesStrF = common.fileterLNB(vesStr)
             let vesN = /\d+/.exec(vesStrF)
             if(vesN && vesN.length > 0) {
-              ves = vesStr.substring(0, vesStr.indexOf(vesN[0]))
-              voy = vesStr.substring(vesStr.indexOf(vesN[0]))
+              ves = vesStr.substring(0, vesStr.indexOf(vesN[0])).trim()
+              voy = vesStr.substring(vesStr.indexOf(vesN[0])).trim()
             } else {
               ves = vesStr
             }
-            
           }
+
           let csIndex = datas.indexOf('Container Information')
           let ceIndex = datas.indexOf('Trucking')
           if(csIndex >= 0 && ceIndex >= 0) {
