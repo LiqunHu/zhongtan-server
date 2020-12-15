@@ -127,7 +127,7 @@ exports.searchAct = async req => {
             })
             if(rfile) {
               if (doc.search_data.receipt_date && doc.search_data.receipt_date.length > 1) {
-                if(moment(rfile.created_at).isBetween(moment(doc.search_data.receipt_date[0]), moment(doc.search_data.receipt_date[1]), null, '[]')) {
+                if(moment(rfile.created_at, 'YYYY-MM-DD').isBetween(moment(doc.search_data.receipt_date[0]), moment(doc.search_data.receipt_date[1]), null, '[]')) {
                   receipt_data.push({
                     receipt_no: rfile.uploadfile_receipt_no,
                     receipt_date: moment(rfile.created_at).format('YYYY-MM-DD HH:ss'),
@@ -261,7 +261,7 @@ exports.exportDemurrageReportAct = async(req, res) => {
           })
           if(rfile) {
             if (doc.search_data.receipt_date && doc.search_data.receipt_date.length > 1) {
-              if(moment(rfile.created_at).isBetween(moment(doc.search_data.receipt_date[0]), moment(doc.search_data.receipt_date[1]), null, '[]')) {
+              if(moment(rfile.created_at, 'YYYY-MM-DD').isBetween(moment(doc.search_data.receipt_date[0]), moment(doc.search_data.receipt_date[1]), null, '[]')) {
                 retRow.receipt_date = moment(rfile.created_at).format('YYYY-MM-DD HH:ss')
                 retRow.receipt_no = rfile.uploadfile_receipt_no
                 retRow.bank_reference_no = rfile.uploadfile_bank_reference_no
@@ -400,7 +400,7 @@ exports.exportDemurrageAdminReportAct = async(req, res) => {
           })
           if(rfile) {
             if (doc.search_data.receipt_date && doc.search_data.receipt_date.length > 1) {
-              if(moment(rfile.created_at).isBetween(moment(doc.search_data.receipt_date[0]), moment(doc.search_data.receipt_date[1]), null, '[]')) {
+              if(moment(rfile.created_at, 'YYYY-MM-DD').isBetween(moment(doc.search_data.receipt_date[0]), moment(doc.search_data.receipt_date[1]), null, '[]')) {
                 retRow.receipt_date = moment(rfile.created_at).format('YYYY-MM-DD HH:ss')
                 retRow.receipt_no = rfile.uploadfile_receipt_no
                 retRow.bank_reference_no = rfile.uploadfile_bank_reference_no
