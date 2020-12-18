@@ -1,7 +1,7 @@
 const db = require('../../app/db')
 // 提单表
 
-module.exports = db.defineModel('tbl_zhongtan_export_container', {
+module.exports = db.defineModel('tbl_zhongtan_export_proforma_container', {
   export_container_id: {
     type: db.IDNO,
     autoIncrement: true,
@@ -20,6 +20,11 @@ module.exports = db.defineModel('tbl_zhongtan_export_container', {
   },
   export_container_no: {
     // 箱号
+    type: db.STRING(20),
+    allowNull: true
+  },
+  export_seal_no: {
+    // 封号
     type: db.STRING(20),
     allowNull: true
   },

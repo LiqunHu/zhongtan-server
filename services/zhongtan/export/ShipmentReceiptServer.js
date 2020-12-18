@@ -7,8 +7,8 @@ const model = require('../../../app/model')
 const seq = require('../../../util/Sequence')
 
 const tb_user = model.common_user
-const tb_bl = model.zhongtan_export_masterbl
-const tb_container = model.zhongtan_export_container
+const tb_bl = model.zhongtan_export_proforma_masterbl
+const tb_container = model.zhongtan_export_proforma_container
 const tb_uploadfile = model.zhongtan_uploadfile
 const tb_shipment_fee = model.zhongtan_export_shipment_fee
 
@@ -24,10 +24,10 @@ exports.searchVesselAct = async req => {
   let etd_end_date = doc.etd_end_date
   let vessel_name = doc.vessel_name
   let masterbi_bl = doc.masterbi_bl
-  let queryStr =  `SELECT * FROM tbl_zhongtan_export_vessel v `
+  let queryStr =  `SELECT * FROM tbl_zhongtan_export_proforma_vessel v `
   let replacements = []
   if(masterbi_bl) {
-    queryStr = queryStr + ` LEFT JOIN tbl_zhongtan_export_masterbl b ON v.export_vessel_id = b.export_vessel_id WHERE v.state = '1' AND b.state = '1' AND b.export_masterbl_bl like ? `
+    queryStr = queryStr + ` LEFT JOIN tbl_zhongtan_export_proforma_masterbl b ON v.export_vessel_id = b.export_vessel_id WHERE v.state = '1' AND b.state = '1' AND b.export_masterbl_bl like ? `
     replacements.push('%' + masterbi_bl + '%')
   } else {
     queryStr = queryStr + ` WHERE v.state = '1' `
@@ -69,7 +69,7 @@ exports.searchBlAct = async req => {
   let returnData = {}
   let export_vessel_id = doc.export_vessel_id
   let masterbi_bl = doc.masterbi_bl
-  let queryStr =  `select * from tbl_zhongtan_export_masterbl b WHERE b.export_vessel_id = ? AND b.state = ?`
+  let queryStr =  `select * from tbl_zhongtan_export_proforma_masterbl b WHERE b.export_vessel_id = ? AND b.state = ?`
   let replacements = [export_vessel_id, GLBConfig.ENABLE]
   if(masterbi_bl) {
     queryStr = queryStr + ` AND b.export_masterbl_bl LIKE ?`
@@ -105,7 +105,7 @@ exports.searchContainerAct = async req => {
   let returnData = {}
   let export_vessel_id = doc.export_vessel_id
   let masterbi_bl = doc.masterbi_bl
-  let queryStr =  `select * from tbl_zhongtan_export_container c WHERE c.export_vessel_id = ? AND c.state = ?`
+  let queryStr =  `select * from tbl_zhongtan_export_proforma_container c WHERE c.export_vessel_id = ? AND c.state = ?`
   let replacements = [export_vessel_id, GLBConfig.ENABLE]
   if(masterbi_bl) {
     queryStr = queryStr + ` AND c.export_container_bl LIKE ?`

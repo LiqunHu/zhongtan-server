@@ -8,8 +8,8 @@ const seq = require('../../../util/Sequence')
 const opSrv = require('../../common/system/OperationPasswordServer')
 
 const tb_user = model.common_user
-const tb_vessel = model.zhongtan_export_vessel
-const tb_bl = model.zhongtan_export_masterbl
+const tb_vessel = model.zhongtan_export_proforma_vessel
+const tb_bl = model.zhongtan_export_proforma_masterbl
 const tb_fee_data = model.zhongtan_export_fee_data
 const tb_shipment_fee = model.zhongtan_export_shipment_fee
 const tb_shipment_fee_log = model.zhongtan_export_shipment_fee_log
@@ -53,7 +53,7 @@ exports.initAct = async () => {
 
 exports.searchBookingDataAct = async req => {
   let doc = common.docValidate(req)
-  let queryStr =  `SELECT * FROM tbl_zhongtan_export_masterbl WHERE state = ? `
+  let queryStr =  `SELECT * FROM tbl_zhongtan_export_proforma_masterbl WHERE state = ? `
   let replacements = [GLBConfig.ENABLE]
   if(doc.bookingNo) {
     queryStr = queryStr + ` AND export_masterbl_bl IN (?)`
@@ -181,7 +181,7 @@ exports.getBookingShipmentAct = async req => {
       returnData.vessel = {}
     }
     let queryStr =  `SELECT CONCAT(COUNT(export_container_size_type), ' x ', export_container_size_type) AS size_type 
-                  FROM tbl_zhongtan_export_container WHERE export_vessel_id = ? AND export_container_bl = ? AND state = ? GROUP BY export_container_size_type ORDER BY export_container_size_type `
+                  FROM tbl_zhongtan_export_proforma_container WHERE export_vessel_id = ? AND export_container_bl = ? AND state = ? GROUP BY export_container_size_type ORDER BY export_container_size_type `
     let replacements = [bl.export_vessel_id, bl.export_masterbl_bl, GLBConfig.ENABLE]
     let sts =  await model.simpleSelect(queryStr, replacements)
     if(sts) {
@@ -759,7 +759,7 @@ exports.invoiceShipmentAct = async req => {
   })
   if(bl && ves) {
     let queryStr =  `SELECT CONCAT(COUNT(export_container_size_type), ' x ', export_container_size_type) AS size_type 
-                  FROM tbl_zhongtan_export_container WHERE export_vessel_id = ? AND export_container_bl = ? AND state = ? GROUP BY export_container_size_type ORDER BY export_container_size_type `
+                  FROM tbl_zhongtan_export_proforma_container WHERE export_vessel_id = ? AND export_container_bl = ? AND state = ? GROUP BY export_container_size_type ORDER BY export_container_size_type `
     let replacements = [bl.export_vessel_id, bl.export_masterbl_bl, GLBConfig.ENABLE]
     let sts =  await model.simpleSelect(queryStr, replacements)
     let size_type = ''
@@ -915,7 +915,7 @@ const calculationShipmentFee = async function(fee_data_code, shipment_fee_type, 
         }
       } else {
         queryStr =  `SELECT COUNT(export_container_size_type) AS size_type_count, export_container_size_type AS size_type 
-                    FROM tbl_zhongtan_export_container WHERE export_vessel_id = ? AND export_container_bl = ? AND state = ? GROUP BY export_container_size_type`
+                    FROM tbl_zhongtan_export_proforma_container WHERE export_vessel_id = ? AND export_container_bl = ? AND state = ? GROUP BY export_container_size_type`
         replacements = [export_vessel_id, export_masterbl_bl, GLBConfig.ENABLE]
         let sts =  await model.simpleSelect(queryStr, replacements)
         let fee_amount = 0

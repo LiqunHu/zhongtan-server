@@ -8,8 +8,8 @@ const tb_verificatione = model.zhongtan_export_verification
 const tb_verification_log = model.zhongtan_export_verification_log
 const tb_user = model.common_user
 const tb_edi_depot = model.zhongtan_edi_depot
-const tb_bl = model.zhongtan_export_masterbl
-const tb_vessel = model.zhongtan_export_vessel
+const tb_vessel = model.zhongtan_export_proforma_vessel
+const tb_bl = model.zhongtan_export_proforma_masterbl
 const tb_shipment_fee = model.zhongtan_export_shipment_fee
 const tb_shipment_fee_log = model.zhongtan_export_shipment_fee_log
 
@@ -24,7 +24,7 @@ exports.searchAct = async req => {
   let doc = common.docValidate(req)
   let returnData = {}
   let queryStr = `select a.*, b.export_masterbl_bl, b.export_masterbl_cargo_type, c.user_name as apply_user, d.user_name as empty_release_party from tbl_zhongtan_export_verification a 
-                LEFT JOIN tbl_zhongtan_export_masterbl b ON a.export_masterbl_id = b.export_masterbl_id 
+                LEFT JOIN tbl_zhongtan_export_proforma_masterbl b ON a.export_masterbl_id = b.export_masterbl_id 
                 LEFT JOIN tbl_common_user c ON a.export_verification_create_user = c.user_id
                 LEFT JOIN tbl_common_user d ON a.export_verification_agent = d.user_id
                 WHERE a.state = '1' AND a.export_verification_api_name IN (?)`
@@ -266,7 +266,7 @@ exports.verificationDetailAct = async req => {
       returnData.export_vessel_etd = vessel.export_vessel_etd
 
       let queryStr =  `SELECT CONCAT(COUNT(export_container_size_type), ' x ', export_container_size_type) AS size_type 
-                  FROM tbl_zhongtan_export_container WHERE export_vessel_id = ? AND export_container_bl = ? AND state = ? GROUP BY export_container_size_type ORDER BY export_container_size_type `
+                  FROM tbl_zhongtan_export_proforma_container WHERE export_vessel_id = ? AND export_container_bl = ? AND state = ? GROUP BY export_container_size_type ORDER BY export_container_size_type `
       let replacements = [bl.export_vessel_id, bl.export_masterbl_bl, GLBConfig.ENABLE]
       let sts =  await model.simpleSelect(queryStr, replacements)
       if(sts) {
