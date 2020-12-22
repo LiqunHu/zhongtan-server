@@ -91,4 +91,5 @@ module.exports = {
   equipment_05: 'selected invoice containers contain other unreceipt container',
   edi_depot_01: 'Edit edi depot do not exist',
   edi_depot_02: 'edi depot name already exists',
+  export_01: 'Collect no data'
 }

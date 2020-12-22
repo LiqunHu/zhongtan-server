@@ -14,7 +14,12 @@ const tb_shipment_fee = model.zhongtan_export_shipment_fee
 
 exports.initAct = async () => {
   let returnData = {}
-  returnData['CASH_BANK_INFO'] = GLBConfig.CASH_BANK_INFO
+  returnData.CASH_BANK_INFO = GLBConfig.CASH_BANK_INFO
+  returnData.RECEIPT_TYPE_INFO= GLBConfig.RECEIPT_TYPE_INFO
+  let queryStr = `SELECT user_id, TRIM(user_name) AS user_name FROM tbl_common_user WHERE state = '1' AND user_type = ? ORDER BY user_name`
+  let replacements = [GLBConfig.TYPE_CUSTOMER]
+  let customers = await model.simpleSelect(queryStr, replacements)
+  returnData.CUSTOMER = customers
   return common.success(returnData)
 }
 
@@ -203,4 +208,122 @@ exports.shipmentReceiptAct = async req => {
     }
   }
   return common.success({ url: fileInfo.url })
+}
+
+exports.exportCollectAct = async (req, res) => {
+  let doc = common.docValidate(req)
+  let queryStr = `SELECT b.*, v.export_vessel_name, v.export_vessel_voyage, v.export_vessel_etd 
+                  FROM tbl_zhongtan_export_proforma_masterbl b LEFT JOIN tbl_zhongtan_export_proforma_vessel v ON b.export_vessel_id = v.export_vessel_id 
+                  WHERE export_masterbl_id IN(SELECT uploadfile_index1 FROM tbl_zhongtan_uploadfile WHERE state = ? AND api_name = 'SHIPMENT-RECEIPT' `
+  let replacements = [GLBConfig.ENABLE]
+  if(doc.collect_date && doc.collect_date.length > 1) {
+    queryStr = queryStr + ` AND created_at > ? AND created_at < ? `
+    replacements.push(moment(doc.collect_date[0]).local().format('YYYY-MM-DD'))
+    replacements.push(moment(doc.collect_date[1]).local().add(1, 'days').format('YYYY-MM-DD'))
+  }
+  if(doc.receipt_party) {
+    queryStr = queryStr + ` AND uploadfile_customer_id = ? `
+    replacements.push(doc.receipt_party)
+  }
+  queryStr = queryStr + `) `
+  if(doc.carrier) {
+    queryStr = queryStr + ` AND b.export_masterbl_bl_carrier = ? `
+    replacements.push(doc.carrier)
+  }
+  queryStr = queryStr + ` ORDER BY STR_TO_DATE(v.export_vessel_etd, "%d/%m/%Y") ASC, b.export_masterbl_bl ASC `
+  let result = await model.simpleSelect(queryStr, replacements)
+  if(result) {
+    let receivable_map = new Map()
+    receivable_map.set('B/L FEE', 'receivable_bl')
+    receivable_map.set('OCEAN FREIGHT', 'receivable_ocean')
+    receivable_map.set('TASAC FEE', 'receivable_tasac')
+    let payable_map = new Map()
+    payable_map.set('B/L FEE', 'payable_bl')
+    payable_map.set('OCEAN FREIGHT', 'payable_ocean')
+    payable_map.set('TASAC FEE', 'payable_tasac')
+    payable_map.set('TELEX RELEASE FEE', 'payable_telex')
+    let renderData = []
+    for(let r of result) {
+      queryStr = `SELECT u.*, c.user_name FROM tbl_zhongtan_uploadfile u LEFT JOIN tbl_common_user c ON u.uploadfile_customer_id = c.user_id 
+                  WHERE u.state = '1' AND api_name = 'SHIPMENT-RECEIPT' AND uploadfile_index1 = '1' `
+      let files = await tb_uploadfile.findAll({
+        where: {
+          state: GLBConfig.ENABLE,
+          api_name: 'SHIPMENT-RECEIPT',
+          uploadfile_index1: r.export_masterbl_id
+        },
+        order: [['uploadfile_id', 'ASC']]
+      })
+      if(files && files.length > 0) {
+        let index = 0
+        for(let f of files) {
+          let row = {}
+          row.receipt_date = moment(f.created_at).format('YYYY/MM/DD')
+          row.receipt_no = f.uploadfile_receipt_no
+          row.receipt_currency = f.uploadfile_currency
+          row.receipt_amount = f.uploadfile_amount
+          row.check_bank = f.uploadfile_check_no
+          row.bank = f.uploadfile_bank_reference_no
+          row.check = f.uploadfile_check_no
+          row.bank_detail = ''
+          row.receipt_party = f.user_name
+          row.receipt_bl = r.export_masterbl_bl
+          row.vessel_voyage = r.export_vessel_name + '/' + r.export_vessel_voyage
+          // 添加对应收据的应付
+          queryStr = `SELECT f.*, d.fee_data_name FROM tbl_zhongtan_export_shipment_fee f 
+                      LEFT JOIN (SELECT fee_data_code, fee_data_name FROM tbl_zhongtan_export_fee_data GROUP BY fee_data_code) d ON f.fee_data_code = d.fee_data_code 
+                      WHERE f.state = '1' AND f.shipment_fee_type = 'R' AND f.shipment_fee_receipt_id = ?`
+          replacements = []
+          replacements.push(f.uploadfile_id)
+          let receivables = await model.simpleSelect(queryStr, replacements)
+          if(receivables) {
+            let receivable_others = 0
+              for(let ra of receivables) {
+                if(receivable_map.get(ra.fee_data_name)) {
+                  row[receivable_map.get(ra.fee_data_name)] = ra.shipment_fee_amount
+                }else {
+                  if(ra.shipment_fee_amount) {
+                    receivable_others = new Decimal(receivable_others).plus(new Decimal(ra.shipment_fee_amount))
+                  }
+                }
+              }
+              if(Decimal.isDecimal(receivable_others) && receivable_others.toNumber() !== 0) {
+                row.receivable_others = receivable_others.toNumber()
+              }
+          }
+          if(index === 0) {
+            // 添加应付费用
+            queryStr = `SELECT f.*, d.fee_data_name FROM tbl_zhongtan_export_shipment_fee f 
+                        LEFT JOIN (SELECT fee_data_code, fee_data_name FROM tbl_zhongtan_export_fee_data GROUP BY fee_data_code) d ON f.fee_data_code = d.fee_data_code 
+                        WHERE f.state = '1' AND f.shipment_fee_type = 'P' AND f.shipment_fee_status = 'AP' AND f.export_masterbl_id = ?`
+            replacements = []
+            replacements.push(r.export_masterbl_id)
+            let payables = await model.simpleSelect(queryStr, replacements)
+            if(payables) {
+              let payable_others = 0
+              for(let pa of payables) {
+                if(payable_map.get(pa.fee_data_name)) {
+                  row[payable_map.get(pa.fee_data_name)] = pa.shipment_fee_amount
+                }else {
+                  if(pa.shipment_fee_amount) {
+                    payable_others = new Decimal(payable_others).plus(new Decimal(pa.shipment_fee_amount))
+                  }
+                }
+              }
+              if(Decimal.isDecimal(payable_others) && payable_others.toNumber() !== 0) {
+                row.payable_others = payable_others.toNumber()
+              }
+            }
+          }
+          index++
+          renderData.push(row)
+        }
+      }
+    }
+    let filepath = await common.ejs2xlsx('ShipmentReceiptTemplate.xlsx', renderData)
+    res.sendFile(filepath)
+  } else {
+    // console.log('EE')
+    return common.error('export_01')
+  }
 }

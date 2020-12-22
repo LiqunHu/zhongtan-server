@@ -61,5 +61,20 @@ module.exports = db.defineModel('tbl_zhongtan_export_fee_data', {
     type: db.STRING(10),
     defaultValue: '0',
     allowNull: false
+  },
+  fee_data_payable_common_party: {
+    // 通用固定代理
+    type: db.STRING(20),
+    allowNull: true
+  },
+  fee_data_payable_cosco_party: {
+    // cosco固定代理
+    type: db.STRING(20),
+    allowNull: true
+  },
+  fee_data_payable_oocl_party: {
+    // oolu固定代理
+    type: db.STRING(20),
+    allowNull: true
   }
 })

@@ -17,7 +17,9 @@ module.exports = async (req, res) => {
       ret = await srv.searchContainerAct(req)
     } else if (method === 'shipmentReceipt') {
       ret = await srv.shipmentReceiptAct(req)
-    } 
+    } else if(method === 'exportCollect') {
+      return await srv.exportCollectAct(req, res)
+    }
     
     common.sendData(res, ret)
   } catch (error) {

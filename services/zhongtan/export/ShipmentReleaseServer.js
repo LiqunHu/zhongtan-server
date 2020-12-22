@@ -222,7 +222,7 @@ exports.getBookingShipmentAct = async req => {
               shipment_fee_id: '',
               fee_data_code: fr.fee_data_code,
               shipment_fee_type: 'R',
-              shipment_fee_party: '',
+              shipment_fee_party: bl.export_masterbl_empty_release_agent,
               shipment_fee_status: 'NE',
               fee_data_fixed: GLBConfig.ENABLE,
               shipment_fee_supplement: GLBConfig.DISABLE,
@@ -242,7 +242,7 @@ exports.getBookingShipmentAct = async req => {
             shipment_fee_id: '',
             fee_data_code: fr.fee_data_code,
             shipment_fee_type: 'R',
-            shipment_fee_party: '',
+            shipment_fee_party: bl.export_masterbl_empty_release_agent,
             shipment_fee_status: 'NE',
             fee_data_fixed: GLBConfig.ENABLE,
             shipment_fee_supplement: GLBConfig.DISABLE,
@@ -288,7 +288,7 @@ exports.getBookingShipmentAct = async req => {
               shipment_fee_id: '',
               fee_data_code: fp.fee_data_code,
               shipment_fee_type: 'P',
-              shipment_fee_party: '',
+              shipment_fee_party: fee_data.shipment_fee_party ? fee_data.shipment_fee_party : '',
               shipment_fee_status: 'NE',
               fee_data_fixed: GLBConfig.ENABLE ,
               shipment_fee_supplement: GLBConfig.DISABLE,
@@ -308,7 +308,7 @@ exports.getBookingShipmentAct = async req => {
             shipment_fee_id: '',
             fee_data_code: fp.fee_data_code,
             shipment_fee_type: 'P',
-            shipment_fee_party: '',
+            shipment_fee_party: fee_data.shipment_fee_party ? fee_data.shipment_fee_party : '',
             shipment_fee_status: 'NE',
             fee_data_fixed: GLBConfig.ENABLE ,
             shipment_fee_supplement: GLBConfig.DISABLE,
@@ -911,9 +911,18 @@ const calculationShipmentFee = async function(fee_data_code, shipment_fee_type, 
             fee_currency: fee_data[0].fee_data_receivable_amount_currency
           }
         } else {
+          let shipment_fee_party = ''
+          if(fee_data[0].fee_data_payable_common_party) {
+            shipment_fee_party = fee_data[0].fee_data_payable_common_party
+          } else if(export_masterbl_bl.indexOf('COSU') >= 0){
+            shipment_fee_party = fee_data[0].fee_data_payable_cosco_party
+          } else if(export_masterbl_bl.indexOf('OOLU') >= 0){
+            shipment_fee_party = fee_data[0].fee_data_payable_oocl_party
+          }
           returnData = {
             fee_amount: fee_data[0].fee_data_payable_amount,
-            fee_currency: fee_data[0].fee_data_payable_amount_currency
+            fee_currency: fee_data[0].fee_data_payable_amount_currency,
+            shipment_fee_party: shipment_fee_party
           }
         }
       } else {
@@ -923,6 +932,7 @@ const calculationShipmentFee = async function(fee_data_code, shipment_fee_type, 
         let sts =  await model.simpleSelect(queryStr, replacements)
         let fee_amount = 0
         let fee_currency = ''
+        let shipment_fee_party = ''
         if(sts) {
           for(let s of sts) {
             if(shipment_fee_type === 'R') {
@@ -958,13 +968,21 @@ const calculationShipmentFee = async function(fee_data_code, shipment_fee_type, 
                   fee_amount = '$'
                 }
                 fee_currency = con_fee_data.fee_data_payable_amount_currency
+                if(con_fee_data.fee_data_payable_common_party) {
+                  shipment_fee_party = con_fee_data.fee_data_payable_common_party
+                } else if(export_masterbl_bl.indexOf('COSU') >= 0){
+                  shipment_fee_party = con_fee_data.fee_data_payable_cosco_party
+                } else if(export_masterbl_bl.indexOf('OOLU') >= 0){
+                  shipment_fee_party = con_fee_data.fee_data_payable_oocl_party
+                }
               }
             }
           }
         }
         returnData = {
           fee_amount: Decimal.isDecimal(fee_amount) ? fee_amount.toNumber() : fee_amount,
-          fee_currency: fee_currency
+          fee_currency: fee_currency,
+          shipment_fee_party: shipment_fee_party
         }
       }
     }
@@ -980,6 +998,7 @@ const calculationShipmentFee = async function(fee_data_code, shipment_fee_type, 
     returnData.fee_amount = ''
     returnData.fee_amount_fixed = GLBConfig.DISABLE
   }
+  
   return returnData
 }
 
@@ -1002,6 +1021,9 @@ const setShipmentFeeDisabled = async function(sf) {
       } else if(sf.shipment_fee_fixed_amount && sf.shipment_fee_fixed_amount === '1') {
         disabled.amount_disabled = true
         disabled.currency_disabled = true
+      }
+      if(sf.shipment_fee_type === 'P' && sf.fee_data_fixed === '1') {
+        disabled.party_disabled = true
       }
     } else {
       disabled.party_disabled = true
