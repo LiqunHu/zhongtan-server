@@ -226,8 +226,8 @@ exports.getBookingShipmentAct = async req => {
               shipment_fee_status: 'NE',
               fee_data_fixed: GLBConfig.ENABLE,
               shipment_fee_supplement: GLBConfig.DISABLE,
-              shipment_fee_fixed_amount: GLBConfig.ENABLE,
-              shipment_fee_amount: fee_data.fee_amount,
+              shipment_fee_fixed_amount: fee_data.fee_amount === '$' ? GLBConfig.DISABLE : GLBConfig.ENABLE,
+              shipment_fee_amount: fee_data.fee_amount === '$' ? '' : fee_data.fee_amount,
               shipment_fee_currency: fee_data.fee_currency
             })
           }
@@ -246,8 +246,8 @@ exports.getBookingShipmentAct = async req => {
             shipment_fee_status: 'NE',
             fee_data_fixed: GLBConfig.ENABLE,
             shipment_fee_supplement: GLBConfig.DISABLE,
-            shipment_fee_fixed_amount: GLBConfig.ENABLE,
-            shipment_fee_amount: fee_data.fee_amount,
+            shipment_fee_fixed_amount: fee_data.fee_amount === '$' ? GLBConfig.DISABLE : GLBConfig.ENABLE,
+            shipment_fee_amount: fee_data.fee_amount === '$' ? '' : fee_data.fee_amount,
             shipment_fee_currency: fee_data.fee_currency
           })
         }
@@ -292,8 +292,8 @@ exports.getBookingShipmentAct = async req => {
               shipment_fee_status: 'NE',
               fee_data_fixed: GLBConfig.ENABLE ,
               shipment_fee_supplement: GLBConfig.DISABLE,
-              shipment_fee_fixed_amount: GLBConfig.ENABLE,
-              shipment_fee_amount: fee_data.fee_amount,
+              shipment_fee_fixed_amount: fee_data.fee_amount === '$' ?GLBConfig.DISABLE : GLBConfig.ENABLE,
+              shipment_fee_amount: fee_data.fee_amount === '$' ? '' : fee_data.fee_amount,
               shipment_fee_currency: fee_data.fee_currency
             })
           }
@@ -312,8 +312,8 @@ exports.getBookingShipmentAct = async req => {
             shipment_fee_status: 'NE',
             fee_data_fixed: GLBConfig.ENABLE ,
             shipment_fee_supplement: GLBConfig.DISABLE,
-            shipment_fee_fixed_amount: GLBConfig.ENABLE,
-            shipment_fee_amount: fee_data.fee_amount,
+            shipment_fee_fixed_amount: fee_data.fee_amount === '$' ? GLBConfig.DISABLE : GLBConfig.ENABLE,
+            shipment_fee_amount: fee_data.fee_amount === '$' ? '' : fee_data.fee_amount,
             shipment_fee_currency: fee_data.fee_currency
           })
         }
@@ -354,6 +354,9 @@ exports.getShipmentFeeAmountAct = async req => {
   })
   if(bl) {
     let cal = await calculationShipmentFee(doc.fee_data_code, doc.shipment_fee_type, bl.export_vessel_id, bl.export_masterbl_bl, bl.export_masterbl_cargo_type)
+    if(cal && cal.fee_amount === '$') {
+      cal.fee_amount = ''
+    }
     let sf = {
       shipment_fee_status: 'NE',
       fee_data_fixed: GLBConfig.DISABLED,
@@ -934,6 +937,8 @@ const calculationShipmentFee = async function(fee_data_code, shipment_fee_type, 
               if(con_fee_data) {
                 if(con_fee_data.fee_data_receivable_amount){
                   fee_amount = new Decimal(fee_amount).plus(new Decimal(con_fee_data.fee_data_receivable_amount).times(s.size_type_count))
+                }else {
+                  fee_amount = '$'
                 }
                 fee_currency = con_fee_data.fee_data_receivable_amount_currency
               }
@@ -949,6 +954,8 @@ const calculationShipmentFee = async function(fee_data_code, shipment_fee_type, 
               if(con_fee_data) {
                 if(con_fee_data.fee_data_payable_amount) {
                   fee_amount = new Decimal(fee_amount).plus(new Decimal(con_fee_data.fee_data_payable_amount).times(s.size_type_count))
+                } else {
+                  fee_amount = '$'
                 }
                 fee_currency = con_fee_data.fee_data_payable_amount_currency
               }
@@ -967,7 +974,7 @@ const calculationShipmentFee = async function(fee_data_code, shipment_fee_type, 
       fee_currency: 'USD'
     }
   }
-  if(returnData.fee_amount && returnData.fee_amount > 0) {
+  if(returnData.fee_amount && (returnData.fee_amount === '$' || returnData.fee_amount > 0)) {
     returnData.fee_amount_fixed = GLBConfig.ENABLE
   } else {
     returnData.fee_amount = ''
