@@ -217,11 +217,49 @@ exports.exportDataAct = async(req, res) => {
   queryStr = queryStr + ' ORDER BY b.invoice_vessel_id DESC, a.invoice_containers_bl, a.invoice_containers_no'
   let result = await model.simpleSelect(queryStr, replacements)
   let renderData = []
+  let calFreeDays = []
+  for (let r of result) {
+    if(r.invoice_masterbi_destination) {
+      let cal = true
+      for(let c of calFreeDays) {
+        if(c.invoice_masterbi_cargo_type === r.invoice_masterbi_cargo_type 
+          && c.invoice_masterbi_destination === r.invoice_masterbi_destination
+          && c.invoice_masterbi_carrier === r.invoice_masterbi_carrier
+          && c.invoice_containers_size === r.invoice_containers_size
+          && c.invoice_vessel_ata === r.invoice_vessel_ata && c.cal_free_days) {
+            cal = false
+            break
+        }
+      }
+      if(cal) {
+        let free_days = await cal_config_srv.queryContainerFreeDays(r.invoice_masterbi_cargo_type, r.invoice_masterbi_destination.substring(0, 2), r.invoice_masterbi_carrier, r.invoice_containers_size, r.invoice_vessel_ata)
+        if(free_days) {
+          calFreeDays.push({
+            invoice_masterbi_cargo_type: r.invoice_masterbi_cargo_type,
+            invoice_masterbi_destination: r.invoice_masterbi_destination,
+            invoice_masterbi_carrier: r.invoice_masterbi_carrier,
+            invoice_containers_size: r.invoice_containers_size,
+            invoice_vessel_ata: r.invoice_vessel_ata,
+            cal_free_days: free_days
+          })
+        }
+      }
+    }
+  }
   for (let r of result) {
     if(r.invoice_containers_empty_return_overdue_free_days) {
       r.invoice_containers_free_days = r.invoice_containers_empty_return_overdue_free_days
     } else {
-      r.invoice_containers_free_days = await cal_config_srv.queryContainerFreeDays(r.invoice_masterbi_cargo_type, r.invoice_masterbi_destination.substring(0, 2), r.invoice_masterbi_carrier, r.invoice_containers_size, r.invoice_vessel_ata)
+      for(let c of calFreeDays) {
+        if(c.invoice_masterbi_cargo_type === r.invoice_masterbi_cargo_type 
+          && c.invoice_masterbi_destination === r.invoice_masterbi_destination
+          && c.invoice_masterbi_carrier === r.invoice_masterbi_carrier
+          && c.invoice_containers_size === r.invoice_containers_size
+          && c.invoice_vessel_ata === r.invoice_vessel_ata && c.cal_free_days) {
+            r.invoice_containers_free_days = c.cal_free_days
+            break
+        }
+      }
     }
     r.discharge_date = r.invoice_vessel_ata
     if(r.invoice_containers_edi_discharge_date) {
