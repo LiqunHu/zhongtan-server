@@ -21,6 +21,7 @@ module.exports = db.defineModel('tbl_zhongtan_export_fee_data', {
   },
   fee_data_container_size: {
     type: db.STRING(20),
+    defaultValue: '',
     allowNull: false
   },
   fee_data_receivable: {
