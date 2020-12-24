@@ -24,6 +24,8 @@ exports.initAct = async () => {
     },
     order: [['discharge_port_code', 'ASC']]
   })
+  returnData['BUSINESS_TYPE'] = GLBConfig.BUSINESS_TYPE
+  returnData['EXPORT_CARGO_TYPE'] = GLBConfig.MNR_CARGO_TYPE
   return common.success(returnData)
 }
 
@@ -35,6 +37,10 @@ exports.searchAct = async req => {
   let replacements = []
 
   if(doc.search_data) {
+    if (doc.search_data.overdue_charge_business_type) {
+      queryStr += ' and overdue_charge_business_type = ?'
+      replacements.push(doc.search_data.overdue_charge_business_type)
+    }
     if (doc.search_data.enabled_date) {
       queryStr += ' and overdue_charge_enabled_date = ?'
       replacements.push(doc.search_data.enabled_date)
@@ -67,21 +73,61 @@ exports.searchAct = async req => {
 
 exports.addAct = async req => {
   let doc = common.docValidate(req)
-
+  let business_type = doc.overdue_charge_business_type
   let discharge_ports = doc.overdue_charge_discharge_port_multiple
   let container_sizes = doc.overdue_charge_container_size_multiple
   let overdue_charge_enabled_date = ''
   if(doc.overdue_charge_enabled_date) {
     overdue_charge_enabled_date = moment(doc.overdue_charge_enabled_date, 'YYYY-MM-DD').local().format('YYYY-MM-DD')
   }
-  for (let d of discharge_ports) {
+  if(business_type === 'I') {
+    // 进口滞期费用规则
+    for (let d of discharge_ports) {
+      for(let c of container_sizes) {
+        let queryStr = `select * from tbl_zhongtan_overdue_charge_rule where state = '1' and overdue_charge_business_type = 'I' and
+          overdue_charge_cargo_type = ? and overdue_charge_discharge_port = ? and overdue_charge_carrier = ? and overdue_charge_container_size = ? 
+          and ((overdue_charge_min_day <= ? and overdue_charge_max_day >= ?) and (overdue_charge_min_day <= ? and overdue_charge_max_day >= ?)) and overdue_charge_enabled_date = ? `
+        let replacements = [
+          doc.overdue_charge_cargo_type,
+          d,
+          doc.overdue_charge_carrier,
+          c,
+          doc.overdue_charge_min_day,
+          doc.overdue_charge_min_day,
+          doc.overdue_charge_max_day,
+          doc.overdue_charge_max_day,
+          overdue_charge_enabled_date
+        ]
+        let rules = await model.simpleSelect(queryStr, replacements)
+        if(rules && rules.length > 0) {
+          return common.error('equipment_01')
+        }
+      }
+    }
+    for (let d of discharge_ports) {
+      for(let c of container_sizes) {
+        await tb_overdue_charge_rule.create({
+          overdue_charge_business_type: 'I',
+          overdue_charge_cargo_type: doc.overdue_charge_cargo_type,
+          overdue_charge_discharge_port: d,
+          overdue_charge_carrier: doc.overdue_charge_carrier,
+          overdue_charge_container_size: c,
+          overdue_charge_min_day: doc.overdue_charge_min_day,
+          overdue_charge_max_day: doc.overdue_charge_max_day,
+          overdue_charge_amount: doc.overdue_charge_amount,
+          overdue_charge_currency: doc.overdue_charge_currency,
+          overdue_charge_enabled_date: overdue_charge_enabled_date
+        })
+      }
+    }
+  } else {
+    // 出口滞期费用规则
     for(let c of container_sizes) {
-      let queryStr = `select * from tbl_zhongtan_overdue_charge_rule where state = '1' and 
-        overdue_charge_cargo_type = ? and overdue_charge_discharge_port = ? and overdue_charge_carrier = ? and overdue_charge_container_size = ? 
+      let queryStr = `select * from tbl_zhongtan_overdue_charge_rule where state = '1' and overdue_charge_business_type = 'E' and
+        overdue_charge_cargo_type = ? and overdue_charge_carrier = ? and overdue_charge_container_size = ? 
         and ((overdue_charge_min_day <= ? and overdue_charge_max_day >= ?) and (overdue_charge_min_day <= ? and overdue_charge_max_day >= ?)) and overdue_charge_enabled_date = ? `
       let replacements = [
         doc.overdue_charge_cargo_type,
-        d,
         doc.overdue_charge_carrier,
         c,
         doc.overdue_charge_min_day,
@@ -95,13 +141,10 @@ exports.addAct = async req => {
         return common.error('equipment_01')
       }
     }
-  }
-  
-  for (let d of discharge_ports) {
     for(let c of container_sizes) {
       await tb_overdue_charge_rule.create({
+        overdue_charge_business_type: 'E',
         overdue_charge_cargo_type: doc.overdue_charge_cargo_type,
-        overdue_charge_discharge_port: d,
         overdue_charge_carrier: doc.overdue_charge_carrier,
         overdue_charge_container_size: c,
         overdue_charge_min_day: doc.overdue_charge_min_day,
@@ -117,40 +160,57 @@ exports.addAct = async req => {
 
 exports.modifyAct = async req => {
   let doc = common.docValidate(req)
-
   let obj = await tb_overdue_charge_rule.findOne({
     where: {
       overdue_charge_rule_id: doc.old.overdue_charge_rule_id,
       state: GLBConfig.ENABLE
     }
   })
-
   if(obj) {
     let overdue_charge_enabled_date = ''
     if(doc.new.overdue_charge_enabled_date) {
       overdue_charge_enabled_date = moment(doc.new.overdue_charge_enabled_date, 'YYYY-MM-DD').local().format('YYYY-MM-DD')
     }
-    let queryStr = `select * from tbl_zhongtan_overdue_charge_rule where overdue_charge_rule_id != ? and state = '1' and 
+    if(obj.overdue_charge_business_type === 'I') {
+      let queryStr = `select * from tbl_zhongtan_overdue_charge_rule where overdue_charge_rule_id != ? and state = '1' and overdue_charge_business_type = 'I' and 
         overdue_charge_cargo_type = ? and overdue_charge_discharge_port = ? and overdue_charge_carrier = ? and overdue_charge_container_size = ? and ((overdue_charge_min_day <= ? and overdue_charge_max_day >= ?) or (overdue_charge_min_day <= ? and overdue_charge_max_day >= ?)) and overdue_charge_enabled_date = ?`
-    let replacements = [
-      doc.old.overdue_charge_rule_id,
-      doc.new.overdue_charge_cargo_type,
-      doc.new.overdue_charge_discharge_port,
-      doc.new.overdue_charge_carrier,
-      doc.new.overdue_charge_container_size,
-      doc.new.overdue_charge_min_day,
-      doc.new.overdue_charge_min_day,
-      doc.new.overdue_charge_max_day,
-      doc.new.overdue_charge_max_day,
-      overdue_charge_enabled_date
-    ]
-    let rules = await model.simpleSelect(queryStr, replacements)
-    if(rules && rules.length > 0) {
-      return common.error('equipment_01')
+      let replacements = [
+        doc.old.overdue_charge_rule_id,
+        doc.new.overdue_charge_cargo_type,
+        doc.new.overdue_charge_discharge_port,
+        doc.new.overdue_charge_carrier,
+        doc.new.overdue_charge_container_size,
+        doc.new.overdue_charge_min_day,
+        doc.new.overdue_charge_min_day,
+        doc.new.overdue_charge_max_day,
+        doc.new.overdue_charge_max_day,
+        overdue_charge_enabled_date
+      ]
+      let rules = await model.simpleSelect(queryStr, replacements)
+      if(rules && rules.length > 0) {
+        return common.error('equipment_01')
+      }
+      obj.overdue_charge_discharge_port = doc.new.overdue_charge_discharge_port
+    } else {
+      let queryStr = `select * from tbl_zhongtan_overdue_charge_rule where overdue_charge_rule_id != ? and state = '1' and overdue_charge_business_type = 'E' and 
+        overdue_charge_cargo_type = ? and overdue_charge_carrier = ? and overdue_charge_container_size = ? and ((overdue_charge_min_day <= ? and overdue_charge_max_day >= ?) or (overdue_charge_min_day <= ? and overdue_charge_max_day >= ?)) and overdue_charge_enabled_date = ?`
+      let replacements = [
+        doc.old.overdue_charge_rule_id,
+        doc.new.overdue_charge_cargo_type,
+        doc.new.overdue_charge_carrier,
+        doc.new.overdue_charge_container_size,
+        doc.new.overdue_charge_min_day,
+        doc.new.overdue_charge_min_day,
+        doc.new.overdue_charge_max_day,
+        doc.new.overdue_charge_max_day,
+        overdue_charge_enabled_date
+      ]
+      let rules = await model.simpleSelect(queryStr, replacements)
+      if(rules && rules.length > 0) {
+        return common.error('equipment_01')
+      }
     }
-
     obj.overdue_charge_cargo_type = doc.new.overdue_charge_cargo_type
-    obj.overdue_charge_discharge_port = doc.new.overdue_charge_discharge_port
     obj.overdue_charge_carrier = doc.new.overdue_charge_carrier
     obj.overdue_charge_container_size = doc.new.overdue_charge_container_size
     obj.overdue_charge_min_day = doc.new.overdue_charge_min_day
@@ -191,7 +251,10 @@ exports.deleteAct = async req => {
  * @param {*} container_type 
  * @param {*} enabled_date 
  */
-exports.queryDemurrageRules = async (cargo_type, discharge_port, carrier, container_type, enabled_date) => {
+exports.queryDemurrageRules = async (cargo_type, discharge_port, carrier, container_type, enabled_date, business_type = 'I') => {
+  // if(!business_type) {
+  //   business_type = 'I'
+  // }
   let con_size_type = await tb_container_size.findOne({
     attributes: ['container_size_code', 'container_size_name'],
     where: {
@@ -202,8 +265,8 @@ exports.queryDemurrageRules = async (cargo_type, discharge_port, carrier, contai
   if(con_size_type) {
     let type = con_size_type.container_size_code
     let queryStr = `SELECT * FROM tbl_zhongtan_overdue_charge_rule WHERE state = ? AND overdue_charge_cargo_type = ? 
-                      AND overdue_charge_discharge_port = ? AND overdue_charge_carrier = ? AND overdue_charge_container_size = ? ORDER BY overdue_charge_enabled_date DESC, overdue_charge_min_day DESC `
-    let replacements = [GLBConfig.ENABLE, cargo_type, discharge_port, carrier, type]
+                      AND overdue_charge_discharge_port = ? AND overdue_charge_carrier = ? AND overdue_charge_container_size = ? AND overdue_charge_business_type = ? ORDER BY overdue_charge_enabled_date DESC, overdue_charge_min_day DESC `
+    let replacements = [GLBConfig.ENABLE, cargo_type, discharge_port, carrier, type, business_type]
     let allChargeRules = await model.simpleSelect(queryStr, replacements)
     if(allChargeRules) {
       let enabledDates = []
@@ -248,8 +311,8 @@ exports.queryDemurrageRules = async (cargo_type, discharge_port, carrier, contai
  * @param {*} container_type 
  * @param {*} enabled_date 
  */
-exports.queryContainerFreeDays = async (cargo_type, discharge_port, carrier, container_type, enabled_date) => {
-  let chargeRules = await this.queryDemurrageRules(cargo_type, discharge_port, carrier, container_type, enabled_date)
+exports.queryContainerFreeDays = async (cargo_type, discharge_port, carrier, container_type, enabled_date, business_type) => {
+  let chargeRules = await this.queryDemurrageRules(cargo_type, discharge_port, carrier, container_type, enabled_date, business_type)
   if(chargeRules && chargeRules.length  > 0) {
     return chargeRules[chargeRules.length - 1].overdue_charge_max_day
   }
@@ -267,11 +330,14 @@ exports.queryContainerFreeDays = async (cargo_type, discharge_port, carrier, con
  * @param {*} container_type 
  * @param {*} enabled_date 
  */
-exports.demurrageCalculation = async (free_days, discharge_date, return_date, cargo_type, discharge_port, carrier, container_type, enabled_date) => {
+exports.demurrageCalculation = async (free_days, discharge_date, return_date, cargo_type, discharge_port, carrier, container_type, enabled_date, business_type = 'I') => {
   if(free_days) {
     free_days = parseInt(free_days)
   }
-  let chargeRules = await this.queryDemurrageRules(cargo_type, discharge_port, carrier, container_type, enabled_date)
+  // if(!business_type) {
+  //   business_type = 'I'
+  // }
+  let chargeRules = await this.queryDemurrageRules(cargo_type, discharge_port, carrier, container_type, enabled_date, business_type)
   if(chargeRules && chargeRules.length  > 0) {
     let diff = moment(return_date, 'DD/MM/YYYY').diff(moment(discharge_date, 'DD/MM/YYYY'), 'days') + 1 // Calendar day Cover First Day
     let overdueAmount = 0

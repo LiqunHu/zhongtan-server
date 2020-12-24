@@ -427,4 +427,8 @@ module.exports = {
     { id: 'IN', text: 'INVOICE' },  // 开票
     { id: 'RE', text: 'RECEIPT' }  // 收据
   ],
+  BUSINESS_TYPE: [
+    { id: 'I', text: 'IMPORT' }, // 进口
+    { id: 'E', text: 'EXPORT' } // 出口
+  ]
 }

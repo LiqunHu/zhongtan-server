@@ -8,14 +8,14 @@ module.exports = db.defineModel('tbl_zhongtan_overdue_charge_rule', {
     primaryKey: true
   },
   overdue_charge_cargo_type: {
-    // IM/TR
+    // 进口: IM/TR 出口: LOCAL/TRANSIT
     type: db.STRING(10),
     allowNull: false
   },
   overdue_charge_discharge_port: {
     // 目的港
     type: db.STRING(20),
-    allowNull: false
+    allowNull: true
   },
   overdue_charge_carrier: {
     // COSCO/OOCL
@@ -52,5 +52,10 @@ module.exports = db.defineModel('tbl_zhongtan_overdue_charge_rule', {
     // 启用日期
     type: db.STRING(20),
     allowNull: true
+  },
+  overdue_charge_business_type: {
+    type: db.STRING(10),
+    defaultValue: 'I',
+    allowNull: false
   }
 })
