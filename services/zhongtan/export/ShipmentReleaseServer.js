@@ -520,8 +520,20 @@ exports.submitShipmentAct = async req => {
     }
   })
   if (bl) {
-    let shipment_receivable = doc.shipment_receivable
-    let shipment_payable = doc.shipment_payable
+    let shipment_receivable = await tb_shipment_fee.findAll({
+      where: {
+        state: GLBConfig.ENABLE,
+        shipment_fee_type: 'R',
+        export_masterbl_id: bl.export_masterbl_id
+      }
+    })
+    let shipment_payable = await tb_shipment_fee.findAll({
+      where: {
+        state: GLBConfig.ENABLE,
+        shipment_fee_type: 'P',
+        export_masterbl_id: bl.export_masterbl_id
+      }
+    })
     let submitStatus = ['SA', 'DE', 'UN']
     let submitReceivable = [], submitPayable = []
     let totalReceivable = 0, totalPayable = 0

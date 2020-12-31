@@ -1519,6 +1519,50 @@ exports.depositDoAct = async req => {
       }
       renderData.fee.push(fee)
       renderData.sum_fee += parseFloat(bl.invoice_masterbi_lcl)
+
+      // 没有开过deposit的话，先开invoice fee，里面包含LCL的话，就自动开一张金额为0的deposit发票并且默认审核通过，后续只需要开receipt
+      if(!bl.invoice_masterbi_deposit_date) {
+        bl.invoice_masterbi_deposit = 0
+        bl.invoice_masterbi_deposit_date = curDate
+        bl.invoice_masterbi_deposit_release_date = curDate
+        let renderDataDeposit = JSON.parse(JSON.stringify(bl))
+        renderDataDeposit.deposit_date = moment(bl.invoice_masterbi_deposit_date).format('YYYY/MM/DD')
+        renderDataDeposit.receipt_no = await seq.genReceiptNo()
+        renderDataDeposit.customer_name = customer.user_name
+        renderDataDeposit.address = customer.user_address
+        renderDataDeposit.address1 = customer.user_address1
+        renderDataDeposit.address2 = customer.user_address2
+        renderDataDeposit.user_name = commonUser.user_name
+        renderDataDeposit.user_phone = commonUser.user_phone
+        renderDataDeposit.user_email = commonUser.user_email
+        renderDataDeposit.vessel_name = vessel.invoice_vessel_name
+        renderDataDeposit.voyage_number = vessel.invoice_vessel_voyage
+        renderDataDeposit.voyage_ata_date = vessel.invoice_vessel_ata
+        renderDataDeposit.invoice_deposit_currency = doc.invoice_container_deposit_currency
+        renderDataDeposit.invoice_masterbi_deposit_comment = doc.invoice_masterbi_deposit_comment
+        renderDataDeposit.containers = []
+        renderDataDeposit.containers.push({
+          quantity: 'FIXED',
+          cnty_type: 'CNT',
+          standard: 'DEPOSIT'
+        })
+        
+        let fileInfoDeposit = await common.ejs2Pdf('deposit.ejs', renderDataDeposit, 'zhongtan')
+        await tb_uploadfile.create({
+          api_name: 'RECEIPT-DEPOSIT',
+          user_id: user.user_id,
+          uploadfile_index1: bl.invoice_masterbi_id,
+          uploadfile_name: fileInfoDeposit.name,
+          uploadfile_url: fileInfoDeposit.url,
+          uploadfile_currency: 'USD',
+          uploadfile_state: 'AP', 
+          uploadfile_amount_comment: doc.invoice_masterbi_deposit_comment,
+          uploadfil_release_date: curDate,
+          uploadfil_release_user_id: user.user_id,
+          uploadfile_received_from: customer.user_name,
+          uploadfile_invoice_no: 'CTS/' + renderDataDeposit.invoice_masterbi_carrier + '/' + renderDataDeposit.voyage_number + '/' + renderDataDeposit.receipt_no
+        })
+      }
     }
     if (bl.invoice_masterbi_amendment) {
       let fee = { type: 'AMENDMENT FEE', amount: formatCurrency(bl.invoice_masterbi_amendment), containers: []}

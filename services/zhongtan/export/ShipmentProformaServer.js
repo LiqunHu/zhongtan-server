@@ -29,7 +29,12 @@ exports.uploadBookingAct = async req => {
       let billOf = common.valueFilter(pdfData, regex) // 提单号
       let ves = '' // 船名
       let voy = '' // 航次
+      let cos = ''
       let bl_carrier = ''
+      let shipper = ''
+      let consignee = ''
+      let pol = ''
+      let pod = ''
       if(billOf) {
         regex = '/VESSEL\\s*:\\s*([a-zA-Z0-9]+)/i'
         ves = common.valueFilter(pdfData, regex)
@@ -39,12 +44,93 @@ exports.uploadBookingAct = async req => {
         let sIndex = -1
         if(billOf.indexOf('COSU') >= 0) {
           // COSCO
+          if(!ves || !voy) {
+            let vesvoyIndex = datas.findIndex((item) => {
+              return item.search(/6.\s*Ocean\s*Vessel\s*Voy.\s*No./i) >= 0
+            })
+            if(vesvoyIndex >= 0) {
+              let vesvoyStr = datas.slice(vesvoyIndex, vesvoyIndex + 1).join(' ').trim().replace(/6.\s*Ocean\s*Vessel\s*Voy.\s*No./i, '').replace(/\s+/g, ' ')
+              if(vesvoyStr) {
+                let lastBlankIndex = vesvoyStr.lastIndexOf(' ')
+                ves = vesvoyStr.substring(0, lastBlankIndex).trim()
+                voy = vesvoyStr.substring(lastBlankIndex).trim()
+              }
+            }
+          }
+          let cosIndex = datas.findIndex((item) => {
+            return item.search(/CSO\s*\/\s*AGREEMENT\s*NUMBER/i) >= 0
+          })
+          let cosStr = datas.slice(cosIndex, cosIndex + 1).join(' ').trim()
+          cos = cosStr.substring(cosStr.search(/CSO\s*\/\s*AGREEMENT\s*NUMBER/ig)).replace(/CSO\s*\/\s*AGREEMENT\s*NUMBER/ig, '').trim()
+          let shipperSindex = datas.findIndex((item) => {
+            return item.search(/1.\s*Shipper\s*Insert\s*Name\s*Address\s*and\s*Phone\s*\/\s*Fax/i) >= 0
+          })
+          let shipperEindex = datas.findIndex((item) => {
+            return item.search(/Booking\s*No./i) >= 0
+          })
+          shipper = datas.slice(shipperSindex, shipperEindex).join(' ').trim().replace(/1.\s*Shipper\s*Insert\s*Name\s*Address\s*and\s*Phone\s*\/\s*Fax/i, '').replace(/\s+/g, ' ')
+          let consigneeSindex = datas.findIndex((item) => {
+            return item.search(/2.\s*Consignee\s*Insert\s*Name\s*Address\s*and\s*Phone\/Fax/i) >= 0
+          })
+          let consigneeEindex = datas.findIndex((item) => {
+            return item.search(/Forwarding\s*Agent\s*and\s*References/i) >= 0
+          })
+          consignee = datas.slice(consigneeSindex, consigneeEindex).join(' ').trim().replace(/2.\s*Consignee\s*Insert\s*Name\s*Address\s*and\s*Phone\/Fax/i, '').replace(/\s+/g, ' ')
+          let polpodSindex = datas.findIndex((item) => {
+            return item.search(/6.\s*Ocean\s*Vessel\s*Voy.\s*No./i) >= 0
+          })
+          let polpodEindex = datas.findIndex((item) => {
+            return item.search(/9.\s*Combined\s*Transport\s*\*\s*Place\s*of\s*Delivery/i) >= 0
+          })
+          let polpodStr = datas.slice(polpodSindex, polpodEindex + 1).join(' ')
+          let polSindex = polpodStr.search(/7.\s*Port\s*of\s*Loading/ig)
+          let polEindex = polpodStr.search(/Service\s*Contract\s*No./ig)
+          pol = polpodStr.substring(polSindex, polEindex).replace(/7.\s*Port\s*of\s*Loading/ig, '').replace(/\s+/g, ' ')
+          if(pol.lastIndexOf(',') >=0) {
+            pol = pol.substring(0, pol.lastIndexOf(','))
+          }
+          let podSindex = polpodStr.search(/8.\s*Port\s*of\s*Discharge/ig)
+          let podEindex = polpodStr.search(/9.\s*Combined\s*Transport/ig)
+          pod = polpodStr.substring(podSindex, podEindex).replace(/8.\s*Port\s*of\s*Discharge/ig, '').replace(/\s+/g, ' ')
+          if(pod.lastIndexOf(',') >=0) {
+            pod = pod.substring(0, pod.lastIndexOf(','))
+          }
           sIndex = datas.findIndex((item) => {
               return item.search(/LOAD\s*STOW\s*COUNT\s*AND\s*SEAL/i) >= 0
           })
           bl_carrier = 'COSCO'
         } else if(billOf.indexOf('OOLU') >= 0) {
           //OOCL
+          let shipperSindex = datas.findIndex((item) => {
+            return item.search(/SHIPPER\s*\/\s*EXPORTER\s*\(COMPLETE\s*NAME\s*AND\s*ADDRESS\)/i) >= 0
+          })
+          let shipperEindex = datas.findIndex((item) => {
+            return item.search(/BOOKING\s*NO./i) >= 0
+          })
+          shipper = datas.slice(shipperSindex, shipperEindex).join(' ').trim().replace(/SHIPPER\s*\/\s*EXPORTER\s*\(COMPLETE\s*NAME\s*AND\s*ADDRESS\)/i, '').replace(/\s+/g, ' ')
+          let consigneeSindex = datas.findIndex((item) => {
+            return item.search(/CONSIGNEE\s*\(COMPLETE\s*NAME\s*AND\s*ADDRESS\)/i) >= 0
+          })
+          let consigneeEindex = datas.findIndex((item) => {
+            return item.search(/FORWARDING\s*AGENT-REFERENCES/i) >= 0
+          })
+          consignee = datas.slice(consigneeSindex, consigneeEindex).join(' ').trim().replace(/CONSIGNEE\s*\(COMPLETE\s*NAME\s*AND\s*ADDRESS\)/i, '').replace(/\s+/g, ' ')
+          let polpodSindex = datas.findIndex((item) => {
+            return item.search(/VESSEL\s*\/\s*VOYAGE\s*\/\s*FLA/i) >= 0
+          })
+          let polpodEindex = datas.findIndex((item) => {
+            return item.search(/PLACE\s*OF\s*DELIVERY/i) >= 0
+          })
+          let polpodStr = datas.slice(polpodSindex, polpodEindex + 1).join(' ')
+          let polSindex = polpodStr.search(/PORT\s*OF\s*LOADINGD/ig)
+          let polEindex = polpodStr.search(/LOADING\s*PIER\s*\/\s*TERMINAL/ig)
+          pol = polpodStr.substring(polSindex, polEindex).replace(/PORT\s*OF\s*LOADINGD/ig, '').replace(/\s+/g, ' ')
+          if(pol.lastIndexOf(',') >=0) {
+            pol = pol.substring(0, pol.lastIndexOf(','))
+          }
+          let podSindex = polpodStr.search(/PORT\s*OF\s*DISCHARGE/ig)
+          let podEindex = polpodStr.search(/PLACE\s*OF\s*DELIVERY/ig)
+          pod = polpodStr.substring(podSindex, podEindex).replace(/PORT\s*OF\s*DISCHARGE/ig, '').replace(/\s+/g, ' ')
           sIndex = datas.findIndex((item) => {
             return item.search(/CNTR\.\s*NOS\.\s*W\/SEAL\s*NOS\.\s*MARK/i) >= 0
           })
@@ -126,13 +212,7 @@ exports.uploadBookingAct = async req => {
                   export_vessel_id: proforma_vessel.export_vessel_id,
                   export_masterbl_bl_carrier: bl.export_masterbl_bl_carrier,
                   export_masterbl_bl: bl.export_masterbl_bl,
-                  export_masterbl_cso_number: bl.export_masterbl_cso_number,
-                  export_masterbl_shipper_company: bl.export_masterbl_shipper_company,
                   export_masterbl_forwarder_company: bl.export_masterbl_forwarder_company,
-                  export_masterbl_consignee_company: bl.export_masterbl_consignee_company,
-                  export_masterbl_port_of_load: bl.export_masterbl_port_of_load,
-                  export_masterbl_port_of_discharge: bl.export_masterbl_port_of_discharge,
-                  export_masterbl_traffic_mode: bl.export_masterbl_traffic_mode,
                   export_masterbl_cargo_nature: bl.export_masterbl_cargo_nature,
                   export_masterbl_cargo_descriptions: bl.export_masterbl_cargo_descriptions
                 })
@@ -274,6 +354,11 @@ exports.uploadBookingAct = async req => {
               })
             }
           }
+          proforma_bl.export_masterbl_cso_number = cos
+          proforma_bl.export_masterbl_shipper_company = shipper
+          proforma_bl.export_masterbl_consignee_company = consignee
+          proforma_bl.export_masterbl_port_of_load = pol
+          proforma_bl.export_masterbl_port_of_discharge = pod
           proforma_bl.export_masterbl_traffic_mode = traffic_mode
           proforma_bl.export_masterbl_container_quantity = qty
           proforma_bl.export_masterbl_container_package = Decimal.isDecimal(total_packages) ? total_packages.toNumber() : total_packages
