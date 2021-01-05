@@ -3,6 +3,7 @@ const moment = require('moment')
 const GLBConfig = require('../../../util/GLBConfig')
 const common = require('../../../util/CommonUtil')
 const model = require('../../../app/model')
+const opSrv = require('../../common/system/OperationPasswordServer')
 const Op = model.Op
 
 const tb_user = model.common_user
@@ -319,23 +320,12 @@ exports.downloadDoAct = async req => {
 
 exports.checkPasswordAct = async req => {
   let doc = common.docValidate(req)
-  if(!doc.check_password) {
-    return common.error('auth_18')
+  let check = await opSrv.checkPassword(doc.action, doc.checkPassword)
+  if(check) {
+    return common.success()
   } else {
-    let adminUser = await tb_user.findOne({
-      where: {
-        user_username: 'admin'
-      }
-    })
-    if(adminUser) {
-      if(adminUser.user_password !== doc.check_password) {
-        return common.error('auth_24')
-      }
-    } else {
-      return common.error('auth_18')
-    }
+    return common.error('auth_24')
   }
-  return common.success()
 }
 
 const checkConditionDoState = async (bl, ves) => {

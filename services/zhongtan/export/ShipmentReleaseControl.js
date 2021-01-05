@@ -17,6 +17,8 @@ module.exports = async (req, res) => {
       ret = await srv.getShipmentFeeAmountAct(req)
     } else if (method === 'saveShipment') {
       ret = await srv.saveShipmentAct(req)
+    } else if (method === 'removeShipment') {
+      ret = await srv.removeShipmentAct(req)
     } else if (method === 'submitShipment') {
       ret = await srv.submitShipmentAct(req)
     } else if (method === 'undoShipment') {

@@ -11,13 +11,12 @@ exports.searchAct = async req => {
   let doc = common.docValidate(req),
     returnData = {}
 
-  let queryStr = `select p.*, m.systemmenu_name from tbl_zhongtan_operation_password p left join tbl_common_systemmenu m on p.operation_page = m.systemmenu_id where p.state = '1' `
+  let queryStr = `select * from tbl_zhongtan_operation_password where state = '1' `
   let replacements = []
 
   if (doc.search_text) {
-    queryStr += ' and (p.operation_desc like ? or p.operation_page like ? or p.operation_action like ? )'
+    queryStr += ' and (operation_desc like ? or operation_action like ? )'
     let search_text = '%' + doc.search_text + '%'
-    replacements.push(search_text)
     replacements.push(search_text)
     replacements.push(search_text)
   }
@@ -35,14 +34,12 @@ exports.searchPageAct = async req => {
 
 exports.addAct = async req => {
   let doc = common.docValidate(req)
-  let menuId = doc.menuId
   let action = doc.operation_action
   let desc = doc.operation_desc
   let password = doc.operation_password
   let pas = await tb_pa.findOne({
     where: {
       state: GLBConfig.ENABLE,
-      operation_page: menuId,
       operation_action: action
     }
   })
@@ -53,7 +50,6 @@ exports.addAct = async req => {
   } else {
     pas = await tb_pa.create({
       operation_desc: desc,
-      operation_page: menuId,
       operation_action: action,
       operation_password: password
     })
@@ -93,9 +89,9 @@ exports.deleteAct = async req => {
   return common.success()
 }
 
-exports.checkPassword = async (page, action, password) => {
-  let queryStr = `select p.* from tbl_zhongtan_operation_password p left join tbl_common_systemmenu m on p.operation_page = m.systemmenu_id where p.state = '1' AND m.systemmenu_name = ? AND operation_action = ?`
-  let replacements = [page, action]
+exports.checkPassword = async (action, password) => {
+  let queryStr = `select * from tbl_zhongtan_operation_password where state = '1' AND operation_action = ?`
+  let replacements = [action]
   let pass = await model.simpleSelect(queryStr, replacements)
   if(pass && pass.length > 0) {
     if(CryptoJS.MD5(pass[0].operation_password).toString() === password) {

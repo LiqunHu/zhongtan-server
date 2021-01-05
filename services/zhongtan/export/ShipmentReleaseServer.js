@@ -376,41 +376,41 @@ exports.saveShipmentAct = async req => {
   let shipment_receivable = doc.shipment_receivable
   let shipment_payable = doc.shipment_payable
   let saveStatus = ['NE', 'SA', 'DE', 'UN']
-  let exist_ids = []
+  // let exist_ids = []
   // remove
-  if(shipment_receivable && shipment_receivable.length > 0) {
-    for(let r of shipment_receivable) {
-      if(r.shipment_fee_id) {
-        exist_ids.push(r.shipment_fee_id)
-      }
-    }
-  }
-  if(shipment_payable && shipment_payable.length > 0) {
-    for(let r of shipment_payable) {
-      if(r.shipment_fee_id) {
-        exist_ids.push(r.shipment_fee_id)
-      }
-    }
-  }
-  if(exist_ids && exist_ids.length > 0) {
-    let queryStr = `SELECT shipment_fee_id FROM tbl_zhongtan_export_shipment_fee WHERE state = ? AND shipment_fee_id NOT IN (?)`
-    let replacements = [GLBConfig.ENABLE, exist_ids]
-    let rms = await model.simpleSelect(queryStr, replacements)
-    if(rms && rms.length > 0) {
-      for(let r of rms) {
-        let rm = await tb_shipment_fee.findOne({
-          where: {
-            shipment_fee_id: r.shipment_fee_id,
-            state: GLBConfig.ENABLE
-          }
-        })
-        if(rm) {
-          rm.state = GLBConfig.DISABLE
-          await rm.save()
-        }
-      }
-    }
-  }
+  // if(shipment_receivable && shipment_receivable.length > 0) {
+  //   for(let r of shipment_receivable) {
+  //     if(r.shipment_fee_id) {
+  //       exist_ids.push(r.shipment_fee_id)
+  //     }
+  //   }
+  // }
+  // if(shipment_payable && shipment_payable.length > 0) {
+  //   for(let r of shipment_payable) {
+  //     if(r.shipment_fee_id) {
+  //       exist_ids.push(r.shipment_fee_id)
+  //     }
+  //   }
+  // }
+  // if(exist_ids && exist_ids.length > 0) {
+  //   let queryStr = `SELECT shipment_fee_id FROM tbl_zhongtan_export_shipment_fee WHERE state = ? AND shipment_fee_id NOT IN (?)`
+  //   let replacements = [GLBConfig.ENABLE, exist_ids]
+  //   let rms = await model.simpleSelect(queryStr, replacements)
+  //   if(rms && rms.length > 0) {
+  //     for(let r of rms) {
+  //       let rm = await tb_shipment_fee.findOne({
+  //         where: {
+  //           shipment_fee_id: r.shipment_fee_id,
+  //           state: GLBConfig.ENABLE
+  //         }
+  //       })
+  //       if(rm) {
+  //         rm.state = GLBConfig.DISABLE
+  //         await rm.save()
+  //       }
+  //     }
+  //   }
+  // }
 
   if(shipment_receivable && shipment_receivable.length > 0) {
     for(let r of shipment_receivable) {
@@ -504,6 +504,30 @@ exports.saveShipmentAct = async req => {
             shipment_fee_save_at: new Date()
           })
         }
+      }
+    }
+  }
+  return common.success()
+}
+
+exports.removeShipmentAct = async req => {
+  let doc = common.docValidate(req)
+  let queryStr = `SELECT shipment_fee_id FROM tbl_zhongtan_export_shipment_fee WHERE state = ? AND shipment_fee_id IN (?)`
+  let replacements = [GLBConfig.ENABLE, doc.remove_ids]
+  let rms = await model.simpleSelect(queryStr, replacements)
+  if(rms && rms.length > 0) {
+    let removeStatus = ['NE', 'SA', 'DE', 'UN']
+    for(let r of rms) {
+      let rm = await tb_shipment_fee.findOne({
+        where: {
+          shipment_fee_id: r.shipment_fee_id,
+          state: GLBConfig.ENABLE
+        }
+      })
+      if(rm && removeStatus.indexOf(rm.shipment_fee_status) >= 0) {
+        rm.state = GLBConfig.DISABLE
+        rm.updated_at = new Date()
+        await rm.save()
       }
     }
   }
@@ -885,7 +909,7 @@ exports.invoiceShipmentAct = async req => {
 
 exports.checkPasswordAct = async req => {
   let doc = common.docValidate(req)
-  let check = await opSrv.checkPassword(doc.page, doc.action, doc.checkPassword)
+  let check = await opSrv.checkPassword(doc.action, doc.checkPassword)
   if(check) {
     return common.success()
   } else {

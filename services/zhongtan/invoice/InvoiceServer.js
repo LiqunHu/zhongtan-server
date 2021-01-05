@@ -8,6 +8,7 @@ const model = require('../../../app/model')
 const seq = require('../../../util/Sequence')
 const mailer = require('../../../util/Mail')
 const cal_config_srv = require('../equipment/OverdueCalculationConfigServer')
+const opSrv = require('../../common/system/OperationPasswordServer')
 const Op = model.Op
 
 const tb_user = model.common_user
@@ -43,8 +44,8 @@ exports.initAct = async () => {
   }
 
   let DEPOT = []
-  queryStr = `SELECT edi_depot_id, edi_depot_name FROM tbl_zhongtan_edi_depot WHERE state = ? ORDER BY edi_depot_name`
-  replacements = [GLBConfig.ENABLE]
+  queryStr = `SELECT edi_depot_id, edi_depot_name FROM tbl_zhongtan_edi_depot WHERE state = ? AND edi_depot_is_wharf = ? ORDER BY edi_depot_name`
+  replacements = [GLBConfig.ENABLE, GLBConfig.DISABLE]
   let depots = await model.simpleSelect(queryStr, replacements)
   if(depots) {
     DEPOT = depots
@@ -2379,23 +2380,12 @@ exports.searchFixedDepositAct = async req => {
 
 exports.checkPasswordAct = async req => {
   let doc = common.docValidate(req)
-  if(!doc.check_password) {
-    return common.error('auth_18')
+  let check = await opSrv.checkPassword(doc.action, doc.checkPassword)
+  if(check) {
+    return common.success()
   } else {
-    let adminUser = await tb_user.findOne({
-      where: {
-        user_username: 'admin'
-      }
-    })
-    if(adminUser) {
-      if(adminUser.user_password !== doc.check_password) {
-        return common.error('auth_24')
-      }
-    } else {
-      return common.error('auth_18')
-    }
+    return common.error('auth_24')
   }
-  return common.success()
 }
 
 exports.doEditVesselAct = async req => {

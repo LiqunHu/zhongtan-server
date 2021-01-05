@@ -12,11 +12,6 @@ module.exports = db.defineModel('tbl_zhongtan_operation_password', {
     type: db.STRING(50),
     allowNull: false
   },
-  operation_page: {
-    // 页面
-    type: db.STRING(20),
-    allowNull: false
-  },
   operation_action: {
     // 动作
     type: db.STRING(20),

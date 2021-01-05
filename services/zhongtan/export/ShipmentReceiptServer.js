@@ -245,15 +245,10 @@ exports.exportCollectAct = async (req, res) => {
     let renderData = []
     for(let r of result) {
       queryStr = `SELECT u.*, c.user_name FROM tbl_zhongtan_uploadfile u LEFT JOIN tbl_common_user c ON u.uploadfile_customer_id = c.user_id 
-                  WHERE u.state = '1' AND api_name = 'SHIPMENT-RECEIPT' AND uploadfile_index1 = '1' `
-      let files = await tb_uploadfile.findAll({
-        where: {
-          state: GLBConfig.ENABLE,
-          api_name: 'SHIPMENT-RECEIPT',
-          uploadfile_index1: r.export_masterbl_id
-        },
-        order: [['uploadfile_id', 'ASC']]
-      })
+                  WHERE u.state = '1' AND api_name = 'SHIPMENT-RECEIPT' AND uploadfile_index1 = ? ORDER by u.uploadfile_id`
+      replacements = []
+      replacements.push(r.export_masterbl_id)
+      let files = await model.simpleSelect(queryStr, replacements)
       if(files && files.length > 0) {
         let index = 0
         for(let f of files) {

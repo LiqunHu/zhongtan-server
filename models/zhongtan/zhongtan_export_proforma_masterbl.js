@@ -35,17 +35,17 @@ module.exports = db.defineModel('tbl_zhongtan_export_proforma_masterbl', {
   },
   export_masterbl_shipper_company: {
     // 发货人
-    type: db.STRING(50),
+    type: db.STRING(200),
     allowNull: true
   },
   export_masterbl_forwarder_company: {
     // 货代
-    type: db.STRING(50),
+    type: db.STRING(200),
     allowNull: true
   },
   export_masterbl_consignee_company: {
     // 收货人
-    type: db.STRING(50),
+    type: db.STRING(200),
     allowNull: true
   },
   export_masterbl_port_of_load: {

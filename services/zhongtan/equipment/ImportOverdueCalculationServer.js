@@ -801,7 +801,7 @@ exports.emptyReInvoiceAct = async req => {
 
 exports.checkPasswordAct = async req => {
   let doc = common.docValidate(req)
-  let check = await opSrv.checkPassword(doc.page, doc.action, doc.checkPassword)
+  let check = await opSrv.checkPassword(doc.action, doc.checkPassword)
   if(check) {
     return common.success()
   } else {
