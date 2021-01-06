@@ -28,12 +28,12 @@ exports.initAct = async () => {
   returnData.CUSTOMER = customers
 
   queryStr = `SELECT fee_data_code, fee_data_name FROM tbl_zhongtan_export_fee_data WHERE state = ? AND fee_data_receivable = ? AND fee_data_receivable_fixed = ? GROUP BY fee_data_code ORDER BY fee_data_id`
-  replacements = [GLBConfig.ENABLE, GLBConfig.ENABLE, GLBConfig.ENABLE, GLBConfig.ENABLE]
+  replacements = [GLBConfig.ENABLE, GLBConfig.ENABLE, GLBConfig.ENABLE]
   let fixed_receivable_fee = await model.simpleSelect(queryStr, replacements)
   returnData.FIXED_RECEIVABLE_FEE = fixed_receivable_fee
   
   queryStr = `SELECT fee_data_code, fee_data_name FROM tbl_zhongtan_export_fee_data WHERE state = ? AND fee_data_receivable = ? AND (fee_data_receivable_fixed = ? OR (fee_data_receivable_fixed = ? AND fee_data_receivable_amount IS NULL)) GROUP BY fee_data_code ORDER BY fee_data_id`
-  replacements = [GLBConfig.ENABLE, GLBConfig.ENABLE, GLBConfig.DISABLE]
+  replacements = [GLBConfig.ENABLE, GLBConfig.ENABLE, GLBConfig.DISABLE, GLBConfig.ENABLE]
   let other_receivable_fee = await model.simpleSelect(queryStr, replacements)
   returnData.OTHER_RECEIVABLE_FEE = other_receivable_fee
   returnData.ALL_RECEIVABLE_FEE = fixed_receivable_fee.concat(other_receivable_fee)
