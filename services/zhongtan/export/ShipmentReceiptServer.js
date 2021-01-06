@@ -151,7 +151,7 @@ exports.shipmentReceiptAct = async req => {
   renderData.shipment_receipt_date = moment().format('MMM DD, YYYY')
   renderData.shipment_receipt_party = customer.user_name
   renderData.shipment_receipt_currency = invoice.uploadfile_currency
-  renderData.shipment_receipt_bl = bl.invoice_masterbi_bl
+  renderData.shipment_receipt_bl = bl.export_masterbl_bl
   if (doc.shipment_receipt_check_cash === 'CASH') {
     renderData.check_cash = 'Cash'
   } else if (doc.shipment_receipt_check_cash === 'TRANSFER') {
