@@ -815,8 +815,9 @@ exports.invoiceShipmentAct = async req => {
     let fds = await model.simpleSelect(queryStr, replacements) 
 
     let invoiceStatus = ['AP']
-    queryStr = `SELECT f.*, u.user_name, u.user_address FROM tbl_zhongtan_export_shipment_fee f LEFT JOIN tbl_common_user u ON f.shipment_fee_party = u.user_id 
-                      WHERE f.state = ? AND f.export_masterbl_id = ? AND f.shipment_fee_type = 'R' AND f.shipment_fee_status IN (?) ORDER BY u.user_name, f.fee_data_fixed DESC, f.shipment_fee_fixed_amount DESC;`
+    queryStr = `SELECT f.*, u.user_name, u.user_address FROM 
+                tbl_zhongtan_export_shipment_fee f LEFT JOIN tbl_common_user u ON f.shipment_fee_party = u.user_id 
+                WHERE f.state = ? AND f.export_masterbl_id = ? AND f.shipment_fee_type = 'R' AND f.shipment_fee_status IN (?) ORDER BY u.user_name, f.fee_data_fixed DESC, f.shipment_fee_fixed_amount DESC;`
     replacements = [GLBConfig.ENABLE, doc.export_masterbl_id, invoiceStatus]
     let invoice_shipment = await model.simpleSelect(queryStr, replacements) 
     if(invoice_shipment && invoice_shipment.length > 0) {
@@ -845,21 +846,49 @@ exports.invoiceShipmentAct = async req => {
           renderData.containerSizeType = size_type
           renderData.receivable = []
           let totalReceivable = 0
+          // 合并费用
+          let renderFee = {}
           for(let i of invoices) {
+            if(!renderFee[i.fee_data_code]) {
+              renderFee[i.fee_data_code] = []
+            }
+            renderFee[i.fee_data_code].push(i)
+          }
+          for(let f in renderFee) {
+            let fi = renderFee[f]
             let fee_name = ''
-            for(let fd of fds) {
-              if(i.fee_data_code === fd.fee_data_code) {
-                fee_name = fd.fee_data_name
-                break
+            let fee_amount = 0
+            for(let i of fi) {
+              for(let fd of fds) {
+                if(i.fee_data_code === fd.fee_data_code) {
+                  fee_name = fd.fee_data_name
+                  break
+                }
               }
+              fee_amount = new Decimal(fee_amount).plus(new Decimal(i.shipment_fee_amount))
             }
             let r = {
               fee_type: fee_name,
-              fee_amount: i.shipment_fee_amount
+              fee_amount: fee_amount
             }
             renderData.receivable.push(r)
-            totalReceivable = new Decimal(totalReceivable).plus(new Decimal(i.shipment_fee_amount))
+            totalReceivable = new Decimal(totalReceivable).plus(new Decimal(fee_amount))
           }
+          // for(let i of invoices) {
+          //   let fee_name = ''
+          //   for(let fd of fds) {
+          //     if(i.fee_data_code === fd.fee_data_code) {
+          //       fee_name = fd.fee_data_name
+          //       break
+          //     }
+          //   }
+          //   let r = {
+          //     fee_type: fee_name,
+          //     fee_amount: i.shipment_fee_amount
+          //   }
+          //   renderData.receivable.push(r)
+          //   totalReceivable = new Decimal(totalReceivable).plus(new Decimal(i.shipment_fee_amount))
+          // }
           totalReceivable = Decimal.isDecimal(totalReceivable) ? totalReceivable.toNumber() : totalReceivable
           renderData.totalReceivable = totalReceivable
           if(totalReceivable > 0) {
