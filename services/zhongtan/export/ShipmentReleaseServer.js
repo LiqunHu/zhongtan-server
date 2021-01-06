@@ -360,7 +360,7 @@ exports.getShipmentFeeAmountAct = async req => {
     let sf = {
       shipment_fee_status: 'NE',
       fee_data_fixed: GLBConfig.DISABLED,
-      shipment_fee_fixed_amount: cal.fee_amount_fixed
+      shipment_fee_fixed_amount: cal.fee_amount ? '1' : '0'
     }
     let disabled = await setShipmentFeeDisabled(sf)
     returnData = JSON.parse((JSON.stringify(cal) + JSON.stringify(disabled)).replace(/}{/, ','))
