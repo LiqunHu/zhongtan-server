@@ -25,6 +25,8 @@ module.exports = async (req, res) => {
       ret = await srv.undoShipmentAct(req)
     } else if (method === 'invoiceShipment') {
       ret = await srv.invoiceShipmentAct(req)
+    } else if (method === 'resetShipment') {
+      ret = await srv.resetShipmentAct(req)
     } 
     
     common.sendData(res, ret)
