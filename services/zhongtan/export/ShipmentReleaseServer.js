@@ -169,7 +169,7 @@ exports.getBookingShipmentAct = async req => {
     returnData = JSON.parse(JSON.stringify(bl))
     returnData.shipment_receivable = []
     returnData.shipment_payable = []
-    let totalStatus = ['SU', 'AP', 'IN', 'RE']
+    let totalStatus = ['SU', 'AP', 'IN', 'RE', 'BA']
     let ves = await tb_vessel.findOne({
       where: {
         export_vessel_id: bl.export_vessel_id
@@ -203,7 +203,7 @@ exports.getBookingShipmentAct = async req => {
     queryStr = `SELECT f.*, u.uploadfile_url, c.user_name AS shipment_fee_submit_by_user FROM tbl_zhongtan_export_shipment_fee f 
                 LEFT JOIN tbl_zhongtan_uploadfile u ON f.shipment_fee_invoice_id = u.uploadfile_id AND u.state = ? AND u.api_name = ? 
                 LEFT JOIN tbl_common_user c ON f.shipment_fee_submit_by = c.user_id
-                WHERE f.state = ? AND f.shipment_fee_type = ? AND f.export_masterbl_id = ? ORDER BY f.shipment_fee_id`
+                WHERE f.state = ? AND f.shipment_fee_type = ? AND f.export_masterbl_id = ? ORDER BY FIELD(f.shipment_fee_status, 'NE', 'DE', 'UN', 'SA', 'SU', 'IN', 'RE', 'BA')`
     replacements = [GLBConfig.ENABLE, 'SHIPMENT-INVOICE', GLBConfig.ENABLE, 'R', doc.export_masterbl_id]
     let shipment_receivable = await model.simpleSelect(queryStr, replacements)
     if(shipment_receivable && shipment_receivable.length > 0) {
@@ -269,7 +269,7 @@ exports.getBookingShipmentAct = async req => {
     }
     queryStr = `SELECT f.*, c.user_name AS shipment_fee_submit_by_user FROM tbl_zhongtan_export_shipment_fee f
                 LEFT JOIN tbl_common_user c ON f.shipment_fee_submit_by = c.user_id
-                WHERE f.state = ? AND f.shipment_fee_type = ? AND f.export_masterbl_id = ? ORDER BY f.shipment_fee_id`
+                WHERE f.state = ? AND f.shipment_fee_type = ? AND f.export_masterbl_id = ? ORDER BY FIELD(f.shipment_fee_status, 'NE', 'DE', 'UN', 'SA', 'SU', 'IN', 'RE', 'BA')`
     replacements = [GLBConfig.ENABLE, 'P', doc.export_masterbl_id]
     let shipment_payable = await model.simpleSelect(queryStr, replacements)
     if(shipment_payable && shipment_payable.length > 0) {
@@ -809,12 +809,38 @@ exports.invoiceShipmentAct = async req => {
       }
       size_type = st.join(';')
     }
-
     queryStr = `SELECT fee_data_code, fee_data_name FROM tbl_zhongtan_export_fee_data GROUP BY fee_data_code`
     replacements = []
     let fds = await model.simpleSelect(queryStr, replacements) 
 
-    let invoiceStatus = ['AP']
+    let invoiceStatus = ['AP', 'IN']
+    // 合并冲账
+    queryStr = `SELECT shipment_fee_party, fee_data_code FROM tbl_zhongtan_export_shipment_fee WHERE state = ? AND export_masterbl_id = ? AND shipment_fee_type = 'R' AND shipment_fee_status IN (?) 
+                GROUP BY shipment_fee_party, fee_data_code HAVING SUM(shipment_fee_amount) = 0`
+    replacements = [GLBConfig.ENABLE, doc.export_masterbl_id, invoiceStatus]
+    let balance_shipment = await model.simpleSelect(queryStr, replacements)
+    if(balance_shipment && balance_shipment.length > 0) {
+      for(let bs of balance_shipment) {
+        let bsfs = await tb_shipment_fee.findAll({
+          where: {
+            state: GLBConfig.ENABLE,
+            export_masterbl_id: doc.export_masterbl_id,
+            shipment_fee_party: bs.shipment_fee_party,
+            fee_data_code: bs.fee_data_code,
+            shipment_fee_type: 'R'
+          }
+        })
+        if(bsfs && bsfs.length > 0) {
+          for(let f of bsfs) {
+            if(invoiceStatus.indexOf(f.shipment_fee_status) >= 0) {
+              f.shipment_fee_status = 'BA'
+              f.updated_at = curDate
+              await f.save()
+            }
+          }
+        }
+      }
+    }
     queryStr = `SELECT f.*, u.user_name, u.user_address FROM 
                 tbl_zhongtan_export_shipment_fee f LEFT JOIN tbl_common_user u ON f.shipment_fee_party = u.user_id 
                 WHERE f.state = ? AND f.export_masterbl_id = ? AND f.shipment_fee_type = 'R' AND f.shipment_fee_status IN (?) ORDER BY u.user_name, f.fee_data_fixed DESC, f.shipment_fee_fixed_amount DESC;`
@@ -867,28 +893,15 @@ exports.invoiceShipmentAct = async req => {
               }
               fee_amount = new Decimal(fee_amount).plus(new Decimal(i.shipment_fee_amount))
             }
-            let r = {
-              fee_type: fee_name,
-              fee_amount: fee_amount
+            if(fee_amount != 0){
+              let r = {
+                fee_type: fee_name,
+                fee_amount: fee_amount
+              }
+              renderData.receivable.push(r)
+              totalReceivable = new Decimal(totalReceivable).plus(new Decimal(fee_amount))
             }
-            renderData.receivable.push(r)
-            totalReceivable = new Decimal(totalReceivable).plus(new Decimal(fee_amount))
           }
-          // for(let i of invoices) {
-          //   let fee_name = ''
-          //   for(let fd of fds) {
-          //     if(i.fee_data_code === fd.fee_data_code) {
-          //       fee_name = fd.fee_data_name
-          //       break
-          //     }
-          //   }
-          //   let r = {
-          //     fee_type: fee_name,
-          //     fee_amount: i.shipment_fee_amount
-          //   }
-          //   renderData.receivable.push(r)
-          //   totalReceivable = new Decimal(totalReceivable).plus(new Decimal(i.shipment_fee_amount))
-          // }
           totalReceivable = Decimal.isDecimal(totalReceivable) ? totalReceivable.toNumber() : totalReceivable
           renderData.totalReceivable = totalReceivable
           if(totalReceivable > 0) {
@@ -952,7 +965,7 @@ exports.resetShipmentAct = async req =>{
       }
     })
     if(fees) {
-      let resetStatus = ['SU', 'AP', 'IN', 'RE']
+      let resetStatus = ['SU', 'AP', 'IN', 'RE', 'BA']
       for(let f of fees) {
         if(resetStatus.indexOf(f.shipment_fee_status) >= 0) {
           if(f.shipment_fee_status === 'RE') {
