@@ -2,6 +2,7 @@ const model = require('../app/model')
 const moment = require('moment')
 
 const tb_container = model.zhongtan_invoice_containers
+const tb_fixed_deposit = model.zhongtan_customer_fixed_deposit
 const cal_config_srv = require('../services/zhongtan/equipment/OverdueCalculationConfigServer')
 
 const resetDemurrageReceiptSeq = async () => {
@@ -42,7 +43,11 @@ const calculationCurrentOverdueDays = async () => {
         if(d.invoice_containers_edi_discharge_date) {
           discharge_date = d.invoice_containers_edi_discharge_date
         }
-        let cal_result = await cal_config_srv.demurrageCalculation(free_days, discharge_date, moment().format('DD/MM/YYYY'), d.invoice_masterbi_cargo_type, d.invoice_masterbi_destination.substring(0, 2), d.invoice_masterbi_carrier, d.invoice_containers_size, d.invoice_vessel_ata)
+        let return_date = moment().format('DD/MM/YYYY')
+        if(d.invoice_containers_actually_return_date) {
+          return_date = d.invoice_containers_actually_return_date
+        }
+        let cal_result = await cal_config_srv.demurrageCalculation(free_days, discharge_date, return_date, d.invoice_masterbi_cargo_type, d.invoice_masterbi_destination.substring(0, 2), d.invoice_masterbi_carrier, d.invoice_containers_size, d.invoice_vessel_ata)
         if(cal_result.diff_days !== -1) {
           await tb_container.update({'invoice_containers_current_overdue_days': cal_result.overdue_days}, {'where': {'invoice_containers_id': d.invoice_containers_id}})
         } 
@@ -53,7 +58,21 @@ const calculationCurrentOverdueDays = async () => {
   }
 }
 
+const expireFixedDepositCheck = async () => {
+  try{
+    let queryStr = `SELECT * FROM tbl_zhongtan_customer_fixed_deposit WHERE state = '1' AND deposit_work_state = 'W' AND deposit_expire_date <= ?`
+    let replacements = [moment().subtract(1, 'days').format('YYYY-MM-DD')]
+    let rows = await model.simpleSelect(queryStr, replacements)
+    for(let d of rows) {
+      await tb_fixed_deposit.update({'deposit_work_state': 'E'}, {'where': {'fixed_deposit_id': d.fixed_deposit_id}})
+    }
+  } finally {
+    // continue regardless of error
+  }
+}
+
 module.exports = {
   resetDemurrageReceiptSeq: resetDemurrageReceiptSeq,
-  calculationCurrentOverdueDays: calculationCurrentOverdueDays
+  calculationCurrentOverdueDays: calculationCurrentOverdueDays,
+  expireFixedDepositCheck: expireFixedDepositCheck
 }

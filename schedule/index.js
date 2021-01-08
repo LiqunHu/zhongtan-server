@@ -4,5 +4,6 @@ const demurrageReceipt = require('./demurrageReceipt')
 module.exports = {
   readEdiMail: ediMail.readEdiMail,
   resetDemurrageReceiptSeq: demurrageReceipt.resetDemurrageReceiptSeq,
-  calculationCurrentOverdueDays: demurrageReceipt.calculationCurrentOverdueDays 
+  calculationCurrentOverdueDays: demurrageReceipt.calculationCurrentOverdueDays,
+  expireFixedDepositCheck: demurrageReceipt.expireFixedDepositCheck 
 }

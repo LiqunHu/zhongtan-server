@@ -380,7 +380,8 @@ module.exports = {
   FIXED_DEPOSIT_WORK_STATE: [
     { id: 'N', text: 'NEW', color: 'primary' },
     { id: 'W', text: 'WORKING', color: 'success'},
-    { id: 'I', text: 'INVALID', color: 'error'}
+    { id: 'I', text: 'INVALID', color: 'error'},
+    { id: 'E', text: 'EXPIRE', color: 'error'}
   ],
   STORING_ORDER_EMAIL_SENDER: 'equipmentcontrol@sinotaship.com',
   STORING_ORDER_CARBON_COPY: 'DEMURRAGE@SINOTASHIP.COM',
