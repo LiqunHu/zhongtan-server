@@ -816,7 +816,7 @@ exports.invoiceShipmentAct = async req => {
     let invoiceStatus = ['AP', 'IN']
     // 合并冲账
     queryStr = `SELECT shipment_fee_party, fee_data_code FROM tbl_zhongtan_export_shipment_fee WHERE state = ? AND export_masterbl_id = ? AND shipment_fee_type = 'R' AND shipment_fee_status IN (?) 
-                GROUP BY shipment_fee_party, fee_data_code HAVING SUM(shipment_fee_amount) = 0`
+                GROUP BY shipment_fee_party, fee_data_code HAVING SUM(CAST(shipment_fee_amount as DECIMAL)) = 0`
     replacements = [GLBConfig.ENABLE, doc.export_masterbl_id, invoiceStatus]
     let balance_shipment = await model.simpleSelect(queryStr, replacements)
     if(balance_shipment && balance_shipment.length > 0) {

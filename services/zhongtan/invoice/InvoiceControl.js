@@ -55,6 +55,8 @@ module.exports = async (req, res) => {
       ret = await srv.deleteMasterblAct(req)
     } else if (method === 'changeContainersType') {
       ret = await srv.changeContainersTypeAct(req)
+    } else if (method === 'deliveryCheck') {
+      ret = await srv.deliveryCheckAct(req)
     }
     common.sendData(res, ret)
   } catch (error) {

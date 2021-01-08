@@ -425,7 +425,8 @@ module.exports = {
     { id: 'DE', text: 'DECLINE' },  // 驳回
     { id: 'UN', text: 'UNDO' },  // 撤回
     { id: 'IN', text: 'INVOICE' },  // 开票
-    { id: 'RE', text: 'RECEIPT' }  // 收据
+    { id: 'RE', text: 'RECEIPT' },  // 收据
+    { id: 'BA', text: 'BALANCE' }  // 冲账
   ],
   BUSINESS_TYPE: [
     { id: 'I', text: 'IMPORT' }, // 进口

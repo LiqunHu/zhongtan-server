@@ -2549,6 +2549,25 @@ exports.createDepotEdiFile = async (email, bl) =>{
   await mailer.sendEdiMail(GLBConfig.EDI_EMAIL_SENDER, email, GLBConfig.EDI_EMAIL_CARBON_COPY, '', mailSubject, mailContent, mailHtml, attachments)
 }
 
+exports.deliveryCheckAct = async req => {
+  let doc = common.docValidate(req)
+  let queryStr = `SELECT * FROM tbl_common_user WHERE state = '1' AND user_type = ? AND TRIM(user_name) = ? LIMIT 1`
+  let replacements = [GLBConfig.TYPE_CUSTOMER, doc.invoice_masterbi_delivery_to]
+  let deliverys = await model.simpleSelect(queryStr, replacements)
+  let retData = {}
+  if(deliverys && deliverys.length > 0) {
+    if(deliverys[0].user_blacklist === GLBConfig.ENABLE) {
+      retData.result = false
+      retData.message = '[' + doc.invoice_masterbi_delivery_to + '] in blcaklist, Cannot be D/O.'
+    }else {
+      retData.result = true
+    }
+  } else {
+    retData.result = true
+  }
+  return common.success(retData)
+}
+
 const checkConditionDoState = async (bl, ves) => {
   let overdueCheck = true
   let blacklistCheck = true
