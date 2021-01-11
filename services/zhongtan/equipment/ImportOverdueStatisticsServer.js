@@ -265,6 +265,12 @@ exports.exportDataAct = async(req, res) => {
     if(r.invoice_containers_edi_discharge_date) {
       r.discharge_date = r.invoice_containers_edi_discharge_date
     }
+    if(r.discharge_date) {
+      r.discharge_date = moment(r.discharge_date, 'DD/MM/YYYY').format('YYYY-MM-DD')
+    }
+    if(r.invoice_containers_actually_return_date) {
+      r.invoice_containers_actually_return_date = moment(r.invoice_containers_actually_return_date, 'DD/MM/YYYY').format('YYYY-MM-DD')
+    }
     renderData.push(r)
   }
 
