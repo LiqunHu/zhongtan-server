@@ -51,9 +51,9 @@ exports.searchAct = async req => {
       queryStr += ' and mnr_ledger_bl like ? '
       replacements.push('%' + doc.search_data.mnr_ledger_bl + '%')
     }
-    if (doc.search_data.containers_no) {
+    if (doc.search_data.container_no) {
       queryStr += ' and mnr_ledger_container_no like ? '
-      replacements.push('%' + doc.search_data.containers_no + '%')
+      replacements.push('%' + doc.search_data.container_no + '%')
     }
   }
   queryStr += ' ORDER BY container_mnr_ledger_id DESC'
