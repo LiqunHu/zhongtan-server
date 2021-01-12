@@ -18,12 +18,12 @@ module.exports = db.defineModel('tbl_zhongtan_export_shipment_fee', {
   fee_data_fixed: {
     type: db.STRING(10),
     defaultValue: '0',
-    allowNull: false
+    allowNull: true
   },
   shipment_fee_supplement: {
     type: db.STRING(10),
     defaultValue: '0',
-    allowNull: false
+    allowNull: true
   },
   shipment_fee_type: {
     type: db.STRING(10),
@@ -31,20 +31,20 @@ module.exports = db.defineModel('tbl_zhongtan_export_shipment_fee', {
   },
   shipment_fee_party: {
     type: db.STRING(50),
-    allowNull: false
+    allowNull: true
   },
   shipment_fee_fixed_amount: {
     type: db.STRING(10),
     defaultValue: '0',
-    allowNull: false
+    allowNull: true
   },
   shipment_fee_amount: {
     type: db.STRING(20),
-    allowNull: false
+    allowNull: true
   },
   shipment_fee_currency: {
     type: db.STRING(20),
-    allowNull: false
+    allowNull: true
   },
   shipment_fee_status: {
     type: db.STRING(10),

@@ -1,3 +1,4 @@
+const X = require('xlsx')
 const moment = require('moment')
 const PDFParser = require('pdf2json')
 const Decimal = require('decimal.js')
@@ -14,6 +15,7 @@ const tb_proforma_vessel = model.zhongtan_export_proforma_vessel
 const tb_proforma_bl = model.zhongtan_export_proforma_masterbl
 const tb_proforma_container = model.zhongtan_export_proforma_container
 const tb_container_size = model.zhongtan_container_size
+const tb_shipment_fee = model.zhongtan_export_shipment_fee
 
 exports.uploadBookingAct = async req => {
   let doc = common.docValidate(req)
@@ -393,6 +395,100 @@ const pdf2jsonParser = async (path) => {
 exports.uploadAct = async req => {
   let fileInfo = await common.fileSaveTemp(req)
   return common.success(fileInfo)
+}
+
+exports.importFreightAct = async req => {
+  let doc = common.docValidate(req),
+  user = req.user
+  for (let f of doc.upload_files) {
+    let wb = X.readFile(f.response.info.path, {
+      cellFormula: true,
+      bookVBA: true,
+      cellNF: true,
+      cellHTML: true,
+      sheetStubs: true,
+      cellDates: true,
+      cellStyles: true
+    })
+    if(wb.SheetNames && wb.SheetNames.length > 0) {
+      let wc = wb.Sheets[wb.SheetNames[0]]
+      let wcTemp= X.utils.sheet_to_json(wc, {})
+      let wcJS = await common.jsonTrim(wcTemp)
+      if(wcJS && wcJS.length > 0) {
+        for(let f of wcJS) {
+          if(f['_1']) {
+            if(common.isNumber(f['_1'])) {
+              if(f['_6'] && common.isNumber(f['_6'])) {
+                let queryStr = `SELECT export_masterbl_id, export_masterbl_empty_release_agent FROM tbl_zhongtan_export_proforma_masterbl WHERE state = ? AND (export_masterbl_bl = ? OR export_masterbl_bl = ? )`
+                let replacements = [GLBConfig.ENABLE, 'COSU' + f['_1'], 'OOLU' + f['_1']]
+                let pmbs = await model.simpleSelect(queryStr, replacements)
+                if(pmbs && pmbs.length > 0) {
+                  for(let p of pmbs) {
+                    let fees = await tb_shipment_fee.findAll({
+                      where: {
+                        state: GLBConfig.ENABLE,
+                        shipment_fee_type: 'R',
+                        fee_data_code: 'OFT',
+                        export_masterbl_id: p.export_masterbl_id
+                      }
+                    })
+                    if(!fees || fees.length === 0) {
+                      await tb_shipment_fee.create({
+                        export_masterbl_id: p.export_masterbl_id,
+                        fee_data_code: 'OFT',
+                        fee_data_fixed: GLBConfig.ENABLE,
+                        shipment_fee_supplement: GLBConfig.DISABLE,
+                        shipment_fee_type: 'R',
+                        shipment_fee_party: p.export_masterbl_empty_release_agent,
+                        shipment_fee_amount: f['_6'],
+                        shipment_fee_currency: 'USD',
+                        shipment_fee_status: 'SA',
+                        shipment_fee_save_by: user.user_id,
+                        shipment_fee_save_at: new Date()
+                      })
+                    }
+                  }
+                } 
+              }
+            } else {
+              let pro_bl = await tb_proforma_bl.findOne({
+                where: {
+                  state: GLBConfig.ENABLE,
+                  export_masterbl_bl: f['_1']
+                }
+              })
+              if(pro_bl && f['_6'] && common.isNumber(f['_6'])) {
+                let fees = await tb_shipment_fee.findAll({
+                  where: {
+                    state: GLBConfig.ENABLE,
+                    shipment_fee_type: 'R',
+                    fee_data_code: 'OFT',
+                    export_masterbl_id: pro_bl.export_masterbl_id
+                  }
+                })
+                if(!fees || fees.length === 0) {
+                  await tb_shipment_fee.create({
+                    export_masterbl_id: pro_bl.export_masterbl_id,
+                    fee_data_code: 'OFT',
+                    fee_data_fixed: GLBConfig.ENABLE,
+                    shipment_fee_supplement: GLBConfig.DISABLE,
+                    shipment_fee_type: 'R',
+                    shipment_fee_party: pro_bl.export_masterbl_empty_release_agent,
+                    shipment_fee_amount: f['_6'],
+                    shipment_fee_currency: 'USD',
+                    shipment_fee_status: 'SA',
+                    shipment_fee_save_by: user.user_id,
+                    shipment_fee_save_at: new Date()
+                  })
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  return common.success()
 }
 
 exports.searchVesselAct = async req => {
