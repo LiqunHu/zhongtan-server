@@ -14,6 +14,9 @@ const tb_invoice_containers = model.zhongtan_invoice_containers
 const tb_vessel = model.zhongtan_invoice_vessel
 const tb_bl = model.zhongtan_invoice_masterbl
 const tb_export_containers = model.zhongtan_export_container
+// const tb_export_proforma_vessel = model.tbl_zhongtan_export_proforma_vessel
+// const tb_export_proforma_bl = model.tbl_zhongtan_export_proforma_masterbl
+const tb_export_proforma_containers = model.zhongtan_export_proforma_container
 const tb_email = model.zhongtan_edi_mail
 
 const transporter = nodemailer.createTransport(config.mailConfig)
@@ -344,7 +347,9 @@ const updateContainerEdi = async (ediData) => {
         billNo = ediData.billNo
       }
       let excon = ''
+      let proexcon = ''
       if(billNo && (billNo.indexOf('COSU') >= 0 || billNo.indexOf('OOLU') >= 0 ) && ediData.containerNo) {
+        // 舱单
         excon = await tb_export_containers.findOne({
           where: {
             state : GLBConfig.ENABLE,
@@ -370,7 +375,16 @@ const updateContainerEdi = async (ediData) => {
             }
           }
         }
-      }else if(ediData.containerNo) {
+        // 托单
+        proexcon = await tb_export_proforma_containers.findOne({
+          where: {
+            state : GLBConfig.ENABLE,
+            export_container_bl: billNo,
+            export_container_no: ediData.containerNo
+          },
+          order: [['export_container_id', 'DESC']]
+        }) 
+      } else if(ediData.containerNo) {
         let queryStr = `select * from tbl_zhongtan_export_container where state = '1' and export_container_no = ? and created_at > ? order by export_container_id DESC limit 1`
         let replacements = [ediData.containerNo, moment().subtract(1, 'months').format('YYYY-MM-DD HH:mm:ss')]
         let loadingCon = await model.simpleSelect(queryStr, replacements)
@@ -382,6 +396,18 @@ const updateContainerEdi = async (ediData) => {
             }
           })  
         }
+
+        queryStr = `select * from tbl_zhongtan_export_proforma_container where state = '1' and export_container_no = ? and created_at > ? order by export_container_id DESC limit 1`
+        replacements = [ediData.containerNo, moment().subtract(1, 'months').format('YYYY-MM-DD HH:mm:ss')]
+        let loadingCon2 = await model.simpleSelect(queryStr, replacements)
+        if(loadingCon2 && loadingCon2.length > 0) {
+          proexcon = await tb_export_proforma_containers.findOne({
+            where: {
+              state : GLBConfig.ENABLE,
+              export_container_id: loadingCon2[0].export_container_id
+            }
+          })  
+        }
       }
       if(excon) {
         if(ediType === '34') {
@@ -390,6 +416,43 @@ const updateContainerEdi = async (ediData) => {
           excon.export_containe_edi_loading_date = moment(ediData.ediDate.substring(0, 8), 'YYYYMMDD').format('DD/MM/YYYY')
         }
         await excon.save()
+      }
+
+      // 更新托单
+      if(proexcon) {
+        if(ediType === '34') {
+          proexcon.export_containe_edi_wharf_gate_in_date = moment(ediData.ediDate.substring(0, 8), 'YYYYMMDD').format('DD/MM/YYYY')
+        } else {
+          proexcon.export_containe_edi_loading_date = moment(ediData.ediDate.substring(0, 8), 'YYYYMMDD').format('DD/MM/YYYY')
+
+          // 计算EDI超期费及超期时间
+          // if(proexcon.export_containe_edi_depot_gate_out_date) {
+          //   let free_days = 0
+          //   if(proexcon.export_containe_cal_free_days) {
+          //     free_days = parseInt(incon.export_containe_cal_free_days)
+          //   } else {
+          //     free_days = await cal_config_srv.queryContainerFreeDays(bl.invoice_masterbi_cargo_type, discharge_port, charge_carrier, incon.invoice_containers_size, discharge_date, 'E')
+          //   }
+          //   let cal_result = await cal_config_srv.demurrageCalculation(free_days, discharge_date, incon.invoice_containers_actually_return_date, bl.invoice_masterbi_cargo_type, discharge_port, charge_carrier, incon.invoice_containers_size, vessel.invoice_vessel_ata, 'E')
+          //   if(cal_result.diff_days !== -1) {
+          //     incon.invoice_containers_actually_return_overdue_days = cal_result.overdue_days
+          //     incon.invoice_containers_actually_return_overdue_amount = cal_result.overdue_amount
+          //   } 
+            
+          //   if(!incon.invoice_containers_empty_return_date) {
+          //     // 没有计算过滞期费
+          //     incon.invoice_containers_empty_return_date = incon.invoice_containers_actually_return_date
+          //     incon.invoice_containers_empty_return_overdue_days = incon.invoice_containers_actually_return_overdue_days
+          //     incon.invoice_containers_empty_return_overdue_amount = incon.invoice_containers_actually_return_overdue_amount
+          //   }
+
+          //   if(incon.invoice_containers_actually_return_date && discharge_date) {
+          //     // 集装箱使用天数， gate in date - dischatge date
+          //     incon.invoice_containers_detention_days = moment(incon.invoice_containers_actually_return_date, 'DD/MM/YYYY').diff(moment(discharge_date, 'DD/MM/YYYY'), 'days')
+          //   }
+          // }
+        }
+        await proexcon.save()
       }
     } else if(ediType === '36' || ediType === '44') {
       // 进口记录码头出场和卸船时间
@@ -524,6 +587,23 @@ const updateContainerEdi = async (ediData) => {
           } else {
             // 根据提单号没有查到对应的出口舱单，不处理
           }
+
+          let proexcon = await tb_export_proforma_containers.findOne({
+            where: {
+              state : GLBConfig.ENABLE,
+              export_container_bl: billNo,
+              export_container_no: ediData.containerNo
+            },
+            order: [['export_container_id', 'DESC']]
+          }) 
+          if(proexcon) {
+            proexcon.export_containe_get_depot_name = ediData.depot
+            proexcon.export_container_no = ediData.containerNo
+            proexcon.export_containe_edi_depot_gate_out_date = moment(ediData.ediDate.substring(0, 8), 'YYYYMMDD').format('DD/MM/YYYY')
+            await proexcon.save()
+          } else {
+            // 根据提单号没有查到对应的出口舱单，不处理
+          }
         } else {
           // TODO没有提单号暂不处理
           let queryStr = `select * from tbl_zhongtan_export_container where state = '1' and export_container_no = ? and created_at > ? order by export_container_id DESC limit 1`
@@ -539,6 +619,21 @@ const updateContainerEdi = async (ediData) => {
             excon.export_containe_get_depot_name = ediData.depot
             excon.export_containe_edi_depot_gate_out_date = moment(ediData.ediDate.substring(0, 8), 'YYYYMMDD').format('DD/MM/YYYY')
             await excon.save()
+          }
+
+          queryStr = `select * from tbl_zhongtan_export_proforma_container where state = '1' and export_container_no = ? and created_at > ? order by export_container_id DESC limit 1`
+          replacements = [ediData.containerNo, moment().subtract(1, 'months').format('YYYY-MM-DD HH:mm:ss')]
+          let outCon2 = await model.simpleSelect(queryStr, replacements)
+          if(outCon2 && outCon2.length > 0) {
+            let proexcon = await tb_export_proforma_containers.findOne({
+              where: {
+                state : GLBConfig.ENABLE,
+                export_container_id: outCon2[0].export_container_id
+              }
+            })  
+            proexcon.export_containe_get_depot_name = ediData.depot
+            proexcon.export_containe_edi_depot_gate_out_date = moment(ediData.ediDate.substring(0, 8), 'YYYYMMDD').format('DD/MM/YYYY')
+            await proexcon.save()
           }
         }
       }

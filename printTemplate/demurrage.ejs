@@ -118,8 +118,14 @@
                         <td valign="middle" rowspan="1" colspan="2">
                             MESSRS          :
                         </td>
-                        <td valign="middle" rowspan="1" colspan="9">
+                        <td valign="middle" rowspan="1" colspan="6">
                             <%=ejsData.customerName%>
+                        </td>
+                        <td valign="middle" rowspan="1" colspan="1">
+                            TIN#          :
+                        </td>
+                        <td valign="middle" rowspan="1" colspan="2">
+                            <%=ejsData.customerTin%>
                         </td>
                     </tr>
                     <tr>
@@ -171,10 +177,10 @@
                             <%=ejsData.voyageNumber%>
                         </td>
                         <td valign="middle" rowspan="1" colspan="2" align="center" >
-                            Discharge Date  :
+                            Berthing Date  :
                         </td>
                         <td valign="middle" rowspan="1" colspan="2" align="center" >
-                            <%=ejsData.dischargeDate%>
+                            <%=ejsData.berthingDate%>
                         </td>
                     </tr>
                     <tr>
@@ -184,12 +190,12 @@
                         <td valign="middle" rowspan="1" colspan="5" align="center" >
                             <%=ejsData.masterbiBl%>
                         </td>
-                        <td valign="middle" rowspan="1" colspan="2" align="center" >
+                        <!-- <td valign="middle" rowspan="1" colspan="2" align="center" >
                             Starting Date :
-                        </td>
-                        <td valign="middle" rowspan="1" colspan="2" align="center" >
+                        </td> -->
+                        <!-- <td valign="middle" rowspan="1" colspan="2" align="center" >
                             <%=ejsData.startingDate%>
-                        </td>
+                        </td> -->
                     </tr>
                     <tr>
                         <td valign="middle" rowspan="1" colspan="11" >
@@ -203,11 +209,14 @@
                         </td>
                     </tr>
                     <tr class="b_top b_bottom b_left b_right">
-                        <td valign="middle"  rowspan="1" colspan="3" align="center" class="b_right">
+                        <td valign="middle"  rowspan="1" colspan="2" align="center" class="b_right">
                             Container #
                         </td>
-                        <td valign="middle" rowspan="1" colspan="2" align="center" class="b_right">
+                        <td valign="middle" rowspan="1" colspan="1" align="center" class="b_right">
                             Size Type
+                        </td>
+                        <td valign="middle" rowspan="1" colspan="2"  align="center" class="b_right">
+                            Starting Date
                         </td>
                         <td valign="middle" rowspan="1" colspan="2"  align="center" class="b_right">
                             Return Date
@@ -221,11 +230,14 @@
                     </tr>
                     <%for (var i = 0; i < ejsData.containers.length; i++) {%>
                         <tr class="b_bottom b_left b_right">
-                            <td valign="middle"  rowspan="1" colspan="3" align="center" class="b_right">
+                            <td valign="middle"  rowspan="1" colspan="2" align="center" class="b_right">
                                 <%= ejsData.containers[i].containerNo %>
                             </td>
-                            <td valign="middle" rowspan="1" colspan="2"  align="center" class="b_right">
+                            <td valign="middle" rowspan="1" colspan="1"  align="center" class="b_right">
                                 <%= ejsData.containers[i].sizeType %>
+                            </td>
+                            <td valign="middle" rowspan="1" colspan="2"  align="center" class="b_right">
+                                <%= ejsData.containers[i].startingDate %>
                             </td>
                             <td valign="middle" rowspan="1" colspan="2"  align="center" class="b_right">
                                 <%= ejsData.containers[i].returnDate %>
