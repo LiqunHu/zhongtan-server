@@ -71,22 +71,22 @@ module.exports = db.defineModel('tbl_zhongtan_export_container', {
     defaultValue: '',
     allowNull: false
   },
-  export_containe_edi_loading_date: {
+  export_container_edi_loading_date: {
     // 装船船日期
     type: db.STRING(20),
     allowNull: true
   },
-  export_containe_edi_depot_gate_out_date: {
+  export_container_edi_depot_gate_out_date: {
     // 堆场出场时间
     type: db.STRING(20),
     allowNull: true
   },
-  export_containe_edi_wharf_gate_in_date: {
+  export_container_edi_wharf_gate_in_date: {
     // 码头进场时间
     type: db.STRING(20),
     allowNull: true
   },
-  export_containe_get_depot_name: {
+  export_container_get_depot_name: {
     // 提箱堆场
     type: db.STRING(20),
     allowNull: true

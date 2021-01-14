@@ -411,9 +411,9 @@ const updateContainerEdi = async (ediData) => {
       }
       if(excon) {
         if(ediType === '34') {
-          excon.export_containe_edi_wharf_gate_in_date = moment(ediData.ediDate.substring(0, 8), 'YYYYMMDD').format('DD/MM/YYYY')
+          excon.export_container_edi_wharf_gate_in_date = moment(ediData.ediDate.substring(0, 8), 'YYYYMMDD').format('DD/MM/YYYY')
         } else {
-          excon.export_containe_edi_loading_date = moment(ediData.ediDate.substring(0, 8), 'YYYYMMDD').format('DD/MM/YYYY')
+          excon.export_container_edi_loading_date = moment(ediData.ediDate.substring(0, 8), 'YYYYMMDD').format('DD/MM/YYYY')
         }
         await excon.save()
       }
@@ -421,15 +421,15 @@ const updateContainerEdi = async (ediData) => {
       // 更新托单
       if(proexcon) {
         if(ediType === '34') {
-          proexcon.export_containe_edi_wharf_gate_in_date = moment(ediData.ediDate.substring(0, 8), 'YYYYMMDD').format('DD/MM/YYYY')
+          proexcon.export_container_edi_wharf_gate_in_date = moment(ediData.ediDate.substring(0, 8), 'YYYYMMDD').format('DD/MM/YYYY')
         } else {
-          proexcon.export_containe_edi_loading_date = moment(ediData.ediDate.substring(0, 8), 'YYYYMMDD').format('DD/MM/YYYY')
+          proexcon.export_container_edi_loading_date = moment(ediData.ediDate.substring(0, 8), 'YYYYMMDD').format('DD/MM/YYYY')
 
           // 计算EDI超期费及超期时间
-          // if(proexcon.export_containe_edi_depot_gate_out_date) {
+          // if(proexcon.export_container_edi_depot_gate_out_date) {
           //   let free_days = 0
-          //   if(proexcon.export_containe_cal_free_days) {
-          //     free_days = parseInt(incon.export_containe_cal_free_days)
+          //   if(proexcon.export_container_cal_free_days) {
+          //     free_days = parseInt(incon.export_container_cal_free_days)
           //   } else {
           //     free_days = await cal_config_srv.queryContainerFreeDays(bl.invoice_masterbi_cargo_type, discharge_port, charge_carrier, incon.invoice_containers_size, discharge_date, 'E')
           //   }
@@ -580,9 +580,9 @@ const updateContainerEdi = async (ediData) => {
             }
           }
           if(excon) {
-            excon.export_containe_get_depot_name = ediData.depot
+            excon.export_container_get_depot_name = ediData.depot
             excon.export_container_no = ediData.containerNo
-            excon.export_containe_edi_depot_gate_out_date = moment(ediData.ediDate.substring(0, 8), 'YYYYMMDD').format('DD/MM/YYYY')
+            excon.export_container_edi_depot_gate_out_date = moment(ediData.ediDate.substring(0, 8), 'YYYYMMDD').format('DD/MM/YYYY')
             await excon.save()
           } else {
             // 根据提单号没有查到对应的出口舱单，不处理
@@ -597,9 +597,9 @@ const updateContainerEdi = async (ediData) => {
             order: [['export_container_id', 'DESC']]
           }) 
           if(proexcon) {
-            proexcon.export_containe_get_depot_name = ediData.depot
+            proexcon.export_container_get_depot_name = ediData.depot
             proexcon.export_container_no = ediData.containerNo
-            proexcon.export_containe_edi_depot_gate_out_date = moment(ediData.ediDate.substring(0, 8), 'YYYYMMDD').format('DD/MM/YYYY')
+            proexcon.export_container_edi_depot_gate_out_date = moment(ediData.ediDate.substring(0, 8), 'YYYYMMDD').format('DD/MM/YYYY')
             await proexcon.save()
           } else {
             // 根据提单号没有查到对应的出口舱单，不处理
@@ -616,8 +616,8 @@ const updateContainerEdi = async (ediData) => {
                 export_container_id: outCon[0].export_container_id
               }
             })  
-            excon.export_containe_get_depot_name = ediData.depot
-            excon.export_containe_edi_depot_gate_out_date = moment(ediData.ediDate.substring(0, 8), 'YYYYMMDD').format('DD/MM/YYYY')
+            excon.export_container_get_depot_name = ediData.depot
+            excon.export_container_edi_depot_gate_out_date = moment(ediData.ediDate.substring(0, 8), 'YYYYMMDD').format('DD/MM/YYYY')
             await excon.save()
           }
 
@@ -631,8 +631,8 @@ const updateContainerEdi = async (ediData) => {
                 export_container_id: outCon2[0].export_container_id
               }
             })  
-            proexcon.export_containe_get_depot_name = ediData.depot
-            proexcon.export_containe_edi_depot_gate_out_date = moment(ediData.ediDate.substring(0, 8), 'YYYYMMDD').format('DD/MM/YYYY')
+            proexcon.export_container_get_depot_name = ediData.depot
+            proexcon.export_container_edi_depot_gate_out_date = moment(ediData.ediDate.substring(0, 8), 'YYYYMMDD').format('DD/MM/YYYY')
             await proexcon.save()
           }
         }

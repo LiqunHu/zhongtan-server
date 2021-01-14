@@ -1395,6 +1395,7 @@ exports.depositDoAct = async req => {
     let renderData = JSON.parse(JSON.stringify(bl))
     renderData.fee_date = moment(bl.invoice_masterbi_fee_date).format('YYYY/MM/DD')
     renderData.customer_name = customer.user_name
+    renderData.customer_tin = customer.user_tin
     renderData.address = customer.user_address
     renderData.address1 = customer.user_address1
     renderData.address2 = customer.user_address2
@@ -1726,6 +1727,7 @@ exports.depositDoAct = async req => {
     let renderData = JSON.parse(JSON.stringify(bl))
     renderData.fee_date = moment(bl.invoice_masterbi_of_date).format('YYYY/MM/DD')
     renderData.customer_name = customer.user_name
+    renderData.customer_tin = customer.user_tin
     renderData.address = customer.user_address
     renderData.address1 = customer.user_address1
     renderData.address2 = customer.user_address2
@@ -1967,7 +1969,8 @@ exports.doCreateEdiAct = async req => {
             renderData.billNo = bl.invoice_masterbi_bl
             renderData.vessel = vessel.invoice_vessel_name
             renderData.voyage = vessel.invoice_vessel_voyage
-            renderData.deliveryTo = bl.invoice_masterbi_delivery_to
+            renderData.deliveryTo = customer.user_name
+            renderData.deliveryToTin = customer.user_tin
             renderData.validTo = bl.invoice_masterbi_valid_to
             renderData.validToStr = moment(bl.invoice_masterbi_valid_to).format('MMM DD, YYYY')
             renderData.fcl = bl.invoice_masterbi_do_fcl
@@ -2053,7 +2056,8 @@ exports.doReplaceEdiAct = async req => {
             renderData.billNo = bl.invoice_masterbi_bl
             renderData.vessel = vessel.invoice_vessel_name
             renderData.voyage = vessel.invoice_vessel_voyage
-            renderData.deliveryTo = bl.invoice_masterbi_delivery_to
+            renderData.deliveryTo = customer.user_name
+            renderData.deliveryToTin = customer.user_tin
             renderData.validTo = bl.invoice_masterbi_valid_to
             renderData.validToStr = moment(bl.invoice_masterbi_valid_to).format('MMM DD, YYYY')
             renderData.fcl = bl.invoice_masterbi_do_fcl

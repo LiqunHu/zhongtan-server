@@ -334,11 +334,11 @@ exports.uploadBookingAct = async req => {
                 export_container_cargo_weight_unit: wu,
                 export_container_cargo_volumn: vl,
                 export_container_cargo_volumn_unit: vu,
-                export_containe_edi_loading_date: container.export_containe_edi_loading_date,
-                export_containe_edi_depot_gate_out_date: container.export_containe_edi_depot_gate_out_date,
-                export_containe_cal_depot_gate_out_date: container.export_containe_edi_depot_gate_out_date,
-                export_containe_edi_wharf_gate_in_date: container.export_containe_edi_wharf_gate_in_date,
-                export_containe_get_depot_name: container.export_containe_get_depot_name
+                export_container_edi_loading_date: container.export_container_edi_loading_date,
+                export_container_edi_depot_gate_out_date: container.export_container_edi_depot_gate_out_date,
+                export_container_cal_depot_gate_out_date: container.export_container_edi_depot_gate_out_date,
+                export_container_edi_wharf_gate_in_date: container.export_container_edi_wharf_gate_in_date,
+                export_container_get_depot_name: container.export_container_get_depot_name
               })
             } else {
               await tb_proforma_container.create({

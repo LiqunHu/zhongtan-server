@@ -57,4 +57,5 @@ router.post('/equipment/EmptyStockManagement/:method', services.EmptyStockManage
 router.post('/equipment/ContainerMNRLedgerInvoice/:method', services.ContainerMNRLedgerInvoiceControl)
 router.post('/equipment/ContainerMNRLedgerReceipt/:method', services.ContainerMNRLedgerReceiptControl)
 router.post('/equipment/ContainerMNRLedgerStatistics/:method', services.ContainerMNRLedgerStatisticsControl)
+router.post('/equipment/ExportDemurrageInvoiceAdmin/:method', services.ExportDemurrageInvoiceControl)
 module.exports = router

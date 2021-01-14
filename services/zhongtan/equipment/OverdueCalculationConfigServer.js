@@ -264,9 +264,17 @@ exports.queryDemurrageRules = async (cargo_type, discharge_port, carrier, contai
   })
   if(con_size_type) {
     let type = con_size_type.container_size_code
-    let queryStr = `SELECT * FROM tbl_zhongtan_overdue_charge_rule WHERE state = ? AND overdue_charge_cargo_type = ? 
+    let queryStr = ''
+    let replacements = []
+    if(business_type === 'I') {
+      queryStr = `SELECT * FROM tbl_zhongtan_overdue_charge_rule WHERE state = ? AND overdue_charge_cargo_type = ? 
                       AND overdue_charge_discharge_port = ? AND overdue_charge_carrier = ? AND overdue_charge_container_size = ? AND overdue_charge_business_type = ? ORDER BY overdue_charge_enabled_date DESC, overdue_charge_min_day DESC `
-    let replacements = [GLBConfig.ENABLE, cargo_type, discharge_port, carrier, type, business_type]
+      replacements = [GLBConfig.ENABLE, cargo_type, discharge_port, carrier, type, business_type]
+    } else {
+      queryStr = `SELECT * FROM tbl_zhongtan_overdue_charge_rule WHERE state = ? AND overdue_charge_cargo_type = ? 
+      AND overdue_charge_carrier = ? AND overdue_charge_container_size = ? AND overdue_charge_business_type = ? ORDER BY overdue_charge_enabled_date DESC, overdue_charge_min_day DESC `
+      replacements = [GLBConfig.ENABLE, cargo_type, carrier, type, business_type]
+    }
     let allChargeRules = await model.simpleSelect(queryStr, replacements)
     if(allChargeRules) {
       let enabledDates = []
