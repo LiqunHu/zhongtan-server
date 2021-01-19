@@ -242,12 +242,14 @@ exports.uploadImportAct = async req => {
       if (!(vesslInfoJS[0]['VESSEL NAME'] && vesslInfoJS[0]['VOYAGE NUM'])) {
         return common.error('import_03')
       }
-
+      let vessel_name = vesslInfoJS[0]['VESSEL NAME'].trim()
+      let vessel_voyage = vesslInfoJS[0]['VOYAGE NUM'].trim()
+      let vessel_code = vesslInfoJS[0]['VESSEL CODE'].trim()
       let vessel = await tb_vessel.findOne({
         where: {
-          invoice_vessel_name: vesslInfoJS[0]['VESSEL NAME'],
-          invoice_vessel_voyage: vesslInfoJS[0]['VOYAGE NUM'],
-          invoice_vessel_code: vesslInfoJS[0]['VESSEL CODE']
+          invoice_vessel_name: vessel_name,
+          invoice_vessel_voyage: vessel_voyage,
+          invoice_vessel_code: vessel_code
         }
       })
 
@@ -273,9 +275,9 @@ exports.uploadImportAct = async req => {
         }
 
         vessel = await tb_vessel.create({
-          invoice_vessel_name: vesslInfoJS[0]['VESSEL NAME'],
-          invoice_vessel_code: vesslInfoJS[0]['VESSEL CODE'],
-          invoice_vessel_voyage: vesslInfoJS[0]['VOYAGE NUM'],
+          invoice_vessel_name: vessel_name,
+          invoice_vessel_code: vessel_code,
+          invoice_vessel_voyage: vessel_voyage,
           invoice_vessel_eta: typeof vesslInfoJS[0]['ETA'] === 'object' ? moment(vesslInfoJS[0]['ETA']).add(1, 'days').format('DD/MM/YYYY') : vesslInfoJS[0]['ETA'],
           invoice_vessel_ata: typeof vesslInfoJS[0]['ATA'] === 'object' ? moment(vesslInfoJS[0]['ATA']).add(1, 'days').format('DD/MM/YYYY') : vesslInfoJS[0]['ATA'],
           invoice_vessel_atd: typeof vesslInfoJS[0]['ATD'] === 'object' ? moment(vesslInfoJS[0]['ATD']).add(1, 'days').format('DD/MM/YYYY') : vesslInfoJS[0]['ATD'],
@@ -317,20 +319,20 @@ exports.uploadImportAct = async req => {
               invoice_vessel_id: vessel.invoice_vessel_id,
               invoice_masterbi_bl: masterbi_bl,
               invoice_masterbi_carrier: masterbi_carrier,
-              invoice_masterbi_cargo_type: m['Cargo Classification'],
+              invoice_masterbi_cargo_type: m['Cargo Classification'] ? m['Cargo Classification'].trim() : '',
               invoice_masterbi_bl_type: m['*B/L Type'],
-              invoice_masterbi_destination: m['Place of Destination'],
-              invoice_masterbi_delivery: m['Place of Delivery'],
+              invoice_masterbi_destination: m['Place of Destination'] ?  m['Place of Destination'].trim() : '',
+              invoice_masterbi_delivery: m['Place of Delivery'] ? m['Place of Delivery'].trim() : '',
               invoice_masterbi_freight: masterbi_freight,
-              invoice_masterbi_loading: m['Port of Loading'],
-              invoice_masterbi_container_no: m['Number of Containers'],
-              invoice_masterbi_goods_description: m['Description of Goods'],
-              invoice_masterbi_package_no: m['Number of Package'],
-              invoice_masterbi_package_unit: m['Package Unit'],
-              invoice_masterbi_gross_weight: m['Gross Weight'],
-              invoice_masterbi_gross_weight_unit: m['Gross Weight Unit'],
-              invoice_masterbi_gross_volume: m['Gross Volume'],
-              invoice_masterbi_gross_volume_unit: m['Gross Volume Unit'],
+              invoice_masterbi_loading: m['Port of Loading'] ? m['Port of Loading'].trim() : '',
+              invoice_masterbi_container_no: m['Number of Containers'] ? m['Number of Containers'].trim() : '',
+              invoice_masterbi_goods_description: m['Description of Goods'] ? m['Description of Goods'].trim() : '',
+              invoice_masterbi_package_no: m['Number of Package'] ? m['Number of Package'].trim() : '',
+              invoice_masterbi_package_unit: m['Package Unit'] ? m['Package Unit'].trim() : '',
+              invoice_masterbi_gross_weight: m['Gross Weight'] ? m['Gross Weight'].trim() : '',
+              invoice_masterbi_gross_weight_unit: m['Gross Weight Unit'] ? m['Gross Weight Unit'].trim() : '',
+              invoice_masterbi_gross_volume: m['Gross Volume'] ? m['Gross Volume'].trim() : '',
+              invoice_masterbi_gross_volume_unit: m['Gross Volume Unit'] ? m['Gross Volume Unit'].trim() : '',
               invoice_masterbi_invoice_value: m['Invoice Value'] || '',
               invoice_masterbi_invoice_currency: m['Invoice Currency'] || '',
               invoice_masterbi_freight_charge: freight_charge,
@@ -366,11 +368,11 @@ exports.uploadImportAct = async req => {
           if(c['#M B/L No'] && c['Container No']) {
             await tb_container.create({
               invoice_vessel_id: vessel.invoice_vessel_id,
-              invoice_containers_bl: c['#M B/L No'],
-              invoice_containers_type: c['Type Of Container'],
-              invoice_containers_no: c['Container No'],
-              invoice_containers_size: c['Container Size'],
-              invoice_containers_seal1: c['Seal No.1'],
+              invoice_containers_bl: c['#M B/L No'].trim(),
+              invoice_containers_type: c['Type Of Container'].trim(),
+              invoice_containers_no: c['Container No'].trim(),
+              invoice_containers_size: c['Container Size'].trim(),
+              invoice_containers_seal1: c['Seal No.1'] ? c['Seal No.1'].trim() : '',
               invoice_containers_seal2: c['Seal No.2'] || '',
               invoice_containers_seal3: c['Seal No.3'] || '',
               invoice_containers_freight_indicator: c['Freight Indicator'] || '',

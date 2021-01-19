@@ -38,10 +38,16 @@ exports.uploadBookingAct = async req => {
       let pol = ''
       let pod = ''
       if(billOf) {
-        regex = '/VESSEL\\s*:\\s*([a-zA-Z0-9]+)\\s*VOYAGE/i'
+        regex = '/VESSEL\\s*:\\s*([a-zA-Z0-9\\s]+)\\s*($|VOYAGE)/im'
         ves = common.valueFilter(pdfData, regex)
-        regex = '/VOYAGE\\s*:\\s*([a-zA-Z0-9]+)\\s*B\\/L/i'
+        if(ves) {
+          ves = ves.trim().replace(/VOYAGE/im, '').replace(/\s+/g, ' ')
+        }
+        regex = '/VOYAGE\\s*:\\s*([a-zA-Z0-9\\s]+)\\s*($|B\\/L)/im'
         voy = common.valueFilter(pdfData, regex)
+        if(voy) {
+          voy = voy.trim().replace(/B\/L/im, '').replace(/\s+/g, '')
+        }
         let datas = pdfData.replace(/[\r]/ig, '').split(/[\n]+/ig)
         let sIndex = -1
         if(billOf.indexOf('COSU') >= 0) {

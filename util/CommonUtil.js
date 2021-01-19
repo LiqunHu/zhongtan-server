@@ -395,13 +395,13 @@ const fs2Edi = async (renderData) => {
   ediTxt += 'RFF+VON:' + data.voyageNo  + '\'\r\n'
   ediLines++
   // line 11
-  ediTxt += 'LOC+7+' + data.deliveryPlace + ':139:6\'\r\n'
+  ediTxt += 'LOC+7+' + data.deliveryPlace.trim() + ':139:6\'\r\n'
   ediLines++
   // line 12
-  ediTxt += 'LOC+8+' + data.portFinalDestination + ':139:6\'\r\n'
+  ediTxt += 'LOC+8+' + data.portFinalDestination.trim() + ':139:6\'\r\n'
   ediLines++
   // line 13
-  ediTxt += 'LOC+76+' + data.portOfLoading + ':139:6\'\r\n'
+  ediTxt += 'LOC+76+' + data.portOfLoading.trim() + ':139:6\'\r\n'
   ediLines++
   // line 14
   // estimatedArrivalDate ETA
