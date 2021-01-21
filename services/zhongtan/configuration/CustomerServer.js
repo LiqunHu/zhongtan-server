@@ -79,7 +79,8 @@ exports.addAct = async req => {
       user_address2: doc.user_address2,
       user_zipcode: doc.user_zipcode,
       user_customer_type: doc.user_customer_type,
-      user_tin: doc.user_tin ? doc.user_tin.trim() : ''
+      user_tin: doc.user_tin ? doc.user_tin.trim() : '',
+      user_vrn: doc.user_vrn ? doc.user_vrn.trim() : ''
     })
 
     await tb_user_groups.create({
@@ -118,6 +119,7 @@ exports.modifyAct = async req => {
     modiuser.user_zipcode = doc.new.user_zipcode
     modiuser.user_customer_type = doc.new.user_customer_type
     modiuser.user_tin = doc.new.user_tin ? doc.new.user_tin.trim() : ''
+    modiuser.user_vrn = doc.new.user_vrn ? doc.new.user_vrn.trim() : ''
     await modiuser.save()
 
     let returnData = JSON.parse(JSON.stringify(modiuser))
@@ -165,4 +167,38 @@ exports.changeBlacklistAct = async req => {
   } else {
     return common.error('operator_03')
   }
+}
+
+exports.exportCustomerAct = async(req, res) => {
+  let doc = common.docValidate(req)
+  let queryStr = 'select * from tbl_common_user where state = "1" and user_type = "' + GLBConfig.TYPE_CUSTOMER + '"'
+  let replacements = []
+
+  if (doc.search_text) {
+    queryStr += ' and (user_username like ? or user_email like ? or user_phone like ? or user_name like ? or user_address like ?)'
+    let search_text = '%' + doc.search_text + '%'
+    replacements.push(search_text)
+    replacements.push(search_text)
+    replacements.push(search_text)
+    replacements.push(search_text)
+    replacements.push(search_text)
+  }
+  queryStr += ' order by user_blacklist desc, user_username'
+  let result = await model.simpleSelect(queryStr, replacements)
+  let renderData = []
+
+  for (let r of result) {
+    if(r.user_customer_type) {
+      for(let t of GLBConfig.USER_CUSTOMER_TYPE) {
+        if(r.user_customer_type === t.id) {
+          r.user_customer_type_name = t.text
+        }
+      }
+    }
+    renderData.push(r)
+  }
+
+  let filepath = await common.ejs2xlsx('CustomerTemplate.xlsx', renderData)
+
+  res.sendFile(filepath)
 }

@@ -19,6 +19,8 @@ module.exports = async (req, res) => {
       ret = await srv.deleteAct(req)
     } else if (method === 'changeBlacklist') {
       ret = await srv.changeBlacklistAct(req)
+    } else if (method === 'exportCustomer') {
+      return await srv.exportCustomerAct(req, res)
     }
     common.sendData(res, ret)
   } catch (error) {
