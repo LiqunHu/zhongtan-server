@@ -193,6 +193,9 @@ exports.receiptAct = async req => {
   mnr.mnr_ledger_receipt_amount = invoice.uploadfile_amount
   mnr.mnr_ledger_receipt_date = moment(curDate).format('YYYY-MM-DD HH:mm:ss')
   mnr.mnr_ledger_receipt_no = receipt_no
+  mnr.mnr_ledger_check_cash = doc.mnr_invoice_check_cash
+  mnr.mnr_ledger_check_no = doc.mnr_invoice_check_no
+  mnr.mnr_ledger_bank_reference_no = doc.mnr_invoice_bank_reference_no
   mnr.save()
   return common.success({ url: fileInfo.url })
 }

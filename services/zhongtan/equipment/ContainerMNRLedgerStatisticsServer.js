@@ -187,6 +187,16 @@ exports.exportAct = async(req, res) => {
     if(r.mnr_ledger_payment_date) {
       r.mnr_ledger_payment_date = moment(r.mnr_ledger_payment_date, 'DD/MM/YYYY').format('YYYYMMDD')
     }
+
+    if(r.mnr_ledger_check_cash) {
+      if (r.mnr_ledger_check_cash === 'CASH') {
+        r.mnr_ledger_receipt_remark = 'Cash'
+      } else if (r.mnr_ledger_check_cash === 'TRANSFER') {
+        r.mnr_ledger_receipt_remark = 'Bank transfer/ ' + r.mnr_ledger_bank_reference_no
+      } else {
+        r.mnr_ledger_receipt_remark = 'Cheque/ ' + r.mnr_ledger_check_no
+      }
+    }
     renderData.push(r)
   }
 
