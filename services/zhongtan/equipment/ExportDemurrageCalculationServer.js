@@ -87,7 +87,7 @@ exports.searchAct = async req => {
       if(d.export_masterbl_id !== last_masterbl_id) {
         last_demurrage_receipt = await tb_shipment_fee.count({
           where: {
-            fee_data_code: 'DEMURRAGE',
+            fee_data_code: 'DND',
             export_masterbl_id: d.export_masterbl_id,
             shipment_fee_status: 'RE'
           }
@@ -95,7 +95,7 @@ exports.searchAct = async req => {
 
         last_demurrage_invoice = await tb_shipment_fee.count({
           where: {
-            fee_data_code: 'DEMURRAGE',
+            fee_data_code: 'DND',
             export_masterbl_id: d.export_masterbl_id,
             shipment_fee_status: 'IN'
           }
