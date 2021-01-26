@@ -15,6 +15,7 @@ router.post('/configuration/IcdConfig/:method', services.IcdConfigControl)
 router.post('/configuration/ContainerSizeConfig/:method', services.ContainerSizeConfigControl)
 router.post('/configuration/DischargePortConfig/:method', services.DischargePortConfigControl)
 router.post('/configuration/EdiDepotConfig/:method', services.EdiDepotConfigControl)
+router.post('/configuration/AllotDepotConfig/:method', services.AllotDepotControl)
 
 router.post('/export/Booking/:method', services.BookingControl)
 router.post('/export/BookingWork/:method', services.BookingWorkControl)
@@ -57,5 +58,5 @@ router.post('/equipment/EmptyStockManagement/:method', services.EmptyStockManage
 router.post('/equipment/ContainerMNRLedgerInvoice/:method', services.ContainerMNRLedgerInvoiceControl)
 router.post('/equipment/ContainerMNRLedgerReceipt/:method', services.ContainerMNRLedgerReceiptControl)
 router.post('/equipment/ContainerMNRLedgerStatistics/:method', services.ContainerMNRLedgerStatisticsControl)
-router.post('/equipment/ExportDemurrageInvoiceAdmin/:method', services.ExportDemurrageInvoiceControl)
+router.post('/equipment/ExportDemurrageCalculation/:method', services.ExportDemurrageCalculationControl)
 module.exports = router

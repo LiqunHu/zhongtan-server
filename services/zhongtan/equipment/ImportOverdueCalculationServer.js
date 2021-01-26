@@ -285,7 +285,7 @@ exports.emptyReturnSaveAct = async req => {
                   oc.invoice_containers_actually_return_overdue_amount = cal_result.overdue_amount
                 } 
               }
-              oc.save()
+              await oc.save()
             }
           } else {
             await tb_container.update(
@@ -489,7 +489,7 @@ exports.emptyInvoiceAct = async req => {
       con.invoice_containers_empty_return_overdue_days_invoice = con.invoice_containers_empty_return_overdue_days
       con.invoice_containers_empty_return_overdue_amount_invoice = con.invoice_containers_empty_return_overdue_amount
       con.invoice_containers_empty_return_edit_flg = GLBConfig.DISABLE
-      con.save()
+      await con.save()
       s.invoice_containers_size = con.invoice_containers_size
       s.invoice_containers_empty_return_date = con.invoice_containers_empty_return_date
       s.invoice_containers_empty_return_overdue_days = con.invoice_containers_empty_return_overdue_days
@@ -643,7 +643,7 @@ exports.emptyReInvoiceAct = async req => {
       }
       con.invoice_containers_empty_return_overdue_amount_invoice = con.invoice_containers_empty_return_overdue_amount - con.invoice_containers_empty_return_overdue_deduction
       con.invoice_containers_empty_return_edit_flg = GLBConfig.DISABLE
-      con.save()
+      await con.save()
       s.invoice_containers_size = con.invoice_containers_size
       s.invoice_containers_empty_return_date = con.invoice_containers_empty_return_date
       s.invoice_containers_empty_return_overdue_days = con.invoice_containers_empty_return_overdue_days
@@ -766,7 +766,7 @@ exports.actuallyOverdueCopyAct = async req => {
     con.invoice_containers_empty_return_date = con.invoice_containers_actually_return_date
     con.invoice_containers_empty_return_overdue_days = con.invoice_containers_actually_return_overdue_days
     con.invoice_containers_empty_return_overdue_amount = con.invoice_containers_actually_return_overdue_amount
-    con.save()
+    await con.save()
   }
   return common.success()
 }
@@ -895,7 +895,7 @@ exports.issuingStoringOrderAct = async req => {
           })
           seq++
           con.invoice_containers_depot_name = depot.edi_depot_name
-          con.save()
+          await con.save()
         }
         let html = await common.ejs2Html('StoringOrder.ejs', renderData)
         let mailSubject = customer.user_name + '/' + bl.invoice_masterbi_bl

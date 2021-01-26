@@ -91,5 +91,7 @@ module.exports = {
   equipment_05: 'selected invoice containers contain other unreceipt container',
   edi_depot_01: 'Edit edi depot do not exist',
   edi_depot_02: 'edi depot name already exists',
-  export_01: 'Collect no data'
+  export_01: 'Collect no data',
+  allot_depot_01: 'allot rule do not exist',
+  allot_depot_02: 'allot rule can not be same enabled date'
 }
