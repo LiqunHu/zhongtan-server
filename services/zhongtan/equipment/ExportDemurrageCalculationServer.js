@@ -266,43 +266,45 @@ exports.demurrageCalculationSaveAct = async req => {
                   ve.state = GLBConfig.DISABLE
                   await ve.save()
                 }
-                let f1 = await tb_shipment_fee.findOne({
+                let fsu = await tb_shipment_fee.findOne({
                   where: {
                     shipment_fee_id: sl.shipment_fee_id,
                     state: GLBConfig.ENABLE
                   }
                 })
-                if(f1) {
-                  f1.shipment_fee_status = 'SA'
-                  f1.shipment_fee_invoice_id = ''
-                  await f1.save()
+                if(fsu) {
+                  fsu.shipment_fee_status = 'SA'
+                  fsu.shipment_fee_invoice_id = ''
+                  await fsu.save()
                 }
               }
             }
           }else {
-            let f1 = await tb_shipment_fee.findOne({
+            let fsa = await tb_shipment_fee.findOne({
               where: {
                 shipment_fee_id: f.shipment_fee_id
               }
             })
-            f1.shipment_fee_status = 'SA'
-            f1.shipment_fee_invoice_id = ''
-            await f1.save()
+            fsa.shipment_fee_status = 'SA'
+            fsa.shipment_fee_invoice_id = ''
+            await fsa.save()
           }
         }
         if(receipt_amount > 0) {
           // 已有开收据费用，多退少补
           if(new Decimal(sumRet[0].bill_demurrage) !== receipt_amount) {
             let diff_demurrage = new Decimal(sumRet[0].bill_demurrage).sub(receipt_amount)
-            let f1 = await tb_shipment_fee.findOne({
+            let fre = await tb_shipment_fee.findOne({
               where: {
                 fee_data_code: 'DND',
-                shipment_fee_status: 'SA'
+                shipment_fee_status: 'SA',
+                export_masterbl_id: bl.export_masterbl_id,
+                state: GLBConfig.ENABLE
               }
             })
-            if(f1) {
-              f1.shipment_fee_amount = Decimal.isDecimal(diff_demurrage) ? diff_demurrage.toNumber() : diff_demurrage
-              await f1.save()
+            if(fre) {
+              fre.shipment_fee_amount = Decimal.isDecimal(diff_demurrage) ? diff_demurrage.toNumber() : diff_demurrage
+              await fre.save()
             } else {
               await tb_shipment_fee.create({
                 export_masterbl_id: bl.export_masterbl_id,
@@ -320,14 +322,16 @@ exports.demurrageCalculationSaveAct = async req => {
             }
           }
         } else {
-          let f1 = await tb_shipment_fee.findOne({
+          let fol = await tb_shipment_fee.findOne({
             where: {
               fee_data_code: 'DND',
-              shipment_fee_status: 'SA'
+              shipment_fee_status: 'SA',
+              export_masterbl_id: bl.export_masterbl_id,
+              state: GLBConfig.ENABLE
             }
           })
-          f1.shipment_fee_amount = sumRet[0].bill_demurrage
-          await f1.save()
+          fol.shipment_fee_amount = sumRet[0].bill_demurrage
+          await fol.save()
         }
       } else {
         if(new Decimal(sumRet[0].bill_demurrage) > 0) {
