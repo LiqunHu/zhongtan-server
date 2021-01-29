@@ -250,7 +250,7 @@ exports.uploadImportAct = async req => {
         where: {
           invoice_vessel_name: vessel_name,
           invoice_vessel_voyage: vessel_voyage,
-          invoice_vessel_code: vessel_code
+          state: GLBConfig.ENABLE
         }
       })
 

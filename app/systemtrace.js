@@ -10,7 +10,7 @@ module.exports = async (req, res, next) => {
     let patha = req.path.split('/')
     let func = patha[patha.length - 2].toUpperCase()
     let method = patha[patha.length - 1]
-    if (func !== 'AUTH' && method !== 'init' && method.search(/search/i) < 0 && method.search(/upload/i) < 0 && user) {
+    if (func !== 'AUTH' && method !== 'init' && method.search(/search/i) < 0 && user) {
       tb_common_userlog.create({
         user_id: user.user_id,
         api_function: func,
