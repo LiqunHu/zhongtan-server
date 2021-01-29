@@ -17,6 +17,8 @@ module.exports = async (req, res) => {
       ret = await srv.demurrageCalculationSaveAct(req)
     } else if (method === 'checkPassword') {
       ret = await srv.checkPasswordAct(req)
+    } else if (method === 'getSelectionDemurrage') {
+      ret = await srv.getSelectionDemurrageAct(req)
     }
     
     common.sendData(res, ret)

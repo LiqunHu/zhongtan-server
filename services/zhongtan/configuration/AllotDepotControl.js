@@ -17,6 +17,10 @@ module.exports = async (req, res) => {
       ret = await srv.modifyAct(req)
     } else if (method === 'delete') {
       ret = await srv.deleteAct(req)
+    } else if (method === 'searchVessel') {
+      ret = await srv.searchVesselAct(req)
+    } else if (method === 'allotVesselDepot') {
+      ret = await srv.allotVesselDepotAct(req)
     }
     common.sendData(res, ret)
   } catch (error) {

@@ -358,6 +358,38 @@ exports.demurrageCalculationSaveAct = async req => {
   }
 }
 
+exports.getSelectionDemurrageAct = async req => {
+  let doc = common.docValidate(req)
+  let selectAll = doc.selectAll
+  let queryStr = ''
+  let replacements = []
+  let total_demurrage_amount = 0
+  if(selectAll && doc.selection && doc.selection.length > 0) {
+    let sel0 = doc.selection[0]
+    queryStr = `SELECT SUM(export_container_cal_demurrage_amount) AS total_demurrage_amount FROM tbl_zhongtan_export_proforma_container WHERE export_vessel_id = ? AND export_container_bl = ? AND state = ?`
+    replacements = [sel0.export_vessel_id, sel0.export_container_bl, GLBConfig.ENABLE]
+    let result = await model.simpleSelect(queryStr, replacements)
+    if(result && result.length > 0) {
+      total_demurrage_amount = result[0].total_demurrage_amount
+    }
+  } else if(doc.selection && doc.selection.length > 0) {
+    let con_ids = []
+    for(let c of doc.selection) {
+      con_ids.push(c.export_container_id)
+    }
+    queryStr = `SELECT SUM(export_container_cal_demurrage_amount) AS total_demurrage_amount FROM tbl_zhongtan_export_proforma_container WHERE export_container_id IN (?) AND state = ?`
+    replacements = [con_ids, GLBConfig.ENABLE]
+    let result = await model.simpleSelect(queryStr, replacements)
+    if(result && result.length > 0) {
+      total_demurrage_amount = result[0].total_demurrage_amount
+    }
+  }
+  let retData = {
+    total_demurrage_amount: total_demurrage_amount
+  }
+  return common.success(retData)
+}
+
 exports.checkPasswordAct = async req => {
   let doc = common.docValidate(req)
   let check = await opSrv.checkPassword(doc.action, doc.checkPassword)

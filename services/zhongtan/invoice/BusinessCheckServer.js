@@ -24,12 +24,11 @@ exports.initAct = async () => {
 exports.searchAct = async req => {
   let doc = common.docValidate(req),
     returnData = {}
-  let queryStr = `select a.*, a.created_at as uploadfile_created_at, b.*, c.*, d.*, e.user_name as fixed_deposit_customer_name, f.user_name as invoice_masterbi_customer_name, g.user_name as overdue_invoice_customer_name from 
+  let queryStr = `select a.*, a.created_at as uploadfile_created_at, b.*, c.*, d.*, e.user_name as fixed_deposit_customer_name, g.user_name as invoice_masterbi_customer_name, g.user_name as overdue_invoice_customer_name from 
     tbl_zhongtan_uploadfile a LEFT JOIN tbl_zhongtan_invoice_masterbl b ON a.uploadfile_index1 = b.invoice_masterbi_id
     LEFT JOIN tbl_zhongtan_customer_fixed_deposit c ON a.uploadfile_index1 = c.fixed_deposit_id
     LEFT JOIN tbl_common_user d ON a.user_id = d.user_id
     LEFT JOIN tbl_common_user e ON c.fixed_deposit_customer_id = e.user_id
-    LEFT JOIN tbl_common_user f ON b.invoice_masterbi_customer_id = f.user_id
     LEFT JOIN tbl_common_user g ON a.uploadfile_customer_id = g.user_id
   WHERE a.state = '1' AND
   a.api_name IN(

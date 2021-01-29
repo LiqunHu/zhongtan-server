@@ -859,6 +859,8 @@ exports.invoiceShipmentAct = async req => {
         if(invoices && invoices.length > 0) {
           let renderData = {}
           renderData.shipmentParty = invoices[0].user_name
+          renderData.partyTin = invoices[0].user_tin
+          renderData.partyVrn = invoices[0].user_vrn
           renderData.partyAddress = invoices[0].user_address
           renderData.cargoType = bl.export_masterbl_cargo_type
           renderData.invoiceDate = moment().format('YYYY/MM/DD')

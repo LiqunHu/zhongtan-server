@@ -221,6 +221,7 @@ exports.invoiceAct = async req => {
 
     let renderData = {}
     renderData.customerName = customer.user_name
+    renderData.customerTin = customer.user_tin
     renderData.address = customer.user_address
     renderData.destination = mnr.mnr_ledger_destination
     renderData.cargoType = mnr.mnr_ledger_cargo_type

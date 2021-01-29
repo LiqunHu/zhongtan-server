@@ -9,6 +9,7 @@ const seq = require('../../../util/Sequence')
 const mailer = require('../../../util/Mail')
 const cal_config_srv = require('../equipment/OverdueCalculationConfigServer')
 const opSrv = require('../../common/system/OperationPasswordServer')
+const adsSrv = require('../configuration/AllotDepotServer')
 const Op = model.Op
 
 const tb_user = model.common_user
@@ -325,14 +326,14 @@ exports.uploadImportAct = async req => {
               invoice_masterbi_delivery: m['Place of Delivery'] ? m['Place of Delivery'].trim() : '',
               invoice_masterbi_freight: masterbi_freight,
               invoice_masterbi_loading: m['Port of Loading'] ? m['Port of Loading'].trim() : '',
-              invoice_masterbi_container_no: m['Number of Containers'] ? m['Number of Containers'].trim() : '',
+              invoice_masterbi_container_no: m['Number of Containers'] || '',
               invoice_masterbi_goods_description: m['Description of Goods'] ? m['Description of Goods'].trim() : '',
-              invoice_masterbi_package_no: m['Number of Package'],
-              invoice_masterbi_package_unit: m['Package Unit'],
-              invoice_masterbi_gross_weight: m['Gross Weight'],
-              invoice_masterbi_gross_weight_unit: m['Gross Weight Unit'],
-              invoice_masterbi_gross_volume: m['Gross Volume'],
-              invoice_masterbi_gross_volume_unit: m['Gross Volume Unit'],
+              invoice_masterbi_package_no: m['Number of Package'] || '',
+              invoice_masterbi_package_unit: m['Package Unit'] || '',
+              invoice_masterbi_gross_weight: m['Gross Weight'] || '',
+              invoice_masterbi_gross_weight_unit: m['Gross Weight Unit'] || '',
+              invoice_masterbi_gross_volume: m['Gross Volume'] || '',
+              invoice_masterbi_gross_volume_unit: m['Gross Volume Unit'] || '',
               invoice_masterbi_invoice_value: m['Invoice Value'] || '',
               invoice_masterbi_invoice_currency: m['Invoice Currency'] || '',
               invoice_masterbi_freight_charge: freight_charge,
@@ -388,6 +389,7 @@ exports.uploadImportAct = async req => {
             })
           }
         }
+        await adsSrv.handleAllotVesselDepot(vessel.invoice_vessel_id)
       }
     }
   }
@@ -1292,6 +1294,7 @@ exports.depositDoAct = async req => {
       uploadfil_release_date: uploadfil_release_date,
       uploadfil_release_user_id: uploadfil_release_user_id,
       uploadfile_received_from: customer.user_name,
+      uploadfile_customer_id: customer.user_id,
       uploadfile_invoice_no: 'CTS/' + renderData.invoice_masterbi_carrier + '/' + renderData.voyage_number + '/' + renderData.receipt_no
     })
     if(doc.invoice_masterbi_deposit_fixed && doc.invoice_masterbi_deposit_fixed === '1' && doc.invoice_masterbi_deposit_fixed_id && !doc.depositEdit) {
@@ -1564,6 +1567,7 @@ exports.depositDoAct = async req => {
           uploadfil_release_date: curDate,
           uploadfil_release_user_id: user.user_id,
           uploadfile_received_from: customer.user_name,
+          uploadfile_customer_id: customer.user_id,
           uploadfile_invoice_no: 'CTS/' + renderDataDeposit.invoice_masterbi_carrier + '/' + renderDataDeposit.voyage_number + '/' + renderDataDeposit.receipt_no
         })
       }
@@ -1715,6 +1719,7 @@ exports.depositDoAct = async req => {
       uploadfile_state: 'PB', // TODO state PM => PB
       uploadfile_amount_comment: doc.invoice_fee_comment,
       uploadfile_received_from: customer.user_name,
+      uploadfile_customer_id: customer.user_id,
       uploadfile_invoice_no: 'CTS/' + renderData.invoice_masterbi_carrier + '/' + renderData.voyage_number + '/' + renderData.receipt_no
     })
     await bl.save()
@@ -1770,6 +1775,7 @@ exports.depositDoAct = async req => {
       uploadfile_state: 'PB', // TODO state PM => PB
       uploadfile_amount_comment: doc.invoice_masterbi_of_comment,
       uploadfile_received_from: customer.user_name,
+      uploadfile_customer_id: customer.user_id,
       uploadfile_invoice_no: 'CTS/' + renderData.invoice_masterbi_carrier + '/' + renderData.voyage_number + '/' + renderData.receipt_no
     })
 
@@ -2700,20 +2706,25 @@ const checkConditionDoState = async (bl, ves) => {
 }
 
 const checkDoDepotState = async (bl) => {
-  let doDepot = false
-  let queryStr = `SELECT COUNT(1) AS count FROM tbl_zhongtan_invoice_containers WHERE invoice_containers_bl = ? AND invoice_vessel_id = ? 
-                    AND (invoice_containers_size IN (SELECT container_size_code FROM tbl_zhongtan_container_size WHERE state = '1' AND container_special_type = '1') 
-                    OR invoice_containers_size IN (SELECT container_size_name FROM tbl_zhongtan_container_size WHERE state = '1' AND container_special_type = '1'))`
-  let replacements = [bl.invoice_masterbi_bl, bl.invoice_vessel_id]
-  let items = await model.simpleSelect(queryStr, replacements)
-  if(items && items.count && parseInt(items.count) > 0) {
-    doDepot = true
+  // let doDepot = false
+  // let queryStr = `SELECT COUNT(1) AS count FROM tbl_zhongtan_invoice_containers WHERE invoice_containers_bl = ? AND invoice_vessel_id = ? 
+  //                   AND (invoice_containers_size IN (SELECT container_size_code FROM tbl_zhongtan_container_size WHERE state = '1' AND container_special_type = '1') 
+  //                   OR invoice_containers_size IN (SELECT container_size_name FROM tbl_zhongtan_container_size WHERE state = '1' AND container_special_type = '1'))`
+  // let replacements = [bl.invoice_masterbi_bl, bl.invoice_vessel_id]
+  // let items = await model.simpleSelect(queryStr, replacements)
+  // if(items && items.count && parseInt(items.count) > 0) {
+  //   doDepot = true
+  // } else {
+  //   if(bl.invoice_masterbi_do_date && bl.invoice_masterbi_do_return_depot === 'FANTUZZI') {
+  //     doDepot = true
+  //   }
+  // }
+  // return doDepot
+  if(bl.invoice_masterbi_do_return_depot) {
+    return true
   } else {
-    if(bl.invoice_masterbi_do_date && bl.invoice_masterbi_do_return_depot === 'FANTUZZI') {
-      doDepot = true
-    }
+    return false
   }
-  return doDepot
 }
 
 const checkConditionInvoiceState = async (bl) => {
