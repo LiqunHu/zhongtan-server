@@ -625,6 +625,14 @@ exports.searchVoyageAct = async req => {
     replacements.push(GLBConfig.ENABLE)
     let ccount = await model.simpleSelect(queryStr, replacements)
     row.invoice_container_count = ccount[0].count
+
+    queryStr = `SELECT invoice_masterbi_do_return_depot AS depot_name, COUNT(invoice_masterbi_do_return_depot) AS depot_count FROM tbl_zhongtan_invoice_masterbl WHERE invoice_vessel_id = ? AND state = ? AND invoice_masterbi_do_return_depot IS NOT NULL GROUP BY invoice_masterbi_do_return_depot
+    `
+    replacements = []
+    replacements.push(v.invoice_vessel_id)
+    replacements.push(GLBConfig.ENABLE)
+    let depot = await model.simpleSelect(queryStr, replacements)
+    row.return_depot = depot
     returnData.vessels.push(row)
   }
 
