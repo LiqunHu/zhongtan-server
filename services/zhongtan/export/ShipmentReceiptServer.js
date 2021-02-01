@@ -275,7 +275,11 @@ exports.exportCollectAct = async (req, res) => {
             let receivable_others = 0
               for(let ra of receivables) {
                 if(receivable_map.get(ra.fee_data_name)) {
-                  row[receivable_map.get(ra.fee_data_name)] = ra.shipment_fee_amount
+                  if(row[receivable_map.get(ra.fee_data_name)]) {
+                    row[receivable_map.get(ra.fee_data_name)] = new Decimal(row[receivable_map.get(ra.fee_data_name)]).plus(new Decimal(ra.shipment_fee_amount))
+                  } else {
+                    row[receivable_map.get(ra.fee_data_name)] = ra.shipment_fee_amount
+                  }
                 }else {
                   if(ra.shipment_fee_amount) {
                     receivable_others = new Decimal(receivable_others).plus(new Decimal(ra.shipment_fee_amount))
@@ -298,7 +302,11 @@ exports.exportCollectAct = async (req, res) => {
               let payable_others = 0
               for(let pa of payables) {
                 if(payable_map.get(pa.fee_data_name)) {
-                  row[payable_map.get(pa.fee_data_name)] = pa.shipment_fee_amount
+                  if(row[payable_map.get(pa.fee_data_name)]) {
+                    row[payable_map.get(pa.fee_data_name)] = new Decimal(row[payable_map.get(pa.fee_data_name)]).plus(new Decimal(pa.shipment_fee_amount))
+                  } else {
+                    row[payable_map.get(pa.fee_data_name)] = pa.shipment_fee_amount
+                  }
                 }else {
                   if(pa.shipment_fee_amount) {
                     payable_others = new Decimal(payable_others).plus(new Decimal(pa.shipment_fee_amount))
