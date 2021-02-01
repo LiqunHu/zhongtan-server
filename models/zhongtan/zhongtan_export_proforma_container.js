@@ -110,5 +110,10 @@ module.exports = db.defineModel('tbl_zhongtan_export_proforma_container', {
     // 计算滞期费
     type: db.STRING(20),
     allowNull: true
+  },
+  export_container_cal_deduction_amount: {
+    // 计算折扣金额
+    type: db.STRING(20),
+    allowNull: true
   }
 })

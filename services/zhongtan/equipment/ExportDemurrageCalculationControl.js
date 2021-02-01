@@ -19,6 +19,8 @@ module.exports = async (req, res) => {
       ret = await srv.checkPasswordAct(req)
     } else if (method === 'getSelectionDemurrage') {
       ret = await srv.getSelectionDemurrageAct(req)
+    } else if (method === 'deductionDemurrage') {
+      ret = await srv.deductionDemurrageAct(req)
     }
     
     common.sendData(res, ret)

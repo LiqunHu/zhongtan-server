@@ -203,155 +203,7 @@ exports.demurrageCalculationSaveAct = async req => {
       }
     }
     // 合并计算提单滞期费，同步到托单应收滞期费项
-    queryStr = `SELECT SUM(export_container_cal_demurrage_amount) AS bill_demurrage FROM tbl_zhongtan_export_proforma_container WHERE export_vessel_id = ? AND export_container_bl = ? AND state = ?`
-    replacements = [con.export_vessel_id, con.export_container_bl, GLBConfig.ENABLE]
-    let sumRet = await model.simpleSelect(queryStr, replacements)
-    if(sumRet && sumRet.length > 0 && sumRet[0].bill_demurrage && new Decimal(sumRet[0].bill_demurrage) >= 0) {
-      // 
-      let bl = await tb_bl.findOne({
-        where: {
-          export_vessel_id: con.export_vessel_id,
-          export_masterbl_bl: con.export_container_bl,
-          state: GLBConfig.ENABLE
-        }
-      })
-      queryStr = `SELECT * FROM tbl_zhongtan_export_shipment_fee WHERE fee_data_code = 'DND' AND shipment_fee_type = 'R' AND export_masterbl_id = ? `
-      replacements = [bl.export_masterbl_id]
-      let sf = await model.simpleSelect(queryStr, replacements)
-      if(sf && sf.length > 0) {
-        let receipt_amount = 0
-        for(let f of sf) {
-          if(f.shipment_fee_status === 'RE') {
-            receipt_amount = new Decimal(receipt_amount).plus(new Decimal(f.shipment_fee_amount))
-          } else if(f.shipment_fee_status === 'IN') {
-            // 查询同一张发票的费用列表，删除对应发票，状态回退
-            let uf = await tb_uploadfile.findOne({
-              where: {
-                uploadfile_id: f.shipment_fee_invoice_id,
-                state: GLBConfig.ENABLE
-              }
-            })
-            if(uf) {
-              uf.state = GLBConfig.DISABLE
-              await uf.save()
-            }
-            let osf = await tb_shipment_fee.findAll({
-              where: {
-                export_masterbl_id: f.export_masterbl_id,
-                shipment_fee_invoice_id: f.shipment_fee_invoice_id,
-                state: GLBConfig.ENABLE
-              }
-            })
-            if(osf && osf.length > 0) {
-              for(let os of osf) {
-                os.shipment_fee_status = 'SA'
-                os.shipment_fee_invoice_id = ''
-                await os.save()
-              }
-            }
-          } else if(f.shipment_fee_status === 'SU') {
-            // 已提交的，全部撤回，重新提交
-            queryStr = `SELECT * FROM tbl_zhongtan_export_shipment_fee_log WHERE shipment_fee_id = ? AND shipment_fee_status = ?`
-            replacements = [f.shipment_fee_id, f.shipment_fee_status]
-            let sfl = await model.simpleSelect(queryStr, replacements)
-            if(sfl && sfl.length > 0) {
-              for(let sl of sfl) {
-                let ve = await tb_verificatione.findOne({
-                  where: {
-                    export_verification_id: sl.shipment_relation_id,
-                    state: GLBConfig.ENABLE
-                  }
-                })
-                if(ve) {
-                  ve.state = GLBConfig.DISABLE
-                  await ve.save()
-                }
-                let fsu = await tb_shipment_fee.findOne({
-                  where: {
-                    shipment_fee_id: sl.shipment_fee_id,
-                    state: GLBConfig.ENABLE
-                  }
-                })
-                if(fsu) {
-                  fsu.shipment_fee_status = 'SA'
-                  fsu.shipment_fee_invoice_id = ''
-                  await fsu.save()
-                }
-              }
-            }
-          }else {
-            let fsa = await tb_shipment_fee.findOne({
-              where: {
-                shipment_fee_id: f.shipment_fee_id
-              }
-            })
-            fsa.shipment_fee_status = 'SA'
-            fsa.shipment_fee_invoice_id = ''
-            await fsa.save()
-          }
-        }
-        if(receipt_amount > 0) {
-          // 已有开收据费用，多退少补
-          if(new Decimal(sumRet[0].bill_demurrage) !== receipt_amount) {
-            let diff_demurrage = new Decimal(sumRet[0].bill_demurrage).sub(receipt_amount)
-            let fre = await tb_shipment_fee.findOne({
-              where: {
-                fee_data_code: 'DND',
-                shipment_fee_status: 'SA',
-                export_masterbl_id: bl.export_masterbl_id,
-                state: GLBConfig.ENABLE
-              }
-            })
-            if(fre) {
-              fre.shipment_fee_amount = Decimal.isDecimal(diff_demurrage) ? diff_demurrage.toNumber() : diff_demurrage
-              await fre.save()
-            } else {
-              await tb_shipment_fee.create({
-                export_masterbl_id: bl.export_masterbl_id,
-                fee_data_code: 'DND',
-                fee_data_fixed: GLBConfig.ENABLE,
-                shipment_fee_supplement: GLBConfig.DISABLE,
-                shipment_fee_type: 'R',
-                shipment_fee_fixed_amount: GLBConfig.ENABLE,
-                shipment_fee_amount: Decimal.isDecimal(diff_demurrage) ? diff_demurrage.toNumber() : diff_demurrage,
-                shipment_fee_currency: 'USD',
-                shipment_fee_status: 'SA',
-                shipment_fee_save_by: user.user_id,
-                shipment_fee_save_at: new Date()
-              })
-            }
-          }
-        } else {
-          let fol = await tb_shipment_fee.findOne({
-            where: {
-              fee_data_code: 'DND',
-              shipment_fee_status: 'SA',
-              export_masterbl_id: bl.export_masterbl_id,
-              state: GLBConfig.ENABLE
-            }
-          })
-          fol.shipment_fee_amount = sumRet[0].bill_demurrage
-          await fol.save()
-        }
-      } else {
-        if(new Decimal(sumRet[0].bill_demurrage) > 0) {
-          // 新建超期费项目
-          await tb_shipment_fee.create({
-            export_masterbl_id: bl.export_masterbl_id,
-            fee_data_code: 'DND',
-            fee_data_fixed: GLBConfig.ENABLE,
-            shipment_fee_supplement: GLBConfig.DISABLE,
-            shipment_fee_type: 'R',
-            shipment_fee_fixed_amount: GLBConfig.ENABLE,
-            shipment_fee_amount: sumRet[0].bill_demurrage,
-            shipment_fee_currency: 'USD',
-            shipment_fee_status: 'SA',
-            shipment_fee_save_by: user.user_id,
-            shipment_fee_save_at: new Date()
-          })
-        }
-      }
-    }
+    await this.mergeDemurrage2Shipment(con.export_vessel_id, con.export_container_bl, user.user_id)
     return common.success()
   } else {
     return common.error('equipment_03')
@@ -388,6 +240,204 @@ exports.getSelectionDemurrageAct = async req => {
     total_demurrage_amount: total_demurrage_amount
   }
   return common.success(retData)
+}
+
+exports.deductionDemurrageAct = async req => {
+  let doc = common.docValidate(req), user = req.user
+  let selectAll = doc.selectAll
+  let queryStr = ''
+  let replacements = []
+  let deductionContainer = []
+  if(selectAll && doc.selection && doc.selection.length > 0) {
+    let sel0 = doc.selection[0]
+    queryStr = `SELECT * FROM tbl_zhongtan_export_proforma_container WHERE export_vessel_id = ? AND export_container_bl = ? AND state = ? AND export_container_cal_demurrage_amount IS NOT NULL`
+    replacements = [sel0.export_vessel_id, sel0.export_container_bl, GLBConfig.ENABLE]
+    deductionContainer = await model.simpleSelect(queryStr, replacements)
+  } else if(doc.selection && doc.selection.length > 0) {
+    let con_ids = []
+    for(let c of doc.selection) {
+      con_ids.push(c.export_container_id)
+    }
+    queryStr = `SELECT * FROM tbl_zhongtan_export_proforma_container WHERE export_container_id IN (?) AND state = ?`
+    replacements = [con_ids, GLBConfig.ENABLE]
+    deductionContainer = await model.simpleSelect(queryStr, replacements)
+  }
+  if(deductionContainer && deductionContainer.length > 0) {
+    let total_deduction_amount = parseInt(doc.deduction_amount)
+    let deduction = parseInt(doc.deduction_amount / deductionContainer.length)
+    for(let c of deductionContainer) {
+      let con = await tb_container.findOne({
+        where: {
+          export_container_id: c.export_container_id
+        }
+      })
+      if(total_deduction_amount > deduction * 2) {
+        con.export_container_cal_deduction_amount = deduction
+        total_deduction_amount = total_deduction_amount - deduction
+      } else {
+        con.export_container_cal_deduction_amount = total_deduction_amount
+      }
+      await con.save()
+    }
+    // 合并计算提单滞期费，同步到托单应收滞期费项
+    await this.mergeDemurrage2Shipment(deductionContainer[0].export_vessel_id, deductionContainer[0].export_container_bl, user.user_id)
+  }
+}
+
+exports.mergeDemurrage2Shipment = async (export_vessel_id, export_container_bl, user_id) => {
+  let queryStr = `SELECT SUM(export_container_cal_demurrage_amount) AS bill_demurrage, SUM(export_container_cal_deduction_amount) AS deduction_demurrage FROM tbl_zhongtan_export_proforma_container WHERE export_vessel_id = ? AND export_container_bl = ? AND state = ?`
+  let replacements = [export_vessel_id, export_container_bl, GLBConfig.ENABLE]
+  let sumRet = await model.simpleSelect(queryStr, replacements)
+  if(sumRet && sumRet.length > 0 && sumRet[0].bill_demurrage && new Decimal(sumRet[0].bill_demurrage) >= 0) {
+    // 
+    let bill_demurrage = sumRet[0].bill_demurrage
+    if(sumRet[0].deduction_demurrage && new Decimal(sumRet[0].deduction_demurrage) >= 0) {
+      bill_demurrage = new Decimal(bill_demurrage).sub(sumRet[0].deduction_demurrage)
+    }
+    let bl = await tb_bl.findOne({
+      where: {
+        export_vessel_id: export_vessel_id,
+        export_masterbl_bl: export_container_bl,
+        state: GLBConfig.ENABLE
+      }
+    })
+    queryStr = `SELECT * FROM tbl_zhongtan_export_shipment_fee WHERE fee_data_code = 'DND' AND shipment_fee_type = 'R' AND export_masterbl_id = ? `
+    replacements = [bl.export_masterbl_id]
+    let sf = await model.simpleSelect(queryStr, replacements)
+    if(sf && sf.length > 0) {
+      let receipt_amount = 0
+      for(let f of sf) {
+        if(f.shipment_fee_status === 'RE') {
+          receipt_amount = new Decimal(receipt_amount).plus(new Decimal(f.shipment_fee_amount))
+        } else if(f.shipment_fee_status === 'IN') {
+          // 查询同一张发票的费用列表，删除对应发票，状态回退
+          let uf = await tb_uploadfile.findOne({
+            where: {
+              uploadfile_id: f.shipment_fee_invoice_id,
+              state: GLBConfig.ENABLE
+            }
+          })
+          if(uf) {
+            uf.state = GLBConfig.DISABLE
+            await uf.save()
+          }
+          let osf = await tb_shipment_fee.findAll({
+            where: {
+              export_masterbl_id: f.export_masterbl_id,
+              shipment_fee_invoice_id: f.shipment_fee_invoice_id,
+              state: GLBConfig.ENABLE
+            }
+          })
+          if(osf && osf.length > 0) {
+            for(let os of osf) {
+              os.shipment_fee_status = 'SA'
+              os.shipment_fee_invoice_id = ''
+              await os.save()
+            }
+          }
+        } else if(f.shipment_fee_status === 'SU') {
+          // 已提交的，全部撤回，重新提交
+          queryStr = `SELECT * FROM tbl_zhongtan_export_shipment_fee_log WHERE shipment_fee_id = ? AND shipment_fee_status = ?`
+          replacements = [f.shipment_fee_id, f.shipment_fee_status]
+          let sfl = await model.simpleSelect(queryStr, replacements)
+          if(sfl && sfl.length > 0) {
+            for(let sl of sfl) {
+              let ve = await tb_verificatione.findOne({
+                where: {
+                  export_verification_id: sl.shipment_relation_id,
+                  state: GLBConfig.ENABLE
+                }
+              })
+              if(ve) {
+                ve.state = GLBConfig.DISABLE
+                await ve.save()
+              }
+              let fsu = await tb_shipment_fee.findOne({
+                where: {
+                  shipment_fee_id: sl.shipment_fee_id,
+                  state: GLBConfig.ENABLE
+                }
+              })
+              if(fsu) {
+                fsu.shipment_fee_status = 'SA'
+                fsu.shipment_fee_invoice_id = ''
+                await fsu.save()
+              }
+            }
+          }
+        }else {
+          let fsa = await tb_shipment_fee.findOne({
+            where: {
+              shipment_fee_id: f.shipment_fee_id
+            }
+          })
+          fsa.shipment_fee_status = 'SA'
+          fsa.shipment_fee_invoice_id = ''
+          await fsa.save()
+        }
+      }
+      if(receipt_amount > 0) {
+        // 已有开收据费用，多退少补
+        if(new Decimal(bill_demurrage) !== receipt_amount) {
+          let diff_demurrage = new Decimal(bill_demurrage).sub(receipt_amount)
+          let fre = await tb_shipment_fee.findOne({
+            where: {
+              fee_data_code: 'DND',
+              shipment_fee_status: 'SA',
+              export_masterbl_id: bl.export_masterbl_id,
+              state: GLBConfig.ENABLE
+            }
+          })
+          if(fre) {
+            fre.shipment_fee_amount = Decimal.isDecimal(diff_demurrage) ? diff_demurrage.toNumber() : diff_demurrage
+            await fre.save()
+          } else {
+            await tb_shipment_fee.create({
+              export_masterbl_id: bl.export_masterbl_id,
+              fee_data_code: 'DND',
+              fee_data_fixed: GLBConfig.ENABLE,
+              shipment_fee_supplement: GLBConfig.DISABLE,
+              shipment_fee_type: 'R',
+              shipment_fee_fixed_amount: GLBConfig.ENABLE,
+              shipment_fee_amount: Decimal.isDecimal(diff_demurrage) ? diff_demurrage.toNumber() : diff_demurrage,
+              shipment_fee_currency: 'USD',
+              shipment_fee_status: 'SA',
+              shipment_fee_save_by: user_id,
+              shipment_fee_save_at: new Date()
+            })
+          }
+        }
+      } else {
+        let fol = await tb_shipment_fee.findOne({
+          where: {
+            fee_data_code: 'DND',
+            shipment_fee_status: 'SA',
+            export_masterbl_id: bl.export_masterbl_id,
+            state: GLBConfig.ENABLE
+          }
+        })
+        fol.shipment_fee_amount = Decimal.isDecimal(bill_demurrage) ? bill_demurrage.toNumber() : bill_demurrage
+        await fol.save()
+      }
+    } else {
+      if(new Decimal(bill_demurrage) > 0) {
+        // 新建超期费项目
+        await tb_shipment_fee.create({
+          export_masterbl_id: bl.export_masterbl_id,
+          fee_data_code: 'DND',
+          fee_data_fixed: GLBConfig.ENABLE,
+          shipment_fee_supplement: GLBConfig.DISABLE,
+          shipment_fee_type: 'R',
+          shipment_fee_fixed_amount: GLBConfig.ENABLE,
+          shipment_fee_amount: Decimal.isDecimal(bill_demurrage) ? bill_demurrage.toNumber() : bill_demurrage,
+          shipment_fee_currency: 'USD',
+          shipment_fee_status: 'SA',
+          shipment_fee_save_by: user_id,
+          shipment_fee_save_at: new Date()
+        })
+      }
+    }
+  }
 }
 
 exports.checkPasswordAct = async req => {
