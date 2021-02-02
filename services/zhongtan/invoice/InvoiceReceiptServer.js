@@ -534,20 +534,25 @@ exports.downloadCollectAct = async (req, res) => {
       b.uploadfile_acttype IN('deposit' , 'fee' , 'freight')
     AND a.invoice_masterbi_id = b.uploadfile_index1
     AND a.invoice_masterbi_customer_id = c.user_id
-    AND a.invoice_vessel_id = v.invoice_vessel_id
-    AND a.invoice_masterbi_carrier = ?
-    AND STR_TO_DATE(v.invoice_vessel_ata, "%d/%m/%Y") >= ?
-    AND STR_TO_DATE(v.invoice_vessel_ata, "%d/%m/%Y") < ? order by v.invoice_vessel_id desc, a.invoice_masterbi_bl`
-  let replacements = [
-    doc.carrier,
-    moment(doc.collect_date[0]).local().format('YYYY-MM-DD'),
-    moment(doc.collect_date[1]).local().add(1, 'days').format('YYYY-MM-DD')
-  ]
-
+    AND a.invoice_vessel_id = v.invoice_vessel_id`
+  let replacements = []
+  if(doc.carrier) {
+    queryStr = queryStr + ` AND a.invoice_masterbi_carrier = ? `
+    replacements.push(doc.carrier)
+  }
+  if(doc.collect_date && doc.collect_date.length === 2 && doc.collect_date[0] && doc.collect_date[1]) {
+    queryStr = queryStr + ` AND STR_TO_DATE(v.invoice_vessel_ata, "%d/%m/%Y") >= ? AND STR_TO_DATE(v.invoice_vessel_ata, "%d/%m/%Y") < ? `
+    replacements.push(doc.collect_date[0])
+    replacements.push(doc.collect_date[1])
+  }
+  if(doc.receipt_date && doc.receipt_date.length === 2 && doc.receipt_date[0] && doc.receipt_date[1]) {
+    queryStr = queryStr + ` AND b.created_at >= ? AND b.created_at < ? `
+    replacements.push(doc.receipt_date[0])
+    replacements.push(doc.receipt_date[1])
+  }
+  queryStr = queryStr + ` order by v.invoice_vessel_id desc, a.invoice_masterbi_bl`
   let result = await model.simpleSelect(queryStr, replacements)
-
   let renderData = []
-
   for (let r of result) {
     let row = {}
     row.date = moment(r.uploadfil_release_date).format('YYYY/MM/DD')
