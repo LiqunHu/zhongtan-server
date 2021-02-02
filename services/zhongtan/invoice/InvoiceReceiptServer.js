@@ -536,8 +536,8 @@ exports.downloadCollectAct = async (req, res) => {
     AND a.invoice_masterbi_customer_id = c.user_id
     AND a.invoice_vessel_id = v.invoice_vessel_id
     AND a.invoice_masterbi_carrier = ?
-    AND b.created_at > ?
-    AND b.created_at < ? order by a.invoice_vessel_id desc, a.invoice_masterbi_bl`
+    AND STR_TO_DATE(v.invoice_vessel_ata, "%d/%m/%Y") >= ?
+    AND STR_TO_DATE(v.invoice_vessel_ata, "%d/%m/%Y") < ? order by v.invoice_vessel_id desc, a.invoice_masterbi_bl`
   let replacements = [
     doc.carrier,
     moment(doc.collect_date[0]).local().format('YYYY-MM-DD'),

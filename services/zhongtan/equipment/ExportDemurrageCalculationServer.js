@@ -271,7 +271,7 @@ exports.deductionDemurrageAct = async req => {
           export_container_id: c.export_container_id
         }
       })
-      if(total_deduction_amount > deduction * 2) {
+      if(total_deduction_amount > (deduction * 2 - 1)) {
         con.export_container_cal_deduction_amount = deduction
         total_deduction_amount = total_deduction_amount - deduction
       } else {
