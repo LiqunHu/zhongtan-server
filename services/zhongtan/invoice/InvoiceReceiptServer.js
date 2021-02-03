@@ -543,12 +543,12 @@ exports.downloadCollectAct = async (req, res) => {
   if(doc.collect_date && doc.collect_date.length === 2 && doc.collect_date[0] && doc.collect_date[1]) {
     queryStr = queryStr + ` AND STR_TO_DATE(v.invoice_vessel_ata, "%d/%m/%Y") >= ? AND STR_TO_DATE(v.invoice_vessel_ata, "%d/%m/%Y") < ? `
     replacements.push(doc.collect_date[0])
-    replacements.push(doc.collect_date[1])
+    replacements.push(moment(doc.collect_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
   }
   if(doc.receipt_date && doc.receipt_date.length === 2 && doc.receipt_date[0] && doc.receipt_date[1]) {
     queryStr = queryStr + ` AND b.created_at >= ? AND b.created_at < ? `
     replacements.push(doc.receipt_date[0])
-    replacements.push(doc.receipt_date[1])
+    replacements.push(moment(doc.receipt_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
   }
   queryStr = queryStr + ` order by v.invoice_vessel_id desc, a.invoice_masterbi_bl`
   let result = await model.simpleSelect(queryStr, replacements)
