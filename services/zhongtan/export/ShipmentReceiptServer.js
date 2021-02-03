@@ -237,11 +237,13 @@ exports.exportCollectAct = async (req, res) => {
     receivable_map.set('B/L FEE', 'receivable_bl')
     receivable_map.set('OCEAN FREIGHT', 'receivable_ocean')
     receivable_map.set('TASAC FEE', 'receivable_tasac')
+    receivable_map.set('DEMURRAGE FEE', 'receivable_demurrage')
     let payable_map = new Map()
     payable_map.set('B/L FEE', 'payable_bl')
     payable_map.set('OCEAN FREIGHT', 'payable_ocean')
     payable_map.set('TASAC FEE', 'payable_tasac')
     payable_map.set('TELEX RELEASE FEE', 'payable_telex')
+    payable_map.set('DEMURRAGE FEE', 'payable_demurrage')
     let renderData = []
     for(let r of result) {
       queryStr = `SELECT u.*, c.user_name FROM tbl_zhongtan_uploadfile u LEFT JOIN tbl_common_user c ON u.uploadfile_customer_id = c.user_id 
@@ -283,6 +285,13 @@ exports.exportCollectAct = async (req, res) => {
                 }else {
                   if(ra.shipment_fee_amount) {
                     receivable_others = new Decimal(receivable_others).plus(new Decimal(ra.shipment_fee_amount))
+                  }
+                }
+                if(ra.fee_data_name === 'DEMURRAGE FEE') {
+                  if(row[payable_map.get(ra.fee_data_name)]) {
+                    row[payable_map.get(ra.fee_data_name)] = new Decimal(row[payable_map.get(ra.fee_data_name)]).plus(new Decimal(ra.shipment_fee_amount))
+                  } else {
+                    row[payable_map.get(ra.fee_data_name)] = ra.shipment_fee_amount
                   }
                 }
               }
