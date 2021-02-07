@@ -38,7 +38,7 @@ exports.initAct = async () => {
 exports.searchAct = async req => {
   let doc = common.docValidate(req)
   let returnData = {}
-  let queryStr = `SELECT b.export_masterbl_id, b.export_masterbl_bl, b.export_masterbl_cargo_type, b.export_masterbl_port_of_load, b.export_masterbl_port_of_discharge, b.export_masterbl_shipper_company, 
+  let queryStr = `SELECT b.export_masterbl_id, b.export_masterbl_bl, b.export_masterbl_cargo_type, b.export_masterbl_port_of_load, b.export_masterbl_port_of_discharge, b.export_masterbl_shipper_company, b.loading_list_import, b.proforma_import,
                   v.export_vessel_id, v.export_vessel_name, v.export_vessel_voyage, v.export_vessel_etd, f.total_count, f.receipt_count, f.total_amount
                   from tbl_zhongtan_export_proforma_masterbl b 
                   LEFT JOIN tbl_zhongtan_export_proforma_vessel v ON b.export_vessel_id = v.export_vessel_id 
@@ -80,7 +80,8 @@ exports.searchAct = async req => {
       let cons = await tb_proforma_container.findAll({
         where: {
           export_vessel_id: d.export_vessel_id,
-          export_container_bl: d.export_masterbl_bl
+          export_container_bl: d.export_masterbl_bl,
+          state: GLBConfig.ENABLE
         },
         order: [['export_container_no', 'ASC']]
       })
@@ -96,6 +97,8 @@ exports.searchAct = async req => {
           bl.container_no = c.export_container_no
           bl.container_size_type = c.export_container_size_type
           bl.container_volume = 1
+          bl.container_loading_list_import = c.loading_list_import
+          bl.container_proforma_import = c.proforma_import
           if(d.total_count === d.receipt_count && d.receipt_count > 0) {
             bl.charge_status = 'RELEASE'
           } else {
@@ -261,12 +264,14 @@ exports.loadingListDataAct = async req => {
               export_vessel_code: vessel.export_vessel_code,
               export_vessel_name: vessel.export_vessel_name,
               export_vessel_voyage: vessel.export_vessel_voyage,
-              export_vessel_etd: vessel.export_vessel_etd
+              export_vessel_etd: vessel.export_vessel_etd,
+              loading_list_import: GLBConfig.ENABLE
             })
           } else {
             proforma_vessel = await tb_proforma_vessel.create({
               export_vessel_name: ves,
-              export_vessel_voyage: voy
+              export_vessel_voyage: voy,
+              loading_list_import: GLBConfig.ENABLE
             })
           }
         }
@@ -283,49 +288,64 @@ exports.loadingListDataAct = async req => {
           if(booking_no) {
             booking_no = booking_no.replace(/[^0-9a-zA-Z]/ig, '').trim()
           }
-          if(booking_no && common.isNumber(booking_no)) {
-            let full_bl = ''
-            if(carrier.indexOf('COS') >= 0) {
-              full_bl = 'COSU' + booking_no
-              carrier = 'COSCO'
-            } else {
-              full_bl = 'OOLU' + booking_no
-              carrier = 'OOCL'
-            }
-            if(!proforma_vessel.export_vessel_code) {
-              proforma_vessel.export_vessel_code = carrier
-              await proforma_vessel.save()
-            }
-            let proforma_bl = await tb_proforma_bl.findOne({
-              where: {
-                export_vessel_id: proforma_vessel.export_vessel_id,
-                export_masterbl_bl: full_bl,
-                state: GLBConfig.ENABLE
+          
+          if(booking_no) {
+            let first_b = booking_no.substring(0, 1)
+            if(common.isNumber(first_b)) {
+              let full_bl = ''
+              if(carrier.indexOf('COS') >= 0) {
+                full_bl = 'COSU' + booking_no
+                carrier = 'COSCO'
+              } else {
+                full_bl = 'OOLU' + booking_no
+                carrier = 'OOCL'
               }
-            })
-            if(!proforma_bl) {
-              if(vessel) {
-                let bl = await tb_bl.findOne({
-                  where: {
-                    export_vessel_id: vessel.export_vessel_id,
-                    export_masterbl_bl: full_bl,
-                    state: GLBConfig.ENABLE
-                  }
-                })
-                if(bl) {
-                  proforma_bl = await tb_proforma_bl.create({
-                    relation_export_masterbl_id: bl.export_masterbl_id,
-                    export_vessel_id: proforma_vessel.export_vessel_id,
-                    export_masterbl_bl_carrier: bl.export_masterbl_bl_carrier,
-                    export_masterbl_bl: bl.export_masterbl_bl,
-                    export_masterbl_cargo_type: poo.indexOf('TZ') === 0 ? 'LOCAL' : 'TRANSIT',
-                    export_masterbl_port_of_load: pol,
-                    export_masterbl_port_of_discharge: pod,
-                    export_masterbl_forwarder_company: bl.export_masterbl_forwarder_company,
-                    export_masterbl_cargo_nature: bl.export_masterbl_cargo_nature,
-                    export_masterbl_cargo_descriptions: bl.export_masterbl_cargo_descriptions
+              if(!proforma_vessel.export_vessel_code) {
+                proforma_vessel.export_vessel_code = carrier
+                await proforma_vessel.save()
+              }
+              let proforma_bl = await tb_proforma_bl.findOne({
+                where: {
+                  export_vessel_id: proforma_vessel.export_vessel_id,
+                  export_masterbl_bl: full_bl,
+                  state: GLBConfig.ENABLE
+                }
+              })
+              if(!proforma_bl) {
+                if(vessel) {
+                  let bl = await tb_bl.findOne({
+                    where: {
+                      export_vessel_id: vessel.export_vessel_id,
+                      export_masterbl_bl: full_bl,
+                      state: GLBConfig.ENABLE
+                    }
                   })
-                }else {
+                  if(bl) {
+                    proforma_bl = await tb_proforma_bl.create({
+                      relation_export_masterbl_id: bl.export_masterbl_id,
+                      export_vessel_id: proforma_vessel.export_vessel_id,
+                      export_masterbl_bl_carrier: bl.export_masterbl_bl_carrier,
+                      export_masterbl_bl: bl.export_masterbl_bl,
+                      export_masterbl_cargo_type: poo.indexOf('TZ') === 0 ? 'LOCAL' : 'TRANSIT',
+                      export_masterbl_port_of_load: pol,
+                      export_masterbl_port_of_discharge: pod,
+                      export_masterbl_forwarder_company: bl.export_masterbl_forwarder_company,
+                      export_masterbl_cargo_nature: bl.export_masterbl_cargo_nature,
+                      export_masterbl_cargo_descriptions: bl.export_masterbl_cargo_descriptions,
+                      loading_list_import: GLBConfig.ENABLE
+                    })
+                  }else {
+                    proforma_bl = await tb_proforma_bl.create({
+                      export_vessel_id: proforma_vessel.export_vessel_id,
+                      export_masterbl_bl_carrier: carrier,
+                      export_masterbl_bl: full_bl,
+                      export_masterbl_cargo_type: poo.indexOf('TZ') === 0 ? 'LOCAL' : 'TRANSIT',
+                      export_masterbl_port_of_load: pol,
+                      export_masterbl_port_of_discharge: pod,
+                      loading_list_import: GLBConfig.ENABLE
+                    })
+                  }
+                } else {
                   proforma_bl = await tb_proforma_bl.create({
                     export_vessel_id: proforma_vessel.export_vessel_id,
                     export_masterbl_bl_carrier: carrier,
@@ -333,63 +353,62 @@ exports.loadingListDataAct = async req => {
                     export_masterbl_cargo_type: poo.indexOf('TZ') === 0 ? 'LOCAL' : 'TRANSIT',
                     export_masterbl_port_of_load: pol,
                     export_masterbl_port_of_discharge: pod,
+                    loading_list_import: GLBConfig.ENABLE
                   })
                 }
               } else {
-                proforma_bl = await tb_proforma_bl.create({
-                  export_vessel_id: proforma_vessel.export_vessel_id,
-                  export_masterbl_bl_carrier: carrier,
-                  export_masterbl_bl: full_bl,
-                  export_masterbl_cargo_type: poo.indexOf('TZ') === 0 ? 'LOCAL' : 'TRANSIT',
-                  export_masterbl_port_of_load: pol,
-                  export_masterbl_port_of_discharge: pod,
-                })
+                proforma_bl.loading_list_import = GLBConfig.ENABLE
+                await proforma_bl.save()
               }
-            }
-            let container = await tb_container.findOne({
-              where: {
-                export_vessel_id: vessel.export_vessel_id,
-                export_container_bl: full_bl,
-                export_container_no: con_no,
-                state: GLBConfig.ENABLE
-              }
-            })
-            let proforma_container = await tb_proforma_container.findOne({
-              where: {
-                export_vessel_id: proforma_vessel.export_vessel_id,
-                export_container_bl: full_bl,
-                export_container_no: con_no,
-                state: GLBConfig.ENABLE
-              }
-            })
-            if(!proforma_container) {
-              if(container) {
-                await tb_proforma_container.create({
+              let container = await tb_container.findOne({
+                where: {
+                  export_vessel_id: vessel.export_vessel_id,
+                  export_container_bl: full_bl,
+                  export_container_no: con_no,
+                  state: GLBConfig.ENABLE
+                }
+              })
+              let proforma_container = await tb_proforma_container.findOne({
+                where: {
                   export_vessel_id: proforma_vessel.export_vessel_id,
                   export_container_bl: full_bl,
                   export_container_no: con_no,
-                  export_seal_no: seal || '',
-                  export_container_size_type: sz_ty,
-                  export_container_soc_type: container.export_container_soc_type,
-                  export_container_edi_loading_date: container.export_container_edi_loading_date,
-                  export_container_edi_depot_gate_out_date: container.export_container_edi_depot_gate_out_date,
-                  export_container_cal_depot_gate_out_date: container.export_container_edi_depot_gate_out_date,
-                  export_container_edi_wharf_gate_in_date: container.export_container_edi_wharf_gate_in_date,
-                  export_container_get_depot_name: container.export_container_get_depot_name
-                })
-
+                  state: GLBConfig.ENABLE
+                }
+              })
+              if(!proforma_container) {
+                if(container) {
+                  await tb_proforma_container.create({
+                    export_vessel_id: proforma_vessel.export_vessel_id,
+                    export_container_bl: full_bl,
+                    export_container_no: con_no,
+                    export_seal_no: seal || '',
+                    export_container_size_type: sz_ty,
+                    export_container_soc_type: container.export_container_soc_type,
+                    export_container_edi_loading_date: container.export_container_edi_loading_date,
+                    export_container_edi_depot_gate_out_date: container.export_container_edi_depot_gate_out_date,
+                    export_container_cal_depot_gate_out_date: container.export_container_edi_depot_gate_out_date,
+                    export_container_edi_wharf_gate_in_date: container.export_container_edi_wharf_gate_in_date,
+                    export_container_get_depot_name: container.export_container_get_depot_name,
+                    loading_list_import: GLBConfig.ENABLE
+                  })
+                } else {
+                  await tb_proforma_container.create({
+                    export_vessel_id: proforma_vessel.export_vessel_id,
+                    export_container_bl: full_bl,
+                    export_container_no: con_no,
+                    export_container_size_type: sz_ty,
+                    export_seal_no: seal || '',
+                    export_container_soc_type: 'C',
+                    loading_list_import: GLBConfig.ENABLE
+                  })
+                }
               } else {
-                await tb_proforma_container.create({
-                  export_vessel_id: proforma_vessel.export_vessel_id,
-                  export_container_bl: full_bl,
-                  export_container_no: con_no,
-                  export_container_size_type: sz_ty,
-                  export_seal_no: seal || '',
-                  export_container_soc_type: 'C',
-                })
+                proforma_container.loading_list_import = GLBConfig.ENABLE
+                await proforma_container.save()
               }
+              await cal_demurrage_srv.calculationDemurrage2Shipment(proforma_vessel.export_vessel_id, full_bl, con_no, user.user_id)
             }
-            await cal_demurrage_srv.calculationDemurrage2Shipment(proforma_vessel.export_vessel_id, full_bl, con_no, user.user_id)
           }
         }
       }

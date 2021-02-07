@@ -30,5 +30,17 @@ module.exports = db.defineModel('tbl_zhongtan_export_proforma_vessel', {
     type: db.STRING(20),
     defaultValue: '',
     allowNull: false
+  },
+  proforma_import: {
+    // proforma 导入
+    type: db.STRING(5),
+    defaultValue: '0',
+    allowNull: false
+  },
+  loading_list_import: {
+    // loading list 导入
+    type: db.STRING(5),
+    defaultValue: '0',
+    allowNull: false
   }
 })
