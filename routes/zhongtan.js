@@ -27,6 +27,7 @@ router.post('/export/ShipmentProforma/:method', services.ShipmentProformaControl
 router.post('/export/ShipmentRelease/:method', services.ShipmentReleaseControl)
 router.post('/export/ShipmentReceipt/:method', services.ShipmentReceiptControl)
 router.post('/export/FreightChargeStatus/:method', services.FreightChargeStatusControl)
+router.post('/export/ExportStatistics/:method', services.ExportStatisticsControl)
 
 router.post('/import/ImportWork/:method', services.ImportWorkControl)
 router.post('/invoice/Invoice/:method', services.InvoiceControl)
