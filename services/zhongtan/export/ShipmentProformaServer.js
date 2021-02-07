@@ -6,6 +6,7 @@ const GLBConfig = require('../../../util/GLBConfig')
 const common = require('../../../util/CommonUtil')
 const model = require('../../../app/model')
 const opSrv = require('../../common/system/OperationPasswordServer')
+const cal_demurrage_srv = require('../equipment/ExportDemurrageCalculationServer')
 
 const tb_user = model.common_user
 const tb_vessel = model.zhongtan_export_vessel
@@ -18,7 +19,7 @@ const tb_container_size = model.zhongtan_container_size
 const tb_shipment_fee = model.zhongtan_export_shipment_fee
 
 exports.uploadBookingAct = async req => {
-  let doc = common.docValidate(req)
+  let doc = common.docValidate(req), user = req.user
   let sizeConfig = await tb_container_size.findAll({
     where: {
       state: GLBConfig.ENABLE
@@ -239,19 +240,19 @@ exports.uploadBookingAct = async req => {
               })
             }
           }
-          let proforma_cons_old = await tb_proforma_container.findAll({
-            where: {
-              export_vessel_id: proforma_vessel.export_vessel_id,
-              export_container_bl: proforma_bl.export_masterbl_bl,
-              state: GLBConfig.ENABLE
-            }
-          })
-          if(proforma_cons_old && proforma_cons_old.length > 0) {
-            for(let co of proforma_cons_old) {
-              co.state = GLBConfig.DISABLE
-              await co.save()
-            }
-          }
+          // let proforma_cons_old = await tb_proforma_container.findAll({
+          //   where: {
+          //     export_vessel_id: proforma_vessel.export_vessel_id,
+          //     export_container_bl: proforma_bl.export_masterbl_bl,
+          //     state: GLBConfig.ENABLE
+          //   }
+          // })
+          // if(proforma_cons_old && proforma_cons_old.length > 0) {
+          //   for(let co of proforma_cons_old) {
+          //     co.state = GLBConfig.DISABLE
+          //     await co.save()
+          //   }
+          // }
           let traffic_mode = ''
           let qty = conRows.length
           let total_packages = 0
@@ -326,42 +327,70 @@ exports.uploadBookingAct = async req => {
                 state: GLBConfig.ENABLE
               }
             })
-            if(container) {
-              await tb_proforma_container.create({
-                export_vessel_id: proforma_vessel.export_vessel_id,
+            let proforma_container = await tb_proforma_container.findOne({
+              where: {
                 export_container_bl: billOf,
                 export_container_no: conNo,
-                export_seal_no: sealNo,
-                export_container_soc_type: container.export_container_soc_type,
-                export_container_size_type: ct,
-                export_container_cargo_package: pg,
-                export_container_cargo_package_unit: pu,
-                export_container_cargo_weight: we,
-                export_container_cargo_weight_unit: wu,
-                export_container_cargo_volumn: vl,
-                export_container_cargo_volumn_unit: vu,
-                export_container_edi_loading_date: container.export_container_edi_loading_date,
-                export_container_edi_depot_gate_out_date: container.export_container_edi_depot_gate_out_date,
-                export_container_cal_depot_gate_out_date: container.export_container_edi_depot_gate_out_date,
-                export_container_edi_wharf_gate_in_date: container.export_container_edi_wharf_gate_in_date,
-                export_container_get_depot_name: container.export_container_get_depot_name
-              })
+                state: GLBConfig.ENABLE
+              }
+            })
+            if(!proforma_container) {
+              if(container) {
+                await tb_proforma_container.create({
+                  export_vessel_id: proforma_vessel.export_vessel_id,
+                  export_container_bl: billOf,
+                  export_container_no: conNo,
+                  export_seal_no: sealNo,
+                  export_container_soc_type: container.export_container_soc_type,
+                  export_container_size_type: ct,
+                  export_container_cargo_package: pg,
+                  export_container_cargo_package_unit: pu,
+                  export_container_cargo_weight: we,
+                  export_container_cargo_weight_unit: wu,
+                  export_container_cargo_volumn: vl,
+                  export_container_cargo_volumn_unit: vu,
+                  export_container_edi_loading_date: container.export_container_edi_loading_date,
+                  export_container_edi_depot_gate_out_date: container.export_container_edi_depot_gate_out_date,
+                  export_container_cal_depot_gate_out_date: container.export_container_edi_depot_gate_out_date,
+                  export_container_edi_wharf_gate_in_date: container.export_container_edi_wharf_gate_in_date,
+                  export_container_get_depot_name: container.export_container_get_depot_name
+                })
+                
+              } else {
+                await tb_proforma_container.create({
+                  export_vessel_id: proforma_vessel.export_vessel_id,
+                  export_container_bl: billOf,
+                  export_container_no: conNo,
+                  export_seal_no: sealNo,
+                  export_container_soc_type: 'C',
+                  export_container_size_type: ct,
+                  export_container_cargo_package: pg,
+                  export_container_cargo_package_unit: pu,
+                  export_container_cargo_weight: we,
+                  export_container_cargo_weight_unit: wu,
+                  export_container_cargo_volumn: vl,
+                  export_container_cargo_volumn_unit: vu
+                })
+              }
             } else {
-              await tb_proforma_container.create({
-                export_vessel_id: proforma_vessel.export_vessel_id,
-                export_container_bl: billOf,
-                export_container_no: conNo,
-                export_seal_no: sealNo,
-                export_container_soc_type: 'C',
-                export_container_size_type: ct,
-                export_container_cargo_package: pg,
-                export_container_cargo_package_unit: pu,
-                export_container_cargo_weight: we,
-                export_container_cargo_weight_unit: wu,
-                export_container_cargo_volumn: vl,
-                export_container_cargo_volumn_unit: vu
-              })
+              proforma_container.export_seal_no = sealNo
+              proforma_container.export_container_size_type = ct
+              proforma_container.export_container_cargo_package = pg
+              proforma_container.export_container_cargo_package_unit = pu
+              proforma_container.export_container_cargo_weight = we
+              proforma_container.export_container_cargo_weight_unit = wu
+              proforma_container.export_container_cargo_volumn = vl
+              proforma_container.export_container_cargo_volumn_unit = vu
+              if(container) {
+                proforma_container.export_container_edi_loading_date = container.export_container_edi_loading_date,
+                proforma_container.export_container_edi_depot_gate_out_date = container.export_container_edi_depot_gate_out_date,
+                proforma_container.export_container_cal_depot_gate_out_date = container.export_container_edi_depot_gate_out_date,
+                proforma_container.export_container_edi_wharf_gate_in_date = container.export_container_edi_wharf_gate_in_date,
+                proforma_container.export_container_get_depot_name = container.export_container_get_depot_name
+              }
+              await proforma_container.save()
             }
+            await cal_demurrage_srv.calculationDemurrage2Shipment(proforma_vessel.export_vessel_id, billOf, conNo, user.user_id)
           }
           proforma_bl.export_masterbl_cso_number = cos
           proforma_bl.export_masterbl_shipper_company = shipper

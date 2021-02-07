@@ -373,7 +373,7 @@ exports.uploadImportAct = async req => {
               invoice_containers_type: c['Type Of Container'].trim(),
               invoice_containers_no: c['Container No'].trim(),
               invoice_containers_size: c['Container Size'].trim(),
-              invoice_containers_seal1: c['Seal No.1'] ? c['Seal No.1'].trim() : '',
+              invoice_containers_seal1: c['Seal No.1'] || '',
               invoice_containers_seal2: c['Seal No.2'] || '',
               invoice_containers_seal3: c['Seal No.3'] || '',
               invoice_containers_freight_indicator: c['Freight Indicator'] || '',

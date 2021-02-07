@@ -76,22 +76,21 @@ exports.addAct = async req => {
 
 exports.modifyAct = async req => {
   let doc = common.docValidate(req)
-
   let queryStr = 'select * from tbl_zhongtan_allot_depot where state = "1" and allot_depot_id <> ? and allot_depot_enabled = ? '
-  let replacements = [doc.allot_depot_id, doc.allot_depot_enabled]
+  let replacements = [doc.new.allot_depot_id, doc.new.allot_depot_enabled]
   let result = await model.simpleSelect(queryStr, replacements)
   if(result && result.length > 0) {
     return common.error('allot_depot_02')
   }else {
     let ad = await tb_allot_depot.findOne({
       where: {
-        allot_depot_id: doc.allot_depot_id,
+        allot_depot_id: doc.new.allot_depot_id,
         state: GLBConfig.ENABLE
       }
     })
     if (ad) {
-      ad.allot_depot_enabled = doc.allot_depot_enabled
-      ad.allot_depot_rules = doc.allot_depot_rules
+      ad.allot_depot_enabled = doc.new.allot_depot_enabled
+      ad.allot_depot_rules = doc.new.allot_depot_rules
       await ad.save()
       return common.success()
     } else {
@@ -163,13 +162,13 @@ exports.allotVesselDepotAct = async req => {
   let result = await model.simpleSelect(queryStr, replacements)
   if(result) {
     for(let r of result) {
-      await this.handleAllotVesselDepot(r.invoice_vessel_id)
+      await this.handleAllotVesselDepot(r.invoice_vessel_id, doc.reset)
     }
   }
   return common.success()
 }
 
-exports.handleAllotVesselDepot = async (vessel_id) => {
+exports.handleAllotVesselDepot = async (vessel_id, reset = '0') => {
   if(vessel_id) {
     // 查询满足条件的分配规则
     let vessel = await tb_vessel.findOne({
@@ -212,6 +211,15 @@ exports.handleAllotVesselDepot = async (vessel_id) => {
           }
         })
         if(vessel_bls && vessel_bls.length > 0 && vessel_cons && vessel_cons.length > 0) {
+          if(reset && reset === GLBConfig.ENABLE) {
+            // 删除未D/O提单分配的堆场
+            for(let b of vessel_bls) {
+              if(!b.invoice_masterbi_do_date && b.invoice_masterbi_do_return_depot) {
+                b.invoice_masterbi_do_return_depot = ''
+                await b.save()
+              }
+            }
+          }
           let cosco_bl_cons = []
           let oocl_bl_cons = []
           let cosco_total = 0
