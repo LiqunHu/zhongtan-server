@@ -841,7 +841,7 @@ exports.invoiceShipmentAct = async req => {
         }
       }
     }
-    queryStr = `SELECT f.*, u.user_name, u.user_address FROM 
+    queryStr = `SELECT f.*, u.user_name, u.user_address, u.user_tin FROM 
                 tbl_zhongtan_export_shipment_fee f LEFT JOIN tbl_common_user u ON f.shipment_fee_party = u.user_id 
                 WHERE f.state = ? AND f.export_masterbl_id = ? AND f.shipment_fee_type = 'R' AND f.shipment_fee_status IN (?) ORDER BY u.user_name, f.fee_data_fixed DESC, f.shipment_fee_fixed_amount DESC;`
     replacements = [GLBConfig.ENABLE, doc.export_masterbl_id, invoiceStatus]
