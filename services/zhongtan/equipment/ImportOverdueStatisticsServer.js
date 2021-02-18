@@ -276,6 +276,9 @@ exports.exportDataAct = async(req, res) => {
     if(r.invoice_containers_actually_return_date) {
       r.invoice_containers_actually_return_date = moment(r.invoice_containers_actually_return_date, 'DD/MM/YYYY').format('YYYY-MM-DD')
     }
+    if(r.invoice_containers_type === 'S') {
+      r.invoice_masterbi_demurrage_party = 'SOC'
+    }
     renderData.push(r)
   }
 

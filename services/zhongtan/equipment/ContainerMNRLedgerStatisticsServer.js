@@ -24,6 +24,10 @@ exports.initAct = async () => {
     },
     order: [['discharge_port_code', 'ASC']]
   })
+  let queryStr = `SELECT user_id, user_name FROM tbl_common_user WHERE state = 1 AND user_type = '${GLBConfig.TYPE_CUSTOMER}' ORDER BY user_name`
+  let replacements = []
+  returnData['CUSTOMER'] = await model.simpleSelect(queryStr, replacements)
+
   returnData['UPLOAD_STATE'] = GLBConfig.UPLOAD_STATE
   returnData['MNR_CARGO_TYPE'] = GLBConfig.MNR_CARGO_TYPE
   returnData['MNR_DESCRIPTION'] = GLBConfig.MNR_DESCRIPTION
@@ -50,6 +54,10 @@ exports.searchAct = async req => {
       queryStr += ` AND mnr_ledger_receipt_date >= ? and mnr_ledger_receipt_date < ? `
       replacements.push(start_date)
       replacements.push(moment(end_date, 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
+    }
+    if (doc.search_data.mnr_ledger_corresponding_payer_id) {
+      queryStr += ' and mnr_ledger_corresponding_payer_id = ? '
+      replacements.push(doc.search_data.mnr_ledger_corresponding_payer_id)
     }
     if (doc.search_data.mnr_ledger_bl) {
       queryStr += ' and mnr_ledger_bl like ? '
@@ -142,6 +150,10 @@ exports.exportAct = async(req, res) => {
       queryStr += ` AND mnr_ledger_receipt_date >= ? and mnr_ledger_receipt_date < ? `
       replacements.push(start_date)
       replacements.push(moment(end_date, 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
+    }
+    if (doc.search_data.mnr_ledger_corresponding_payer_id) {
+      queryStr += ' and mnr_ledger_corresponding_payer_id = ? '
+      replacements.push(doc.search_data.mnr_ledger_corresponding_payer_id)
     }
     if (doc.search_data.mnr_ledger_bl) {
       queryStr += ' and mnr_ledger_bl like ? '
