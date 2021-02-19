@@ -4,6 +4,7 @@ const common = require('../../../util/CommonUtil')
 const GLBConfig = require('../../../util/GLBConfig')
 const model = require('../../../app/model')
 const seq = require('../../../util/Sequence')
+const opSrv = require('../../common/system/OperationPasswordServer')
 
 const tb_container_size = model.zhongtan_container_size
 const tb_mnr_ledger = model.zhongtan_container_mnr_ledger
@@ -80,7 +81,7 @@ exports.searchAct = async req => {
     }
     queryStr = `SELECT a.*, b.user_name FROM tbl_zhongtan_uploadfile a
       left join tbl_common_user b on a.uploadfil_release_user_id = b.user_id
-      WHERE a.uploadfile_index1 = ? and (api_name = ? or api_name = ?) order by a.uploadfile_id desc`
+      WHERE a.uploadfile_index1 = ? and (api_name = ? or api_name = ?) and a.state = '1' order by a.uploadfile_id desc`
     replacements = [r.container_mnr_ledger_id, 'MNR-INVOICE', 'MNR-RECEIPT']
     r.mnr_files = []
     let files = await model.simpleSelect(queryStr, replacements)
@@ -103,7 +104,8 @@ exports.searchAct = async req => {
           url: f.uploadfile_url,
           state: f.uploadfile_state,
           release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
-          release_user: f.user_name
+          release_user: f.user_name,
+          receipt_status: !!r.mnr_ledger_receipt_date
         })
       }
     }
@@ -325,4 +327,41 @@ function formatCurrency(num) {
     num = num.substring(0, num.length - (4 * i + 3)) + ',' + num.substring(num.length - (4 * i + 3))
   }
   return (sign ? '' : '-') + num + '.' + cents
+}
+
+exports.checkPasswordAct = async req => {
+  let doc = common.docValidate(req)
+  let check = await opSrv.checkPassword(doc.action, doc.checkPassword)
+  if(check) {
+    return common.success()
+  } else {
+    return common.error('auth_24')
+  }
+}
+
+exports.deleteMNRInvoieAct = async req => {
+  let doc = common.docValidate(req)
+  let f = await tb_uploadfile.findOne({
+    where: {
+      uploadfile_id: doc.file_id,
+      state: GLBConfig.ENABLE
+    }
+  })
+  if(f) {
+    f.state = GLBConfig.DISABLE
+    await f.save()
+
+    let mnr = await tb_mnr_ledger.findOne({
+      where: {
+        container_mnr_ledger_id: doc.container_mnr_ledger_id
+      }
+    })
+    if(mnr) {
+      mnr.mnr_ledger_invoice_amount = ''
+      mnr.mnr_ledger_invoice_date = ''
+      mnr.mnr_ledger_invoice_no = ''
+      await mnr.save()
+    }
+  }
+  return common.success()
 }

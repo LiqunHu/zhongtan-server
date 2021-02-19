@@ -4,6 +4,7 @@ const GLBConfig = require('../../../util/GLBConfig')
 const common = require('../../../util/CommonUtil')
 const model = require('../../../app/model')
 const seq = require('../../../util/Sequence')
+const opSrv = require('../../common/system/OperationPasswordServer')
 
 const tb_user = model.common_user
 const tb_fixed_deposit = model.zhongtan_customer_fixed_deposit
@@ -250,6 +251,24 @@ exports.searchCustomerAct = async req => {
   }
 }
 
+exports.cancelAct = async req => {
+  let doc = common.docValidate(req), user = req.user
+  let theDeposit = await tb_fixed_deposit.findOne({
+    where: {
+      fixed_deposit_id: doc.fixed_deposit_id,
+      state: GLBConfig.ENABLE
+    }
+  })
+  if(!theDeposit) {
+    return common.error('fee_04')
+  }
+  theDeposit.deposit_work_state = 'C'
+  theDeposit.deposit_invalid_date = new Date()
+  theDeposit.deposit_invalid_user_id = user.user_id
+  await theDeposit.save()
+  return common.success()
+}
+
 exports.invalidAct = async req => {
   let doc = common.docValidate(req), user = req.user
   let theDeposit = await tb_fixed_deposit.findOne({
@@ -266,4 +285,75 @@ exports.invalidAct = async req => {
   theDeposit.deposit_invalid_user_id = user.user_id
   await theDeposit.save()
   return common.success()
+}
+
+exports.exportFixedDepositAct = async (req, res) => {
+  let doc = common.docValidate(req)
+  let queryStr = `select a.*, b.user_name from tbl_zhongtan_customer_fixed_deposit a LEFT JOIN tbl_common_user b ON b.user_id = a.fixed_deposit_customer_id where a.state = '1' `
+  let replacements = []
+  if (doc.fixed_deposit_customer_id) {
+    queryStr += ' AND a.fixed_deposit_customer_id = ?'
+    replacements.push(doc.fixed_deposit_customer_id)
+  }
+  if (doc.fixed_deposit_type) {
+    queryStr += ' AND a.fixed_deposit_type = ?'
+    replacements.push(doc.fixed_deposit_type)
+  }
+  if (doc.deposit_work_state) {
+    queryStr += ' AND a.deposit_work_state = ?'
+    replacements.push(doc.deposit_work_state)
+  }
+  queryStr += ' ORDER BY a.created_at DESC'
+  let result = await model.simpleSelect(queryStr, replacements)
+  let renderData = []
+  if(result && result.length > 0) {
+    for(let r of result) {
+      let row = {}
+      row.fixed_deposit_customer = r.user_name
+      for(let t of GLBConfig.FIXED_DEPOSIT_TYPE) {
+        if(t.id === r.fixed_deposit_type) {
+          row.fixed_deposit_type = t.text
+          break
+        }
+      }
+      if(r.deposit_long_term === '1') {
+        row.fixed_deposit_range = r.deposit_begin_date + ' To Long Term'
+      } else if (r.deposit_begin_date && r.deposit_expire_date) {
+        row.fixed_deposit_range = r.deposit_begin_date + ' To ' + r.deposit_expire_date
+      } else if(r.deposit_begin_date) {
+        row.fixed_deposit_range = r.deposit_begin_date + ' To '
+      } else if(r.deposit_expire_date){
+        row.fixed_deposit_range = ' To ' + r.deposit_expire_date
+      }
+      row.fixed_deposit_amount = r.deposit_amount
+      row.fixed_deposit_currency = r.deposit_currency
+      row.fixed_deposit_check_cash = r.deposit_check_cash
+      if(r.deposit_guarantee_letter_no) {
+        row.fixed_deposit_letter_no = r.deposit_guarantee_letter_no
+      } else if(r.deposit_bank_reference_no) {
+        row.fixed_deposit_letter_no = r.deposit_bank_reference_no
+      } else if(r.deposit_check_cash_no) {
+        row.fixed_deposit_letter_no = r.deposit_check_cash_no
+      }
+      for(let t of GLBConfig.FIXED_DEPOSIT_WORK_STATE) {
+        if(t.id === r.deposit_work_state) {
+          row.fixed_deposit_stauts = t.text
+          break
+        }
+      }
+      renderData.push(row)
+    }
+  }
+  let filepath = await common.ejs2xlsx('FixedDepositTemplate.xlsx', renderData)
+  res.sendFile(filepath)
+}
+
+exports.checkPasswordAct = async req => {
+  let doc = common.docValidate(req)
+  let check = await opSrv.checkPassword(doc.action, doc.checkPassword)
+  if(check) {
+    return common.success()
+  } else {
+    return common.error('auth_24')
+  }
 }

@@ -2631,7 +2631,7 @@ const checkConditionDoState = async (bl, ves) => {
         }
         return_date = c.invoice_containers_empty_return_date_receipt
         if(c.invoice_containers_empty_return_receipt_release_date && c.invoice_containers_empty_return_date_receipt 
-          && moment(c.invoice_containers_empty_return_date_receipt, 'DD/MM/YYYY').isBefore(moment())) {
+          && moment(c.invoice_containers_empty_return_date_receipt, 'DD/MM/YYYY').isBefore(moment(), 'days')) {
             overdueCheck = false 
             break
         }

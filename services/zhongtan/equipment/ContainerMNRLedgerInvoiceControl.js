@@ -23,6 +23,10 @@ module.exports = async (req, res) => {
       ret = await srv.searchContainerAct(req)
     } else if (method === 'searchCustomer') {
       ret = await srv.searchCustomerAct(req)
+    } else if (method === 'checkPassword') {
+      ret = await srv.checkPasswordAct(req)
+    } else if (method === 'deleteMNRInvoie') {
+      ret = await srv.deleteMNRInvoieAct(req)
     }
     common.sendData(res, ret)
   } catch (error) {
