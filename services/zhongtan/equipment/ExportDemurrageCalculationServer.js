@@ -302,7 +302,7 @@ exports.mergeDemurrage2Shipment = async (export_vessel_id, export_container_bl, 
         state: GLBConfig.ENABLE
       }
     })
-    queryStr = `SELECT * FROM tbl_zhongtan_export_shipment_fee WHERE fee_data_code = 'DND' AND shipment_fee_type = 'R' AND export_masterbl_id = ? `
+    queryStr = `SELECT * FROM tbl_zhongtan_export_shipment_fee WHERE state = '1' AND fee_data_code = 'DND' AND shipment_fee_type = 'R' AND export_masterbl_id = ? `
     replacements = [bl.export_masterbl_id]
     let sf = await model.simpleSelect(queryStr, replacements)
     if(sf && sf.length > 0) {
@@ -338,7 +338,7 @@ exports.mergeDemurrage2Shipment = async (export_vessel_id, export_container_bl, 
           }
         } else if(f.shipment_fee_status === 'SU') {
           // 已提交的，全部撤回，重新提交
-          queryStr = `SELECT * FROM tbl_zhongtan_export_shipment_fee_log WHERE shipment_fee_id = ? AND shipment_fee_status = ?`
+          queryStr = `SELECT * FROM tbl_zhongtan_export_shipment_fee_log WHERE state = '1' AND shipment_fee_id = ? AND shipment_fee_status = ?`
           replacements = [f.shipment_fee_id, f.shipment_fee_status]
           let sfl = await model.simpleSelect(queryStr, replacements)
           if(sfl && sfl.length > 0) {

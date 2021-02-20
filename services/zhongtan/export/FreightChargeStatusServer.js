@@ -12,6 +12,7 @@ const tb_proforma_vessel = model.zhongtan_export_proforma_vessel
 const tb_proforma_bl = model.zhongtan_export_proforma_masterbl
 const tb_proforma_container = model.zhongtan_export_proforma_container
 const tb_container_size = model.zhongtan_container_size
+const tb_shipment_fee = model.zhongtan_export_shipment_fee
 
 exports.initAct = async () => {
   let returnData = {}
@@ -275,7 +276,63 @@ exports.loadingListDataAct = async req => {
             })
           }
         }
-
+        let bl_cons = new Map()
+        for(let i = 1; i < wcJS.length; i++) {
+          let carrier = wcJS[i]['_1']
+          let booking_no = wcJS[i]['_14']
+          if(booking_no) {
+            booking_no = booking_no.replace(/[^0-9a-zA-Z]/ig, '').trim()
+          }
+          if(booking_no) {
+            let first_b = booking_no.substring(0, 1)
+            if(common.isNumber(first_b)) {
+              let full_bl = ''
+              if(carrier.indexOf('COS') >= 0) {
+                full_bl = 'COSU' + booking_no
+              } else {
+                full_bl = 'OOLU' + booking_no
+              }
+              if(bl_cons.get(full_bl)) {
+                bl_cons.set(full_bl, bl_cons.get(full_bl) + 1)
+              } else {
+                bl_cons.set(full_bl, 1)
+              }
+            }
+          }
+        }
+        for (var [k, v] of bl_cons) {
+          let proforma_bl = await tb_proforma_bl.findOne({
+            where: {
+              export_vessel_id: proforma_vessel.export_vessel_id,
+              export_masterbl_bl: k,
+              state: GLBConfig.ENABLE
+            }
+          })
+          if(proforma_bl) {
+            let old_con_count = await tb_proforma_container.count({
+              where: {
+                state: GLBConfig.ENABLE,
+                export_vessel_id: proforma_vessel.export_vessel_id,
+                export_container_bl: k
+              }
+            })
+            if(old_con_count > 0 && old_con_count !== v) {
+              // 已存在箱子并且箱数量不等，删除已保存的相关费用
+              let fees = await tb_shipment_fee.findAll({
+                where: {
+                  state: GLBConfig.ENABLE,
+                  export_masterbl_id: proforma_bl.export_masterbl_id
+                }
+              })
+              if(fees && fees.length > 0) {
+                for(let f of fees) {
+                  f.state = GLBConfig.DISABLE
+                  await f.save()
+                }
+              }
+            }
+          }
+        }
         for(let i = 1; i < wcJS.length; i++) {
           let con_no = wcJS[i][key_con_no]
           let carrier = wcJS[i]['_1']

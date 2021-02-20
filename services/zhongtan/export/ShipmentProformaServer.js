@@ -245,6 +245,29 @@ exports.uploadBookingAct = async req => {
               })
             }
           }
+          // 查询是否已存在箱子
+          let old_con_count = await tb_proforma_container.count({
+            where: {
+              state: GLBConfig.ENABLE,
+              export_vessel_id: proforma_vessel.export_vessel_id,
+              export_container_bl: billOf
+            }
+          })
+          if(old_con_count > 0 && old_con_count !== conRows.length) {
+            // 已存在箱子并且箱数量不等，删除已保存的相关费用
+            let fees = await tb_shipment_fee.findAll({
+              where: {
+                state: GLBConfig.ENABLE,
+                export_masterbl_id: proforma_bl.export_masterbl_id
+              }
+            })
+            if(fees && fees.length > 0) {
+              for(let f of fees) {
+                f.state = GLBConfig.DISABLE
+                await f.save()
+              }
+            }
+          }
           let traffic_mode = ''
           let qty = conRows.length
           let total_packages = 0
@@ -348,7 +371,6 @@ exports.uploadBookingAct = async req => {
                   export_container_get_depot_name: container.export_container_get_depot_name,
                   proforma_import: GLBConfig.ENABLE
                 })
-                
               } else {
                 await tb_proforma_container.create({
                   export_vessel_id: proforma_vessel.export_vessel_id,
