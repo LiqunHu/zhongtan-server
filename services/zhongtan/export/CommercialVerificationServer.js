@@ -49,7 +49,12 @@ exports.searchAct = async req => {
   queryStr = queryStr + " order by a.export_verification_id desc"
   let result = await model.queryWithCount(doc, queryStr, replacements)
   returnData.total = result.count
-  returnData.rows = result.data
+  returnData.rows = []
+  if(result.data && result.data.length > 0) {
+    for(let d of result.data) {
+      returnData.rows.push(JSON.parse(JSON.stringify(d)))
+    }
+  }
   return common.success(returnData)
 }
 
