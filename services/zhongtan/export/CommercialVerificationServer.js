@@ -52,7 +52,9 @@ exports.searchAct = async req => {
   returnData.rows = []
   if(result.data && result.data.length > 0) {
     for(let d of result.data) {
-      returnData.rows.push(JSON.parse(JSON.stringify(d)))
+      let b = JSON.parse(JSON.stringify(d))
+      b.create_at = moment(d.create_at).format('YYYY-MM-DD HH:mm:ss')
+      returnData.rows.push(b)
     }
   }
   return common.success(returnData)
