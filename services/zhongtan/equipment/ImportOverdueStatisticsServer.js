@@ -49,7 +49,7 @@ exports.searchAct = async req => {
       replacements.push(moment(doc.search_data.ata_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
     }
     if (doc.search_data.return_date && doc.search_data.return_date.length > 1 && doc.search_data.return_date[0] && doc.search_data.return_date[1]) {
-      queryStr += ' and STR_TO_DATE(a.invoice_containers_empty_return_date, "%d/%m/%Y") >= ? and STR_TO_DATE(a.invoice_containers_empty_return_date, "%d/%m/%Y") < ? '
+      queryStr += ' and STR_TO_DATE(a.invoice_containers_actually_return_date, "%d/%m/%Y") >= ? and STR_TO_DATE(a.invoice_containers_actually_return_date, "%d/%m/%Y") < ? '
       replacements.push(doc.search_data.return_date[0])
       replacements.push(moment(doc.search_data.return_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
     }
@@ -153,7 +153,7 @@ exports.exportDataAct = async(req, res) => {
       replacements.push(moment(doc.search_data.ata_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
     }
     if (doc.search_data.return_date && doc.search_data.return_date.length > 1 && doc.search_data.return_date[0] && doc.search_data.return_date[1]) {
-      queryStr += ' and STR_TO_DATE(a.invoice_containers_empty_return_date, "%d/%m/%Y") >= ? and STR_TO_DATE(a.invoice_containers_empty_return_date, "%d/%m/%Y") < ? '
+      queryStr += ' and STR_TO_DATE(a.invoice_containers_actually_return_date, "%d/%m/%Y") >= ? and STR_TO_DATE(a.invoice_containers_actually_return_date, "%d/%m/%Y") < ? '
       replacements.push(doc.search_data.return_date[0])
       replacements.push(moment(doc.search_data.return_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
     }
