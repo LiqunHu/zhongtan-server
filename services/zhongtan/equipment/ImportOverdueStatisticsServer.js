@@ -147,10 +147,15 @@ exports.exportDataAct = async(req, res) => {
   WHERE a.state = '1' `
   let replacements = []
   if(doc.search_data) {
-    if (doc.search_data.ata_date && doc.search_data.ata_date.length > 1) {
+    if (doc.search_data.ata_date && doc.search_data.ata_date.length > 1 && doc.search_data.ata_date[0] && doc.search_data.ata_date[1]) {
       queryStr += ' and STR_TO_DATE(b.invoice_vessel_ata, "%d/%m/%Y") >= ? and STR_TO_DATE(b.invoice_vessel_ata, "%d/%m/%Y") < ? '
       replacements.push(doc.search_data.ata_date[0])
       replacements.push(moment(doc.search_data.ata_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
+    }
+    if (doc.search_data.return_date && doc.search_data.return_date.length > 1 && doc.search_data.return_date[0] && doc.search_data.return_date[1]) {
+      queryStr += ' and STR_TO_DATE(a.invoice_containers_empty_return_date, "%d/%m/%Y") >= ? and STR_TO_DATE(a.invoice_containers_empty_return_date, "%d/%m/%Y") < ? '
+      replacements.push(doc.search_data.return_date[0])
+      replacements.push(moment(doc.search_data.return_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
     }
     if (doc.search_data.invoice_containers_bl) {
       queryStr += ' and a.invoice_containers_bl like ? '
