@@ -967,33 +967,33 @@ exports.resetShipmentAct = async req =>{
       }
     })
     if(fees) {
-      let resetStatus = ['SU', 'AP', 'IN', 'RE', 'BA']
+      let resetStatus = ['SU', 'AP', 'IN', 'BA']
       for(let f of fees) {
         if(resetStatus.indexOf(f.shipment_fee_status) >= 0) {
           if(f.shipment_fee_status === 'RE') {
             // 删除对应的收据和发票及审核记录
-            let rf = await tb_uploadfile.findOne({
-              where: {
-                uploadfile_id: f.shipment_fee_receipt_id,
-                state: GLBConfig.ENABLE
-              }
-            })
-            if(rf) {
-              rf.state = GLBConfig.DISABLE
-              rf.updated_at = curDate
-              await rf.save()
-            }
-            let inf = await tb_uploadfile.findOne({
-              where: {
-                uploadfile_id: f.shipment_fee_invoice_id,
-                state: GLBConfig.ENABLE
-              }
-            })
-            if(inf) {
-              inf.state = GLBConfig.DISABLE
-              inf.updated_at = curDate
-              await inf.save()
-            }
+            // let rf = await tb_uploadfile.findOne({
+            //   where: {
+            //     uploadfile_id: f.shipment_fee_receipt_id,
+            //     state: GLBConfig.ENABLE
+            //   }
+            // })
+            // if(rf) {
+            //   rf.state = GLBConfig.DISABLE
+            //   rf.updated_at = curDate
+            //   await rf.save()
+            // }
+            // let inf = await tb_uploadfile.findOne({
+            //   where: {
+            //     uploadfile_id: f.shipment_fee_invoice_id,
+            //     state: GLBConfig.ENABLE
+            //   }
+            // })
+            // if(inf) {
+            //   inf.state = GLBConfig.DISABLE
+            //   inf.updated_at = curDate
+            //   await inf.save()
+            // }
           } else if(f.shipment_fee_status === 'IN') {
             // 删除对应的发票及审核记录
             let inf = await tb_uploadfile.findOne({
