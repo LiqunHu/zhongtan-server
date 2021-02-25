@@ -365,3 +365,18 @@ exports.deleteMNRInvoieAct = async req => {
   }
   return common.success()
 }
+
+exports.deleteMNRAct = async req => {
+  let doc = common.docValidate(req)
+  let mnr = await tb_mnr_ledger.findOne({
+    where: {
+      container_mnr_ledger_id: doc.container_mnr_ledger_id,
+      state: GLBConfig.ENABLE
+    }
+  })
+  if(mnr) {
+    mnr.state = GLBConfig.DISABLE
+    await mnr.save()
+  }
+  return common.success()
+}

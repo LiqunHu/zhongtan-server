@@ -27,6 +27,8 @@ module.exports = async (req, res) => {
       ret = await srv.checkPasswordAct(req)
     } else if (method === 'deleteMNRInvoie') {
       ret = await srv.deleteMNRInvoieAct(req)
+    } else if (method === 'deleteMNR') {
+      ret = await srv.deleteMNRAct(req)
     }
     common.sendData(res, ret)
   } catch (error) {
