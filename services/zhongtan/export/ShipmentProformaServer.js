@@ -150,11 +150,12 @@ exports.uploadBookingAct = async req => {
           for(let i = sIndex; i < datas.length; i++) {
             let row = datas[i]
             let fIndex = row.search(/[a-zA-Z]{4}\d{7}\s+/i)
-            if(fIndex >= 0) {
+            if(fIndex >= 0 && fIndex < 20) {
               let conRow = row.trim()
               let tempRow = conRow.substr(11)
               let f2Index = tempRow.search(/[a-zA-Z]{4}\d{7}\s+/i)
               if(f2Index >= 0) {
+                f2Index = f2Index + 11
                 let con1Row = conRow.substring(0, f2Index)
                 let con2Row = conRow.substring(f2Index)
                 let con1Infos = con1Row.split(/\s\//ig)

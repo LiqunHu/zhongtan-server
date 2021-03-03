@@ -626,13 +626,31 @@ exports.searchVoyageAct = async req => {
     let ccount = await model.simpleSelect(queryStr, replacements)
     row.invoice_container_count = ccount[0].count
 
-    queryStr = `SELECT invoice_masterbi_do_return_depot AS depot_name, COUNT(invoice_masterbi_do_return_depot) AS depot_count FROM tbl_zhongtan_invoice_masterbl WHERE invoice_vessel_id = ? AND state = ? AND invoice_masterbi_do_return_depot IS NOT NULL GROUP BY invoice_masterbi_do_return_depot
-    `
+    queryStr = `SELECT invoice_masterbi_do_return_depot AS depot_name, COUNT(invoice_masterbi_do_return_depot) AS depot_count 
+                FROM tbl_zhongtan_invoice_masterbl WHERE invoice_vessel_id = ? AND state = ? AND invoice_masterbi_do_return_depot IS NOT NULL 
+                GROUP BY invoice_masterbi_do_return_depot`
     replacements = []
     replacements.push(v.invoice_vessel_id)
     replacements.push(GLBConfig.ENABLE)
     let depot = await model.simpleSelect(queryStr, replacements)
-    row.return_depot = depot
+    if(depot && depot.length > 0) {
+      row.return_depot = []
+      for(let d of depot) {
+        queryStr = `SELECT invoice_containers_size AS containers_size, COUNT(invoice_containers_size) AS containers_size_count 
+                    FROM tbl_zhongtan_invoice_containers WHERE state = ? AND invoice_vessel_id = ? 
+                    AND invoice_containers_bl IN (SELECT invoice_masterbi_bl FROM tbl_zhongtan_invoice_masterbl WHERE invoice_vessel_id = ? AND invoice_masterbi_do_return_depot = ?) 
+                    GROUP BY invoice_containers_size ORDER BY invoice_containers_size`
+        replacements = []
+        replacements.push(GLBConfig.ENABLE)
+        replacements.push(v.invoice_vessel_id)
+        replacements.push(v.invoice_vessel_id)
+        replacements.push(d.depot_name)
+        let con_depot = await model.simpleSelect(queryStr, replacements)
+        d.con_depot = con_depot
+        row.return_depot.push(d)
+      }
+    }
+    
     returnData.vessels.push(row)
   }
 
