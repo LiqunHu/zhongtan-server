@@ -249,6 +249,11 @@ exports.handleAllotVesselDepot = async (vessel_id, reset = '0') => {
                        GROUP BY invoice_containers_bl, invoice_containers_size ORDER BY invoice_containers_bl`
           replacements = [vessel.invoice_vessel_id]
           let bl_cons = await model.simpleSelect(queryStr, replacements)
+
+          queryStr = `SELECT invoice_containers_bl FROM tbl_zhongtan_invoice_containers WHERE invoice_vessel_id = ? AND state = 1 
+                    GROUP BY invoice_containers_bl HAVING COUNT(DISTINCT(invoice_containers_size)) > 1`
+          replacements = [vessel.invoice_vessel_id]
+          let multiple_cons = await model.simpleSelect(queryStr, replacements)
           if(bl_cons && bl_cons.length > 0) {
             let cosco_bl_cons = []
             let oocl_bl_cons = []
@@ -263,8 +268,14 @@ exports.handleAllotVesselDepot = async (vessel_id, reset = '0') => {
                 oocl_total = oocl_total + bc.container_size_count
               }
             }
+            let multiple_cons_bls = []
+            if(multiple_cons && multiple_cons.length > 0) {
+              for(let m of multiple_cons) {
+                multiple_cons_bls.push(m.invoice_containers_bl)
+              }
+            }
             if(cosco_bl_cons && cosco_bl_cons.length > 0) {
-              let allot_result = await this.handleCarrierAllotDepot(cosco_bl_cons, coscoRule, cosco_total, special_cons)
+              let allot_result = await this.handleCarrierAllotDepot(cosco_bl_cons, coscoRule, cosco_total, special_cons, multiple_cons_bls)
               if(allot_result && allot_result.length > 0) {
                 for(let cb of allot_result) {
                   if(cb.allot_return_depot) {
@@ -283,7 +294,7 @@ exports.handleAllotVesselDepot = async (vessel_id, reset = '0') => {
               }
             }
             if(oocl_bl_cons && oocl_bl_cons.length > 0) {
-              let allot_result = await this.handleCarrierAllotDepot(oocl_bl_cons, ooclRule, oocl_total, special_cons)
+              let allot_result = await this.handleCarrierAllotDepot(oocl_bl_cons, ooclRule, oocl_total, special_cons, multiple_cons_bls)
               if(allot_result && allot_result.length > 0) {
                 for(let cb of allot_result) {
                   if(cb.allot_return_depot) {
@@ -509,7 +520,7 @@ exports.handleAllotVesselDepot = async (vessel_id, reset = '0') => {
   }
 }
 
-exports.handleCarrierAllotDepot = async (bl_cons, depot_rules, total_count, special_cons) => {
+exports.handleCarrierAllotDepot = async (bl_cons, depot_rules, total_count, special_cons, multiple_cons) => {
   if(bl_cons && bl_cons.length > 0 && depot_rules && depot_rules.length > 0) {
     for(let cre of depot_rules) {
       cre.allot_count = 0
@@ -558,6 +569,9 @@ exports.handleCarrierAllotDepot = async (bl_cons, depot_rules, total_count, spec
             detail_con_types.push(d.con_type)
             let detail_diff_limit_count = d.allot_type_count
             for(let c of bl_cons) {
+              if(multiple_cons && multiple_cons.length > 0 && multiple_cons.indexOf(c.invoice_containers_bl) >= 0) {
+                continue
+              }
               if(!c.bl_return_depot && !c.allot_return_depot && (c.invoice_containers_size === d.con_type || c.invoice_containers_size === d.con_name)) {
                 if(special_cons.indexOf(c.invoice_containers_size) >= 0){
                   // 特殊箱型
@@ -582,8 +596,46 @@ exports.handleCarrierAllotDepot = async (bl_cons, depot_rules, total_count, spec
           }
           if(diff_limit_count > 0) {
             for(let c of bl_cons) {
-              if(!c.bl_return_depot && !c.allot_return_depot && detail_con_types.indexOf(c.invoice_containers_size) < 0) {
-                if(special_cons.indexOf(c.invoice_containers_size) >= 0){
+              if(!c.bl_return_depot && !c.allot_return_depot && detail_con_types.indexOf(c.invoice_containers_size) >= 0) {
+                if(special_cons.indexOf(c.invoice_containers_size) >= 0) {
+                  // 特殊箱型
+                  if(cre.depot_name !== 'AFICD') {
+                    c.allot_return_depot = cre.depot_name
+                    diff_limit_count = diff_limit_count - c.container_size_count
+                  }
+                } else {
+                  c.allot_return_depot = cre.depot_name
+                  diff_limit_count = diff_limit_count - c.container_size_count
+                }
+                if(multiple_cons.indexOf(c.invoice_containers_bl) >= 0) {
+                  for(let cc of bl_cons) {
+                    if(!cc.bl_return_depot && !cc.allot_return_depot && cc.invoice_containers_bl === c.invoice_containers_bl) {
+                      if(special_cons.indexOf(c.invoice_containers_size) >= 0) {
+                        // 特殊箱型
+                        if(cre.depot_name !== 'AFICD') {
+                          cc.allot_return_depot = cre.depot_name
+                          diff_limit_count = diff_limit_count - cc.container_size_count
+                        }
+                      } else {
+                        cc.allot_return_depot = cre.depot_name
+                        diff_limit_count = diff_limit_count - cc.container_size_count
+                      }
+                    }
+                    if(diff_limit_count <= 0) {
+                      break
+                    }
+                  }
+                }
+              }
+              if(diff_limit_count <= 0) {
+                break
+              }
+            }
+          }
+          if(diff_limit_count > 0) {
+            for(let c of bl_cons) {
+              if(!c.bl_return_depot && !c.allot_return_depot ) {
+                if(special_cons.indexOf(c.invoice_containers_size) >= 0 && detail_con_types.indexOf(c.invoice_containers_size) < 0){
                   // 特殊箱型
                   if(cre.depot_name !== 'AFICD') {
                     c.allot_return_depot = cre.depot_name

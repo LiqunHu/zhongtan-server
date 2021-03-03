@@ -53,7 +53,7 @@ exports.searchAct = async req => {
   if(result.data && result.data.length > 0) {
     for(let d of result.data) {
       let b = JSON.parse(JSON.stringify(d))
-      b.created_at = moment(d.create_at).format('YYYY-MM-DD HH:mm:ss')
+      b.created_at = moment(d.created_at).format('YYYY-MM-DD HH:mm:ss')
       returnData.rows.push(b)
     }
   }
