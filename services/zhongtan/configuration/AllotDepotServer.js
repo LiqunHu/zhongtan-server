@@ -524,14 +524,14 @@ exports.handleCarrierAllotDepot = async (bl_cons, depot_rules, total_count, spec
         }
         if(final_limit_count > limit_count) {
           if(total_con_type_percent === 100) {
-            cre.details[cre.details - 1].allot_type_count = cre.details[cre.details - 1].allot_type_count - (final_limit_count - limit_count)
+            cre.details[cre.details.length - 1].allot_type_count = cre.details[cre.details.length - 1].allot_type_count - (final_limit_count - limit_count)
           }else {
             limit_count = final_limit_count
           }
           cre.other_con_type_limit_count = 0
         } else {
           if(total_con_type_percent === 100) {
-            cre.details[cre.details - 1].allot_type_count = cre.details[cre.details - 1].allot_type_count + (limit_count - final_limit_count)
+            cre.details[cre.details.length - 1].allot_type_count = cre.details[cre.details.length - 1].allot_type_count + (limit_count - final_limit_count)
             cre.other_con_type_limit_count = 0
           } else {
             cre.other_con_type_limit_count = limit_count - final_limit_count
