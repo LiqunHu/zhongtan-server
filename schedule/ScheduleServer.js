@@ -88,28 +88,28 @@ const importEmptyStockContainer = async () => {
     replacements.push(end_date)
   }
   queryStr = queryStr + ` ORDER BY invoice_containers_id `
-  // let import_rows = await model.simpleSelect(queryStr, replacements)
-  // if(import_rows && import_rows.length > 0) {
-  //   for(let ir of import_rows) {
-  //     let esc = {
-  //       container_no: ir.invoice_containers_no,
-  //       size_type: ir.invoice_containers_size,
-  //       container_owner: (ir.invoice_containers_bl && ir.invoice_containers_bl.indexOf('COS') >= 0) ? 'COSCO' : 'OOCL',
-  //       bill_no: ir.invoice_containers_bl,
-  //       depot_name: ir.invoice_containers_depot_name
-  //     }
-  //     if(ir.invoice_containers_edi_discharge_date) {
-  //       esc.discharge_date = moment(ir.invoice_containers_edi_discharge_date, 'DD/MM/YYYY').format('YYYY-MM-DD')
-  //     }
-  //     if(ir.invoice_containers_gate_out_terminal_date) {
-  //       esc.gate_out_terminal_date = moment(ir.invoice_containers_gate_out_terminal_date, 'DD/MM/YYYY').format('YYYY-MM-DD')
-  //     }
-  //     if(ir.invoice_containers_actually_return_date) {
-  //       esc.gate_in_depot_date = moment(ir.invoice_containers_actually_return_date, 'DD/MM/YYYY').format('YYYY-MM-DD')
-  //     }
-  //     await empty_stock_srv.importEmptyStockContainer('I', esc)
-  //   }
-  // }
+  let import_rows = await model.simpleSelect(queryStr, replacements)
+  if(import_rows && import_rows.length > 0) {
+    for(let ir of import_rows) {
+      let esc = {
+        container_no: ir.invoice_containers_no,
+        size_type: ir.invoice_containers_size,
+        container_owner: (ir.invoice_containers_bl && ir.invoice_containers_bl.indexOf('COS') >= 0) ? 'COSCO' : 'OOCL',
+        bill_no: ir.invoice_containers_bl,
+        depot_name: ir.invoice_containers_depot_name
+      }
+      if(ir.invoice_containers_edi_discharge_date) {
+        esc.discharge_date = moment(ir.invoice_containers_edi_discharge_date, 'DD/MM/YYYY').format('YYYY-MM-DD')
+      }
+      if(ir.invoice_containers_gate_out_terminal_date) {
+        esc.gate_out_terminal_date = moment(ir.invoice_containers_gate_out_terminal_date, 'DD/MM/YYYY').format('YYYY-MM-DD')
+      }
+      if(ir.invoice_containers_actually_return_date) {
+        esc.gate_in_depot_date = moment(ir.invoice_containers_actually_return_date, 'DD/MM/YYYY').format('YYYY-MM-DD')
+      }
+      await empty_stock_srv.importEmptyStockContainer('I', esc)
+    }
+  }
   // 导入出口数据到EMPTY STOCK
   queryStr = `SELECT export_container_bl, export_container_no, export_container_size_type, export_container_get_depot_name, export_container_edi_depot_gate_out_date, export_container_edi_wharf_gate_in_date, export_container_edi_loading_date 
               FROM tbl_zhongtan_export_proforma_container WHERE state = ? `
