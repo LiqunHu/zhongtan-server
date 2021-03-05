@@ -73,7 +73,7 @@ const expireFixedDepositCheck = async () => {
 }
 
 const importEmptyStockContainer = async () => {
-  let start_date = ''
+  let start_date = moment().subtract(1, 'days').format('YYYY-MM-DD') + ' 00:00:00'
   let end_date = moment().format('YYYY-MM-DD') + ' 00:00:00'
   // 导入进口数据到EMPTY STOCK
   let queryStr = `SELECT invoice_containers_bl, invoice_containers_no, invoice_containers_size, invoice_containers_edi_discharge_date, invoice_containers_gate_out_terminal_date, invoice_containers_actually_return_date, invoice_containers_depot_name 
