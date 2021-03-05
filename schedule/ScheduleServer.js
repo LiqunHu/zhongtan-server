@@ -4,6 +4,8 @@ const moment = require('moment')
 const tb_container = model.zhongtan_invoice_containers
 const tb_fixed_deposit = model.zhongtan_customer_fixed_deposit
 const cal_config_srv = require('../services/zhongtan/equipment/OverdueCalculationConfigServer')
+const empty_stock_srv = require('../services/zhongtan/equipment/EmptyStockManagementServer')
+const GLBConfig = require('../util/GLBConfig')
 
 const resetDemurrageReceiptSeq = async () => {
   try{
@@ -20,7 +22,6 @@ const resetDemurrageReceiptSeq = async () => {
     // continue regardless of error
   }
 }
-
 
 const calculationCurrentOverdueDays = async () => {
   try{
@@ -71,8 +72,84 @@ const expireFixedDepositCheck = async () => {
   }
 }
 
+const importEmptyStockContainer = async () => {
+  let start_date = ''
+  let end_date = moment().format('YYYY-MM-DD') + ' 00:00:00'
+  // 导入进口数据到EMPTY STOCK
+  let queryStr = `SELECT invoice_containers_bl, invoice_containers_no, invoice_containers_size, invoice_containers_edi_discharge_date, invoice_containers_gate_out_terminal_date, invoice_containers_actually_return_date, invoice_containers_depot_name 
+                  FROM tbl_zhongtan_invoice_containers WHERE state = ? `
+  let replacements = [GLBConfig.ENABLE]
+  if(start_date) {
+    queryStr = queryStr + ` AND created_at >= ? `
+    replacements.push(start_date)
+  }
+  if(end_date) {
+    queryStr = queryStr + ` AND created_at < ? `
+    replacements.push(end_date)
+  }
+  queryStr = queryStr + ` ORDER BY invoice_containers_id `
+  // let import_rows = await model.simpleSelect(queryStr, replacements)
+  // if(import_rows && import_rows.length > 0) {
+  //   for(let ir of import_rows) {
+  //     let esc = {
+  //       container_no: ir.invoice_containers_no,
+  //       size_type: ir.invoice_containers_size,
+  //       container_owner: (ir.invoice_containers_bl && ir.invoice_containers_bl.indexOf('COS') >= 0) ? 'COSCO' : 'OOCL',
+  //       bill_no: ir.invoice_containers_bl,
+  //       depot_name: ir.invoice_containers_depot_name
+  //     }
+  //     if(ir.invoice_containers_edi_discharge_date) {
+  //       esc.discharge_date = moment(ir.invoice_containers_edi_discharge_date, 'DD/MM/YYYY').format('YYYY-MM-DD')
+  //     }
+  //     if(ir.invoice_containers_gate_out_terminal_date) {
+  //       esc.gate_out_terminal_date = moment(ir.invoice_containers_gate_out_terminal_date, 'DD/MM/YYYY').format('YYYY-MM-DD')
+  //     }
+  //     if(ir.invoice_containers_actually_return_date) {
+  //       esc.gate_in_depot_date = moment(ir.invoice_containers_actually_return_date, 'DD/MM/YYYY').format('YYYY-MM-DD')
+  //     }
+  //     await empty_stock_srv.importEmptyStockContainer('I', esc)
+  //   }
+  // }
+  // 导入出口数据到EMPTY STOCK
+  queryStr = `SELECT export_container_bl, export_container_no, export_container_size_type, export_container_get_depot_name, export_container_edi_depot_gate_out_date, export_container_edi_wharf_gate_in_date, export_container_edi_loading_date 
+              FROM tbl_zhongtan_export_proforma_container WHERE state = ? `
+  replacements = [GLBConfig.ENABLE]
+  if(start_date) {
+    queryStr = queryStr + ` AND created_at >= ? `
+    replacements.push(start_date)
+  }
+  if(end_date) {
+    queryStr = queryStr + ` AND created_at < ? `
+    replacements.push(end_date)
+  }
+  queryStr = queryStr + ` ORDER BY export_container_id `
+  let export_rows = await model.simpleSelect(queryStr, replacements)
+  if(export_rows && export_rows.length > 0) {
+    for(let er of export_rows) {
+      let esc = {
+        container_no: er.export_container_no,
+        size_type: er.export_container_size_type,
+        container_owner: (er.export_container_bl && er.export_container_bl.indexOf('COS') >= 0) ? 'COSCO' : 'OOCL',
+        bill_no: er.export_container_bl,
+        depot_name: er.export_container_get_depot_name
+      }
+      if(er.export_container_edi_depot_gate_out_date) {
+        esc.gate_out_depot_date = moment(er.export_container_edi_depot_gate_out_date, 'DD/MM/YYYY').format('YYYY-MM-DD')
+      }
+      if(er.export_container_edi_wharf_gate_in_date) {
+        esc.gate_in_terminal_date = moment(er.export_container_edi_wharf_gate_in_date, 'DD/MM/YYYY').format('YYYY-MM-DD')
+      }
+      if(er.export_container_edi_loading_date) {
+        esc.loading_date = moment(er.export_container_edi_loading_date, 'DD/MM/YYYY').format('YYYY-MM-DD')
+      }
+      await empty_stock_srv.importEmptyStockContainer('E', esc)
+    }
+  }
+}
+
 module.exports = {
   resetDemurrageReceiptSeq: resetDemurrageReceiptSeq,
   calculationCurrentOverdueDays: calculationCurrentOverdueDays,
-  expireFixedDepositCheck: expireFixedDepositCheck
+  expireFixedDepositCheck: expireFixedDepositCheck,
+  importEmptyStockContainer: importEmptyStockContainer
 }

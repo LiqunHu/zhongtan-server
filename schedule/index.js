@@ -1,9 +1,10 @@
 const ediMail = require('./ediMail')
-const demurrageReceipt = require('./demurrageReceipt')
+const schedule_srv = require('./ScheduleServer')
 
 module.exports = {
   readEdiMail: ediMail.readEdiMail,
-  resetDemurrageReceiptSeq: demurrageReceipt.resetDemurrageReceiptSeq,
-  calculationCurrentOverdueDays: demurrageReceipt.calculationCurrentOverdueDays,
-  expireFixedDepositCheck: demurrageReceipt.expireFixedDepositCheck 
+  resetDemurrageReceiptSeq: schedule_srv.resetDemurrageReceiptSeq,
+  calculationCurrentOverdueDays: schedule_srv.calculationCurrentOverdueDays,
+  expireFixedDepositCheck: schedule_srv.expireFixedDepositCheck ,
+  importEmptyStockContainer : schedule_srv.importEmptyStockContainer
 }

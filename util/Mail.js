@@ -9,6 +9,7 @@ const model = require('../app/model')
 const GLBConfig = require('../util/GLBConfig')
 const common = require('../util/CommonUtil')
 const cal_config_srv = require('../services/zhongtan/equipment/OverdueCalculationConfigServer')
+const empty_stock_srv = require('../services/zhongtan/equipment/EmptyStockManagementServer')
 
 const tb_invoice_containers = model.zhongtan_invoice_containers
 const tb_vessel = model.zhongtan_invoice_vessel
@@ -214,6 +215,7 @@ const parserMailAttachment = async (ediDepots, parserData) => {
                 ediDate: returnDate,
               }
               await updateContainerEdi(ediData)
+              await updateContainerEmptyStock(ediData)
               // 记录解析内容
               await tb_email.create({
                 mail_depot_name: edi.edi_depot_name,
@@ -302,6 +304,7 @@ const parserMailAttachment = async (ediDepots, parserData) => {
                 billNo: billNo
               }
               await updateContainerEdi(ediData)
+              await updateContainerEmptyStock(ediData)
               // 记录解析内容
               await tb_email.create({
                 mail_depot_name: edi.edi_depot_name,
@@ -417,40 +420,12 @@ const updateContainerEdi = async (ediData) => {
         }
         await excon.save()
       }
-
       // 更新托单
       if(proexcon) {
         if(ediType === '34') {
           proexcon.export_container_edi_wharf_gate_in_date = moment(ediData.ediDate.substring(0, 8), 'YYYYMMDD').format('DD/MM/YYYY')
         } else {
           proexcon.export_container_edi_loading_date = moment(ediData.ediDate.substring(0, 8), 'YYYYMMDD').format('DD/MM/YYYY')
-
-          // 计算EDI超期费及超期时间
-          // if(proexcon.export_container_edi_depot_gate_out_date) {
-          //   let free_days = 0
-          //   if(proexcon.export_container_cal_free_days) {
-          //     free_days = parseInt(incon.export_container_cal_free_days)
-          //   } else {
-          //     free_days = await cal_config_srv.queryContainerFreeDays(bl.invoice_masterbi_cargo_type, discharge_port, charge_carrier, incon.invoice_containers_size, discharge_date, 'E')
-          //   }
-          //   let cal_result = await cal_config_srv.demurrageCalculation(free_days, discharge_date, incon.invoice_containers_actually_return_date, bl.invoice_masterbi_cargo_type, discharge_port, charge_carrier, incon.invoice_containers_size, vessel.invoice_vessel_ata, 'E')
-          //   if(cal_result.diff_days !== -1) {
-          //     incon.invoice_containers_actually_return_overdue_days = cal_result.overdue_days
-          //     incon.invoice_containers_actually_return_overdue_amount = cal_result.overdue_amount
-          //   } 
-            
-          //   if(!incon.invoice_containers_empty_return_date) {
-          //     // 没有计算过滞期费
-          //     incon.invoice_containers_empty_return_date = incon.invoice_containers_actually_return_date
-          //     incon.invoice_containers_empty_return_overdue_days = incon.invoice_containers_actually_return_overdue_days
-          //     incon.invoice_containers_empty_return_overdue_amount = incon.invoice_containers_actually_return_overdue_amount
-          //   }
-
-          //   if(incon.invoice_containers_actually_return_date && discharge_date) {
-          //     // 集装箱使用天数， gate in date - dischatge date
-          //     incon.invoice_containers_detention_days = moment(incon.invoice_containers_actually_return_date, 'DD/MM/YYYY').diff(moment(discharge_date, 'DD/MM/YYYY'), 'days')
-          //   }
-          // }
         }
         await proexcon.save()
       }
@@ -639,6 +614,39 @@ const updateContainerEdi = async (ediData) => {
       }
     }
   }
+}
+
+const updateContainerEmptyStock = async (ediData) => {
+  // 更新箱EDI信息
+  let isWharf = ediData.isWharf
+  let ediType = ediData.ediType
+  // 类别 34: 进场, 36: 出场, 44: 卸船, 46：装船
+  let esc = {
+    container_no: ediData.containerNo,
+    container_owner: ediData.carrier,
+    depot_name: ediData.depot,
+    bill_no: ediData.billNo
+  }
+  if(isWharf && isWharf === GLBConfig.ENABLE) {
+    // 34: 进场, 36: 出场, 44: 卸船, 46：装船
+    if(ediType === '34') {
+      esc.gate_in_terminal_date = moment(ediData.ediDate.substring(0, 8), 'YYYYMMDD').format('YYYY-MM-DD')
+    } else if(ediType === '36') {
+      esc.gate_out_terminal_date = moment(ediData.ediDate.substring(0, 8), 'YYYYMMDD').format('YYYY-MM-DD')
+    } else if(ediType === '44') {
+      esc.discharge_date = moment(ediData.ediDate.substring(0, 8), 'YYYYMMDD').format('YYYY-MM-DD')
+    } else if(ediType === '46') {
+      esc.loading_date = moment(ediData.ediDate.substring(0, 8), 'YYYYMMDD').format('YYYY-MM-DD')
+    } 
+  } else {
+    // 更新Empty Stock 34: 进场, 36: 出场, 44: 卸船, 46：装船
+    if(ediType === '34') {
+      esc.gate_in_depot_date = moment(ediData.ediDate.substring(0, 8), 'YYYYMMDD').format('YYYY-MM-DD')
+    } else if(ediType === '36') {
+      esc.gate_out_depot_date = moment(ediData.ediDate.substring(0, 8), 'YYYYMMDD').format('YYYY-MM-DD')
+    }
+  }
+  await empty_stock_srv.uploadEmptyStockContainer(esc)
 }
 
 module.exports = {
