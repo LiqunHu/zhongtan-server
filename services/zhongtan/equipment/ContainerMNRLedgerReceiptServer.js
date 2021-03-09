@@ -1,11 +1,11 @@
 const moment = require('moment')
 const numberToText = require('number2text')
+const Decimal = require('decimal.js')
 const common = require('../../../util/CommonUtil')
 const GLBConfig = require('../../../util/GLBConfig')
 const model = require('../../../app/model')
 const seq = require('../../../util/Sequence')
 
-const tb_container_size = model.zhongtan_container_size
 const tb_mnr_ledger = model.zhongtan_container_mnr_ledger
 const tb_uploadfile = model.zhongtan_uploadfile
 const tb_user = model.common_user
@@ -13,13 +13,9 @@ const tb_discharge_port = model.zhongtan_discharge_port
 
 exports.initAct = async () => {
   let returnData = {}
-  returnData['CONTAINER_SIZE'] = await tb_container_size.findAll({
-    attributes: ['container_size_code', 'container_size_name'],
-    where: {
-      state : GLBConfig.ENABLE
-    },
-    order: [['container_size_code', 'ASC']]
-  })
+  let queryStr = `SELECT container_size_code, GROUP_CONCAT(container_size_name) container_size_name FROM tbl_zhongtan_container_size WHERE state = 1 GROUP BY container_size_code ORDER BY container_size_code`
+  let replacements = []
+  returnData['CONTAINER_SIZE'] = await model.simpleSelect(queryStr, replacements)
   returnData['DESTINATION'] = await tb_discharge_port.findAll({
     attributes: ['discharge_port_code', 'discharge_port_name'],
     where: {
@@ -164,7 +160,12 @@ exports.receiptAct = async req => {
     renderData.check_cash = 'Cheque/ ' + doc.mnr_invoice_check_no
   }
   renderData.sum_fee = parseFloat(invoice.uploadfile_amount.replace(/,/g, '') || 0)
-  renderData.sum_fee_str = numberToText(renderData.sum_fee)
+
+  if(invoice.uploadfile_amount && invoice.uploadfile_amount.indexOf('-') < 0) {
+    renderData.sum_fee_str = numberToText(invoice.uploadfile_amount)
+  } else {
+    renderData.sum_fee_str = 'MINUS ' + numberToText(new Decimal(invoice.uploadfile_amount).absoluteValue())
+  }
   renderData.user_name = commonUser.user_name
   renderData.user_phone = commonUser.user_phone
   renderData.user_email = commonUser.user_email

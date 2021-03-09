@@ -1,12 +1,12 @@
 const moment = require('moment')
 const numberToText = require('number2text')
+const Decimal = require('decimal.js')
 const common = require('../../../util/CommonUtil')
 const GLBConfig = require('../../../util/GLBConfig')
 const model = require('../../../app/model')
 const seq = require('../../../util/Sequence')
 const opSrv = require('../../common/system/OperationPasswordServer')
 
-const tb_container_size = model.zhongtan_container_size
 const tb_mnr_ledger = model.zhongtan_container_mnr_ledger
 const tb_uploadfile = model.zhongtan_uploadfile
 const tb_user = model.common_user
@@ -14,13 +14,9 @@ const tb_discharge_port = model.zhongtan_discharge_port
 
 exports.initAct = async () => {
   let returnData = {}
-  returnData['CONTAINER_SIZE'] = await tb_container_size.findAll({
-    attributes: ['container_size_code', 'container_size_name'],
-    where: {
-      state : GLBConfig.ENABLE
-    },
-    order: [['container_size_code', 'ASC']]
-  })
+  let queryStr = `SELECT container_size_code, GROUP_CONCAT(container_size_name) container_size_name FROM tbl_zhongtan_container_size WHERE state = 1 GROUP BY container_size_code ORDER BY container_size_code`
+  let replacements = []
+  returnData['CONTAINER_SIZE'] = await model.simpleSelect(queryStr, replacements)
   returnData['DESTINATION'] = await tb_discharge_port.findAll({
     attributes: ['discharge_port_code', 'discharge_port_name'],
     where: {
@@ -28,8 +24,8 @@ exports.initAct = async () => {
     },
     order: [['discharge_port_code', 'ASC']]
   })
-  let queryStr = `SELECT user_id, user_name FROM tbl_common_user WHERE state = 1 AND user_type = '${GLBConfig.TYPE_CUSTOMER}' ORDER BY user_name`
-  let replacements = []
+  queryStr = `SELECT user_id, user_name FROM tbl_common_user WHERE state = 1 AND user_type = '${GLBConfig.TYPE_CUSTOMER}' ORDER BY user_name`
+  replacements = []
   returnData['CUSTOMER'] = await model.simpleSelect(queryStr, replacements)
   returnData['UPLOAD_STATE'] = GLBConfig.UPLOAD_STATE
   returnData['MNR_CARGO_TYPE'] = GLBConfig.MNR_CARGO_TYPE
@@ -247,6 +243,11 @@ exports.invoiceAct = async req => {
     renderData.mnrAmount = mnr.mnr_ledger_actual_charge_amount
     renderData.mnrTotal = formatCurrency(mnr.mnr_ledger_actual_charge_amount)
     renderData.mnrTotalStr = numberToText(mnr.mnr_ledger_actual_charge_amount)
+    if(mnr.mnr_ledger_actual_charge_amount && mnr.mnr_ledger_actual_charge_amount.indexOf('-') < 0) {
+      renderData.mnrTotalStr = numberToText(mnr.mnr_ledger_actual_charge_amount)
+    } else {
+      renderData.mnrTotalStr = 'MINUS ' + numberToText(new Decimal(mnr.mnr_ledger_actual_charge_amount).absoluteValue())
+    }
     renderData.user_name = commonUser.user_name
     renderData.user_phone = commonUser.user_phone
     renderData.user_email = commonUser.user_email
