@@ -69,7 +69,7 @@ exports.searchBookingDataAct = async req => {
       let r = {}
       r.export_masterbl_id = b.export_masterbl_id
       r.booking_no = b.export_masterbl_bl
-
+      r.bk_cancellation_status = b.bk_cancellation_status
       let shipmentFees = await tb_shipment_fee.findAll({
         where: {
           export_masterbl_id: b.export_masterbl_id,
@@ -217,7 +217,7 @@ exports.getBookingShipmentAct = async req => {
         }
         if(!exist) {
           let fee_data = await calculationShipmentFee(fr.fee_data_code, 'R', bl.export_vessel_id, bl.export_masterbl_bl, bl.export_masterbl_cargo_type)
-          if(fee_data.fee_amount) {
+          if(fee_data.fee_amount && bl.bk_cancellation_status !== GLBConfig.ENABLE) {
             shipment_receivable.unshift({
               shipment_fee_id: '',
               fee_data_code: fr.fee_data_code,
@@ -237,7 +237,7 @@ exports.getBookingShipmentAct = async req => {
       shipment_receivable = []
       for(let fr of fixed_receivable_fee) {
         let fee_data = await calculationShipmentFee(fr.fee_data_code, 'R', bl.export_vessel_id, bl.export_masterbl_bl, bl.export_masterbl_cargo_type)
-        if(fee_data.fee_amount) {
+        if(fee_data.fee_amount && bl.bk_cancellation_status !== GLBConfig.ENABLE) {
           shipment_receivable.unshift({
             shipment_fee_id: '',
             fee_data_code: fr.fee_data_code,
@@ -283,7 +283,7 @@ exports.getBookingShipmentAct = async req => {
         }
         if(!exist) {
           let fee_data = await calculationShipmentFee(fp.fee_data_code, 'P', bl.export_vessel_id, bl.export_masterbl_bl, bl.export_masterbl_cargo_type)
-          if(fee_data.fee_amount) {
+          if(fee_data.fee_amount && bl.bk_cancellation_status !== GLBConfig.ENABLE) {
             shipment_payable.unshift({
               shipment_fee_id: '',
               fee_data_code: fp.fee_data_code,
@@ -303,7 +303,7 @@ exports.getBookingShipmentAct = async req => {
       shipment_payable = []
       for(let fp of fixed_payable_fee) {
         let fee_data = await calculationShipmentFee(fp.fee_data_code, 'P', bl.export_vessel_id, bl.export_masterbl_bl, bl.export_masterbl_cargo_type)
-        if(fee_data.fee_amount) {
+        if(fee_data.fee_amount && bl.bk_cancellation_status !== GLBConfig.ENABLE) {
           shipment_payable.unshift({
             shipment_fee_id: '',
             fee_data_code: fp.fee_data_code,

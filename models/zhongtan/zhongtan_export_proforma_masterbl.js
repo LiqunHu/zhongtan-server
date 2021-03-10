@@ -140,5 +140,11 @@ module.exports = db.defineModel('tbl_zhongtan_export_proforma_masterbl', {
     type: db.STRING(5),
     defaultValue: '0',
     allowNull: false
-  }
+  },
+  bk_cancellation_status: {
+    // 退仓标志
+    type: db.STRING(5),
+    defaultValue: '0',
+    allowNull: false
+  },
 })

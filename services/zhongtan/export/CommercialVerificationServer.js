@@ -28,7 +28,7 @@ exports.searchAct = async req => {
                 LEFT JOIN tbl_common_user c ON a.export_verification_create_user = c.user_id
                 LEFT JOIN tbl_common_user d ON a.export_verification_agent = d.user_id
                 WHERE a.state = '1' AND a.export_verification_api_name IN (?)`
-  let api_name = ['SHIPMENT RELEASE', 'EXPORT DEMURRAGE INVOICE']
+  let api_name = ['SHIPMENT RELEASE', 'EXPORT DEMURRAGE INVOICE', 'BK CANCELLATION']
   let replacements = [api_name]
   if (doc.verification_state) {
     queryStr += ' AND a.export_verification_state = ?'
