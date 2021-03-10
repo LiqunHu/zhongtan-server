@@ -238,6 +238,7 @@ exports.exportCollectAct = async (req, res) => {
     receivable_map.set('OCEAN FREIGHT', 'receivable_ocean')
     receivable_map.set('TASAC FEE', 'receivable_tasac')
     receivable_map.set('DEMURRAGE FEE', 'receivable_demurrage')
+    receivable_map.set('LIFT ON/OFF', 'receivable_lofo')
     let payable_map = new Map()
     payable_map.set('B/L FEE', 'payable_bl')
     payable_map.set('OCEAN FREIGHT', 'payable_ocean')
