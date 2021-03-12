@@ -191,5 +191,10 @@ module.exports = db.defineModel('tbl_zhongtan_import_billlading', {
     type: db.STRING(3000),
     defaultValue: '',
     allowNull: false
+  },
+  import_business_type: {
+    type: db.STRING(5),
+    defaultValue: 'I',
+    allowNull: false
   }
 })

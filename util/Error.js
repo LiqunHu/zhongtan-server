@@ -93,5 +93,6 @@ module.exports = {
   edi_depot_02: 'edi depot name already exists',
   export_01: 'Collect no data',
   allot_depot_01: 'allot rule do not exist',
-  allot_depot_02: 'allot rule can not be same enabled date'
+  allot_depot_02: 'allot rule can not be same enabled date',
+  bk_cancellation_fee_01: 'Bk cancellation Fee has receipt'
 }

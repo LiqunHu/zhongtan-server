@@ -30,6 +30,8 @@ router.post('/export/FreightChargeStatus/:method', services.FreightChargeStatusC
 router.post('/export/ExportStatistics/:method', services.ExportStatisticsControl)
 
 router.post('/import/ImportWork/:method', services.ImportWorkControl)
+router.post('/import/ExportWork/:method', services.ImportWorkControl)
+
 router.post('/invoice/Invoice/:method', services.InvoiceControl)
 router.post('/invoice/InvoiceReceipt/:method', services.InvoiceReceiptControl)
 router.post('/invoice/ManagerCheck/:method', services.ManagerCheckControl)

@@ -564,6 +564,14 @@ async function ejs2Html(templateFile, renderData) {
   return html
 }
 
+const fileterN = value => {
+  let p = /[^0-9.]/gi
+  if(value) {
+    return value.replace(p, '')
+  }
+  return value
+}
+
 const fileterLN = value => {
   let p = /[^0-9a-zA-Z]/gi
   if(value) {
@@ -693,6 +701,7 @@ module.exports = {
   checkDoState: checkDoState,
   isNumber: isNumber,
   ejs2Html: ejs2Html,
+  fileterN: fileterN,
   fileterLN: fileterLN,
   fileterLNB: fileterLNB,
   fileterB: fileterB,

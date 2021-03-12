@@ -18,5 +18,10 @@ module.exports = db.defineModel('tbl_zhongtan_import_shipinfo', {
     type: db.STRING(100),
     defaultValue: '',
     allowNull: false
+  },
+  import_business_type: {
+    type: db.STRING(5),
+    defaultValue: 'I',
+    allowNull: false
   }
 })
