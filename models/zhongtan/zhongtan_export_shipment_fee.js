@@ -129,5 +129,11 @@ module.exports = db.defineModel('tbl_zhongtan_export_shipment_fee', {
   shipment_fee_receipt_no: {
     type: db.STRING(50),
     allowNull: true
+  },
+  shipment_list_import: {
+    // shipment list 导入
+    type: db.STRING(5),
+    defaultValue: '0',
+    allowNull: false
   }
 })

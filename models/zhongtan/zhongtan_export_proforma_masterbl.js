@@ -90,7 +90,7 @@ module.exports = db.defineModel('tbl_zhongtan_export_proforma_masterbl', {
   },
   export_masterbl_cargo_descriptions: {
     // 货物描述
-    type: db.STRING(50),
+    type: db.STRING(500),
     allowNull: true
   },
   export_masterbl_empty_release_agent: {
@@ -147,4 +147,10 @@ module.exports = db.defineModel('tbl_zhongtan_export_proforma_masterbl', {
     defaultValue: '0',
     allowNull: false
   },
+  shipment_list_import: {
+    // shipment list 导入
+    type: db.STRING(5),
+    defaultValue: '0',
+    allowNull: false
+  }
 })

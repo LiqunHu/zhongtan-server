@@ -259,6 +259,7 @@ exports.loadingListDataAct = async req => {
             state: GLBConfig.ENABLE
           }
         })
+        
         if(!proforma_vessel) {
           if(vessel) {
             proforma_vessel = await tb_proforma_vessel.create({
@@ -309,6 +310,9 @@ exports.loadingListDataAct = async req => {
             }
           })
           if(proforma_bl) {
+            if(proforma_bl.shipment_list_import === GLBConfig.ENABLE) {
+              return common.error('import_01')
+            }
             let old_con_count = await tb_proforma_container.count({
               where: {
                 state: GLBConfig.ENABLE,

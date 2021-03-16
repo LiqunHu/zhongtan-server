@@ -257,7 +257,7 @@ exports.uploadImportAct = async req => {
               import_billlading_pol: a.G_DATA.POL._text,
               import_billlading_fnd: a.G_DATA.FND._text,
               // import_billlading_flag: a.G_DATAA.FLAG._text,
-              import_billlading_no: 'COSCO' + gbl.BL_NUM_REF_CDE._text,
+              import_billlading_no: 'COSU' + gbl.BL_NUM_REF_CDE._text,
               import_billlading_cso_no: cso_no,
               import_billlading_cso_no1: cso_no1,
               import_billlading_shipper: common.df(gbl.SHIPPER),
@@ -1085,7 +1085,7 @@ exports.exportShipmentListAct = async (req, res) => {
       let cr = {
         bl: r.import_billlading_no,
         container_type: 'C',
-        container_no: r.import_billlading_no,
+        container_no: c.import_billlading_container_num,
         container_seal: c.import_billlading_container_seal,
         container_freight_indicator: c.import_billlading_container_traffic_mode,
         container_package_number: c.import_billlading_container_package_cnt,

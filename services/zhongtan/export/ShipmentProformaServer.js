@@ -209,6 +209,9 @@ exports.uploadBookingAct = async req => {
               state: GLBConfig.ENABLE
             }
           })
+          if(proforma_bl && proforma_bl.shipment_list_import === GLBConfig.ENABLE) {
+            return common.error('import_01')
+          }
           if(!proforma_bl) {
             if(vessel) {
               let bl = await tb_bl.findOne({
@@ -446,6 +449,373 @@ const pdf2jsonParser = async (path) => {
   return parserData
 }
 
+exports.uploadShipmentAct = async req => {
+  let doc = common.docValidate(req), user = req.user
+  for (let f of doc.upload_files) {
+    // var parser = new xml2js.Parser();
+    let wb = X.readFile(f.response.info.path, {
+      cellFormula: true,
+      bookVBA: true,
+      cellNF: true,
+      cellHTML: true,
+      sheetStubs: true,
+      cellDates: true,
+      cellStyles: true
+    })
+    let vesselInfo = wb.Sheets['VesselInformation']
+    let masterBI = wb.Sheets['MasterBl']
+    let containers = wb.Sheets['Containers']
+    if(!vesselInfo || !masterBI || !containers) {
+      return common.error('import_03')
+    }
+    
+    let vesslInfoJSTemp = X.utils.sheet_to_json(vesselInfo, {})
+    let masterBIJSTemp = X.utils.sheet_to_json(masterBI, {})
+    let containersJSTemp = X.utils.sheet_to_json(containers, {})
+    let vesslInfoJS = await common.jsonTrim(vesslInfoJSTemp)
+    let masterBIJS = await common.jsonTrim(masterBIJSTemp)
+    let containersJS = await common.jsonTrim(containersJSTemp)
+    // console.log('vesslInfoJS', vesslInfoJS)
+    // console.log('masterBIJS', masterBIJS)
+    // console.log('containersJS', containersJS)
+    if (!(vesslInfoJS[0]['VESSEL NAME'] && vesslInfoJS[0]['VOYAGE NUM'])) {
+      return common.error('import_03')
+    }
+    let vessel_name = vesslInfoJS[0]['VESSEL NAME'].trim()
+    let vessel_voyage = vesslInfoJS[0]['VOYAGE NUM'].trim()
+    let vessel_code = vesslInfoJS[0]['VESSEL CODE'].trim()
+    let vessel_etd = typeof vesslInfoJS[0]['ETD'] === 'object' ? moment(vesslInfoJS[0]['ETD']).add(1, 'days').format('DD/MM/YYYY') : vesslInfoJS[0]['ETD']
+    let call_sign = vesslInfoJS[0]['CALL SIGN'] ? vesslInfoJS[0]['CALL SIGN'].trim() : ''
+    let total_prepaid = vesslInfoJS[0]['TOTAL PREPAID'] ? vesslInfoJS[0]['TOTAL PREPAID'].trim() : ''
+    let ves = await tb_proforma_vessel.findOne({
+      where: {
+        export_vessel_name: vessel_name,
+        export_vessel_voyage: vessel_voyage,
+        state: GLBConfig.ENABLE
+      }
+    })
+    let new_import = true
+    if(ves) {
+      new_import = false
+      ves.shipment_list_import = GLBConfig.ENABLE
+      ves.export_vessel_etd = vessel_etd
+      ves.export_vessel_total_prepaid = total_prepaid
+      ves.export_vessel_call_sign = call_sign
+      await ves.save()
+    } else {
+      ves = await tb_proforma_vessel.create({
+        export_vessel_code: vessel_code,
+        export_vessel_name: vessel_name,
+        export_vessel_voyage: vessel_voyage,
+        export_vessel_etd: vessel_etd,
+        export_vessel_total_prepaid: total_prepaid,
+        export_vessel_call_sign: call_sign,
+        shipment_list_import: GLBConfig.ENABLE
+      })
+    }
+    for (let m of masterBIJS) {
+      let masterbi_bl = m['#M B/L No']
+      if(masterbi_bl) {
+        masterbi_bl = masterbi_bl.trim()
+        let bl_carrier = 'COSCO'
+        if(masterbi_bl.indexOf('OOLU') >= 0) {
+          bl_carrier = 'OOCL'
+        }
+        let cargo_classification = m['Cargo Classification'] ? m['Cargo Classification'].toString().trim() : ''
+        // let bl_type = m['*B/L Typen'] ? m['*B/L Type'].toString().trim() : ''
+        let cso_no = m['CSO NO'] ? m['CSO NO'].toString().trim() : ''
+        let port_of_loading = m['Port of Loading'] ? m['Port of Loading'].toString().trim() : ''
+        let place_of_delivery = m['Place of Delivery'] ? m['Place of Delivery'].toString().trim() : ''
+        let number_of_containers = m['Number of Containers'] ? m['Number of Containers'].toString().trim() : ''
+        let description_of_goods = m['Description of Goods'] ? m['Description of Goods'].toString().trim() : ''
+        let number_of_package = m['Number of Package'] ? m['Number of Package'].toString().trim() : ''
+        // let package_unit = m['Package Unit'] ? m['Package Unit'].toString().trim() : ''
+        let gross_weight = m['Gross Weight'] ? m['Gross Weight'].toString().trim() : ''
+        // let gross_weight_unit = m['Gross Weight Unit'] ? m['Gross Weight Unit'].toString().trim() : ''
+        let gross_volume = m['Gross Volume'] ? m['Gross Volume'].toString().trim() : ''
+        // let gross_volume_unit = m['Gross Volume Unit'] ? m['Gross Volume Unit'].toString().trim() : ''
+        let shipper_name = m['Shipper Name'] ? m['Shipper Name'].toString().trim() : ''
+        // let shipper_mark = m['Shipping Mark'] ? m['Shipping Mark'].toString().trim() : ''
+        let forwarder_name = m['Forwarder Name'] ? m['Forwarder Name'].toString().trim() : ''
+        let consignee_name = m['Consignee Name'] ? m['Consignee Name'].toString().trim() : ''
+        // let notify_name = m['Notify Name'] ? m['Notify Name'].toString().trim() : ''
+        let oft = m['OFT'] ? m['OFT'].toString().trim() : ''
+        let blf = m['BLF'] ? m['BLF'].toString().trim() : ''
+        let faf = m['FAF'] ? m['FAF'].toString().trim() : ''
+        let create_bl = true
+        let create_con = true
+        let bl = await tb_proforma_bl.findOne({
+          where: {
+            export_vessel_id: ves.export_vessel_id,
+            export_masterbl_bl: masterbi_bl,
+            state: GLBConfig.ENABLE
+          }
+        })
+        if(!new_import) {
+          if(bl) {
+            create_bl = false
+            if(bl.shipment_list_import === GLBConfig.DISABLE) {
+              await tb_proforma_container.update(
+                {'state': GLBConfig.DISABLE}, 
+                {'where': {'export_vessel_id': ves.export_vessel_id, 'export_container_bl': masterbi_bl}}
+              )
+              // 删除相关费用
+              let fees = await tb_shipment_fee.findAll({
+                where: {
+                  state: GLBConfig.ENABLE,
+                  export_masterbl_id: bl.export_masterbl_id
+                }
+              })
+              if(fees && fees.length > 0) {
+                for(let f of fees) {
+                  f.state = GLBConfig.DISABLE
+                  await f.save()
+                }
+              }
+            } else {
+              // shipment 导入
+              let bl_cons = []
+              for(let c of containersJS) {
+                let container_bl = c['#M B/L No']
+                let container_no = c['Container No']
+                if(container_bl && container_no) {
+                  container_bl = container_bl.trim()
+                  container_no = container_no.trim()
+                  if(container_bl === masterbi_bl) {
+                    bl_cons.push(container_no)
+                  }
+                }
+              }
+              let db_pro_cons = await tb_proforma_container.findAll({
+                where: {
+                  'export_vessel_id': ves.export_vessel_id,
+                  'export_container_bl': masterbi_bl,
+                  'state': GLBConfig.ENABLE
+                }
+              })
+              if(db_pro_cons) {
+                let pro_cons = []
+                for(let pc of db_pro_cons) {
+                  pro_cons.push(pc.export_container_no)
+                }
+                let bl_cons_sort = bl_cons.sort()
+                let pro_cons_sort = pro_cons.sort()
+                if(bl_cons_sort.join() === pro_cons_sort.join()) {
+                  create_con = false
+                } else {
+                  await tb_proforma_container.update(
+                    {'state': GLBConfig.DISABLE}, 
+                    {'where': {'export_vessel_id': ves.export_vessel_id, 'export_container_bl': masterbi_bl}}
+                  )
+                  // 删除相关费用
+                  let fees = await tb_shipment_fee.findAll({
+                    where: {
+                      state: GLBConfig.ENABLE,
+                      export_masterbl_id: bl.export_masterbl_id
+                    }
+                  })
+                  if(fees && fees.length > 0) {
+                    for(let f of fees) {
+                      f.state = GLBConfig.DISABLE
+                      await f.save()
+                    }
+                  }
+                }
+              }
+            }
+            bl.shipment_list_import = GLBConfig.ENABLE
+            bl.export_masterbl_cso_number = cso_no
+            bl.export_masterbl_shipper_company = shipper_name
+            bl.export_masterbl_forwarder_company = forwarder_name
+            bl.export_masterbl_consignee_company = consignee_name
+            bl.export_masterbl_port_of_load = port_of_loading
+            bl.export_masterbl_port_of_discharge = place_of_delivery
+            // bl.export_masterbl_traffic_mode = traffic_mode
+            bl.export_masterbl_container_quantity = number_of_containers
+            bl.export_masterbl_container_weight = gross_weight
+            // bl.export_masterbl_cargo_nature = cso_no
+            bl.export_masterbl_cargo_descriptions = description_of_goods
+            bl.export_masterbl_cargo_type = cargo_classification
+            bl.export_masterbl_container_package = number_of_package
+            bl.export_masterbl_container_volumn = gross_volume
+            if(!bl.relation_export_masterbl_id) {
+              let load_ves = await tb_vessel.findOne({
+                where: {
+                  export_vessel_name: vessel_name,
+                  export_vessel_voyage: vessel_voyage,
+                  state: GLBConfig.ENABLE
+                }
+              })
+              if(load_ves) {
+                let load_bl = await tb_bl.findOne({
+                  where: {
+                    export_vessel_id: load_ves.export_vessel_id,
+                    export_masterbl_bl: masterbi_bl,
+                    state: GLBConfig.ENABLE
+                  }
+                })
+                if(load_bl) {
+                  bl.relation_export_masterbl_id = load_bl.export_masterbl_id
+                }
+              }
+            }
+            await bl.save()
+          }
+        }
+        if(create_bl) {
+          let relation_export_masterbl_id = null
+          let export_masterbl_empty_release_agent = null
+          let load_ves = await tb_vessel.findOne({
+            where: {
+              export_vessel_name: vessel_name,
+              export_vessel_voyage: vessel_voyage,
+              state: GLBConfig.ENABLE
+            }
+          })
+          if(load_ves) {
+            let load_bl = await tb_bl.findOne({
+              where: {
+                export_vessel_id: load_ves.export_vessel_id,
+                export_masterbl_bl: masterbi_bl,
+                state: GLBConfig.ENABLE
+              }
+            })
+            if(load_bl) {
+              relation_export_masterbl_id = load_bl.export_masterbl_id
+              export_masterbl_empty_release_agent = load_bl.export_masterbl_empty_release_agent
+            }
+          }
+          bl = await tb_proforma_bl.create({
+            relation_export_masterbl_id: relation_export_masterbl_id,
+            export_vessel_id: ves.export_vessel_id,
+            export_masterbl_bl_carrier: bl_carrier,
+            export_masterbl_bl: masterbi_bl,
+            export_masterbl_cso_number: cso_no,
+            export_masterbl_shipper_company: shipper_name,
+            export_masterbl_forwarder_company: forwarder_name,
+            export_masterbl_consignee_company: consignee_name,
+            export_masterbl_port_of_load: port_of_loading,
+            export_masterbl_port_of_discharge: place_of_delivery,
+            export_masterbl_container_quantity: number_of_containers,
+            export_masterbl_container_weight: gross_weight,
+            export_masterbl_cargo_descriptions: description_of_goods,
+            export_masterbl_cargo_type: cargo_classification,
+            export_masterbl_container_package: number_of_package,
+            export_masterbl_container_volumn: gross_volume,
+            export_masterbl_empty_release_agent: export_masterbl_empty_release_agent,
+            shipment_list_import: GLBConfig.ENABLE
+          })
+        }
+        if(create_con) {
+          // 新建箱信息
+          for(let c of containersJS) {
+            let container_bl = c['#M B/L No']
+            let container_no = c['Container No']
+            if(container_bl && container_no) {
+              container_bl = container_bl.trim()
+              if(container_bl === masterbi_bl) {
+                container_no = container_no.trim()
+                let type_of_container = c['Type Of Container'] ? c['Type Of Container'].toString().trim() : ''
+                let container_size = c['Container Size'] ? c['Container Size'].toString().trim() : ''
+                let container_seal = c['Seal No.1'] ? c['Seal No.1'].toString().trim() : ''
+                // let freight_indicator = m['Freight Indicator'] ? m['Freight Indicator'].toString().trim() : ''
+                let no_of_package = c['No Of Package'] ? c['No Of Package'].toString().trim() : ''
+                let package_unit = c['Package Unit'] ? c['Package Unit'].toString().trim() : ''
+                let volumn = c['Volumn'] ? c['Volumn'].toString().trim() : ''
+                let volumn_unit = c['Volumn Unit'] ? c['Volumn Unit'].toString().trim() : ''
+                let weight = c['Weight'] ? c['Weight'].toString().trim() : ''
+                let weight_unit = c['Weight Unit'] ? c['Weight Unit'].toString().trim() : ''
+                let load_con = await tb_container.findOne({
+                  where: {
+                    export_container_bl: container_bl,
+                    export_container_no: container_no,
+                    state: GLBConfig.ENABLE
+                  }
+                })
+                await tb_proforma_container.create({
+                  export_vessel_id: ves.export_vessel_id,
+                  export_container_bl:  container_bl,
+                  export_container_no: container_no,
+                  export_container_soc_type: type_of_container,
+                  export_container_size_type: container_size,
+                  export_seal_no: container_seal,
+                  export_container_cargo_weight: weight,
+                  export_container_cargo_weight_unit: weight_unit,
+                  export_container_cargo_package: no_of_package,
+                  export_container_cargo_package_unit: package_unit,
+                  export_container_cargo_volumn: volumn,
+                  export_container_cargo_volumn_unit: volumn_unit,
+                  export_container_edi_loading_date: load_con ? load_con.export_container_edi_loading_date: null,
+                  export_container_edi_depot_gate_out_date: load_con ? load_con.export_container_edi_depot_gate_out_date: null,
+                  export_container_cal_depot_gate_out_date: load_con ? load_con.export_container_cal_depot_gate_out_date: null,
+                  export_container_edi_wharf_gate_in_date: load_con ? load_con.export_container_edi_wharf_gate_in_date: null,
+                  export_container_get_depot_name: load_con ? load_con.export_container_get_depot_name: null
+                })
+                if(load_con) {
+                  await cal_demurrage_srv.calculationDemurrage2Shipment(ves.export_vessel_id, container_bl, container_no, user.user_id)
+                }
+              }
+            }
+          }
+          if(bl) {
+            if(oft && parseFloat(oft) > 0) {
+              await tb_shipment_fee.create({
+                export_masterbl_id: bl.export_masterbl_id,
+                fee_data_code: 'OFT',
+                fee_data_fixed: GLBConfig.ENABLE,
+                shipment_fee_supplement: GLBConfig.DISABLE,
+                shipment_fee_type: 'R',
+                shipment_fee_party: bl.export_masterbl_empty_release_agent,
+                shipment_fee_fixed_amount: GLBConfig.ENABLE,
+                shipment_fee_amount: oft,
+                shipment_fee_currency: 'USD',
+                shipment_fee_status: 'SA',
+                shipment_fee_save_by: user.user_id,
+                shipment_fee_save_at: new Date(),
+                shipment_list_import: GLBConfig.ENABLE
+              })
+            }
+            if(blf && parseFloat(blf) > 0) {
+              await tb_shipment_fee.create({
+                export_masterbl_id: bl.export_masterbl_id,
+                fee_data_code: 'BLF',
+                fee_data_fixed: GLBConfig.ENABLE,
+                shipment_fee_supplement: GLBConfig.DISABLE,
+                shipment_fee_type: 'R',
+                shipment_fee_party: bl.export_masterbl_empty_release_agent,
+                shipment_fee_fixed_amount: GLBConfig.ENABLE,
+                shipment_fee_amount: blf,
+                shipment_fee_currency: 'USD',
+                shipment_fee_status: 'SA',
+                shipment_fee_save_by: user.user_id,
+                shipment_fee_save_at: new Date(),
+                shipment_list_import: GLBConfig.ENABLE
+              })
+            }
+            if(faf && parseFloat(faf) > 0) {
+              await tb_shipment_fee.create({
+                export_masterbl_id: bl.export_masterbl_id,
+                fee_data_code: 'FAF',
+                fee_data_fixed: GLBConfig.ENABLE,
+                shipment_fee_supplement: GLBConfig.DISABLE,
+                shipment_fee_type: 'R',
+                shipment_fee_party: bl.export_masterbl_empty_release_agent,
+                shipment_fee_fixed_amount: GLBConfig.ENABLE,
+                shipment_fee_amount: faf,
+                shipment_fee_currency: 'USD',
+                shipment_fee_status: 'SA',
+                shipment_fee_save_by: user.user_id,
+                shipment_fee_save_at: new Date(),
+                shipment_list_import: GLBConfig.ENABLE
+              })
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 exports.uploadAct = async req => {
   let fileInfo = await common.fileSaveTemp(req)
   return common.success(fileInfo)
@@ -551,13 +921,11 @@ exports.searchVesselAct = async req => {
   let etd_end_date = doc.etd_end_date
   let vessel_name = doc.vessel_name
   let masterbi_bl = doc.masterbi_bl
-  let queryStr =  `SELECT * FROM tbl_zhongtan_export_proforma_vessel v `
+  let queryStr =  `SELECT * FROM tbl_zhongtan_export_proforma_vessel v WHERE v.state = '1' `
   let replacements = []
   if(masterbi_bl) {
-    queryStr = queryStr + ` LEFT JOIN tbl_zhongtan_export_proforma_masterbl b ON v.export_vessel_id = b.export_vessel_id WHERE v.state = '1' AND b.state = '1' AND b.export_masterbl_bl like ? `
+    queryStr = queryStr + ` AND EXISTS (SELECT 1 FROM tbl_zhongtan_export_proforma_masterbl b WHERE v.export_vessel_id = b.export_vessel_id AND b.state = 1 AND export_masterbl_bl like ?) `
     replacements.push('%' + masterbi_bl + '%')
-  } else {
-    queryStr = queryStr + ` WHERE v.state = '1' `
   }
   if(etd_start_date && etd_end_date) {
     queryStr = queryStr + ` AND STR_TO_DATE(v.export_vessel_etd, "%d/%m/%Y") >= ? AND STR_TO_DATE(v.export_vessel_etd, "%d/%m/%Y") <= ? `
@@ -604,7 +972,18 @@ exports.searchBlAct = async req => {
   }
   let bls = await model.queryWithCount(doc, queryStr, replacements)
   returnData.total = bls.count
-  returnData.rows = bls.data
+  returnData.rows = []
+  if(bls.data && bls.data.length > 0) {
+    for(let d of bls.data) {
+      queryStr =  `select * from tbl_zhongtan_export_shipment_fee WHERE shipment_list_import = ? AND export_masterbl_id = ? AND shipment_fee_status != ? AND state = ?`
+      replacements = [GLBConfig.ENABLE, d.export_masterbl_id, 'NE', GLBConfig.ENABLE]
+      let fees = await model.simpleSelect(queryStr, replacements)
+      if(fees && fees.length > 0) {
+        d.shipment_fee = true
+      }
+      returnData.rows.push(d)
+    }
+  }
   return returnData
 }
 

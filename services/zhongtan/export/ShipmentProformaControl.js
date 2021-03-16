@@ -11,6 +11,8 @@ module.exports = async (req, res) => {
       ret = await srv.uploadAct(req)
     } else if (method === 'uploadBooking') {
       ret = await srv.uploadBookingAct(req)
+    } else if (method === 'uploadShipment') {
+      ret = await srv.uploadShipmentAct(req)
     } else if (method === 'importFreight') {
       ret = await srv.importFreightAct(req)
     } else if (method === 'searchVessel') {
