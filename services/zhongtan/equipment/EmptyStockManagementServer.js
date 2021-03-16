@@ -3,18 +3,22 @@ const common = require('../../../util/CommonUtil')
 const GLBConfig = require('../../../util/GLBConfig')
 const model = require('../../../app/model')
 
-const tb_container_size = model.zhongtan_container_size
 const tb_container = model.zhongtan_invoice_containers
 const tb_empty_stock = model.zhongtan_empty_stock
+const tb_depot = model.zhongtan_edi_depot
 
 exports.initAct = async () => {
   let returnData = {}
-  returnData['CONTAINER_SIZE'] = await tb_container_size.findAll({
-    attributes: ['container_size_code', 'container_size_name'],
+  let queryStr = `SELECT container_size_code, GROUP_CONCAT(container_size_name) container_size_name FROM tbl_zhongtan_container_size WHERE state = 1 GROUP BY container_size_code ORDER BY container_size_code`
+  let replacements = []
+  returnData['CONTAINER_SIZE'] = await model.simpleSelect(queryStr, replacements)
+  returnData['DEPOT'] = await tb_depot.findAll({
+    attributes: ['edi_depot_name'],
     where: {
+      edi_depot_is_wharf: GLBConfig.DISABLE, 
       state : GLBConfig.ENABLE
     },
-    order: [['container_size_code', 'ASC']]
+    order: [['edi_depot_name', 'ASC']]
   })
   return common.success(returnData)
 }
@@ -64,6 +68,14 @@ exports.searchAct = async req => {
     if (doc.search_data.containers_no) {
       queryStr += ' and empty_stock_container_no like ? '
       replacements.push('%' + doc.search_data.containers_no + '%')
+    }
+    if (doc.search_data.size_type) {
+      queryStr += ' and empty_stock_size_type = ? '
+      replacements.push(doc.search_data.size_type)
+    }
+    if (doc.search_data.depot) {
+      queryStr += ' and empty_stock_in_depot_name = ? '
+      replacements.push(doc.search_data.depot)
     }
   }
   queryStr += ' ORDER BY empty_stock_id DESC'
