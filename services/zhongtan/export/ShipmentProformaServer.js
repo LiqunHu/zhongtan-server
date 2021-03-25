@@ -475,9 +475,6 @@ exports.uploadShipmentAct = async req => {
     let vesslInfoJS = await common.jsonTrim(vesslInfoJSTemp)
     let masterBIJS = await common.jsonTrim(masterBIJSTemp)
     let containersJS = await common.jsonTrim(containersJSTemp)
-    // console.log('vesslInfoJS', vesslInfoJS)
-    // console.log('masterBIJS', masterBIJS)
-    // console.log('containersJS', containersJS)
     if (!(vesslInfoJS[0]['VESSEL NAME'] && vesslInfoJS[0]['VOYAGE NUM'])) {
       return common.error('import_03')
     }
@@ -485,6 +482,9 @@ exports.uploadShipmentAct = async req => {
     let vessel_voyage = vesslInfoJS[0]['VOYAGE NUM'].trim()
     let vessel_code = vesslInfoJS[0]['VESSEL CODE'].trim()
     let vessel_etd = typeof vesslInfoJS[0]['ETD'] === 'object' ? moment(vesslInfoJS[0]['ETD']).add(1, 'days').format('DD/MM/YYYY') : vesslInfoJS[0]['ETD']
+    if(!vessel_etd) {
+      vessel_etd = moment().format('DD/MM/YYYY')
+    }
     let call_sign = vesslInfoJS[0]['CALL SIGN'] ? vesslInfoJS[0]['CALL SIGN'].trim() : ''
     let total_prepaid = vesslInfoJS[0]['TOTAL PREPAID'] ? vesslInfoJS[0]['TOTAL PREPAID'].trim() : ''
     let ves = await tb_proforma_vessel.findOne({
@@ -774,6 +774,35 @@ exports.uploadShipmentAct = async req => {
                 shipment_fee_save_at: new Date(),
                 shipment_list_import: GLBConfig.ENABLE
               })
+
+              let queryStrOFT = `SELECT * FROM tbl_zhongtan_export_fee_data WHERE state = 1 AND fee_data_code = ? LIMIT 1`
+              let replacementsOFT = ['OFT'] 
+              let oftFee = await model.simpleSelect(queryStrOFT, replacementsOFT)
+              let oft_shipment_fee_party = null
+              if(oftFee && oftFee.length > 0) {
+                if(oftFee[0].fee_data_payable_common_party) {
+                  oft_shipment_fee_party = oftFee[0].fee_data_payable_common_party
+                } else if(masterbi_bl.indexOf('COSU') >= 0){
+                  oft_shipment_fee_party = oftFee[0].fee_data_payable_cosco_party
+                } else if(masterbi_bl.indexOf('OOLU') >= 0){
+                  oft_shipment_fee_party = oftFee[0].fee_data_payable_oocl_party
+                }
+              }
+              await tb_shipment_fee.create({
+                export_masterbl_id: bl.export_masterbl_id,
+                fee_data_code: 'OFT',
+                fee_data_fixed: GLBConfig.ENABLE,
+                shipment_fee_supplement: GLBConfig.DISABLE,
+                shipment_fee_type: 'P',
+                shipment_fee_party: oft_shipment_fee_party,
+                shipment_fee_fixed_amount: GLBConfig.ENABLE,
+                shipment_fee_amount: oft,
+                shipment_fee_currency: 'USD',
+                shipment_fee_status: 'SA',
+                shipment_fee_save_by: user.user_id,
+                shipment_fee_save_at: new Date(),
+                shipment_list_import: GLBConfig.ENABLE
+              })
             }
             if(blf && parseFloat(blf) > 0) {
               await tb_shipment_fee.create({
@@ -800,6 +829,35 @@ exports.uploadShipmentAct = async req => {
                 shipment_fee_supplement: GLBConfig.DISABLE,
                 shipment_fee_type: 'R',
                 shipment_fee_party: bl.export_masterbl_empty_release_agent,
+                shipment_fee_fixed_amount: GLBConfig.ENABLE,
+                shipment_fee_amount: faf,
+                shipment_fee_currency: 'USD',
+                shipment_fee_status: 'SA',
+                shipment_fee_save_by: user.user_id,
+                shipment_fee_save_at: new Date(),
+                shipment_list_import: GLBConfig.ENABLE
+              })
+
+              let queryStrFAF = `SELECT * FROM tbl_zhongtan_export_fee_data WHERE state = 1 AND fee_data_code = ? LIMIT 1`
+              let replacementsFAF = ['FAF'] 
+              let fafFee = await model.simpleSelect(queryStrFAF, replacementsFAF)
+              let faf_shipment_fee_party = null
+              if(fafFee && fafFee.length > 0) {
+                if(fafFee[0].fee_data_payable_common_party) {
+                  faf_shipment_fee_party = fafFee[0].fee_data_payable_common_party
+                } else if(masterbi_bl.indexOf('COSU') >= 0){
+                  faf_shipment_fee_party = fafFee[0].fee_data_payable_cosco_party
+                } else if(masterbi_bl.indexOf('OOLU') >= 0){
+                  faf_shipment_fee_party = fafFee[0].fee_data_payable_oocl_party
+                }
+              }
+              await tb_shipment_fee.create({
+                export_masterbl_id: bl.export_masterbl_id,
+                fee_data_code: 'FAF',
+                fee_data_fixed: GLBConfig.ENABLE,
+                shipment_fee_supplement: GLBConfig.DISABLE,
+                shipment_fee_type: 'P',
+                shipment_fee_party: faf_shipment_fee_party,
                 shipment_fee_fixed_amount: GLBConfig.ENABLE,
                 shipment_fee_amount: faf,
                 shipment_fee_currency: 'USD',

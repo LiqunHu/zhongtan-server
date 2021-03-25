@@ -996,7 +996,6 @@ exports.exportShipmentListAct = async (req, res) => {
     if(vessels.length === 0) {
       vessel_name = r.import_billlading_vessel_name
       vessel_voyage = r.import_billlading_voyage
-      
     }
     let charges = await tb_billlading_charges.findAll({
       where: {
@@ -1004,15 +1003,13 @@ exports.exportShipmentListAct = async (req, res) => {
         state: GLBConfig.ENABLE
       }
     })
-    let bl_blf = 0
+    let bl_blf = 45
     let bl_faf = 0
     if(charges && charges.length > 0) {
       for(let c of charges) {
         if(c.import_billlading_charges_pc === 'P' && c.import_billlading_charges_ttl_ame) {
           if(c.import_billlading_charges_type === 'FAF') {
             bl_faf = new Decimal(bl_faf).plus(new Decimal(c.import_billlading_charges_ttl_ame))
-          } else if(c.import_billlading_charges_type === 'BLF' || c.import_billlading_charges_type === 'BLD') {
-            bl_blf = new Decimal(bl_blf).plus(new Decimal(c.import_billlading_charges_ttl_ame))
           }
         }
       }
@@ -1063,7 +1060,7 @@ exports.exportShipmentListAct = async (req, res) => {
       bl_type: 'S',
       bl_cso_no: r.import_billlading_cso_no1,
       bl_pol: r.import_billlading_pol,
-      bl_pod: r.import_billlading_pod,
+      bl_pod: r.import_billlading_fnd,
       bl_number_of_container: container.length,
       bl_desc_of_goods: desc_of_goods,
       bl_number_of_package: r.import_billlading_total_packno,
@@ -1078,7 +1075,7 @@ exports.exportShipmentListAct = async (req, res) => {
       bl_consignee_name: r.import_billlading_consignee,
       bl_notify_name: r.import_billlading_notify_party,
       bl_oft: r.import_billlading_ocean_freight_ttl_ame,
-      bl_blf: Decimal.isDecimal(bl_blf) ? bl_blf.toNumber() : bl_blf,
+      bl_blf: 45,
       bl_faf: Decimal.isDecimal(bl_faf) ? bl_faf.toNumber() : bl_faf
     })
     for (let c of container) {
