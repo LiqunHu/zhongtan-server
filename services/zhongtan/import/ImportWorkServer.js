@@ -196,205 +196,221 @@ exports.uploadImportAct = async req => {
           import_ship_srv_main: xmldata.DATA_DS.P_SERVICE._text,
           import_ship_vessel_main: xmldata.DATA_DS.P_VESSEL._text,
           import_ship_voyage_main: xmldata.DATA_DS.P_VOYAGE._text,
-          import_business_type: business_type
+          import_business_type: business_type,
+          state: GLBConfig.ENABLE
         }
       })
   
       let shipinfo = await tb_shipinfo.findOne({
         where: {
           import_shipinfo_vessel_code: xmldata.DATA_DS.P_VESSEL._text,
-          import_business_type: business_type
+          import_business_type: business_type,
+          state: GLBConfig.ENABLE
         }
       })
       if (ship) {
-        return common.error('import_01')
-      } else {
-        ship = await tb_ship.create({
-          import_ship_srv_main: xmldata.DATA_DS.P_SERVICE._text,
-          import_ship_vessel_main: xmldata.DATA_DS.P_VESSEL._text,
-          import_ship_voyage_main: xmldata.DATA_DS.P_VOYAGE._text,
-          import_business_type: business_type
-        })
-  
-        for (let a of xmldata.DATA_DS.G_DATA_SEQ) {
-          let blarray = []
-          if (_.isArray(a.G_DATA.G_DETAIL)) {
-            blarray = a.G_DATA.G_DETAIL
-          } else {
-            blarray.push(a.G_DATA.G_DETAIL)
-          }
-          
-          if (!shipinfo) {
-            shipinfo = await tb_shipinfo.create({
-              import_shipinfo_vessel_code: a.G_DATA.VSL._text,
-              import_shipinfo_vessel_name: a.G_DATA.VSL_NME._text,
-              import_business_type: business_type
-            })
-          }
-  
-          for (let gbl of blarray) {
-            let cso_no = common.df(gbl.CSO_NO)
-            let cso_no1 = ''
-            if(!cso_no) {
-              cso_no = common.df(gbl.SVC_CTR)
+        ship.state = GLBConfig.DISABLE
+        await ship.save()
+        
+      }
+      if(shipinfo) {
+        await tb_billlading.update(
+          {'state': GLBConfig.DISABLE}, 
+          {'where': {
+              'import_billlading_vessel_code': shipinfo.import_shipinfo_vessel_code,
+              'import_billlading_vessel_name': shipinfo.import_shipinfo_vessel_name,
+              'state': GLBConfig.ENABLE
             }
-            if(cso_no) {
-              if(cso_no.indexOf(':') >= 0) {
-                let cso_nos = cso_no.split(':')
-                cso_no = cso_nos[0]
-                cso_no1 = cso_nos[1]
-              }
+          }
+        )
+        // let oldBills = await tb_billlading.findAll({
+        //   where: {
+        //     import_billlading_vessel_code: shipinfo.import_shipinfo_vessel_code,
+        //     import_billlading_vessel_name: shipinfo.import_shipinfo_vessel_name,
+        //     state: GLBConfig.ENABLE
+        //   }
+        // })
+        // if(oldBills) {
+        //   for(let bill of oldBills) {
+        //     bill.state = GLBConfig.DISABLE
+        //     await bill.save()
+        //     await tb_billlading_goods.update(
+        //       {'state': GLBConfig.DISABLE}, 
+        //       {'where': {'import_billlading_id': bill.import_billlading_id}}
+        //     )
+        //     await tb_billlading_charges.update(
+        //       {'state': GLBConfig.DISABLE}, 
+        //       {'where': {'import_billlading_id': bill.import_billlading_id}}
+        //     )
+        //     await tb_billlading_sumcharges.update(
+        //       {'state': GLBConfig.DISABLE}, 
+        //       {'where': {'import_billlading_id': bill.import_billlading_id}}
+        //     )
+        //     await tb_billlading_container.update(
+        //       {'state': GLBConfig.DISABLE}, 
+        //       {'where': {'import_billlading_id': bill.import_billlading_id}}
+        //     )
+        //   }
+        // }
+      }
+
+      ship = await tb_ship.create({
+        import_ship_srv_main: xmldata.DATA_DS.P_SERVICE._text,
+        import_ship_vessel_main: xmldata.DATA_DS.P_VESSEL._text,
+        import_ship_voyage_main: xmldata.DATA_DS.P_VOYAGE._text,
+        import_business_type: business_type
+      })
+
+      for (let a of xmldata.DATA_DS.G_DATA_SEQ) {
+        let blarray = []
+        if (_.isArray(a.G_DATA.G_DETAIL)) {
+          blarray = a.G_DATA.G_DETAIL
+        } else {
+          blarray.push(a.G_DATA.G_DETAIL)
+        }
+        if (!shipinfo) {
+          shipinfo = await tb_shipinfo.create({
+            import_shipinfo_vessel_code: a.G_DATA.VSL._text,
+            import_shipinfo_vessel_name: a.G_DATA.VSL_NME._text,
+            import_business_type: business_type
+          })
+        }
+        for (let gbl of blarray) {
+          let cso_no = common.df(gbl.CSO_NO)
+          let cso_no1 = ''
+          if(!cso_no) {
+            cso_no = common.df(gbl.SVC_CTR)
+          }
+          if(cso_no) {
+            if(cso_no.indexOf(':') >= 0) {
+              let cso_nos = cso_no.split(':')
+              cso_no = cso_nos[0]
+              cso_no1 = cso_nos[1]
             }
-            let bl = await tb_billlading.create({
-              import_billlading_arrive_date: doc.arrive_date,
-              import_billlading_srv_code: a.G_DATA.SVC._text,
-              import_billlading_srv_name: a.G_DATA.SVC_NME._text,
-              import_billlading_vessel_code: a.G_DATA.VSL._text,
-              import_billlading_vessel_name: a.G_DATA.VSL_NME._text,
-              import_billlading_voyage: a.G_DATA.VOY._text,
-              import_billlading_por: a.G_DATA.POR._text,
-              import_billlading_pod: a.G_DATA.POD._text,
-              import_billlading_pol: a.G_DATA.POL._text,
-              import_billlading_fnd: a.G_DATA.FND._text,
-              // import_billlading_flag: a.G_DATAA.FLAG._text,
-              import_billlading_no: 'COSU' + gbl.BL_NUM_REF_CDE._text,
-              import_billlading_cso_no: cso_no,
-              import_billlading_cso_no1: cso_no1,
-              import_billlading_shipper: common.df(gbl.SHIPPER),
-              import_billlading_consignee: common.df(gbl.CONSIGNEE),
-              import_billlading_notify_party: common.df(gbl.NOTIFY),
-              import_billlading_also_notify_party: common.df(gbl.ALSO_NOTIFY),
-              import_billlading_ocean_freight_rate: gbl.G_OCEAN_FRT ? common.df(gbl.G_OCEAN_FRT.RATE) : '',
-              import_billlading_ocean_freight_pc: gbl.G_OCEAN_FRT ? common.df(gbl.G_OCEAN_FRT.PC_INDICATOR) : '',
-              import_billlading_ocean_freight_ttl_ame: gbl.G_OCEAN_FRT ? common.df(gbl.G_OCEAN_FRT.TTL_AMT) : '',
-              import_billlading_ocean_freight_currency: gbl.G_OCEAN_FRT ? common.df(gbl.G_OCEAN_FRT.CURRENCY) : '',
-              // import_billlading_ocean_freight_pay_loc: gbl.G_OCEAN_FRT ? common.df(gbl.G_OCEAN_FRT.V_PYMT_LOC) : '',
-              import_billlading_total_packno: common.df(gbl.Q_SUMMARY_OCEAN.NUM),
-              import_billlading_total_unit: common.df(gbl.Q_SUMMARY_OCEAN.PLURAL_NME),
-              import_billlading_total_gross_weight_kg: common.df(gbl.Q_SUMMARY_OCEAN.SUM_KG),
-              import_billlading_total_gross_weight_lb: common.df(gbl.Q_SUMMARY_OCEAN.SUM_LB),
-              import_billlading_total_volume_cbm: common.df(gbl.Q_SUMMARY_OCEAN.SUE_CBM),
-              import_billlading_total_volume_cft: common.df(gbl.Q_SUMMARY_OCEAN.SUM_CFT),
-              import_billlading_remark: formatInfo(gbl.G_BLRMKS, 'BL_RMKS'),
-              import_business_type: business_type
-            })
-            if(gbl.G_OCEAN) {
-              if (_.isArray(gbl.G_OCEAN)) {
-                for (let g of gbl.G_OCEAN) {
-                  await tb_billlading_goods.create({
-                    import_billlading_id: bl.import_billlading_id,
-                    import_billlading_goods_description: common.df(g.STRDESC),
-                    import_billlading_goods_package_number: common.df(g.NUM),
-                    import_billlading_goods_package_unit: common.df(g.PLURAL_NME),
-                    import_billlading_goods_gross_weight_kg: common.df(g.SUM_KG),
-                    import_billlading_goods_gross_weight_lb: common.df(g.SUM_LB),
-                    import_billlading_goods_volume_cbm: common.df(g.SUM_CBM),
-                    import_billlading_goods_volume_cft: common.df(g.SUM_CFT),
-                    import_billlading_goods_marks_num: common.df(g.MARKS_AND_NUM)
-                  })
-                }
-              } else {
+          }
+          let bl = await tb_billlading.create({
+            import_billlading_arrive_date: doc.arrive_date,
+            import_billlading_srv_code: a.G_DATA.SVC._text,
+            import_billlading_srv_name: a.G_DATA.SVC_NME._text,
+            import_billlading_vessel_code: a.G_DATA.VSL._text,
+            import_billlading_vessel_name: a.G_DATA.VSL_NME._text,
+            import_billlading_voyage: a.G_DATA.VOY._text,
+            import_billlading_por: a.G_DATA.POR._text,
+            import_billlading_pod: a.G_DATA.POD._text,
+            import_billlading_pol: a.G_DATA.POL._text,
+            import_billlading_fnd: a.G_DATA.FND._text,
+            // import_billlading_flag: a.G_DATAA.FLAG._text,
+            import_billlading_no: 'COSU' + gbl.BL_NUM_REF_CDE._text,
+            import_billlading_cso_no: cso_no,
+            import_billlading_cso_no1: cso_no1,
+            import_billlading_shipper: common.df(gbl.SHIPPER),
+            import_billlading_consignee: common.df(gbl.CONSIGNEE),
+            import_billlading_notify_party: common.df(gbl.NOTIFY),
+            import_billlading_also_notify_party: common.df(gbl.ALSO_NOTIFY),
+            import_billlading_ocean_freight_rate: gbl.G_OCEAN_FRT ? common.df(gbl.G_OCEAN_FRT.RATE) : '',
+            import_billlading_ocean_freight_pc: gbl.G_OCEAN_FRT ? common.df(gbl.G_OCEAN_FRT.PC_INDICATOR) : '',
+            import_billlading_ocean_freight_ttl_ame: gbl.G_OCEAN_FRT ? common.df(gbl.G_OCEAN_FRT.TTL_AMT) : '',
+            import_billlading_ocean_freight_currency: gbl.G_OCEAN_FRT ? common.df(gbl.G_OCEAN_FRT.CURRENCY) : '',
+            // import_billlading_ocean_freight_pay_loc: gbl.G_OCEAN_FRT ? common.df(gbl.G_OCEAN_FRT.V_PYMT_LOC) : '',
+            import_billlading_total_packno: common.df(gbl.Q_SUMMARY_OCEAN.NUM),
+            import_billlading_total_unit: common.df(gbl.Q_SUMMARY_OCEAN.PLURAL_NME),
+            import_billlading_total_gross_weight_kg: common.df(gbl.Q_SUMMARY_OCEAN.SUM_KG),
+            import_billlading_total_gross_weight_lb: common.df(gbl.Q_SUMMARY_OCEAN.SUM_LB),
+            import_billlading_total_volume_cbm: common.df(gbl.Q_SUMMARY_OCEAN.SUE_CBM),
+            import_billlading_total_volume_cft: common.df(gbl.Q_SUMMARY_OCEAN.SUM_CFT),
+            import_billlading_remark: formatInfo(gbl.G_BLRMKS, 'BL_RMKS'),
+            import_business_type: business_type
+          })
+          if(gbl.G_OCEAN) {
+            if (_.isArray(gbl.G_OCEAN)) {
+              for (let g of gbl.G_OCEAN) {
                 await tb_billlading_goods.create({
                   import_billlading_id: bl.import_billlading_id,
-                  import_billlading_goods_description: common.df(gbl.G_OCEAN.STRDESC),
-                  import_billlading_goods_package_number: common.df(gbl.G_OCEAN.NUM),
-                  import_billlading_goods_package_unit: common.df(gbl.G_OCEAN.PLURAL_NME),
-                  import_billlading_goods_gross_weight_kg: common.df(gbl.G_OCEAN.SUM_KG),
-                  import_billlading_goods_gross_weight_lb: common.df(gbl.G_OCEAN.SUM_LB),
-                  import_billlading_goods_volume_cbm: common.df(gbl.G_OCEAN.SUM_CBM),
-                  import_billlading_goods_volume_cft: common.df(gbl.G_OCEAN.SUM_CFT),
-                  import_billlading_goods_marks_num: common.df(gbl.G_OCEAN.MARKS_AND_NUM)
+                  import_billlading_goods_description: common.df(g.STRDESC),
+                  import_billlading_goods_package_number: common.df(g.NUM),
+                  import_billlading_goods_package_unit: common.df(g.PLURAL_NME),
+                  import_billlading_goods_gross_weight_kg: common.df(g.SUM_KG),
+                  import_billlading_goods_gross_weight_lb: common.df(g.SUM_LB),
+                  import_billlading_goods_volume_cbm: common.df(g.SUM_CBM),
+                  import_billlading_goods_volume_cft: common.df(g.SUM_CFT),
+                  import_billlading_goods_marks_num: common.df(g.MARKS_AND_NUM)
+                })
+              }
+            } else {
+              await tb_billlading_goods.create({
+                import_billlading_id: bl.import_billlading_id,
+                import_billlading_goods_description: common.df(gbl.G_OCEAN.STRDESC),
+                import_billlading_goods_package_number: common.df(gbl.G_OCEAN.NUM),
+                import_billlading_goods_package_unit: common.df(gbl.G_OCEAN.PLURAL_NME),
+                import_billlading_goods_gross_weight_kg: common.df(gbl.G_OCEAN.SUM_KG),
+                import_billlading_goods_gross_weight_lb: common.df(gbl.G_OCEAN.SUM_LB),
+                import_billlading_goods_volume_cbm: common.df(gbl.G_OCEAN.SUM_CBM),
+                import_billlading_goods_volume_cft: common.df(gbl.G_OCEAN.SUM_CFT),
+                import_billlading_goods_marks_num: common.df(gbl.G_OCEAN.MARKS_AND_NUM)
+              })
+            }
+          }
+          if(gbl.G_SUR) {
+            if (_.isArray(gbl.G_SUR)) {
+              for (let d of gbl.G_SUR) {
+                if(common.df(d.PC_INDICATOR) && common.df(d.PC_INDICATOR) === 'P') {
+                  await tb_billlading_charges.create({
+                    import_billlading_id: bl.import_billlading_id,
+                    import_billlading_charges_type: common.df(d.CHRG_TYPE),
+                    import_billlading_charges_description: common.df(d.DESCRIPTION),
+                    import_billlading_charges_basis: common.df(d.BASIS),
+                    import_billlading_charges_rate: common.df(d.RATE),
+                    import_billlading_charges_pc: common.df(d.PC_INDICATOR),
+                    import_billlading_charges_ttl_ame: common.df(d.TTL_AMT),
+                    // import_billlading_charges_pay_loc: common.df(d.ROWSURCHARGES_PYMT_LOC),
+                    import_billlading_charges_currency: common.df(d.CURRENCY)
+                  })
+                }
+              }
+            } else {
+              if (gbl.G_SUR) {
+                if(common.df(gbl.G_SUR.PC_INDICATOR) && common.df(gbl.G_SUR.PC_INDICATOR) === 'P') {
+                  await tb_billlading_charges.create({
+                    import_billlading_id: bl.import_billlading_id,
+                    import_billlading_charges_type: common.df(gbl.G_SUR.CHRG_TYPE),
+                    import_billlading_charges_description: common.df(gbl.G_SUR.DESCRIPTION),
+                    import_billlading_charges_basis: common.df(gbl.G_SUR.BASIS),
+                    import_billlading_charges_rate: common.df(gbl.G_SUR.RATE),
+                    import_billlading_charges_pc: common.df(gbl.G_SUR.PC_INDICATOR),
+                    import_billlading_charges_ttl_ame: common.df(gbl.G_SUR.TTL_AMT),
+                    // import_billlading_charges_pay_loc: common.df(gbl.G_SUR.ROWSURCHARGES_PYMT_LOC),
+                    import_billlading_charges_currency: common.df(gbl.G_SUR.CURRENCY)
+                  })
+                }
+              }
+            }
+          }
+          if(gbl.Q_SUMMARY_SUR) {
+            if (_.isArray(gbl.Q_SUMMARY_SUR)) {
+              for (let g of gbl.Q_SUMMARY_SUR) {
+                if(common.df(g.PC_INDICATOR) && common.df(g.PC_INDICATOR) === 'P') {
+                  await tb_billlading_sumcharges.create({
+                    import_billlading_id: bl.import_billlading_id,
+                    import_billlading_sumcharges_pc: common.df(g.PC_INDICATOR),
+                    import_billlading_sumcharges_currency: common.df(g.CURRENCY),
+                    import_billlading_sumcharges_amt: common.df(g.TTL_AMT)
+                  })
+                }
+              }
+            } else {
+              if(common.df(gbl.Q_SUMMARY_SUR.PC_INDICATOR) && common.df(gbl.Q_SUMMARY_SUR.PC_INDICATOR) === 'P') {
+                await tb_billlading_sumcharges.create({
+                  import_billlading_id: bl.import_billlading_id,
+                  import_billlading_sumcharges_pc: common.df(gbl.Q_SUMMARY_SUR.PC_INDICATOR),
+                  import_billlading_sumcharges_currency: common.df(gbl.Q_SUMMARY_SUR.CURRENCY),
+                  import_billlading_sumcharges_amt: common.df(gbl.Q_SUMMARY_SUR.TTL_AMT)
                 })
               }
             }
-            if(gbl.G_SUR) {
-              if (_.isArray(gbl.G_SUR)) {
-                for (let d of gbl.G_SUR) {
-                  if(common.df(d.PC_INDICATOR) && common.df(d.PC_INDICATOR) === 'P') {
-                    await tb_billlading_charges.create({
-                      import_billlading_id: bl.import_billlading_id,
-                      import_billlading_charges_type: common.df(d.CHRG_TYPE),
-                      import_billlading_charges_description: common.df(d.DESCRIPTION),
-                      import_billlading_charges_basis: common.df(d.BASIS),
-                      import_billlading_charges_rate: common.df(d.RATE),
-                      import_billlading_charges_pc: common.df(d.PC_INDICATOR),
-                      import_billlading_charges_ttl_ame: common.df(d.TTL_AMT),
-                      // import_billlading_charges_pay_loc: common.df(d.ROWSURCHARGES_PYMT_LOC),
-                      import_billlading_charges_currency: common.df(d.CURRENCY)
-                    })
-                  }
-                }
-              } else {
-                if (gbl.G_SUR) {
-                  if(common.df(gbl.G_SUR.PC_INDICATOR) && common.df(gbl.G_SUR.PC_INDICATOR) === 'P') {
-                    await tb_billlading_charges.create({
-                      import_billlading_id: bl.import_billlading_id,
-                      import_billlading_charges_type: common.df(gbl.G_SUR.CHRG_TYPE),
-                      import_billlading_charges_description: common.df(gbl.G_SUR.DESCRIPTION),
-                      import_billlading_charges_basis: common.df(gbl.G_SUR.BASIS),
-                      import_billlading_charges_rate: common.df(gbl.G_SUR.RATE),
-                      import_billlading_charges_pc: common.df(gbl.G_SUR.PC_INDICATOR),
-                      import_billlading_charges_ttl_ame: common.df(gbl.G_SUR.TTL_AMT),
-                      // import_billlading_charges_pay_loc: common.df(gbl.G_SUR.ROWSURCHARGES_PYMT_LOC),
-                      import_billlading_charges_currency: common.df(gbl.G_SUR.CURRENCY)
-                    })
-                  }
-                }
-              }
-            }
-            if(gbl.Q_SUMMARY_SUR) {
-              if (_.isArray(gbl.Q_SUMMARY_SUR)) {
-                for (let g of gbl.Q_SUMMARY_SUR) {
-                  if(common.df(g.PC_INDICATOR) && common.df(g.PC_INDICATOR) === 'P') {
-                    await tb_billlading_sumcharges.create({
-                      import_billlading_id: bl.import_billlading_id,
-                      import_billlading_sumcharges_pc: common.df(g.PC_INDICATOR),
-                      import_billlading_sumcharges_currency: common.df(g.CURRENCY),
-                      import_billlading_sumcharges_amt: common.df(g.TTL_AMT)
-                    })
-                  }
-                }
-              } else {
-                if(common.df(gbl.Q_SUMMARY_SUR.PC_INDICATOR) && common.df(gbl.Q_SUMMARY_SUR.PC_INDICATOR) === 'P') {
-                  await tb_billlading_sumcharges.create({
-                    import_billlading_id: bl.import_billlading_id,
-                    import_billlading_sumcharges_pc: common.df(gbl.Q_SUMMARY_SUR.PC_INDICATOR),
-                    import_billlading_sumcharges_currency: common.df(gbl.Q_SUMMARY_SUR.CURRENCY),
-                    import_billlading_sumcharges_amt: common.df(gbl.Q_SUMMARY_SUR.TTL_AMT)
-                  })
-                }
-              }
-            }
-            if(gbl.G_CONTAINER) {
-              if (_.isArray(gbl.G_CONTAINER)) {
-                for (let i of gbl.G_CONTAINER) {
-                  let weight = ''
-                  let weights = common.df(i.SREMARKS)
-                  if(weights && weights.indexOf(';')) {
-                    let ws = weights.split(';')
-                    if(ws && ws.length > 0) {
-                      for(let w of ws) {
-                        if(w.indexOf('kgs') >= 0) {
-                          weight = common.fileterN(w)
-                          break
-                        }
-                      }
-                    }
-                  }
-                  await tb_billlading_container.create({
-                    import_billlading_id: bl.import_billlading_id,
-                    import_billlading_container_num: common.df(i.SCONTAINER_NUM),
-                    import_billlading_container_seal: common.df(i.SSEAL_ID),
-                    import_billlading_container_type: common.df(i.SCNTR_TYPE),
-                    import_billlading_container_package_cnt: common.df(i.NPIECE_CNT),
-                    import_billlading_container_cnt_unit: common.df(i.SPIECE_CNT_UNIT),
-                    import_billlading_container_traffic_mode: common.df(i.TRAFFIC),
-                    import_billlading_container_weight: weight,
-                    import_billlading_container_tare_weight: common.df(i.TARE_WT)
-                  })
-                }
-              } else {
-                let i = gbl.G_CONTAINER
+          }
+          if(gbl.G_CONTAINER) {
+            if (_.isArray(gbl.G_CONTAINER)) {
+              for (let i of gbl.G_CONTAINER) {
                 let weight = ''
                 let weights = common.df(i.SREMARKS)
                 if(weights && weights.indexOf(';')) {
@@ -420,6 +436,32 @@ exports.uploadImportAct = async req => {
                   import_billlading_container_tare_weight: common.df(i.TARE_WT)
                 })
               }
+            } else {
+              let i = gbl.G_CONTAINER
+              let weight = ''
+              let weights = common.df(i.SREMARKS)
+              if(weights && weights.indexOf(';')) {
+                let ws = weights.split(';')
+                if(ws && ws.length > 0) {
+                  for(let w of ws) {
+                    if(w.indexOf('kgs') >= 0) {
+                      weight = common.fileterN(w)
+                      break
+                    }
+                  }
+                }
+              }
+              await tb_billlading_container.create({
+                import_billlading_id: bl.import_billlading_id,
+                import_billlading_container_num: common.df(i.SCONTAINER_NUM),
+                import_billlading_container_seal: common.df(i.SSEAL_ID),
+                import_billlading_container_type: common.df(i.SCNTR_TYPE),
+                import_billlading_container_package_cnt: common.df(i.NPIECE_CNT),
+                import_billlading_container_cnt_unit: common.df(i.SPIECE_CNT_UNIT),
+                import_billlading_container_traffic_mode: common.df(i.TRAFFIC),
+                import_billlading_container_weight: weight,
+                import_billlading_container_tare_weight: common.df(i.TARE_WT)
+              })
             }
           }
         }
