@@ -468,7 +468,7 @@ exports.uploadShipmentAct = async req => {
     if(!vesselInfo || !masterBI || !containers) {
       return common.error('import_03')
     }
-    
+   
     let vesslInfoJSTemp = X.utils.sheet_to_json(vesselInfo, {})
     let masterBIJSTemp = X.utils.sheet_to_json(masterBI, {})
     let containersJSTemp = X.utils.sheet_to_json(containers, {})
@@ -517,11 +517,27 @@ exports.uploadShipmentAct = async req => {
       let masterbi_bl = m['#M B/L No']
       if(masterbi_bl) {
         masterbi_bl = masterbi_bl.trim()
+        let bl = await tb_proforma_bl.findOne({
+          where: {
+            export_vessel_id: ves.export_vessel_id,
+            export_masterbl_bl: masterbi_bl,
+            state: GLBConfig.ENABLE
+          }
+        })
+        let load_bl = await tb_bl.findOne({
+          where: {
+            export_masterbl_bl: masterbi_bl,
+            state: GLBConfig.ENABLE
+          }
+        })
         let bl_carrier = 'COSCO'
         if(masterbi_bl.indexOf('OOLU') >= 0) {
           bl_carrier = 'OOCL'
         }
         let cargo_classification = m['Cargo Classification'] ? m['Cargo Classification'].toString().trim() : ''
+        if(load_bl && load_bl.export_masterbl_cargo_type) {
+          cargo_classification = load_bl.export_masterbl_cargo_type
+        }
         // let bl_type = m['*B/L Typen'] ? m['*B/L Type'].toString().trim() : ''
         let cso_no = m['CSO NO'] ? m['CSO NO'].toString().trim() : ''
         let port_of_loading = m['Port of Loading'] ? m['Port of Loading'].toString().trim() : ''
@@ -537,6 +553,9 @@ exports.uploadShipmentAct = async req => {
         let shipper_name = m['Shipper Name'] ? m['Shipper Name'].toString().trim() : ''
         // let shipper_mark = m['Shipping Mark'] ? m['Shipping Mark'].toString().trim() : ''
         let forwarder_name = m['Forwarder Name'] ? m['Forwarder Name'].toString().trim() : ''
+        if(load_bl && load_bl.export_masterbl_forwarder_company) {
+          forwarder_name = load_bl.export_masterbl_forwarder_company
+        }
         let consignee_name = m['Consignee Name'] ? m['Consignee Name'].toString().trim() : ''
         // let notify_name = m['Notify Name'] ? m['Notify Name'].toString().trim() : ''
         let oft = m['OFT'] ? m['OFT'].toString().trim() : ''
@@ -544,13 +563,6 @@ exports.uploadShipmentAct = async req => {
         let faf = m['FAF'] ? m['FAF'].toString().trim() : ''
         let create_bl = true
         let create_con = true
-        let bl = await tb_proforma_bl.findOne({
-          where: {
-            export_vessel_id: ves.export_vessel_id,
-            export_masterbl_bl: masterbi_bl,
-            state: GLBConfig.ENABLE
-          }
-        })
         if(!new_import) {
           if(bl) {
             create_bl = false
@@ -725,13 +737,9 @@ exports.uploadShipmentAct = async req => {
                 let volumn_unit = c['Volumn Unit'] ? c['Volumn Unit'].toString().trim() : ''
                 let weight = c['Weight'] ? c['Weight'].toString().trim() : ''
                 let weight_unit = c['Weight Unit'] ? c['Weight Unit'].toString().trim() : ''
-                let load_con = await tb_container.findOne({
-                  where: {
-                    export_container_bl: container_bl,
-                    export_container_no: container_no,
-                    state: GLBConfig.ENABLE
-                  }
-                })
+                let queryStrStock = `SELECT * FROM tbl_zhongtan_empty_stock WHERE state = 1 AND empty_stock_container_no = ?  ORDER BY empty_stock_id DESC LIMIT 1`
+                let replacementsStock = [container_no] 
+                let stock_cons = await model.simpleSelect(queryStrStock, replacementsStock)
                 await tb_proforma_container.create({
                   export_vessel_id: ves.export_vessel_id,
                   export_container_bl:  container_bl,
@@ -745,13 +753,13 @@ exports.uploadShipmentAct = async req => {
                   export_container_cargo_package_unit: package_unit,
                   export_container_cargo_volumn: volumn,
                   export_container_cargo_volumn_unit: volumn_unit,
-                  export_container_edi_loading_date: load_con ? load_con.export_container_edi_loading_date: null,
-                  export_container_edi_depot_gate_out_date: load_con ? load_con.export_container_edi_depot_gate_out_date: null,
-                  export_container_cal_depot_gate_out_date: load_con ? load_con.export_container_cal_depot_gate_out_date: null,
-                  export_container_edi_wharf_gate_in_date: load_con ? load_con.export_container_edi_wharf_gate_in_date: null,
-                  export_container_get_depot_name: load_con ? load_con.export_container_get_depot_name: null
+                  shipment_list_import: GLBConfig.ENABLE,
+                  export_container_edi_loading_date: stock_cons && stock_cons.length > 0 && stock_cons[0].empty_stock_loading_date ? moment(stock_cons[0].empty_stock_loading_date).format('DD/MM/YYYY'): null,
+                  export_container_edi_depot_gate_out_date: stock_cons && stock_cons.length > 0 && stock_cons[0].empty_stock_gate_out_depot_date ?  moment(stock_cons[0].empty_stock_gate_out_depot_date).format('DD/MM/YYYY'): null,
+                  export_container_edi_wharf_gate_in_date: stock_cons && stock_cons.length > 0 && stock_cons[0].empty_stock_gate_in_terminal_date ?  moment(stock_cons[0].empty_stock_gate_in_terminal_date).format('DD/MM/YYYY'): null,
+                  export_container_get_depot_name: stock_cons && stock_cons.length > 0 ? stock_cons[0].empty_stock_out_depot_name: null
                 })
-                if(load_con) {
+                if(stock_cons && stock_cons.length > 0) {
                   await cal_demurrage_srv.calculationDemurrage2Shipment(ves.export_vessel_id, container_bl, container_no, user.user_id)
                 }
               }
