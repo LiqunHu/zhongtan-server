@@ -17,6 +17,7 @@ const tb_container = model.zhongtan_invoice_containers
 const tb_invoice_container = model.zhongtan_overdue_invoice_containers
 const tb_uploadfile = model.zhongtan_uploadfile
 const tb_edi_depot = model.zhongtan_edi_depot
+const tb_shipment_list = model.zhongtan_logistics_shipment_list
 
 exports.initAct = async () => {
   let returnData = {}
@@ -319,6 +320,21 @@ exports.ediCalculationSaveAct = async req => {
       con.invoice_containers_actually_return_overdue_amount = doc.invoice_containers_actually_return_overdue_amount
     }
     await con.save()
+    if(doc.invoice_containers_edi_discharge_date || doc.invoice_containers_actually_return_date) {
+      let sl = await tb_shipment_list.findOne({
+        where: {
+          shipment_list_bill_no: con.invoice_containers_bl,
+          shipment_list_container_no: con.invoice_containers_no,
+          shipment_list_business_type: 'I',
+          state: GLBConfig.ENABLE
+        }
+      })
+      if(sl) {
+        sl.shipment_list_discharge_date = doc.invoice_containers_edi_discharge_date ? moment(doc.invoice_containers_edi_discharge_date, 'DD/MM/YYYY').format('YYYY-MM-DD') : sl.shipment_list_discharge_date
+        sl.shipment_list_empty_return_date = doc.invoice_containers_actually_return_date ? moment(doc.invoice_containers_actually_return_date, 'DD/MM/YYYY').format('YYYY-MM-DD') : sl.shipment_list_empty_return_date 
+        await sl.save()
+      }
+    }
     return common.success()
   } else {
     return common.error('equipment_03')
