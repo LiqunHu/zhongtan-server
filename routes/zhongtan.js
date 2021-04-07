@@ -63,4 +63,7 @@ router.post('/equipment/ContainerMNRLedgerInvoice/:method', services.ContainerMN
 router.post('/equipment/ContainerMNRLedgerReceipt/:method', services.ContainerMNRLedgerReceiptControl)
 router.post('/equipment/ContainerMNRLedgerStatistics/:method', services.ContainerMNRLedgerStatisticsControl)
 router.post('/equipment/ExportDemurrageCalculation/:method', services.ExportDemurrageCalculationControl)
+
+router.post('/logistics/ShipmentList/:method', services.ShipmentListControl)
+
 module.exports = router

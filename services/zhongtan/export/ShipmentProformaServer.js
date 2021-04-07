@@ -566,71 +566,51 @@ exports.uploadShipmentAct = async req => {
         if(!new_import) {
           if(bl) {
             create_bl = false
-            if(bl.shipment_list_import === GLBConfig.DISABLE) {
-              await tb_proforma_container.update(
-                {'state': GLBConfig.DISABLE}, 
-                {'where': {'export_vessel_id': ves.export_vessel_id, 'export_container_bl': masterbi_bl}}
-              )
-              // 删除相关费用
-              let fees = await tb_shipment_fee.findAll({
-                where: {
-                  state: GLBConfig.ENABLE,
-                  export_masterbl_id: bl.export_masterbl_id
-                }
-              })
-              if(fees && fees.length > 0) {
-                for(let f of fees) {
-                  f.state = GLBConfig.DISABLE
-                  await f.save()
+            // shipment 导入
+            let bl_cons = []
+            for(let c of containersJS) {
+              let container_bl = c['#M B/L No']
+              let container_no = c['Container No']
+              if(container_bl && container_no) {
+                container_bl = container_bl.trim()
+                container_no = container_no.trim()
+                if(container_bl === masterbi_bl) {
+                  bl_cons.push(container_no)
                 }
               }
-            } else {
-              // shipment 导入
-              let bl_cons = []
-              for(let c of containersJS) {
-                let container_bl = c['#M B/L No']
-                let container_no = c['Container No']
-                if(container_bl && container_no) {
-                  container_bl = container_bl.trim()
-                  container_no = container_no.trim()
-                  if(container_bl === masterbi_bl) {
-                    bl_cons.push(container_no)
+            }
+            let db_pro_cons = await tb_proforma_container.findAll({
+              where: {
+                'export_vessel_id': ves.export_vessel_id,
+                'export_container_bl': masterbi_bl,
+                'state': GLBConfig.ENABLE
+              }
+            })
+            if(db_pro_cons) {
+              let pro_cons = []
+              for(let pc of db_pro_cons) {
+                pro_cons.push(pc.export_container_no)
+              }
+              let bl_cons_sort = bl_cons.sort()
+              let pro_cons_sort = pro_cons.sort()
+              if(bl_cons_sort.join() === pro_cons_sort.join()) {
+                create_con = false
+              } else {
+                await tb_proforma_container.update(
+                  {'state': GLBConfig.DISABLE}, 
+                  {'where': {'export_vessel_id': ves.export_vessel_id, 'export_container_bl': masterbi_bl}}
+                )
+                // 删除相关费用
+                let fees = await tb_shipment_fee.findAll({
+                  where: {
+                    state: GLBConfig.ENABLE,
+                    export_masterbl_id: bl.export_masterbl_id
                   }
-                }
-              }
-              let db_pro_cons = await tb_proforma_container.findAll({
-                where: {
-                  'export_vessel_id': ves.export_vessel_id,
-                  'export_container_bl': masterbi_bl,
-                  'state': GLBConfig.ENABLE
-                }
-              })
-              if(db_pro_cons) {
-                let pro_cons = []
-                for(let pc of db_pro_cons) {
-                  pro_cons.push(pc.export_container_no)
-                }
-                let bl_cons_sort = bl_cons.sort()
-                let pro_cons_sort = pro_cons.sort()
-                if(bl_cons_sort.join() === pro_cons_sort.join()) {
-                  create_con = false
-                } else {
-                  await tb_proforma_container.update(
-                    {'state': GLBConfig.DISABLE}, 
-                    {'where': {'export_vessel_id': ves.export_vessel_id, 'export_container_bl': masterbi_bl}}
-                  )
-                  // 删除相关费用
-                  let fees = await tb_shipment_fee.findAll({
-                    where: {
-                      state: GLBConfig.ENABLE,
-                      export_masterbl_id: bl.export_masterbl_id
-                    }
-                  })
-                  if(fees && fees.length > 0) {
-                    for(let f of fees) {
-                      f.state = GLBConfig.DISABLE
-                      await f.save()
-                    }
+                })
+                if(fees && fees.length > 0) {
+                  for(let f of fees) {
+                    f.state = GLBConfig.DISABLE
+                    await f.save()
                   }
                 }
               }
