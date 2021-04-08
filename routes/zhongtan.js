@@ -16,6 +16,7 @@ router.post('/configuration/ContainerSizeConfig/:method', services.ContainerSize
 router.post('/configuration/DischargePortConfig/:method', services.DischargePortConfigControl)
 router.post('/configuration/EdiDepotConfig/:method', services.EdiDepotConfigControl)
 router.post('/configuration/AllotDepotConfig/:method', services.AllotDepotControl)
+router.post('/configuration/VendorControl/:method', services.VendorControl)
 
 router.post('/export/Booking/:method', services.BookingControl)
 router.post('/export/BookingWork/:method', services.BookingWorkControl)

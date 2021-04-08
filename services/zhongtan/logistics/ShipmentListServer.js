@@ -7,15 +7,27 @@ const opSrv = require('../../common/system/OperationPasswordServer')
 const tb_shipment_list = model.zhongtan_logistics_shipment_list
 
 exports.initAct = async () => {
-  let returnData = {
+  let returnData = {}
+  let queryStr = `select * from tbl_common_vendor where state = ? order by vendor_code, vendor_name`
+  let replacements = [GLBConfig.ENABLE]
+  let vendors = await model.simpleSelect(queryStr, replacements)
+  let VENDOR = []
+  if(vendors) {
+    for(let v of vendors) {
+      VENDOR.push({
+        id: v.vendor_id,
+        text: v.vendor_code + '-' + v.vendor_name
+      })
+    }
   }
+  returnData.VENDOR = VENDOR
   return common.success(returnData)
 }
 
 exports.searchAct = async req => {
   let doc = common.docValidate(req),
     returnData = {}
-  let queryStr = `select * from tbl_zhongtan_logistics_shipment_list where state = ?`
+  let queryStr = `select s.*, v.vendor_code as shipment_list_vendor_code, v.vendor_name as shipment_list_vendor_name from tbl_zhongtan_logistics_shipment_list s left join tbl_common_vendor v on s.shipment_list_vendor = v.vendor_id where s.state = ?`
   let replacements = [GLBConfig.ENABLE]
   let searchPara = doc.searchPara
   if(searchPara) {
@@ -227,7 +239,7 @@ exports.deleteAct = async req => {
 
 exports.exportAct = async (req, res) => {
   let doc = common.docValidate(req)
-  let queryStr = `select * from tbl_zhongtan_logistics_shipment_list where state = ?`
+  let queryStr = `select s.*, v.vendor_code as shipment_list_vendor_code, v.vendor_name as shipment_list_vendor_name from tbl_zhongtan_logistics_shipment_list s left join tbl_common_vendor v on s.shipment_list_vendor = v.vendor_id where s.state = ?`
   let replacements = [GLBConfig.ENABLE]
   let searchPara = doc.searchPara
   if(searchPara) {
@@ -281,8 +293,8 @@ exports.exportAct = async (req, res) => {
       }
     }
     if(searchPara.shipment_list_vendor) {
-      queryStr = queryStr + ' and shipment_list_vendor like ? '
-      replacements.push('%' + searchPara.shipment_list_vendor + '%')
+      queryStr = queryStr + ' and shipment_list_vendor = ?  '
+      replacements.push(searchPara.shipment_list_vendor)
     }
   }
   queryStr = queryStr + ' ORDER BY shipment_list_id DESC'
