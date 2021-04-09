@@ -484,7 +484,7 @@ exports.calculationDemurrage2Shipment = async (export_vessel_id, export_containe
         loading_date = con.export_container_edi_wharf_gate_in_date
       }
       let cal_result = await cal_config_srv.demurrageCalculation(0, con.export_container_edi_depot_gate_out_date, loading_date, bl.export_masterbl_cargo_type, null, bl.export_masterbl_bl_carrier, con.export_container_size_type, loading_date, 'E')
-      if(cal_result && cal_result.overdue_days) {
+      if(cal_result && cal_result.overdue_days && con.export_container_cal_demurrage_days !== cal_result.overdue_days) {
         con.export_container_cal_demurrage_days = cal_result.overdue_days
         con.export_container_cal_demurrage_amount = cal_result.overdue_amount
         if(bl.export_masterbl_bl_carrier === 'OOCL' && !con.export_container_edi_loading_date) {

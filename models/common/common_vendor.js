@@ -35,6 +35,10 @@ module.exports = db.defineModel('tbl_common_vendor', {
     type: db.STRING(50),
     allowNull: true
   },
+  vendor_bank_address: {
+    type: db.STRING(200),
+    allowNull: true
+  },
   vendor_swift_code: {
     type: db.STRING(50),
     allowNull: true

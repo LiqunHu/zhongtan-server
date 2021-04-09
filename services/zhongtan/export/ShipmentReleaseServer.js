@@ -6,10 +6,12 @@ const common = require('../../../util/CommonUtil')
 const model = require('../../../app/model')
 const seq = require('../../../util/Sequence')
 const opSrv = require('../../common/system/OperationPasswordServer')
+const cal_demurrage_srv = require('../equipment/ExportDemurrageCalculationServer')
 
 const tb_user = model.common_user
 const tb_vessel = model.zhongtan_export_proforma_vessel
 const tb_bl = model.zhongtan_export_proforma_masterbl
+const tb_con = model.zhongtan_export_proforma_container
 const tb_fee_data = model.zhongtan_export_fee_data
 const tb_shipment_fee = model.zhongtan_export_shipment_fee
 const tb_shipment_fee_log = model.zhongtan_export_shipment_fee_log
@@ -158,7 +160,7 @@ exports.searchBookingDataAct = async req => {
 }
 
 exports.getBookingShipmentAct = async req => {
-  let doc = common.docValidate(req)
+  let doc = common.docValidate(req), user = req.user
   let returnData = {}
   let bl = await tb_bl.findOne({
     where: {
@@ -166,6 +168,18 @@ exports.getBookingShipmentAct = async req => {
     }
   })
   if(bl) {
+    let cons = await tb_con.findAll({
+      where: {
+        export_vessel_id: bl.export_vessel_id,
+        export_container_bl: bl.export_masterbl_bl,
+        state: GLBConfig.ENABLE
+      }
+    })
+    if(cons) {
+      for(let c of cons) {
+        await cal_demurrage_srv.calculationDemurrage2Shipment(c.export_vessel_id, c.export_container_bl, c.export_container_no, user.user_id)
+      }
+    }
     returnData = JSON.parse(JSON.stringify(bl))
     returnData.shipment_receivable = []
     returnData.shipment_payable = []

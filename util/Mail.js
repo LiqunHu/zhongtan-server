@@ -10,6 +10,7 @@ const GLBConfig = require('../util/GLBConfig')
 const common = require('../util/CommonUtil')
 const cal_config_srv = require('../services/zhongtan/equipment/OverdueCalculationConfigServer')
 const empty_stock_srv = require('../services/zhongtan/equipment/EmptyStockManagementServer')
+const cal_demurrage_srv = require('../services/zhongtan/equipment/ExportDemurrageCalculationServer')
 
 const tb_invoice_containers = model.zhongtan_invoice_containers
 const tb_vessel = model.zhongtan_invoice_vessel
@@ -428,6 +429,7 @@ const updateContainerEdi = async (ediData) => {
           proexcon.export_container_edi_loading_date = moment(ediData.ediDate.substring(0, 8), 'YYYYMMDD').format('DD/MM/YYYY')
         }
         await proexcon.save()
+        await cal_demurrage_srv.calculationDemurrage2Shipment(proexcon.export_vessel_id, proexcon.export_container_bl, proexcon.export_container_no, '')
       }
     } else if(ediType === '36' || ediType === '44') {
       // 进口记录码头出场和卸船时间
@@ -576,6 +578,7 @@ const updateContainerEdi = async (ediData) => {
             proexcon.export_container_no = ediData.containerNo
             proexcon.export_container_edi_depot_gate_out_date = moment(ediData.ediDate.substring(0, 8), 'YYYYMMDD').format('DD/MM/YYYY')
             await proexcon.save()
+            await cal_demurrage_srv.calculationDemurrage2Shipment(proexcon.export_vessel_id, proexcon.export_container_bl, proexcon.export_container_no, '')
           } else {
             // 根据提单号没有查到对应的出口舱单，不处理
           }
@@ -609,6 +612,7 @@ const updateContainerEdi = async (ediData) => {
             proexcon.export_container_get_depot_name = ediData.depot
             proexcon.export_container_edi_depot_gate_out_date = moment(ediData.ediDate.substring(0, 8), 'YYYYMMDD').format('DD/MM/YYYY')
             await proexcon.save()
+            await cal_demurrage_srv.calculationDemurrage2Shipment(proexcon.export_vessel_id, proexcon.export_container_bl, proexcon.export_container_no, '')
           }
         }
       }

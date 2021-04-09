@@ -37,7 +37,7 @@ module.exports = db.defineModel('tbl_zhongtan_logistics_shipment_list', {
     type: db.STRING(20),
     allowNull: false
   },
-  shipment_list_port_of_discharge: {
+  shipment_list_port_of_destination: {
     // 卸港
     type: db.STRING(20),
     allowNull: true

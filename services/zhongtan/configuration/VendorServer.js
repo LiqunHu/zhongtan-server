@@ -42,6 +42,7 @@ exports.addAct = async req => {
     vendor_address: doc.vendor_address,
     vendor_bank_name: doc.vendor_bank_name,
     vendor_bank_account: doc.vendor_bank_account,
+    vendor_bank_address: doc.vendor_bank_address,
     vendor_swift_code: doc.vendor_swift_code
   })
   return common.success()
@@ -72,6 +73,7 @@ exports.modifyAct = async req => {
     modiVendor.vendor_address = doc.new.vendor_address
     modiVendor.vendor_bank_name = doc.new.vendor_bank_name
     modiVendor.vendor_bank_account = doc.new.vendor_bank_account
+    modiVendor.vendor_bank_address = doc.new.vendor_bank_address
     modiVendor.vendor_swift_code = doc.new.vendor_swift_code
     await modiVendor.save()
     return common.success()

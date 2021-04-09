@@ -121,7 +121,7 @@ exports.searchShipmentListAct = async req => {
       if(d.invoice_masterbi_cargo_type === 'TR') {
         r.shipment_list_cargo_type = 'TRANSIT'
       }
-      r.shipment_list_port_of_discharge = d.invoice_masterbi_delivery
+      r.shipment_list_port_of_destination = d.invoice_masterbi_destination
       r.shipment_list_discharge_date = d.invoice_containers_edi_discharge_date ? moment(d.invoice_containers_edi_discharge_date, 'DD/MM/YYYY').format('YYYY-MM-DD') : ''
       r.shipment_list_port_of_loading = d.invoice_masterbi_loading
       r.shipment_list_empty_return_date = d.invoice_containers_actually_return_date ? moment(d.invoice_containers_actually_return_date, 'DD/MM/YYYY').format('YYYY-MM-DD') : ''
@@ -152,7 +152,7 @@ exports.searchShipmentListAct = async req => {
       if(d.export_masterbl_cargo_type === 'TRANSIT') {
         r.shipment_list_cargo_type = 'TRANSIT'
       }
-      r.shipment_list_port_of_discharge = d.export_masterbl_port_of_discharge
+      r.shipment_list_port_of_destination = d.export_masterbl_port_of_discharge
       r.shipment_list_depot_gate_out_date = d.export_container_edi_depot_gate_out_date ? moment(d.export_container_edi_depot_gate_out_date, 'DD/MM/YYYY').format('YYYY-MM-DD') : ''
       r.shipment_list_port_of_loading = d.export_masterbl_port_of_load
       if(r.shipment_list_cntr_owner === 'COS') {
@@ -181,7 +181,7 @@ exports.addAct = async req => {
         shipment_list_size_type: d.shipment_list_size_type,
         shipment_list_container_no: d.shipment_list_container_no,
         shipment_list_cargo_type: d.shipment_list_cargo_type,
-        shipment_list_port_of_discharge: d.shipment_list_port_of_discharge,
+        shipment_list_port_of_destination: d.shipment_list_port_of_destination,
         shipment_list_discharge_date: d.shipment_list_discharge_date ? d.shipment_list_discharge_date : null,
         shipment_list_port_of_loading: d.shipment_list_port_of_loading,
         shipment_list_empty_return_date: d.shipment_list_empty_return_date ? d.shipment_list_empty_return_date : null,
