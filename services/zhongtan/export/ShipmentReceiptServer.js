@@ -258,9 +258,20 @@ exports.exportCollectAct = async (req, res) => {
           let row = {}
           row.receipt_date = moment(f.created_at).format('YYYY/MM/DD')
           row.receipt_no = f.uploadfile_receipt_no
+          if(f.uploadfile_index3) {
+            let invoice = await tb_uploadfile.findOne({
+              where: {
+                uploadfile_id: f.uploadfile_index3,
+                state: GLBConfig.ENABLE
+              }
+            })
+            if(invoice) {
+              row.invoice_no = invoice.uploadfile_invoice_no
+            }
+          }
           row.receipt_currency = f.uploadfile_currency
           row.receipt_amount = f.uploadfile_amount
-          row.check_bank = f.uploadfile_check_no
+          row.check_bank = f.uploadfile_check_cash
           row.bank = f.uploadfile_bank_reference_no
           row.check = f.uploadfile_check_no
           row.bank_detail = ''

@@ -334,6 +334,12 @@ exports.exportAct = async (req, res) => {
     row.freight_terms = r.invoice_masterbi_freight
     row.loading = r.invoice_masterbi_loading
     row.containers_number = r.invoice_masterbi_container_no
+    queryStr = `SELECT GROUP_CONCAT(DISTINCT invoice_containers_size SEPARATOR ',') AS containers_size_type FROM tbl_zhongtan_invoice_containers WHERE invoice_containers_bl = ? AND invoice_vessel_id = ? AND state = ? ORDER BY invoice_containers_size`
+    replacements = [r.invoice_masterbi_bl, r.invoice_vessel_id, GLBConfig.ENABLE]
+    let cons = await model.simpleSelect(queryStr, replacements)
+    if(cons && cons.length > 0) {
+      row.containers_size_type = cons[0].containers_size_type
+    }
     row.exporter_name = r.invoice_masterbi_exporter_name
     row.exporter_address = r.invoice_masterbi_exporter_address
     row.consignee_name = r.invoice_masterbi_consignee_name
