@@ -703,6 +703,34 @@ exports.emptyReInvoiceAct = async req => {
       })
       demurrageTotal += parseFloat(s.overdue_amount)
     }
+    // 删除未开收据发票
+    let old_invoices = await tb_uploadfile.findAll({
+      where: {
+        uploadfile_index1: bl.invoice_masterbi_id,
+        state: GLBConfig.ENABLE,
+        uploadfile_receipt_no: {
+          [Op.ne]: null
+        }
+      }
+    })
+    if(old_invoices) {
+      for(let i of old_invoices) {
+        let ics = await tb_invoice_container.findAll({
+          where: {
+            overdue_invoice_containers_invoice_uploadfile_id: i.uploadfile_id,
+            state: GLBConfig.ENABLE
+          }
+        })
+        if(ics) {
+          for(let ic of ics) {
+            ic.state = GLBConfig.DISABLE
+            await ic.save()
+          }
+        }
+        i.state = GLBConfig.DISABLE
+        await i.save()
+      }
+    }
     renderData.demurrageTotal = formatCurrency(demurrageTotal)
     renderData.demurrageTotalStr = numberToText(demurrageTotal)
     let fileInfo = await common.ejs2Pdf('demurrage.ejs', renderData, 'zhongtan')
