@@ -39,7 +39,7 @@ exports.initAct = async () => {
 exports.searchAct = async req => {
   let doc = common.docValidate(req)
   let returnData = {}
-  let queryStr = `SELECT b.export_masterbl_id, b.export_masterbl_bl, b.export_masterbl_cargo_type, b.export_masterbl_port_of_load, b.export_masterbl_port_of_discharge, b.export_masterbl_shipper_company, b.loading_list_import, b.proforma_import,
+  let queryStr = `SELECT b.export_masterbl_id, b.export_masterbl_bl, b.export_masterbl_cargo_type, b.export_masterbl_port_of_load, b.export_masterbl_port_of_discharge, b.export_masterbl_shipper_company, b.loading_list_import, b.proforma_import, b.bk_cancellation_status,
                   v.export_vessel_id, v.export_vessel_name, v.export_vessel_voyage, v.export_vessel_etd, f.total_count, f.receipt_count, f.total_amount
                   from tbl_zhongtan_export_proforma_masterbl b 
                   LEFT JOIN tbl_zhongtan_export_proforma_vessel v ON b.export_vessel_id = v.export_vessel_id 
@@ -78,34 +78,57 @@ exports.searchAct = async req => {
   let rows = []
   if(result.data) {
     for(let d of result.data) {
-      let cons = await tb_proforma_container.findAll({
-        where: {
-          export_vessel_id: d.export_vessel_id,
-          export_container_bl: d.export_masterbl_bl,
-          state: GLBConfig.ENABLE
-        },
-        order: [['export_container_no', 'ASC']]
-      })
-      if(cons) {
-        queryStr = `SELECT shipment_fee_status, shipment_fee_party, u.user_name, shipment_fee_receipt_no, SUM(shipment_fee_amount) AS total_amount FROM tbl_zhongtan_export_shipment_fee f LEFT JOIN tbl_common_user u ON f.shipment_fee_party = u.user_id WHERE f.state = '1' AND shipment_fee_type = 'R' AND export_masterbl_id = ? GROUP BY shipment_fee_status, shipment_fee_party, shipment_fee_receipt_no
-        `
-        replacements = [d.export_masterbl_id]
-        let fees = await model.simpleSelect(queryStr, replacements)
-        d.receivable_detail = fees
-        for(let c of cons) {
-          let bl = JSON.parse(JSON.stringify(d))
-          bl.container_id = c.export_container_id
-          bl.container_no = c.export_container_no
-          bl.container_size_type = c.export_container_size_type
-          bl.container_volume = 1
-          bl.container_loading_list_import = c.loading_list_import
-          bl.container_proforma_import = c.proforma_import
-          if(d.total_count === d.receipt_count && d.receipt_count > 0) {
-            bl.charge_status = 'RELEASE'
-          } else {
-            bl.charge_status = 'HOLD'
+      // 查询是否有退仓费的相同提单
+      queryStr = `SELECT shipment_fee_status, shipment_fee_party, u.user_name, shipment_fee_receipt_no, SUM(shipment_fee_amount) AS total_amount FROM tbl_zhongtan_export_shipment_fee f LEFT JOIN tbl_common_user u ON f.shipment_fee_party = u.user_id WHERE f.state = '1' AND shipment_fee_type = 'R' AND export_masterbl_id = ? GROUP BY shipment_fee_status, shipment_fee_party, shipment_fee_receipt_no
+          `
+      replacements = [d.export_masterbl_id]
+      let fees = await model.simpleSelect(queryStr, replacements)
+      d.receivable_detail = fees
+      queryStr = `SELECT * FROM tbl_zhongtan_export_proforma_masterbl b WHERE state = '1' AND bk_cancellation_status = '1' AND export_masterbl_bl = ? AND EXISTS (SELECT 1 FROM tbl_zhongtan_export_shipment_fee f WHERE f.export_masterbl_id = b.export_masterbl_id AND f.state = '1' AND f.shipment_fee_status <> 'RE')`
+      replacements = [d.export_masterbl_bl]
+      let cancelBls = await model.simpleSelect(queryStr, replacements)
+      if(d.bk_cancellation_status === GLBConfig.ENABLE) {
+        let bl = JSON.parse(JSON.stringify(d))
+        bl.container_id = ''
+        bl.container_no = 'CANCELLATION FEE'
+        bl.container_size_type = ''
+        bl.container_volume = 1
+        bl.container_loading_list_import = '0'
+        bl.container_proforma_import = '0'
+        if(d.total_count === d.receipt_count && d.receipt_count > 0) {
+          bl.charge_status = 'RELEASE'
+        } else {
+          bl.charge_status = 'HOLD'
+        }
+        rows.push(bl)
+      } else {
+        let cons = await tb_proforma_container.findAll({
+          where: {
+            export_vessel_id: d.export_vessel_id,
+            export_container_bl: d.export_masterbl_bl,
+            state: GLBConfig.ENABLE
+          },
+          order: [['export_container_no', 'ASC']]
+        })
+        if(cons) {
+          for(let c of cons) {
+            let bl = JSON.parse(JSON.stringify(d))
+            bl.container_id = c.export_container_id
+            bl.container_no = c.export_container_no
+            bl.container_size_type = c.export_container_size_type
+            bl.container_volume = 1
+            bl.container_loading_list_import = c.loading_list_import
+            bl.container_proforma_import = c.proforma_import
+            if(d.total_count === d.receipt_count && d.receipt_count > 0) {
+              bl.charge_status = 'RELEASE'
+            } else {
+              bl.charge_status = 'HOLD'
+            }
+            if(cancelBls && cancelBls.length > 0) {
+              bl.charge_status = 'HOLD'
+            }
+            rows.push(bl)
           }
-          rows.push(bl)
         }
       }
     }
@@ -117,7 +140,7 @@ exports.searchAct = async req => {
 
 exports.exportFreightAct = async (req, res) => {
   let doc = common.docValidate(req)
-  let queryStr = `SELECT b.export_masterbl_id, b.export_masterbl_bl, b.export_masterbl_cargo_type, b.export_masterbl_port_of_load, b.export_masterbl_port_of_discharge, b.export_masterbl_shipper_company, 
+  let queryStr = `SELECT b.export_masterbl_id, b.export_masterbl_bl, b.export_masterbl_cargo_type, b.export_masterbl_port_of_load, b.export_masterbl_port_of_discharge, b.export_masterbl_shipper_company, b.bk_cancellation_status, 
                   v.export_vessel_id, v.export_vessel_name, v.export_vessel_voyage, v.export_vessel_etd, f.total_count, f.receipt_count, f.total_amount
                   from tbl_zhongtan_export_proforma_masterbl b 
                   LEFT JOIN tbl_zhongtan_export_proforma_vessel v ON b.export_vessel_id = v.export_vessel_id 
@@ -165,6 +188,10 @@ exports.exportFreightAct = async (req, res) => {
       if(con_info && con_info.length > 0) {
         container_volume = con_info[0].total_count
         container_size = con_info[0].group_size
+      }
+      if(r.bk_cancellation_status === GLBConfig.ENABLE) {
+        container_volume = 1
+        container_size = 'CANCELLATION FEE'
       }
       queryStr = `SELECT shipment_fee_status, shipment_fee_party, u.user_name, shipment_fee_receipt_no, SUM(shipment_fee_amount) AS total_amount FROM tbl_zhongtan_export_shipment_fee f LEFT JOIN tbl_common_user u ON f.shipment_fee_party = u.user_id WHERE f.state = '1' AND shipment_fee_type = 'R' AND export_masterbl_id = ? GROUP BY shipment_fee_status, shipment_fee_party, shipment_fee_receipt_no
         `

@@ -929,7 +929,7 @@ exports.invoiceShipmentAct = async req => {
           renderData.user_phone = commonUser.user_phone
           renderData.user_email = commonUser.user_email
 
-          let fileInfo = await common.ejs2Pdf('shipmentInvoice.ejs', renderData, 'zhongtan')
+          let fileInfo = await common.ejs2Pdf(bl.bk_cancellation_status === GLBConfig.ENABLE ? 'cancellationInvoice.ejs' : 'shipmentInvoice.ejs', renderData, 'zhongtan')
           let invoice_file = await tb_uploadfile.create({
             api_name: 'SHIPMENT-INVOICE',
             user_id: user.user_id,

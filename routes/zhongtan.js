@@ -17,6 +17,7 @@ router.post('/configuration/DischargePortConfig/:method', services.DischargePort
 router.post('/configuration/EdiDepotConfig/:method', services.EdiDepotConfigControl)
 router.post('/configuration/AllotDepotConfig/:method', services.AllotDepotControl)
 router.post('/configuration/VendorControl/:method', services.VendorControl)
+router.post('/configuration/FreightPlaceControl/:method', services.FreightPlaceControl)
 
 router.post('/export/Booking/:method', services.BookingControl)
 router.post('/export/BookingWork/:method', services.BookingWorkControl)
@@ -66,5 +67,6 @@ router.post('/equipment/ContainerMNRLedgerStatistics/:method', services.Containe
 router.post('/equipment/ExportDemurrageCalculation/:method', services.ExportDemurrageCalculationControl)
 
 router.post('/logistics/ShipmentList/:method', services.ShipmentListControl)
+router.post('/logistics/TBLFreightConfig/:method', services.TBLFreightConfigControl)
 
 module.exports = router

@@ -461,7 +461,7 @@ const updateContainerEdi = async (ediData) => {
         order: [['invoice_containers_id', 'DESC']]
       })
       if(incon) {
-        if(incon.invoice_containers_edi_read && incon.invoice_containers_edi_read !== '0' && ediData.depot === incon.invoice_containers_depot_name) {
+        if(incon.invoice_containers_edi_read && incon.invoice_containers_edi_read !== '0') {
           // 已经读取过EDI文件并且场站一致
           incon.invoice_containers_edi_read = (parseInt(incon.invoice_containers_edi_read) + 1) + ''
         } else {

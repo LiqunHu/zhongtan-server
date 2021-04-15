@@ -1308,6 +1308,18 @@ exports.depositDoAct = async req => {
       uploadfil_release_date = curDate
       uploadfil_release_user_id = user.user_id
     }
+    // soc箱判断
+    let allSoc = false
+    queryStr = `SELECT * FROM tbl_zhongtan_invoice_masterbl b WHERE state = 1 AND invoice_masterbi_id = ? 
+                AND EXISTS (SELECT 1 FROM tbl_zhongtan_invoice_containers c WHERE state = 1 AND c.invoice_vessel_id = b.invoice_vessel_id AND c.invoice_containers_bl = b.invoice_masterbi_bl AND invoice_containers_type = 'C')`
+    replacements = [doc.invoice_masterbi_id]
+    let socBl = await model.simpleSelect(queryStr, replacements)
+    if(!socBl || socBl.length === 0) {
+      allSoc = true
+      uploadfile_state = 'AP'
+      uploadfil_release_date = curDate
+      uploadfil_release_user_id = user.user_id
+    }
     await tb_uploadfile.create({
       api_name: 'RECEIPT-DEPOSIT',
       user_id: user.user_id,
@@ -1323,12 +1335,12 @@ exports.depositDoAct = async req => {
       uploadfile_customer_id: customer.user_id,
       uploadfile_invoice_no: 'CTS/' + renderData.invoice_masterbi_carrier + '/' + renderData.voyage_number + '/' + renderData.receipt_no
     })
-    if(doc.invoice_masterbi_deposit_fixed && doc.invoice_masterbi_deposit_fixed === '1' && doc.invoice_masterbi_deposit_fixed_id && !doc.depositEdit) {
+    if((doc.invoice_masterbi_deposit_fixed && doc.invoice_masterbi_deposit_fixed === '1' && doc.invoice_masterbi_deposit_fixed_id && !doc.depositEdit) || allSoc) {
       bl.invoice_masterbi_receipt_amount = bl.invoice_masterbi_deposit
-      bl.invoice_masterbi_receipt_currency = fd.deposit_currency
-      bl.invoice_masterbi_check_cash = fd.deposit_check_cash
-      bl.invoice_masterbi_check_no = fd.deposit_check_cash_no
-      bl.invoice_masterbi_bank_reference_no = fd.deposit_bank_reference_no
+      bl.invoice_masterbi_receipt_currency = fd ? fd.deposit_currency : ''
+      bl.invoice_masterbi_check_cash = fd ? fd.deposit_check_cash : ''
+      bl.invoice_masterbi_check_no = fd ? fd.deposit_check_cash_no : ''
+      bl.invoice_masterbi_bank_reference_no = fd ? fd.deposit_bank_reference_no : ''
       bl.invoice_masterbi_received_from = customer.user_name
       bl.invoice_masterbi_receipt_no = await seq.genInvoiceReceiptNo(bl.invoice_masterbi_carrier)
       if(common.checkInvoiceState(bl)) {

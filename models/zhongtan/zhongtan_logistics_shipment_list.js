@@ -74,7 +74,7 @@ module.exports = db.defineModel('tbl_zhongtan_logistics_shipment_list', {
   },
   shipment_list_ata_destination: {
     // 目的地
-    type: db.STRING(50),
+    type: db.DATEONLY,
     allowNull: true
   },
   shipment_list_delivery_date: {
@@ -106,11 +106,11 @@ module.exports = db.defineModel('tbl_zhongtan_logistics_shipment_list', {
     allowNull: true
   },
   shipment_list_ata_tz_border: {
-    type: db.STRING(50),
+    type: db.DATEONLY,
     allowNull: true
   },
   shipment_list_ata_foreing_border: {
-    type: db.STRING(50),
+    type: db.DATEONLY,
     allowNull: true
   },
   shipment_list_border_release_date: {

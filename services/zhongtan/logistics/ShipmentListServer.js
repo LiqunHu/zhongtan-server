@@ -85,7 +85,7 @@ exports.searchAct = async req => {
       replacements.push('%' + searchPara.shipment_list_vendor + '%')
     }
   }
-  queryStr = queryStr + ' ORDER BY shipment_list_id DESC'
+  queryStr = queryStr + ' ORDER BY IFNULL(shipment_list_discharge_date, shipment_list_depot_gate_out_date) DESC, shipment_list_bill_no, shipment_list_container_no'
   let result = await model.queryWithCount(doc, queryStr, replacements)
   returnData.total = result.count
   returnData.rows = result.data
@@ -117,7 +117,7 @@ exports.searchShipmentListAct = async req => {
       }
       r.shipment_list_size_type = d.invoice_containers_size
       r.shipment_list_container_no = d.invoice_containers_no
-      r.shipment_list_cargo_type = 'LOCAL'
+      r.shipment_list_cargo_type = 'IMPORT'
       if(d.invoice_masterbi_cargo_type === 'TR') {
         r.shipment_list_cargo_type = 'TRANSIT'
       }
