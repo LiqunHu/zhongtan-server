@@ -99,8 +99,10 @@ exports.searchShipmentListAct = async req => {
   // IMPORT
   let queryStr = `SELECT * FROM tbl_zhongtan_invoice_containers c LEFT JOIN tbl_zhongtan_invoice_masterbl b 
                   ON c.invoice_vessel_id = b.invoice_vessel_id AND c.invoice_containers_bl = b.invoice_masterbi_bl 
-                  WHERE c.state = ? AND b.state = ? AND b.invoice_masterbi_bl LIKE ? ORDER BY b.invoice_masterbi_bl, c.invoice_containers_no`
-  let replacements = [GLBConfig.ENABLE, GLBConfig.ENABLE, search_bl]
+                  WHERE c.state = ? AND b.state = ? AND b.invoice_masterbi_bl LIKE ? 
+                  AND NOT EXISTS (SELECT 1 FROM tbl_zhongtan_logistics_shipment_list s WHERE s.state = ? AND s.shipment_list_bill_no = c.invoice_containers_bl AND s.shipment_list_container_no = c.invoice_containers_no) 
+                  ORDER BY b.invoice_masterbi_bl, c.invoice_containers_no`
+  let replacements = [GLBConfig.ENABLE, GLBConfig.ENABLE, search_bl, GLBConfig.ENABLE]
   let ret_import = await model.simpleSelect(queryStr, replacements)
   let total = 0
   let rows = []
@@ -126,14 +128,17 @@ exports.searchShipmentListAct = async req => {
       r.shipment_list_port_of_loading = d.invoice_masterbi_loading
       r.shipment_list_empty_return_date = d.invoice_containers_actually_return_date ? moment(d.invoice_containers_actually_return_date, 'DD/MM/YYYY').format('YYYY-MM-DD') : ''
       r.shipment_list_cargo_weight = d.invoice_containers_weight
+      r._checked = false
       rows.push(r)
     }
   }
   // EXPORT
   queryStr = `SELECT * FROM tbl_zhongtan_export_proforma_container c LEFT JOIN tbl_zhongtan_export_proforma_masterbl b 
               ON c.export_vessel_id = b.export_vessel_id AND c.export_container_bl = b.export_masterbl_bl 
-              WHERE c.state = ? AND b.state = ? AND b.export_masterbl_bl LIKE ? ORDER BY b.export_masterbl_bl, c.export_container_no`
-  replacements = [GLBConfig.ENABLE, GLBConfig.ENABLE, search_bl]
+              WHERE c.state = ? AND b.state = ? AND b.export_masterbl_bl LIKE ? 
+              AND NOT EXISTS (SELECT 1 FROM tbl_zhongtan_logistics_shipment_list s WHERE s.state = ? AND s.shipment_list_bill_no = c.export_container_bl AND s.shipment_list_container_no = c.export_container_no) 
+              ORDER BY b.export_masterbl_bl, c.export_container_no`
+  replacements = [GLBConfig.ENABLE, GLBConfig.ENABLE, search_bl, GLBConfig.ENABLE]
   let ret_export = await model.simpleSelect(queryStr, replacements)
   if(ret_export && ret_export.length > 0) {
     total = total + ret_export.length
@@ -161,6 +166,7 @@ exports.searchShipmentListAct = async req => {
         r.shipment_list_loading_date = d.export_container_edi_loading_date ? moment(d.export_container_edi_loading_date, 'DD/MM/YYYY').format('YYYY-MM-DD') : ''
       }
       r.shipment_list_cargo_weight = d.export_container_cargo_weight
+      r._checked = false
       rows.push(r)
     }
   }
@@ -206,6 +212,7 @@ exports.modifyAct = async req => {
     })
     if(modifyRow) {
       modifyRow.shipment_list_port_of_loading = modifyData.shipment_list_port_of_loading
+      modifyRow.shipment_list_port_of_destination = modifyData.shipment_list_port_of_destination
       modifyRow.shipment_list_dar_customs_release_date = modifyData.shipment_list_dar_customs_release_date
       modifyRow.shipment_list_truck_departure_date = modifyData.shipment_list_truck_departure_date
       modifyRow.shipment_list_truck_plate = modifyData.shipment_list_truck_plate

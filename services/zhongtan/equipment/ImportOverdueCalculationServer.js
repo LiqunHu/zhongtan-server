@@ -591,7 +591,10 @@ exports.emptyReInvoiceAct = async req => {
       }
     })
     for(let c of cons) {
-      if((c.invoice_containers_empty_return_receipt_date && c.invoice_containers_empty_return_overdue_amount && parseInt(c.invoice_containers_empty_return_overdue_amount) === 0) 
+      if((c.invoice_containers_empty_return_overdue_amount_receipt && c.invoice_containers_actually_return_overdue_amount && parseInt(c.invoice_containers_empty_return_overdue_amount_receipt) === parseInt(c.invoice_containers_actually_return_overdue_amount))
+            || (c.invoice_containers_empty_return_overdue_amount_receipt && c.invoice_containers_empty_return_overdue_amount && parseInt(c.invoice_containers_empty_return_overdue_amount_receipt) === parseInt(c.invoice_containers_empty_return_overdue_amount))) {
+        continue
+      } else if((c.invoice_containers_empty_return_receipt_date && c.invoice_containers_empty_return_overdue_amount && parseInt(c.invoice_containers_empty_return_overdue_amount) === 0) 
                 || (c.invoice_containers_empty_return_date && c.invoice_containers_empty_return_overdue_amount && parseInt(c.invoice_containers_empty_return_overdue_amount) > 0)) {
         selection.push({
           ...JSON.parse(JSON.stringify(c)),
@@ -702,33 +705,43 @@ exports.emptyReInvoiceAct = async req => {
         'demurrage': formatCurrency(s.overdue_amount),
       })
       demurrageTotal += parseFloat(s.overdue_amount)
-    }
-    // 删除未开收据发票
-    let old_invoices = await tb_uploadfile.findAll({
-      where: {
-        uploadfile_index1: bl.invoice_masterbi_id,
-        state: GLBConfig.ENABLE,
-        uploadfile_receipt_no: {
-          [Op.ne]: null
-        }
-      }
-    })
-    if(old_invoices) {
-      for(let i of old_invoices) {
-        let ics = await tb_invoice_container.findAll({
-          where: {
-            overdue_invoice_containers_invoice_uploadfile_id: i.uploadfile_id,
-            state: GLBConfig.ENABLE
-          }
-        })
-        if(ics) {
-          for(let ic of ics) {
-            ic.state = GLBConfig.DISABLE
-            await ic.save()
+
+      // 删除箱关联未开收据发票
+      let unreceipts = await tb_invoice_container.findAll({
+        where: {
+          overdue_invoice_containers_invoice_containers_id: con.invoice_containers_id,
+          state: GLBConfig.ENABLE,
+          overdue_invoice_containers_receipt_date: {
+            [Op.eq]: null
           }
         }
-        i.state = GLBConfig.DISABLE
-        await i.save()
+      })
+      if(unreceipts) {
+        for(let u of unreceipts) {
+          // 删除同一张发票的关联箱
+          let ics = await tb_invoice_container.findAll({
+            where: {
+              overdue_invoice_containers_invoice_uploadfile_id: u.overdue_invoice_containers_invoice_uploadfile_id,
+              state: GLBConfig.ENABLE
+            }
+          })
+          if(ics) {
+            for(let ic of ics) {
+              ic.state = GLBConfig.DISABLE
+              await ic.save()
+            }
+          }
+          let inv = await tb_uploadfile.findOne({
+            where: {
+              uploadfile_id: u.overdue_invoice_containers_invoice_uploadfile_id,
+              state: GLBConfig.ENABLE,
+            }
+          })
+          if(inv) {
+            inv.state = GLBConfig.DISABLE
+            await inv.save()
+          }
+        }
       }
     }
     renderData.demurrageTotal = formatCurrency(demurrageTotal)

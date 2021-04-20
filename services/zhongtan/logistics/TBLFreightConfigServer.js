@@ -116,7 +116,7 @@ exports.modifyAct = async req => {
     obj.freight_config_amount = doc.new.freight_config_amount
     obj.freight_config_advance = doc.new.freight_config_advance
     obj.freight_config_advance_amount = doc.new.freight_config_advance_amount
-    obj.overdue_charge_enabled_date = freight_config_enabled_date
+    obj.freight_config_enabled_date = freight_config_enabled_date
     await obj.save()
     return common.success()
   } else {
