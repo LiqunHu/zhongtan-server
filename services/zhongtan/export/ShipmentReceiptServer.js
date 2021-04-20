@@ -20,6 +20,11 @@ exports.initAct = async () => {
   let replacements = [GLBConfig.TYPE_CUSTOMER]
   let customers = await model.simpleSelect(queryStr, replacements)
   returnData.CUSTOMER = customers
+
+  queryStr = `SELECT export_vessel_id, CONCAT(export_vessel_name, '/', export_vessel_voyage) AS export_vessel FROM tbl_zhongtan_export_proforma_vessel WHERE state = ? ORDER BY export_vessel_etd DESC, export_vessel_name, export_vessel_voyage`
+  replacements = [GLBConfig.ENABLE]
+  let vessels = await model.simpleSelect(queryStr, replacements)
+  returnData.VESSEL = vessels
   return common.success(returnData)
 }
 
@@ -226,6 +231,10 @@ exports.exportCollectAct = async (req, res) => {
     replacements.push(doc.receipt_party)
   }
   queryStr = queryStr + `) `
+  if(doc.receipt_vessel) {
+    queryStr = queryStr + ` AND b.export_vessel_id = ? `
+    replacements.push(doc.receipt_vessel)
+  }
   if(doc.carrier) {
     queryStr = queryStr + ` AND b.export_masterbl_bl_carrier = ? `
     replacements.push(doc.carrier)
