@@ -248,12 +248,14 @@ exports.exportCollectAct = async (req, res) => {
     receivable_map.set('TASAC FEE', 'receivable_tasac')
     receivable_map.set('DEMURRAGE FEE', 'receivable_demurrage')
     receivable_map.set('LIFT ON/OFF', 'receivable_lofo')
+    receivable_map.set('FAF', 'receivable_faf')
     let payable_map = new Map()
     payable_map.set('B/L FEE', 'payable_bl')
     payable_map.set('OCEAN FREIGHT', 'payable_ocean')
     payable_map.set('TASAC FEE', 'payable_tasac')
     payable_map.set('TELEX RELEASE FEE', 'payable_telex')
     payable_map.set('DEMURRAGE FEE', 'payable_demurrage')
+    payable_map.set('FAF', 'payable_faf')
     let renderData = []
     for(let r of result) {
       queryStr = `SELECT u.*, c.user_name FROM tbl_zhongtan_uploadfile u LEFT JOIN tbl_common_user c ON u.uploadfile_customer_id = c.user_id 
