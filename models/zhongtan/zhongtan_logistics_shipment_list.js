@@ -117,5 +117,61 @@ module.exports = db.defineModel('tbl_zhongtan_logistics_shipment_list', {
     // 
     type: db.DATEONLY,
     allowNull: true
+  },
+  shipment_list_payment_status: {
+    // 支付状态 0：未添加，1：已添加，2：申请预付，3预付支付，4申请余款，5余款支付，6申请额外费用，7额外费用支付
+    type: db.STRING(5),
+    defaultValue: '0',
+    allowNull: false
+  },
+  shipment_list_total_freight: {
+    // 总运费金额
+    type: db.STRING(20),
+    allowNull: true
+  },
+  shipment_list_advance_payment: {
+    // 预付
+    type: db.STRING(20),
+    allowNull: true
+  },
+  shipment_list_advance_percent: {
+    // 预付比例
+    type: db.STRING(10),
+    allowNull: true
+  },
+  shipment_list_advance_payment_date: {
+    // 预付支付日期
+    type: db.STRING(20),
+    allowNull: true
+  },
+  shipment_list_balance_payment: {
+    // 余款
+    type: db.STRING(20),
+    allowNull: true
+  },
+  shipment_list_balance_payment_date: {
+    // 余款支付日期
+    type: db.STRING(20),
+    allowNull: true
+  },
+  shipment_list_extra_charges_usd: {
+    // 额外费用美元合计
+    type: db.STRING(20),
+    allowNull: true
+  },
+  shipment_list_extra_charges_usd_date: {
+    // 额外费用美元最后支付日期
+    type: db.STRING(20),
+    allowNull: true
+  },
+  shipment_list_extra_charges_tzs: {
+    // 额外费用先令合计
+    type: db.STRING(20),
+    allowNull: true
+  },
+  shipment_list_extra_charges_tzs_date: {
+    // 额外费用先令最后支付日期
+    type: db.STRING(20),
+    allowNull: true
   }
 })

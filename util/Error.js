@@ -94,5 +94,9 @@ module.exports = {
   export_01: 'Collect no data',
   allot_depot_01: 'allot rule do not exist',
   allot_depot_02: 'allot rule can not be same enabled date',
-  bk_cancellation_fee_01: 'Bk cancellation Fee has receipt'
+  bk_cancellation_fee_01: 'Bk cancellation Fee has receipt',
+  logistics_01: 'Advance can not selected diffrent vendor',
+  logistics_02: 'Balance can not selected diffrent vendor',
+  logistics_03: 'Extra can not selected diffrent vendor',
+  logistics_04: 'Apply Payment can not selected diffrent vendor'
 }

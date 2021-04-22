@@ -67,6 +67,9 @@ router.post('/equipment/ContainerMNRLedgerStatistics/:method', services.Containe
 router.post('/equipment/ExportDemurrageCalculation/:method', services.ExportDemurrageCalculationControl)
 
 router.post('/logistics/ShipmentList/:method', services.ShipmentListControl)
+router.post('/logistics/ShipmentNote/:method', services.ShipmentNoteControl)
 router.post('/logistics/TBLFreightConfig/:method', services.TBLFreightConfigControl)
+router.post('/logistics/BusinessVerification/:method', services.LogisticsBusinessVerificationControl)
+router.post('/logistics/ManagerVerification/:method', services.LogisticsManagerVerificationControl)
 
 module.exports = router

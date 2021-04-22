@@ -433,5 +433,28 @@ module.exports = {
   BUSINESS_TYPE: [
     { id: 'I', text: 'IMPORT' }, // 进口
     { id: 'E', text: 'EXPORT' } // 出口
-  ]
+  ],
+  FREIGHT_PAYMENT_STATUS: [
+    // 支付状态 0：未添加，1：已添加，2：申请预付，3预付支付，4申请余款，5余款支付，6申请额外费用，7额外费用支付
+    { id: '0', text: 'NEW' }, // 新建
+    { id: '1', text: 'NEW PAYMENT NOTE' }, // 已添加
+    { id: '2', text: 'APPLY ADVANCE' },  // 申请预付
+    { id: '3', text: 'ADVANCE PAYMENT' },  // 预付支付
+    { id: '4', text: 'APPLY BALANCE' },  // 申请余款
+    { id: '5', text: 'BALANCE PAYMENT' },  // 余款支付
+    { id: '6', text: 'EXTRA CHARGES' },  // 申请额外费用
+    { id: '7', text: 'EXTRA PAYMENT' }  // 额外费用支付
+  ],
+  LOGISTICS_FREIGHT_STATE_BUSINESS: [
+    { id: 'PB', text: 'Pending at Business' },
+    { id: 'BD', text: 'Business Declined' }
+  ],
+  LOGISTICS_FREIGHT_STATE: [
+    { id: 'PB', text: 'Pending at Business' },
+    { id: 'BD', text: 'Business Declined' },
+    { id: 'PM', text: 'Pending at Manager' },
+    { id: 'MD', text: 'Manager Declined' },
+    { id: 'AP', text: 'All Approved' },
+    { id: 'UN', text: 'UNDO' }
+  ],
 }

@@ -670,6 +670,29 @@ const depot2Edi = async (renderData) => {
   return filePath
 }
 
+const groupingJson = async(arr, key) => {
+  var map = {}, dest = []
+  for(var i = 0; i < arr.length; i++){
+      var ai = arr[i]
+      if(!map[ai[key]]){
+          dest.push({
+              id: ai[key],
+              data: [ai]
+          })
+          map[ai[key]] = ai
+      }else{
+        for(var j = 0; j < dest.length; j++){
+          var dj = dest[j]
+          if(dj.id == ai[key]){
+              dj.data.push(ai)
+              break
+          }
+        }
+      }
+  }
+  return dest
+}
+
 module.exports = {
   docValidate: docValidate,
   reqTrans: reqTrans,
@@ -708,5 +731,6 @@ module.exports = {
   isContain: isContain,
   valueFilter: valueFilter,
   jsonTrim: jsonTrim,
-  depot2Edi: depot2Edi
+  depot2Edi: depot2Edi,
+  groupingJson: groupingJson
 }
