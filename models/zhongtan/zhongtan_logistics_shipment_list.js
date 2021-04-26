@@ -125,7 +125,12 @@ module.exports = db.defineModel('tbl_zhongtan_logistics_shipment_list', {
     allowNull: false
   },
   shipment_list_total_freight: {
-    // 总运费金额
+    // 总运费金额USD
+    type: db.STRING(20),
+    allowNull: true
+  },
+  shipment_list_total_freight_tzs: {
+    // 总运费金额TZS
     type: db.STRING(20),
     allowNull: true
   },

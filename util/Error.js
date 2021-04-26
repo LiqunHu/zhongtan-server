@@ -98,5 +98,6 @@ module.exports = {
   logistics_01: 'Advance can not selected diffrent vendor',
   logistics_02: 'Balance can not selected diffrent vendor',
   logistics_03: 'Extra can not selected diffrent vendor',
-  logistics_04: 'Apply Payment can not selected diffrent vendor'
+  logistics_04: 'Apply Payment can not selected diffrent vendor',
+  logistics_05: 'apply payment extra already exists'
 }

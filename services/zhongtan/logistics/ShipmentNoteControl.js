@@ -31,7 +31,11 @@ module.exports = async (req, res) => {
       ret = await srv.undoPaymentAct(req)
     } else if(method === 'paymentBalanceEdit') {
       ret = await srv.paymentBalanceEditAct(req)
-    }
+    } else if (method === 'upload') {
+      ret = await srv.uploadAct(req)
+    } else if(method === 'applyPaymentExtra') {
+      ret = await srv.applyPaymentExtraAct(req)
+    } 
 
     common.sendData(res, ret)
   } catch (error) {

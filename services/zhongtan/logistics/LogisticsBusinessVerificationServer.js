@@ -6,6 +6,8 @@ const model = require('../../../app/model')
 const tb_verificatione = model.zhongtan_logistics_verification
 const tb_verification_freight = model.zhongtan_logistics_verification_freight
 const tb_shipment_list = model.zhongtan_logistics_shipment_list
+const tb_payment_extra = model.zhongtan_logistics_payment_extra
+const tb_uploadfile = model.zhongtan_uploadfile
 
 exports.initAct = async () => {
   let returnData = {
@@ -111,19 +113,65 @@ exports.declineAct = async req => {
       for(let v of vfs) {
         v.logistics_freight_state = 'BD'
         await v.save()
-        let sp = await tb_shipment_list.findOne({
-          where: {
-            shipment_list_id: v.shipment_list_id,
-            state: GLBConfig.ENABLE
+        if(ver.logistics_verification_api_name === 'PAYMENT ADVANCE' || ver.logistics_verification_api_name === 'PAYMENT BALANCE') {
+          let sp = await tb_shipment_list.findOne({
+            where: {
+              shipment_list_id: v.shipment_list_id,
+              state: GLBConfig.ENABLE
+            }
+          })
+          if(sp) {
+            if(ver.logistics_verification_api_name === 'PAYMENT ADVANCE') {
+              sp.shipment_list_payment_status = '1'
+            } else if(ver.logistics_verification_api_name === 'PAYMENT BALANCE') {
+              sp.shipment_list_payment_status = '3'
+            }
+            await sp.save()
           }
-        })
-        if(sp) {
-          if(ver.logistics_verification_api_name === 'PAYMENT ADVANCE') {
-            sp.shipment_list_payment_status = '1'
-          } else if(ver.logistics_verification_api_name === 'PAYMENT BALANCE') {
-            sp.shipment_list_payment_status = '3'
+        } else if(ver.logistics_verification_api_name === 'PAYMENT EXTRA') {
+          let extra = await tb_payment_extra.findOne({
+            where: {
+              payment_extra_id: v.shipment_list_id,
+              state: GLBConfig.ENABLE
+            }
+          })
+          if(extra) {
+            extra.state = GLBConfig.DISABLE
+            await extra.save()
+            let extra_file = await tb_uploadfile.findOne({
+              where: {
+                api_name: 'PAYMENT EXTRA ATTACHMENT',
+                uploadfile_index1: extra.payment_extra_id,
+                state: GLBConfig.ENABLE
+              }
+            })
+            if(extra_file) {
+              extra_file.state = GLBConfig.DISABLE
+              await extra_file.save()
+            }
           }
-          await sp.save()
+          let exist_extras = await tb_payment_extra.findAll({
+            where: {
+              payment_extra_bl_no: extra.payment_extra_bl_no,
+              state: GLBConfig.ENABLE
+            }
+          })
+          let shipment_list = await tb_shipment_list.findAll({
+            where: {
+              shipment_list_bill_no: extra.payment_extra_bl_no,
+              state: GLBConfig.ENABLE
+            }
+          })
+          if(shipment_list && shipment_list.length > 0) {
+            for (let sl of shipment_list) {
+              if(!exist_extras || exist_extras.length <= 0) {
+                sl.shipment_list_payment_status = '5'
+              } else {
+                sl.shipment_list_payment_status = '7'
+              }
+              await sl.save()
+            }
+          }
         }
       }
     }
@@ -146,6 +194,12 @@ exports.verificationDetailAct = async req => {
       let queryStr = `SELECT sl.*, CONCAT(cv.vendor_code, '/', cv.vendor_name) AS vendor FROM tbl_zhongtan_logistics_verification_freight vf 
                       LEFT JOIN tbl_zhongtan_logistics_shipment_list sl ON vf.shipment_list_id = sl.shipment_list_id 
                       LEFT JOIN tbl_common_vendor cv ON sl.shipment_list_vendor = cv.vendor_id WHERE vf.state = 1 AND vf.logistics_verification_id = ?`
+      let replacements = [doc.logistics_verification_id]
+      returnData = await model.simpleSelect(queryStr, replacements)
+    } else if(ver.logistics_verification_api_name === 'PAYMENT EXTRA') {
+      let queryStr = `SELECT pe.*, CONCAT(cv.vendor_code, '/', cv.vendor_name) AS vendor FROM tbl_zhongtan_logistics_verification_freight vf 
+                      LEFT JOIN tbl_zhongtan_logistics_payment_extra pe ON vf.shipment_list_id = pe.payment_extra_id 
+                      LEFT JOIN tbl_common_vendor cv ON pe.payment_extra_vendor = cv.vendor_id WHERE vf.state = 1 AND vf.logistics_verification_id = ?`
       let replacements = [doc.logistics_verification_id]
       returnData = await model.simpleSelect(queryStr, replacements)
     }

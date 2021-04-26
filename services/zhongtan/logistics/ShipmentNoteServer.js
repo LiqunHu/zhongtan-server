@@ -9,6 +9,7 @@ const tb_shipment_list = model.zhongtan_logistics_shipment_list
 const tb_verification = model.zhongtan_logistics_verification
 const tb_verification_freight = model.zhongtan_logistics_verification_freight
 const tb_uploadfile = model.zhongtan_uploadfile
+const tb_payment_extra = model.zhongtan_logistics_payment_extra
 
 exports.initAct = async () => {
   let returnData = {}
@@ -25,6 +26,8 @@ exports.initAct = async () => {
     }
   }
   returnData.VENDOR = VENDOR
+  returnData.RECEIPT_CURRENCY = GLBConfig.RECEIPT_CURRENCY
+  returnData.PAYMENT_STATUS = GLBConfig.FREIGHT_PAYMENT_STATUS
   return common.success(returnData)
 }
 
@@ -47,7 +50,7 @@ exports.searchAct = async req => {
       d._checked = false
       queryStr = `SELECT u.*, cu.user_name FROM tbl_zhongtan_uploadfile u LEFT JOIN tbl_common_user cu ON u.uploadfil_release_user_id = cu.user_id WHERE u.state = ? AND uploadfile_index1 IN (
                   SELECT logistics_verification_id FROM tbl_zhongtan_logistics_verification_freight WHERE state = ? AND shipment_list_id = ? AND logistics_freight_state = 'AP') 
-                  AND api_name IN ('PAYMENT ADVANCE', 'PAYMENT BALANCE', 'PAYMENT EXTRA') ORDER BY api_name`
+                  AND api_name IN ('PAYMENT ADVANCE', 'PAYMENT BALANCE') ORDER BY api_name`
       let replacements = [GLBConfig.ENABLE, GLBConfig.ENABLE, d.shipment_list_id]
       let paymentFiles = await model.simpleSelect(queryStr, replacements)
       let files = []
@@ -56,10 +59,32 @@ exports.searchAct = async req => {
           files.push({
             filetype: pf.api_name,
             creater: pf.user_name,
+            amount: pf.uploadfile_amount,
+            currency: pf.uploadfile_currency,
             date: moment(pf.created_at).format('YYYY-MM-DD HH:mm:ss'),
             url: pf.uploadfile_url,
             file_id : pf.uploadfile_id,
             relation_id: pf.uploadfile_index1
+          })
+        }
+      }
+      queryStr = `SELECT u.*, cu.user_name FROM tbl_zhongtan_uploadfile u LEFT JOIN tbl_common_user cu ON u.user_id = cu.user_id WHERE u.state = ? AND uploadfile_index1 IN (
+        SELECT logistics_verification_id FROM tbl_zhongtan_logistics_verification_freight WHERE state = ? AND logistics_freight_state = 'AP' 
+        AND shipment_list_id IN (SELECT payment_extra_id FROM tbl_zhongtan_logistics_payment_extra WHERE state = 1 AND payment_extra_status = '7' AND payment_extra_shipment_id = ?)) 
+        AND api_name IN ('PAYMENT EXTRA') ORDER BY api_name`
+      replacements = [GLBConfig.ENABLE, GLBConfig.ENABLE, d.shipment_list_id]
+      let extraFiles = await model.simpleSelect(queryStr, replacements)
+      if(extraFiles) {
+        for(let ex of extraFiles) {
+          files.push({
+            filetype: ex.api_name,
+            creater: ex.user_name,
+            amount: ex.uploadfile_amount,
+            currency: ex.uploadfile_currency,
+            date: moment(ex.created_at).format('YYYY-MM-DD HH:mm:ss'),
+            url: ex.uploadfile_url,
+            file_id : ex.uploadfile_id,
+            relation_id: ex.uploadfile_index1
           })
         }
       }
@@ -91,6 +116,10 @@ const queryWhereJoin = async (param) => {
     if(searchPara.shipment_list_cargo_type) {
       queryStr = queryStr + ' and shipment_list_cargo_type = ? '
       replacements.push(searchPara.shipment_list_cargo_type)
+    }
+    if(searchPara.shipment_list_payment_status) {
+      queryStr = queryStr + ' and shipment_list_payment_status = ? '
+      replacements.push(searchPara.shipment_list_payment_status)
     }
     if(searchPara.shipment_list_business_type) {
       queryStr = queryStr + ' and shipment_list_business_type = ? '
@@ -286,8 +315,15 @@ exports.exportAct = async (req, res) => {
       r.shipment_list_in_date = r.shipment_list_depot_gate_out_date
       r.shipment_list_out_date = r.shipment_list_loading_date
     }
+    if(r.shipment_list_in_date && r.shipment_list_out_date) {
+      r.empty_returned_or_not = 'YES'
+    } else {
+      r.empty_returned_or_not = 'NO'
+    }
     if(r.shipment_list_cargo_type === 'LOCAL') {
       r.shipment_list_cargo_type = 'IMPORT'
+    }
+    if(r.shipment_list_business_type === 'I') {
       imports.push(r)
     } else {
       transits.push(r)
@@ -295,7 +331,7 @@ exports.exportAct = async (req, res) => {
   }
   jsData.push(transits)
   jsData.push(imports)
-  let filepath = await common.ejs2xlsx('LogisticsShipmentListTemplate.xlsx', jsData)
+  let filepath = await common.ejs2xlsx('LogisticsPaymentNoteTemplate.xlsx', jsData)
   res.sendFile(filepath)
 }
 
@@ -322,7 +358,9 @@ exports.applyPaymentSearchAct = async req => {
     for(let s of doc.selection) {
       sels.push(s.shipment_list_id)
     }
-    let queryStr = `select s.*, v.vendor_code as shipment_list_vendor_code, v.vendor_name as shipment_list_vendor_name from tbl_zhongtan_logistics_shipment_list s left join tbl_common_vendor v on s.shipment_list_vendor = v.vendor_id where s.state = ? and shipment_list_payment_status IN ('1', '3', '5', '7') and shipment_list_id IN (?) `
+    let queryStr = `select s.*, v.vendor_code as shipment_list_vendor_code, v.vendor_name as shipment_list_vendor_name from tbl_zhongtan_logistics_shipment_list s 
+                  left join tbl_common_vendor v on s.shipment_list_vendor = v.vendor_id where s.state = ? and shipment_list_payment_status IN ('1', '3', '5', '7') and shipment_list_id IN (?) 
+                  ORDER BY IFNULL(shipment_list_discharge_date, shipment_list_depot_gate_out_date) DESC, shipment_list_bill_no, shipment_list_container_no`
     let replacements = [GLBConfig.ENABLE, sels]
     paymentList = await model.simpleSelect(queryStr, replacements)
   }
@@ -368,6 +406,21 @@ exports.applyPaymentSearchAct = async req => {
             return common.error('logistics_03')
           }
         }
+        p.extra_files = []
+        let queryStr = `SELECT u.*, cu.user_name FROM tbl_zhongtan_uploadfile u LEFT JOIN tbl_common_user cu ON u.user_id = cu.user_id WHERE u.state = '1' AND api_name = 'PAYMENT EXTRA ATTACHMENT' AND uploadfile_index1 IN (
+          SELECT payment_extra_id FROM tbl_zhongtan_logistics_payment_extra WHERE state = 1 AND payment_extra_bl_no = ? AND payment_extra_status = '7')`
+        let replacements = [p.shipment_list_bill_no]
+        let extraFiles = await model.simpleSelect(queryStr, replacements)
+        if(extraFiles && extraFiles.length > 0) {
+          for(let f of extraFiles) {
+            p.extra_files.push({
+              amount: f.uploadfile_amount,
+              url: f.uploadfile_url,
+              created_by: f.user_name,
+              created_at: moment(f.created_at).format('YYYY-MM-DD HH:mm:ss')
+            })
+          }
+        }
         retData.extra_list.push(p)
       }
     }
@@ -395,9 +448,6 @@ exports.applyPaymentAct = async req => {
   if(doc.applyAction === 'BALANCE') {
     api_name = 'PAYMENT BALANCE'
     payment_status = '4'
-  } else if(doc.applyAction === 'EXTRA') {
-    api_name = 'PAYMENT EXTRA'
-    payment_status = '6'
   }
   for(let g of gts) {
     let ids = g.id.split('_')
@@ -408,9 +458,6 @@ exports.applyPaymentAct = async req => {
         applyAmount = new Decimal(applyAmount).plus(d.shipment_list_advance_payment)
       } else if(doc.applyAction === 'BALANCE') {
         applyAmount = new Decimal(applyAmount).plus(d.shipment_list_balance_payment)
-
-      } else if(doc.applyAction === 'EXTRA') {
-        // applyAmount = new Decimal(applyAmount).plus(d.shipment_list_advance_payment)
       }
     }
     let ver = await tb_verification.create({
@@ -515,6 +562,87 @@ exports.paymentBalanceEditAct = async req => {
     sp.shipment_list_balance_payment = doc.new.shipment_list_balance_payment
     sp.shipment_list_total_freight = new Decimal(sp.shipment_list_advance_payment).plus(sp.shipment_list_balance_payment).toNumber()
     await sp.save()
+  }
+  return common.success()
+}
+
+exports.uploadAct = async req => {
+  let fileInfo = await common.fileSaveTemp(req)
+  return common.success(fileInfo)
+}
+
+exports.applyPaymentExtraAct = async req => {
+  let doc = common.docValidate(req), user = req.user
+  let queryStr = `SELECT * FROM tbl_zhongtan_logistics_payment_extra WHERE state = ? AND payment_extra_bl_no = ? `
+  let replacements = [GLBConfig.ENABLE, doc.payment_extra_bl_no]
+  let exist_extras = await model.simpleSelect(queryStr, replacements)
+  let exist_shipment_id = doc.payment_extra_shipment_id
+  if(exist_extras) {
+    for(let e of exist_extras) {
+      if(e.payment_extra_status === '6') {
+        return common.error('logistics_05')
+      }
+      exist_shipment_id = e.payment_extra_shipment_id
+    }
+  }
+  let extra = await tb_payment_extra.create({
+    payment_extra_bl_no: doc.payment_extra_bl_no,
+    payment_extra_shipment_id: exist_shipment_id,
+    payment_extra_vendor: doc.payment_extra_vendor,
+    payment_extra_cntr_owner: doc.payment_extra_cntr_owner,
+    payment_extra_business_type: doc.payment_extra_business_type,
+    payment_extra_cargo_type: doc.payment_extra_cargo_type,
+    payment_extra_amount_usd: doc.payment_extra_currency === 'USD' ? doc.payment_extra_amount : null,
+    payment_extra_amount_tzs: doc.payment_extra_currency === 'TZS' ? doc.payment_extra_amount : null,
+    payment_extra_status: '6',
+    payment_extra_created_by: user.user_id
+  })
+  if(doc.payment_extra_files && doc.payment_extra_files.length > 0) {
+    for(let f of doc.payment_extra_files) {
+      let fileInfo = await common.fileSaveMongo(f.response.info.path, 'zhongtan')
+      await tb_uploadfile.create({
+        api_name: 'PAYMENT EXTRA ATTACHMENT',
+        user_id: user.user_id,
+        uploadfile_index1: extra.payment_extra_id,
+        uploadfile_name: fileInfo.name,
+        uploadfile_url: fileInfo.url,
+        uploadfile_state: 'AP',
+        uploadfile_amount: doc.payment_extra_amount
+      })
+    }
+  }
+  let ver = await tb_verification.create({
+    logistics_verification_vendor: extra.payment_extra_vendor,
+    logistics_verification_business_type: extra.payment_extra_business_type,
+    logistics_verification_cntr_owner: extra.payment_extra_cntr_owner,
+    logistics_verification_cargo_type: extra.payment_extra_cargo_type,
+    logistics_verification_api_name: 'PAYMENT EXTRA',
+    logistics_verification_state: 'PB',
+    logistics_verification_amount: doc.payment_extra_amount,
+    logistics_verification_create_user: user.user_id,
+  })
+  await tb_verification_freight.create({
+    logistics_verification_id: ver.logistics_verification_id,
+    shipment_list_id: extra.payment_extra_id,
+    logistics_freight_api_name: 'PAYMENT EXTRA',
+    logistics_freight_state: 'PB',
+    logistics_freight_amount: doc.payment_extra_amount
+  })
+
+  queryStr = `SELECT * FROM tbl_zhongtan_logistics_shipment_list WHERE state = ? AND shipment_list_bill_no = ? `
+  replacements = [GLBConfig.ENABLE, doc.payment_extra_bl_no]
+  let shipment_list = await model.simpleSelect(queryStr, replacements)
+  if(shipment_list) {
+    for(let sl of shipment_list) {
+      let s = await tb_shipment_list.findOne({
+        where: {
+          shipment_list_id: sl.shipment_list_id,
+          state: GLBConfig.ENABLE
+        }
+      })
+      s.shipment_list_payment_status = '6'
+      await s.save()
+    }
   }
   return common.success()
 }

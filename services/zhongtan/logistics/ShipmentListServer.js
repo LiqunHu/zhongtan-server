@@ -224,6 +224,23 @@ exports.modifyAct = async req => {
       modifyRow.shipment_list_ata_foreing_border = modifyData.shipment_list_ata_foreing_border
       modifyRow.shipment_list_border_release_date = modifyData.shipment_list_border_release_date
       await modifyRow.save()
+      if(modifyData.shipment_list_vendor) {
+        // 更新同提单号
+        let sameRows = await tb_shipment_list.findAll({
+          where: {
+            shipment_list_bill_no: modifyData.shipment_list_bill_no,
+            state: GLBConfig.ENABLE
+          }
+        })
+        if(sameRows && sameRows.length > 0) {
+          for(let s of sameRows) {
+            if(s.shipment_list_id !== modifyData.shipment_list_id) {
+              s.shipment_list_vendor = modifyData.shipment_list_vendor
+              await s.save()
+            }
+          }
+        }
+      }
     }
   }
   return common.success()
@@ -319,6 +336,8 @@ exports.exportAct = async (req, res) => {
     }
     if(r.shipment_list_cargo_type === 'LOCAL') {
       r.shipment_list_cargo_type = 'IMPORT'
+    }
+    if(r.shipment_list_business_type === 'I') {
       imports.push(r)
     } else {
       transits.push(r)
