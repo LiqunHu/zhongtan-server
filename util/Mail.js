@@ -16,6 +16,7 @@ const tb_invoice_containers = model.zhongtan_invoice_containers
 const tb_vessel = model.zhongtan_invoice_vessel
 const tb_bl = model.zhongtan_invoice_masterbl
 const tb_export_containers = model.zhongtan_export_container
+const tb_shipment_list = model.zhongtan_logistics_shipment_list
 // const tb_export_proforma_vessel = model.tbl_zhongtan_export_proforma_vessel
 // const tb_export_proforma_bl = model.tbl_zhongtan_export_proforma_masterbl
 const tb_export_proforma_containers = model.zhongtan_export_proforma_container
@@ -217,6 +218,7 @@ const parserMailAttachment = async (ediDepots, parserData) => {
               }
               await updateContainerEdi(ediData)
               await updateContainerEmptyStock(ediData)
+              await updateShipmentList(ediData)
               // 记录解析内容
               await tb_email.create({
                 mail_depot_name: edi.edi_depot_name,
@@ -651,6 +653,59 @@ const updateContainerEmptyStock = async (ediData) => {
     }
   }
   await empty_stock_srv.uploadEmptyStockContainer(esc)
+}
+
+const updateShipmentList = async (ediData) => {
+  let sl
+  if(ediData.billNo) {
+    sl = await tb_shipment_list.findOne({
+      where: {
+        shipment_list_bill_no: ediData.billNo,
+        shipment_list_container_no: ediData.containerNo,
+        state: GLBConfig.ENABLE
+      }
+    })
+  } else {
+    sl = await tb_shipment_list.findOne({
+      where: {
+        shipment_list_container_no: ediData.containerNo,
+        state: GLBConfig.ENABLE
+      },
+      order: [['shipment_list_id', 'DESC']]
+    })
+  }
+  if(sl) {
+    // COSCO 进场日期， OOLU 装船日期
+    let isWharf = ediData.isWharf
+    let ediType = ediData.ediType
+    if(isWharf && isWharf === GLBConfig.ENABLE) {
+      // 34: 进场, 36: 出场, 44: 卸船, 46：装船
+      if(ediType === '34') {
+        if(sl.shipment_list_cntr_owner === 'COS' && !sl.shipment_list_loading_date) {
+          sl.shipment_list_loading_date = moment(ediData.ediDate.substring(0, 8), 'YYYYMMDD').format('YYYY-MM-DD')
+        }
+      } else if(ediType === '44') {
+        if(!sl.shipment_list_discharge_date) {
+          sl.shipment_list_discharge_date = moment(ediData.ediDate.substring(0, 8), 'YYYYMMDD').format('YYYY-MM-DD')
+        }
+      } else if(ediType === '46') {
+        if(sl.shipment_list_cntr_owner === 'OOL' && !sl.shipment_list_loading_date) {
+          sl.shipment_list_loading_date = moment(ediData.ediDate.substring(0, 8), 'YYYYMMDD').format('YYYY-MM-DD')
+        }
+      } 
+    } else {
+      // 34: 进场, 36: 出场
+      if(ediType === '34') {
+        if(!sl.shipment_list_empty_return_date) {
+          sl.shipment_list_empty_return_date = moment(ediData.ediDate.substring(0, 8), 'YYYYMMDD').format('YYYY-MM-DD')
+        }
+      } else if(ediType === '36') {
+        if(!sl.shipment_list_depot_gate_out_date) {
+          sl.shipment_list_depot_gate_out_date = moment(ediData.ediDate.substring(0, 8), 'YYYYMMDD').format('YYYY-MM-DD')
+        }
+      }
+    }
+  }
 }
 
 module.exports = {

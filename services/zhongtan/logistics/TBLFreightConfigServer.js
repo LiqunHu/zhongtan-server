@@ -38,6 +38,34 @@ exports.searchAct = async req => {
       queryStr += ' and fc.freight_config_vendor = ?'
       replacements.push(doc.search_data.freight_config_vendor)
     }
+    if (doc.search_data.freight_config_business_type) {
+      queryStr += ' and fc.freight_config_business_type = ?'
+      replacements.push(doc.search_data.freight_config_business_type)
+    }
+    if (doc.search_data.freight_config_cargo_type) {
+      queryStr += ' and fc.freight_config_cargo_type = ?'
+      replacements.push(doc.search_data.freight_config_cargo_type)
+    }
+    if (doc.search_data.freight_config_pol) {
+      queryStr += ' and fc.freight_config_pol = ?'
+      replacements.push(doc.search_data.freight_config_pol)
+    }
+    if (doc.search_data.freight_config_pod) {
+      queryStr += ' and fc.freight_config_pod = ?'
+      replacements.push(doc.search_data.freight_config_pod)
+    }
+    if (doc.search_data.freight_config_carrier) {
+      queryStr += ' and fc.freight_config_carrier = ?'
+      replacements.push(doc.search_data.freight_config_carrier)
+    }
+    if (doc.search_data.freight_config_size_type) {
+      queryStr += ' and fc.freight_config_size_type = ?'
+      replacements.push(doc.search_data.freight_config_size_type)
+    }
+    if (doc.search_data.freight_config_enabled_date) {
+      queryStr += ' and fc.freight_config_enabled_date = ?'
+      replacements.push(doc.search_data.freight_config_enabled_date)
+    }
   }
   queryStr += ' order by fc.freight_config_enabled_date desc, cv.vendor_code'
   let result = await model.queryWithCount(doc, queryStr, replacements)
@@ -57,35 +85,69 @@ exports.addAct = async req => {
   for(let c of doc.freight_config_size_type) {
     if(doc.freight_config_business_type === 'I') {
       for(let d of doc.freight_config_pod) {
-        await tb_freight_config.create({
-          freight_config_vendor: doc.freight_config_vendor,
-          freight_config_business_type: doc.freight_config_business_type,
-          freight_config_cargo_type: doc.freight_config_cargo_type,
-          freight_config_pol: doc.freight_config_pol[0],
-          freight_config_pod: d,
-          freight_config_carrier: doc.freight_config_carrier,
-          freight_config_size_type: c,
-          freight_config_amount: doc.freight_config_amount,
-          freight_config_advance: doc.freight_config_advance,
-          freight_config_advance_amount: doc.freight_config_advance_amount,
-          freight_config_enabled_date: freight_config_enabled_date
+        let exist = await tb_freight_config.findOne({
+          where: {
+            freight_config_vendor: doc.freight_config_vendor,
+            freight_config_business_type: doc.freight_config_business_type,
+            freight_config_cargo_type: doc.freight_config_cargo_type,
+            freight_config_pol: doc.freight_config_pol[0],
+            freight_config_pod: d,
+            freight_config_carrier: doc.freight_config_carrier,
+            freight_config_size_type: c,
+            freight_config_amount: doc.freight_config_amount,
+            freight_config_advance: doc.freight_config_advance,
+            freight_config_advance_amount: doc.freight_config_advance_amount,
+            freight_config_enabled_date: freight_config_enabled_date
+          }
         })
+        if(!exist) {
+          await tb_freight_config.create({
+            freight_config_vendor: doc.freight_config_vendor,
+            freight_config_business_type: doc.freight_config_business_type,
+            freight_config_cargo_type: doc.freight_config_cargo_type,
+            freight_config_pol: doc.freight_config_pol[0],
+            freight_config_pod: d,
+            freight_config_carrier: doc.freight_config_carrier,
+            freight_config_size_type: c,
+            freight_config_amount: doc.freight_config_amount,
+            freight_config_advance: doc.freight_config_advance,
+            freight_config_advance_amount: doc.freight_config_advance_amount,
+            freight_config_enabled_date: freight_config_enabled_date
+          })
+        }
       }
     }else {
       for(let l of doc.freight_config_pol) {
-        await tb_freight_config.create({
-          freight_config_vendor: doc.freight_config_vendor,
-          freight_config_business_type: doc.freight_config_business_type,
-          freight_config_cargo_type: doc.freight_config_cargo_type,
-          freight_config_pol: l,
-          freight_config_pod: doc.freight_config_pod[0],
-          freight_config_carrier: doc.freight_config_carrier,
-          freight_config_size_type: c,
-          freight_config_amount: doc.freight_config_amount,
-          freight_config_advance: doc.freight_config_advance,
-          freight_config_advance_amount: doc.freight_config_advance_amount,
-          freight_config_enabled_date: freight_config_enabled_date
+        let exist = await tb_freight_config.findOne({
+          where: {
+            freight_config_vendor: doc.freight_config_vendor,
+            freight_config_business_type: doc.freight_config_business_type,
+            freight_config_cargo_type: doc.freight_config_cargo_type,
+            freight_config_pol: l,
+            freight_config_pod: doc.freight_config_pod[0],
+            freight_config_carrier: doc.freight_config_carrier,
+            freight_config_size_type: c,
+            freight_config_amount: doc.freight_config_amount,
+            freight_config_advance: doc.freight_config_advance,
+            freight_config_advance_amount: doc.freight_config_advance_amount,
+            freight_config_enabled_date: freight_config_enabled_date
+          }
         })
+        if(!exist) {
+          await tb_freight_config.create({
+            freight_config_vendor: doc.freight_config_vendor,
+            freight_config_business_type: doc.freight_config_business_type,
+            freight_config_cargo_type: doc.freight_config_cargo_type,
+            freight_config_pol: l,
+            freight_config_pod: doc.freight_config_pod[0],
+            freight_config_carrier: doc.freight_config_carrier,
+            freight_config_size_type: c,
+            freight_config_amount: doc.freight_config_amount,
+            freight_config_advance: doc.freight_config_advance,
+            freight_config_advance_amount: doc.freight_config_advance_amount,
+            freight_config_enabled_date: freight_config_enabled_date
+          })
+        }
       }
     }
   }

@@ -21,6 +21,7 @@ const tb_fee_config = model.zhongtan_invoice_fixed_fee_config
 const tb_fixed_deposit = model.zhongtan_customer_fixed_deposit
 const tb_icd = model.zhongtan_icd
 const tb_edi_depot = model.zhongtan_edi_depot
+const tb_shipment_list = model.zhongtan_logistics_shipment_list
 
 exports.initAct = async () => {
   let DELIVER = []
@@ -1887,6 +1888,24 @@ exports.changeblAct = async req => {
       })
       if(icd) {
         bl.invoice_masterbi_do_icd = icd.icd_name
+      }
+    }
+
+    if(bl.invoice_masterbi_destination !== b.invoice_masterbi_destination || bl.invoice_masterbi_loading !== b.invoice_masterbi_loading) {
+      // 修改了起始点和目的地，更新shipment list
+      let sls = await tb_shipment_list.findAll({
+        where: {
+          shipment_list_bill_no: bl.invoice_masterbi_bl,
+          shipment_list_business_type: 'I',
+          state: GLBConfig.ENABLE
+        }
+      })
+      if(sls && sls.length > 0) {
+        for(let s of sls) {
+          s.shipment_list_port_of_destination = b.invoice_masterbi_destination ? b.invoice_masterbi_destination : s.shipment_list_port_of_destination
+          s.shipment_list_port_of_loading = b.invoice_masterbi_loading ? b.invoice_masterbi_loading : s.shipment_list_port_of_loading
+          await s.save()
+        }
       }
     }
     bl.invoice_masterbi_cargo_type = b.invoice_masterbi_cargo_type
