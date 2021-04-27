@@ -61,5 +61,10 @@ module.exports = db.defineModel('tbl_zhongtan_freight_config', {
     // 启用日期
     type: db.STRING(20),
     allowNull: false
+  },
+  freight_config_amount_receivable: {
+    // 应收费用
+    type: db.STRING(20),
+    allowNull: true
   }
 })

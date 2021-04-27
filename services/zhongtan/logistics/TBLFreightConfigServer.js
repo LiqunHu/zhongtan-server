@@ -2,10 +2,8 @@ const common = require('../../../util/CommonUtil')
 const GLBConfig = require('../../../util/GLBConfig')
 const moment = require('moment')
 const model = require('../../../app/model')
-const Op = model.Op
 
 const tb_freight_config = model.zhongtan_freight_config
-const tb_container_size = model.zhongtan_container_size
 const tb_freight_place = model.zhongtan_freight_place
 
 exports.initAct = async () => {
@@ -94,9 +92,6 @@ exports.addAct = async req => {
             freight_config_pod: d,
             freight_config_carrier: doc.freight_config_carrier,
             freight_config_size_type: c,
-            freight_config_amount: doc.freight_config_amount,
-            freight_config_advance: doc.freight_config_advance,
-            freight_config_advance_amount: doc.freight_config_advance_amount,
             freight_config_enabled_date: freight_config_enabled_date
           }
         })
@@ -112,7 +107,8 @@ exports.addAct = async req => {
             freight_config_amount: doc.freight_config_amount,
             freight_config_advance: doc.freight_config_advance,
             freight_config_advance_amount: doc.freight_config_advance_amount,
-            freight_config_enabled_date: freight_config_enabled_date
+            freight_config_enabled_date: freight_config_enabled_date,
+            freight_config_amount_receivable: doc.freight_config_amount_receivable,
           })
         }
       }
@@ -127,10 +123,8 @@ exports.addAct = async req => {
             freight_config_pod: doc.freight_config_pod[0],
             freight_config_carrier: doc.freight_config_carrier,
             freight_config_size_type: c,
-            freight_config_amount: doc.freight_config_amount,
-            freight_config_advance: doc.freight_config_advance,
-            freight_config_advance_amount: doc.freight_config_advance_amount,
-            freight_config_enabled_date: freight_config_enabled_date
+            freight_config_enabled_date: freight_config_enabled_date,
+            
           }
         })
         if(!exist) {
@@ -145,7 +139,8 @@ exports.addAct = async req => {
             freight_config_amount: doc.freight_config_amount,
             freight_config_advance: doc.freight_config_advance,
             freight_config_advance_amount: doc.freight_config_advance_amount,
-            freight_config_enabled_date: freight_config_enabled_date
+            freight_config_enabled_date: freight_config_enabled_date,
+            freight_config_amount_receivable: doc.freight_config_amount_receivable,
           })
         }
       }
@@ -179,6 +174,7 @@ exports.modifyAct = async req => {
     obj.freight_config_advance = doc.new.freight_config_advance
     obj.freight_config_advance_amount = doc.new.freight_config_advance_amount
     obj.freight_config_enabled_date = freight_config_enabled_date
+    obj.freight_config_amount_receivable = doc.new.freight_config_amount_receivable
     await obj.save()
     return common.success()
   } else {
@@ -201,169 +197,5 @@ exports.deleteAct = async req => {
     return common.success()
   } else {
     return common.error('equipment_02')
-  }
-}
-
-/**
- * 查询箱超期费规则
- * @param {*} cargo_type 
- * @param {*} discharge_port 
- * @param {*} carrier 
- * @param {*} container_type 
- * @param {*} enabled_date 
- */
-exports.queryDemurrageRules = async (cargo_type, discharge_port, carrier, container_type, enabled_date, business_type = 'I') => {
-  // if(!business_type) {
-  //   business_type = 'I'
-  // }
-  let con_size_type = await tb_container_size.findOne({
-    attributes: ['container_size_code', 'container_size_name'],
-    where: {
-      state : GLBConfig.ENABLE,
-      [Op.or]: [{ container_size_code: container_type }, { container_size_name: container_type }]
-    }
-  })
-  if(con_size_type) {
-    let type = con_size_type.container_size_code
-    let queryStr = ''
-    let replacements = []
-    if(business_type === 'I') {
-      queryStr = `SELECT * FROM tbl_zhongtan_overdue_charge_rule WHERE state = ? AND overdue_charge_cargo_type = ? 
-                      AND overdue_charge_discharge_port = ? AND overdue_charge_carrier = ? AND overdue_charge_container_size = ? AND overdue_charge_business_type = ? ORDER BY overdue_charge_enabled_date DESC, overdue_charge_min_day DESC `
-      replacements = [GLBConfig.ENABLE, cargo_type, discharge_port, carrier, type, business_type]
-    } else {
-      queryStr = `SELECT * FROM tbl_zhongtan_overdue_charge_rule WHERE state = ? AND overdue_charge_cargo_type = ? 
-      AND overdue_charge_carrier = ? AND overdue_charge_container_size = ? AND overdue_charge_business_type = ? ORDER BY overdue_charge_enabled_date DESC, overdue_charge_min_day DESC `
-      replacements = [GLBConfig.ENABLE, cargo_type, carrier, type, business_type]
-    }
-    let allChargeRules = await model.simpleSelect(queryStr, replacements)
-    if(allChargeRules) {
-      let enabledDates = []
-      for(let a of allChargeRules) {
-        if(a.overdue_charge_enabled_date && enabledDates.indexOf(a.overdue_charge_enabled_date) < 0) {
-          enabledDates.push(a.overdue_charge_enabled_date)
-        }
-      }
-      let baseEnabledDate = ''
-      if(enabled_date && enabledDates.length > 0) {
-        for(let d of enabledDates) {
-          if(moment(enabled_date, 'DD/MM/YYYY').isAfter(moment(d))) {
-            baseEnabledDate = d
-            break
-          }
-        }
-      }
-      let retChargeRules = []
-      if(baseEnabledDate) {
-        for(let a of allChargeRules) {
-          if(a.overdue_charge_enabled_date && moment(baseEnabledDate).isSame(moment(a.overdue_charge_enabled_date))) {
-            retChargeRules.push(a)
-          }
-        }
-      } else {
-        for(let a of allChargeRules) {
-          if(!a.overdue_charge_enabled_date) {
-            retChargeRules.push(a)
-          }
-        }
-      }
-      return retChargeRules
-    }
-  }
-  return []
-}
-/**
- * 查询免用箱期
- * @param {*} cargo_type 
- * @param {*} discharge_port 
- * @param {*} carrier 
- * @param {*} container_type 
- * @param {*} enabled_date 
- */
-exports.queryContainerFreeDays = async (cargo_type, discharge_port, carrier, container_type, enabled_date, business_type) => {
-  let chargeRules = await this.queryDemurrageRules(cargo_type, discharge_port, carrier, container_type, enabled_date, business_type)
-  if(chargeRules && chargeRules.length  > 0) {
-    return chargeRules[chargeRules.length - 1].overdue_charge_max_day
-  }
-  return 0
-}
-
-/**
- * 计算箱超期费
- * @param {*} free_days 
- * @param {*} discharge_date 
- * @param {*} return_date 
- * @param {*} cargo_type 
- * @param {*} discharge_port 
- * @param {*} carrier 
- * @param {*} container_type 
- * @param {*} enabled_date 
- */
-exports.demurrageCalculation = async (free_days, discharge_date, return_date, cargo_type, discharge_port, carrier, container_type, enabled_date, business_type = 'I') => {
-  if(free_days) {
-    free_days = parseInt(free_days)
-  }
-  // if(!business_type) {
-  //   business_type = 'I'
-  // }
-  let chargeRules = await this.queryDemurrageRules(cargo_type, discharge_port, carrier, container_type, enabled_date, business_type)
-  if(chargeRules && chargeRules.length  > 0) {
-    let diff = moment(return_date, 'DD/MM/YYYY').diff(moment(discharge_date, 'DD/MM/YYYY'), 'days') + 1 // Calendar day Cover First Day
-    let overdueAmount = 0
-    let freeMaxDay = 0
-    if(free_days == 0) {
-      for(let c of chargeRules) {
-        let charge = parseInt(c.overdue_charge_amount)
-        if(charge === 0) {
-          freeMaxDay = parseInt(c.overdue_charge_max_day)
-        }
-      }
-    } else {
-      freeMaxDay = free_days
-    }
-    if(diff <= freeMaxDay) {
-      return {
-        diff_days: diff,
-        overdue_days: 0,
-        overdue_amount: 0
-      }
-    } else {
-      for(let c of chargeRules) {
-        let charge = parseInt(c.overdue_charge_amount)
-        let min = parseInt(c.overdue_charge_min_day)
-        if(c.overdue_charge_max_day) {
-          let max = parseInt(c.overdue_charge_max_day)
-          if(freeMaxDay > max) {
-            continue
-          } else {
-            if(freeMaxDay >= min && freeMaxDay <= max) {
-              min = freeMaxDay + 1
-            }
-            if(diff > max) {
-              overdueAmount = overdueAmount + charge * (max - min + 1)
-            } else if((diff >= min)){
-              overdueAmount = overdueAmount + charge * (diff - min + 1)
-            }
-          }
-        } else {
-          if(freeMaxDay >= min) {
-            min = freeMaxDay + 1
-          } 
-          if(diff >= min) {
-            overdueAmount = overdueAmount + charge * (diff - min + 1)
-          }
-        }
-      }
-      return {
-        diff_days: diff,
-        overdue_days: diff - freeMaxDay,
-        overdue_amount: overdueAmount
-      }
-    }
-  }
-  return {
-    diff_days: -1,
-    overdue_days: 0,
-    overdue_amount: 0
   }
 }
