@@ -1,4 +1,5 @@
 const moment = require('moment')
+const Decimal = require('decimal.js')
 const numberToText = require('number2text')
 const common = require('../../../util/CommonUtil')
 const GLBConfig = require('../../../util/GLBConfig')
@@ -516,12 +517,13 @@ exports.emptyInvoiceAct = async req => {
       if(rcon && rcon.length > 0) {
         s.starting_date = moment(rcon[0].overdue_invoice_containers_return_date, 'DD/MM/YYYY').add(1, 'days').format('DD/MM/YYYY')
         s.overdue_days = parseInt(con.invoice_containers_empty_return_overdue_days) - parseInt(rcon[0].overdue_invoice_containers_overdue_days)
-        s.overdue_amount = parseFloat(con.invoice_containers_empty_return_overdue_amount) - parseFloat(rcon[0].overdue_invoice_containers_overdue_amount) 
+        // s.overdue_amount = parseFloat(con.invoice_containers_empty_return_overdue_amount) - parseFloat(rcon[0].overdue_invoice_containers_overdue_amount) 
       } else {
         s.starting_date = discharge_date
         s.overdue_days = con.invoice_containers_empty_return_overdue_days
-        s.overdue_amount = con.invoice_containers_empty_return_overdue_amount
+        // s.overdue_amount = con.invoice_containers_empty_return_overdue_amount
       }
+      s.overdue_amount = new Decimal(con.invoice_containers_empty_return_overdue_amount).sub(new Decimal(con.invoice_containers_empty_return_overdue_amount_receipt)).sub(new Decimal(con.invoice_containers_empty_return_overdue_deduction)).toNumber()
       let conSize = await tb_container_size.findOne({
         where: {
           container_size_code: s.invoice_containers_size
@@ -674,23 +676,35 @@ exports.emptyReInvoiceAct = async req => {
       con.invoice_containers_empty_return_invoice_date = curDate
       con.invoice_containers_empty_return_date_invoice = con.invoice_containers_empty_return_date
       con.invoice_containers_empty_return_overdue_days_invoice = con.invoice_containers_empty_return_overdue_days
+      let curDeduction = 0
       if(deduction > splitDeduction) {
-        con.invoice_containers_empty_return_overdue_deduction = splitDeduction
+        curDeduction = splitDeduction
         deduction -= splitDeduction
       } else {
-        con.invoice_containers_empty_return_overdue_deduction = deduction
+        curDeduction = deduction
       }
-      con.invoice_containers_empty_return_overdue_amount_invoice = con.invoice_containers_empty_return_overdue_amount - con.invoice_containers_empty_return_overdue_deduction
+      con.invoice_containers_empty_return_overdue_amount_invoice = con.invoice_containers_empty_return_overdue_amount - con.invoice_containers_empty_return_overdue_deduction - curDeduction
       con.invoice_containers_empty_return_edit_flg = GLBConfig.DISABLE
       await con.save()
       s.invoice_containers_size = con.invoice_containers_size
       s.invoice_containers_empty_return_date = con.invoice_containers_empty_return_date
       s.invoice_containers_empty_return_overdue_days = con.invoice_containers_empty_return_overdue_days
-      s.invoice_containers_empty_return_overdue_amount = con.invoice_containers_empty_return_overdue_amount_invoice
-      s.starting_date = discharge_date
-      s.overdue_days = con.invoice_containers_empty_return_overdue_days
-      s.overdue_amount = con.invoice_containers_empty_return_overdue_amount_invoice
-      s.overdue_invoice_containers_overdue_deduction = con.invoice_containers_empty_return_overdue_deduction
+      s.invoice_containers_empty_return_overdue_amount = con.invoice_containers_empty_return_overdue_amount
+      
+      let queryStr = `SELECT * FROM tbl_zhongtan_overdue_invoice_containers WHERE overdue_invoice_containers_invoice_containers_id= ? AND  overdue_invoice_containers_receipt_date IS NOT NULL AND overdue_invoice_containers_receipt_date != '' ORDER BY overdue_invoice_containers_receipt_date DESC LIMIT 1`
+      let replacements = [con.invoice_containers_id]
+      let rcon = await model.simpleSelect(queryStr, replacements)
+      if(rcon && rcon.length > 0) {
+        s.starting_date = moment(rcon[0].overdue_invoice_containers_return_date, 'DD/MM/YYYY').add(1, 'days').format('DD/MM/YYYY')
+        s.overdue_days = parseInt(con.invoice_containers_empty_return_overdue_days) - parseInt(rcon[0].overdue_invoice_containers_overdue_days)
+        // s.overdue_amount = parseFloat(con.invoice_containers_empty_return_overdue_amount) - parseFloat(rcon[0].overdue_invoice_containers_overdue_amount) 
+      } else {
+        s.starting_date = discharge_date
+        s.overdue_days = con.invoice_containers_empty_return_overdue_days
+        // s.overdue_amount = con.invoice_containers_empty_return_overdue_amount
+      }
+      s.overdue_amount = new Decimal(con.invoice_containers_empty_return_overdue_amount).sub(new Decimal(con.invoice_containers_empty_return_overdue_amount_receipt)).sub(new Decimal(con.invoice_containers_empty_return_overdue_deduction)).sub(new Decimal(curDeduction)).toNumber()
+      s.overdue_invoice_containers_overdue_deduction = curDeduction
       let conSize = await tb_container_size.findOne({
         where: {
           container_size_code: s.invoice_containers_size
@@ -813,17 +827,38 @@ exports.actuallyOverdueCopyAct = async req => {
 
 exports.containerInvoiceDetailAct = async req => {
   let doc = common.docValidate(req)
-  let queryStr = `SELECT a.*, b.user_id, b.uploadfile_state, c.user_name FROM tbl_zhongtan_overdue_invoice_containers a LEFT JOIN tbl_zhongtan_uploadfile b ON a.overdue_invoice_containers_invoice_uploadfile_id = b.uploadfile_id LEFT JOIN tbl_common_user c ON b.user_id = c.user_id WHERE overdue_invoice_containers_invoice_containers_id = ? ORDER BY a.overdue_invoice_containers_id DESC`
+  let queryStr = `SELECT a.*, b.user_id, b.uploadfile_state, c.user_name FROM tbl_zhongtan_overdue_invoice_containers a 
+                  LEFT JOIN tbl_zhongtan_uploadfile b ON a.overdue_invoice_containers_invoice_uploadfile_id = b.uploadfile_id 
+                  LEFT JOIN tbl_common_user c ON b.user_id = c.user_id WHERE overdue_invoice_containers_invoice_containers_id = ? 
+                  ORDER BY a.overdue_invoice_containers_id DESC`
   let replacements = []
   replacements.push(doc.invoice_containers_id)
   let result = await model.simpleSelect(queryStr, replacements)
+  let rows = []
+  let con = await tb_container.findOne({
+    where: {
+      invoice_containers_id: doc.invoice_containers_id,
+      state: GLBConfig.ENABLE
+    }
+  })
+  if(con) {
+    // 插入箱当前状态
+    rows.push({
+      overdue_invoice_containers_overdue_discharge_date: con.invoice_containers_edi_discharge_date,
+      overdue_invoice_containers_return_date: con.invoice_containers_actually_return_date,
+      overdue_invoice_containers_overdue_days: con.invoice_containers_empty_return_overdue_days_receipt,
+      overdue_invoice_containers_overdue_amount: con.invoice_containers_empty_return_overdue_amount_receipt,
+      overdue_invoice_containers_overdue_deduction: con.invoice_containers_empty_return_overdue_deduction
+    })
+  }
   if(result) {
     for(let r of result) {
       r.invoice_created_at = moment(r.created_at).format('YYYY-MM-DD HH:mm')
       r.overdue_invoice_containers_receipt_date = r.overdue_invoice_containers_receipt_date ? moment(r.overdue_invoice_containers_receipt_date).format('YYYY-MM-DD HH:mm') : ''
+      rows.push(r)
     }
   }
-  return common.success(result)
+  return common.success(rows)
 }
 
 exports.issuingStoringOrderAct = async req => {
@@ -953,7 +988,6 @@ exports.issuingStoringOrderAct = async req => {
 
 exports.getInvoiceSelectionAct = async req => {
   let doc = common.docValidate(req)
-  let action = doc.action
   let selectAll = doc.selectAll
   let selection = []
   if(selectAll && doc.selection && doc.selection.length > 0) {
@@ -1000,28 +1034,33 @@ exports.getInvoiceSelectionAct = async req => {
   let returnData = {}
   let totalDemurrage = 0
   if(selection && selection.length > 0) {
-    if(action === 'reinvoice') {
-      for(let s of selection) {
-        if(s.invoice_containers_empty_return_overdue_amount) {
-          totalDemurrage += parseInt(s.invoice_containers_empty_return_overdue_amount)
-        }
-      }
-    } else {
-      let queryStr = ''
-      let replacements = []
-      for(let s of selection) {
-        queryStr = `SELECT * FROM tbl_zhongtan_overdue_invoice_containers WHERE overdue_invoice_containers_invoice_containers_id= ? AND  overdue_invoice_containers_receipt_date IS NOT NULL AND overdue_invoice_containers_receipt_date != '' ORDER BY overdue_invoice_containers_overdue_days+0 DESC, overdue_invoice_containers_receipt_date DESC LIMIT 1`
-        replacements = [s.invoice_containers_id]
-        let rcon = await model.simpleSelect(queryStr, replacements)
-        if(rcon && rcon.length > 0) {
-          totalDemurrage += parseFloat(s.invoice_containers_empty_return_overdue_amount) - parseFloat(rcon[0].overdue_invoice_containers_overdue_amount) 
-        } else {
-          totalDemurrage += parseInt(s.invoice_containers_empty_return_overdue_amount)
-        }
+    for(let s of selection) {
+      if(s.invoice_containers_empty_return_overdue_amount) {
+        totalDemurrage = new Decimal(totalDemurrage).plus(new Decimal(s.invoice_containers_empty_return_overdue_amount)).sub(new Decimal(s.invoice_containers_empty_return_overdue_amount_receipt)).sub(new Decimal(s.invoice_containers_empty_return_overdue_deduction))
       }
     }
+    // if(action === 'reinvoice') {
+    //   for(let s of selection) {
+    //     if(s.invoice_containers_empty_return_overdue_amount) {
+    //       totalDemurrage += parseInt(s.invoice_containers_empty_return_overdue_amount)
+    //     }
+    //   }
+    // } else {
+    //   let queryStr = ''
+    //   let replacements = []
+    //   for(let s of selection) {
+    //     queryStr = `SELECT * FROM tbl_zhongtan_overdue_invoice_containers WHERE overdue_invoice_containers_invoice_containers_id= ? AND  overdue_invoice_containers_receipt_date IS NOT NULL AND overdue_invoice_containers_receipt_date != '' ORDER BY overdue_invoice_containers_overdue_days+0 DESC, overdue_invoice_containers_receipt_date DESC LIMIT 1`
+    //     replacements = [s.invoice_containers_id]
+    //     let rcon = await model.simpleSelect(queryStr, replacements)
+    //     if(rcon && rcon.length > 0) {
+    //       totalDemurrage += parseFloat(s.invoice_containers_empty_return_overdue_amount) - parseFloat(rcon[0].overdue_invoice_containers_overdue_amount) 
+    //     } else {
+    //       totalDemurrage += parseInt(s.invoice_containers_empty_return_overdue_amount)
+    //     }
+    //   }
+    // }
   }
-  returnData.totalDemurrage = totalDemurrage
+  returnData.totalDemurrage = Decimal.isDecimal(totalDemurrage) ? totalDemurrage.toNumber() : totalDemurrage
   return common.success(returnData)
 }
 

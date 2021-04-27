@@ -1,4 +1,5 @@
 const moment = require('moment')
+const Decimal = require('decimal.js')
 const numberToText = require('number2text')
 const common = require('../../../util/CommonUtil')
 const GLBConfig = require('../../../util/GLBConfig')
@@ -188,6 +189,9 @@ exports.doReceiptAct = async req => {
     con.invoice_containers_empty_return_overdue_days_receipt = incon.overdue_invoice_containers_overdue_days
     con.invoice_containers_empty_return_overdue_amount_receipt = incon.overdue_invoice_containers_overdue_amount
     con.invoice_containers_empty_return_date_receipt_no = receipt_no
+    if(incon.overdue_invoice_containers_overdue_deduction) {
+      con.invoice_containers_empty_return_overdue_deduction = new Decimal(con.invoice_containers_empty_return_overdue_deduction).plus(new Decimal(incon.overdue_invoice_containers_overdue_deduction)).toNumber()
+    }
     con.save()
 
     incon.overdue_invoice_containers_receipt_date = curDate
