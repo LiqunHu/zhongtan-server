@@ -211,7 +211,7 @@ exports.approveAct = async req => {
               bl: p.shipment_list_bill_no,
               container_no: p.shipment_list_container_no,
               size_type: p.shipment_list_size_type,
-              fnd: p.shipment_list_business_type === 'I' ? 'TZDAR' : p.shipment_list_port_of_loading,
+              fnd: p.shipment_list_business_type === 'I' ?  p.shipment_list_port_of_destination : p.shipment_list_port_of_loading,
               amount: p.shipment_list_advance_payment
             })
             advance_percent = p.shipment_list_advance_percent + '%'
@@ -241,7 +241,7 @@ exports.approveAct = async req => {
               bl: p.shipment_list_bill_no,
               container_no: p.shipment_list_container_no,
               size_type: p.shipment_list_size_type,
-              fnd: p.shipment_list_business_type === 'I' ? 'TZDAR' : p.shipment_list_port_of_loading,
+              fnd: p.shipment_list_business_type === 'I' ?  p.shipment_list_port_of_destination : p.shipment_list_port_of_loading,
               amount: p.shipment_list_balance_payment
             })
           }
