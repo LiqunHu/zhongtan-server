@@ -503,13 +503,13 @@ exports.emptyInvoiceAct = async req => {
       con.invoice_containers_empty_return_invoice_date = curDate
       con.invoice_containers_empty_return_date_invoice = con.invoice_containers_empty_return_date
       con.invoice_containers_empty_return_overdue_days_invoice = con.invoice_containers_empty_return_overdue_days
-      con.invoice_containers_empty_return_overdue_amount_invoice = con.invoice_containers_empty_return_overdue_amount
+      con.invoice_containers_empty_return_overdue_amount_invoice = new Decimal(con.invoice_containers_empty_return_overdue_amount).sub(new Decimal(con.invoice_containers_empty_return_overdue_deduction ? con.invoice_containers_empty_return_overdue_deduction : 0)).toNumber()
       con.invoice_containers_empty_return_edit_flg = GLBConfig.DISABLE
       await con.save()
       s.invoice_containers_size = con.invoice_containers_size
       s.invoice_containers_empty_return_date = con.invoice_containers_empty_return_date
       s.invoice_containers_empty_return_overdue_days = con.invoice_containers_empty_return_overdue_days
-      s.invoice_containers_empty_return_overdue_amount = con.invoice_containers_empty_return_overdue_amount
+      s.invoice_containers_empty_return_overdue_amount = con.invoice_containers_empty_return_overdue_amount_invoice
      
       queryStr = `SELECT * FROM tbl_zhongtan_overdue_invoice_containers WHERE overdue_invoice_containers_invoice_containers_id= ? AND  overdue_invoice_containers_receipt_date IS NOT NULL AND overdue_invoice_containers_receipt_date != '' ORDER BY overdue_invoice_containers_receipt_date DESC LIMIT 1`
       replacements = [con.invoice_containers_id]
@@ -523,7 +523,7 @@ exports.emptyInvoiceAct = async req => {
         s.overdue_days = con.invoice_containers_empty_return_overdue_days
         // s.overdue_amount = con.invoice_containers_empty_return_overdue_amount
       }
-      s.overdue_amount = new Decimal(con.invoice_containers_empty_return_overdue_amount).sub(new Decimal(con.invoice_containers_empty_return_overdue_amount_receipt)).sub(new Decimal(con.invoice_containers_empty_return_overdue_deduction)).toNumber()
+      s.overdue_amount = new Decimal(con.invoice_containers_empty_return_overdue_amount ? con.invoice_containers_empty_return_overdue_amount : 0).sub(new Decimal(con.invoice_containers_empty_return_overdue_amount_receipt ? con.invoice_containers_empty_return_overdue_amount_receipt : 0)).sub(new Decimal(con.invoice_containers_empty_return_overdue_deduction ? con.invoice_containers_empty_return_overdue_deduction : 0)).toNumber()
       let conSize = await tb_container_size.findOne({
         where: {
           container_size_code: s.invoice_containers_size
@@ -683,13 +683,13 @@ exports.emptyReInvoiceAct = async req => {
       } else {
         curDeduction = deduction
       }
-      con.invoice_containers_empty_return_overdue_amount_invoice = con.invoice_containers_empty_return_overdue_amount - con.invoice_containers_empty_return_overdue_deduction - curDeduction
+      con.invoice_containers_empty_return_overdue_amount_invoice = new Decimal(con.invoice_containers_empty_return_overdue_amount).sub(new Decimal(con.invoice_containers_empty_return_overdue_deduction ? con.invoice_containers_empty_return_overdue_deduction : 0)).sub(new Decimal(curDeduction)).toNumber()
       con.invoice_containers_empty_return_edit_flg = GLBConfig.DISABLE
       await con.save()
       s.invoice_containers_size = con.invoice_containers_size
       s.invoice_containers_empty_return_date = con.invoice_containers_empty_return_date
       s.invoice_containers_empty_return_overdue_days = con.invoice_containers_empty_return_overdue_days
-      s.invoice_containers_empty_return_overdue_amount = con.invoice_containers_empty_return_overdue_amount
+      s.invoice_containers_empty_return_overdue_amount = con.invoice_containers_empty_return_overdue_amount_invoice
       
       let queryStr = `SELECT * FROM tbl_zhongtan_overdue_invoice_containers WHERE overdue_invoice_containers_invoice_containers_id= ? AND  overdue_invoice_containers_receipt_date IS NOT NULL AND overdue_invoice_containers_receipt_date != '' ORDER BY overdue_invoice_containers_receipt_date DESC LIMIT 1`
       let replacements = [con.invoice_containers_id]
@@ -703,7 +703,7 @@ exports.emptyReInvoiceAct = async req => {
         s.overdue_days = con.invoice_containers_empty_return_overdue_days
         // s.overdue_amount = con.invoice_containers_empty_return_overdue_amount
       }
-      s.overdue_amount = new Decimal(con.invoice_containers_empty_return_overdue_amount).sub(new Decimal(con.invoice_containers_empty_return_overdue_amount_receipt)).sub(new Decimal(con.invoice_containers_empty_return_overdue_deduction)).sub(new Decimal(curDeduction)).toNumber()
+      s.overdue_amount = new Decimal(con.invoice_containers_empty_return_overdue_amount ? con.invoice_containers_empty_return_overdue_amount : 0).sub(new Decimal(con.invoice_containers_empty_return_overdue_amount_receipt ? con.invoice_containers_empty_return_overdue_amount_receipt : 0)).sub(new Decimal(con.invoice_containers_empty_return_overdue_deduction ? con.invoice_containers_empty_return_overdue_deduction : 0)).sub(new Decimal(curDeduction)).toNumber()
       s.overdue_invoice_containers_overdue_deduction = curDeduction
       let conSize = await tb_container_size.findOne({
         where: {
@@ -1036,7 +1036,7 @@ exports.getInvoiceSelectionAct = async req => {
   if(selection && selection.length > 0) {
     for(let s of selection) {
       if(s.invoice_containers_empty_return_overdue_amount) {
-        totalDemurrage = new Decimal(totalDemurrage).plus(new Decimal(s.invoice_containers_empty_return_overdue_amount)).sub(new Decimal(s.invoice_containers_empty_return_overdue_amount_receipt)).sub(new Decimal(s.invoice_containers_empty_return_overdue_deduction))
+        totalDemurrage = new Decimal(totalDemurrage).plus(new Decimal(s.invoice_containers_empty_return_overdue_amount ? s.invoice_containers_empty_return_overdue_amount : 0)).sub(new Decimal(s.invoice_containers_empty_return_overdue_amount_receipt ? s.invoice_containers_empty_return_overdue_amount_receipt : 0)).sub(new Decimal(s.invoice_containers_empty_return_overdue_deduction ? s.invoice_containers_empty_return_overdue_deduction : 0))
       }
     }
     // if(action === 'reinvoice') {
