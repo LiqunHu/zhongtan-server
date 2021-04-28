@@ -9,7 +9,7 @@ const moment = require('moment')
 const ejsExcel = require('ejsexcel')
 const JSZip = require('jszip')
 const Docxtemplater = require('docxtemplater')
-const puppeteer = require('puppeteer')
+const puppeteerBrowser = require('../../util/PuppeteerBrowser')
 
 const config = require('../app/config')
 const Error = require('./Error')
@@ -218,12 +218,12 @@ async function ejs2Pdf(templateFile, renderData, bucket) {
   data.basedir = path.join(__dirname, '../printTemplate')
   let ejsFile = fs.readFileSync(path.join(__dirname, '../printTemplate/' + templateFile), 'utf8')
   let html = ejs.render(ejsFile, { ejsData: data })
-  const browser = await puppeteer.launch()
+  const browser = await puppeteerBrowser.getBrowser()
   const page = await browser.newPage()
   await page.setContent(html)
   let filePath = path.join(process.cwd(), config.fileSys.filesDir, uuid.v4().replace(/-/g, '') + '.pdf')
   await page.pdf({ path: filePath, format: 'A4', landscape: true })
-  await browser.close()
+  await page.close()
   let fileInfo = await fileUtil.fileSaveMongoByLocalPath(filePath, bucket, config.fileSys.bucket[bucket].baseUrl)
   return fileInfo
 }
