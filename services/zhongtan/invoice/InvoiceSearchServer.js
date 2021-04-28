@@ -298,24 +298,25 @@ exports.downloadDoAct = async req => {
     }
   }
   renderData.container_count = bl.invoice_masterbi_container_no + 'X' + cSize.join(' ')
-
-  let fileInfo = await common.ejs2Pdf('do.ejs', renderData, 'zhongtan')
-
-  // await tb_uploadfile.destroy({
-  //   where: {
-  //     api_name: 'RECEIPT-DO',
-  //     uploadfile_index1: bl.invoice_masterbi_id
-  //   }
-  // })
-
-  await tb_uploadfile.create({
-    api_name: 'RECEIPT-DO',
-    user_id: user.user_id,
-    uploadfile_index1: bl.invoice_masterbi_id,
-    uploadfile_name: fileInfo.name,
-    uploadfile_url: fileInfo.url
-  })
-  return common.success({ url: fileInfo.url })
+  try {
+    let fileInfo = await common.ejs2Pdf('do.ejs', renderData, 'zhongtan')
+    // await tb_uploadfile.destroy({
+    //   where: {
+    //     api_name: 'RECEIPT-DO',
+    //     uploadfile_index1: bl.invoice_masterbi_id
+    //   }
+    // })
+    await tb_uploadfile.create({
+      api_name: 'RECEIPT-DO',
+      user_id: user.user_id,
+      uploadfile_index1: bl.invoice_masterbi_id,
+      uploadfile_name: fileInfo.name,
+      uploadfile_url: fileInfo.url
+    })
+    return common.success({ url: fileInfo.url })
+  } catch(e) {
+    return common.error('generate_file_01')
+  }
 }
 
 exports.checkPasswordAct = async req => {

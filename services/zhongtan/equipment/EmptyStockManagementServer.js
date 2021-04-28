@@ -178,10 +178,20 @@ exports.uploadEmptyStockContainer = async(esc) => {
           // 进口
           if(existEsc[0].empty_stock_container_status === '2') {
             // 最新记录已离场, 新建
-            upload_es = await tb_empty_stock.create({
-              empty_stock_container_no: esc.container_no,
-              empty_stock_container_status: '0'
-            })
+            if(esc.gate_in_depot_date && existEsc[0].empty_stock_gate_out_depot_date 
+              && moment(esc.gate_in_depot_date).isSameOrBefore(moment(existEsc[0].empty_stock_gate_out_depot_date))
+              && (existEsc[0].empty_stock_in_depot_name === esc.depot_name || existEsc[0].empty_stock_out_depot_name === esc.depot_name)) {
+                upload_es = await tb_empty_stock.findOne({
+                  where: {
+                    empty_stock_id: existEsc[0].empty_stock_id
+                  }
+                })
+            } else {
+              upload_es = await tb_empty_stock.create({
+                empty_stock_container_no: esc.container_no,
+                empty_stock_container_status: '0'
+              })
+            }
           }else {
             upload_es = await tb_empty_stock.findOne({
               where: {
@@ -197,7 +207,7 @@ exports.uploadEmptyStockContainer = async(esc) => {
             }
           })
         }
-      }else {
+      } else {
         upload_es = await tb_empty_stock.create({
           empty_stock_container_no: esc.container_no,
           empty_stock_container_status: '0'

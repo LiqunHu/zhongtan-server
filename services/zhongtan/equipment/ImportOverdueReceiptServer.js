@@ -152,52 +152,56 @@ exports.doReceiptAct = async req => {
   renderData.user_name = commonUser.user_name
   renderData.user_phone = commonUser.user_phone
   renderData.user_email = commonUser.user_email
-  let fileInfo = await common.ejs2Pdf('demurrageReceipt.ejs', renderData, 'zhongtan')
-  await tb_uploadfile.create({
-    api_name: 'OVERDUE-RECEIPT',
-    user_id: user.user_id,
-    uploadfile_index1: invoice.uploadfile_index1,
-    uploadfile_index3: invoice.uploadfile_id,
-    uploadfile_name: fileInfo.name,
-    uploadfile_url: fileInfo.url,
-    uploadfile_acttype: 'overdue',
-    uploadfile_amount: invoice.uploadfile_amount,
-    uploadfile_currency: invoice.uploadfile_currency,
-    uploadfile_check_cash: doc.overdue_invoice_check_cash,
-    uploadfile_check_no: doc.overdue_invoice_check_no,
-    uploadfile_received_from: doc.overdue_invoice_received_from,
-    uploadfile_receipt_no: receipt_no,
-    uploadfil_release_date: curDate,
-    uploadfil_release_user_id: user.user_id,
-    uploadfile_bank_reference_no: doc.overdue_invoice_bank_reference_no,
-  })
+  try {
+    let fileInfo = await common.ejs2Pdf('demurrageReceipt.ejs', renderData, 'zhongtan')
+    await tb_uploadfile.create({
+      api_name: 'OVERDUE-RECEIPT',
+      user_id: user.user_id,
+      uploadfile_index1: invoice.uploadfile_index1,
+      uploadfile_index3: invoice.uploadfile_id,
+      uploadfile_name: fileInfo.name,
+      uploadfile_url: fileInfo.url,
+      uploadfile_acttype: 'overdue',
+      uploadfile_amount: invoice.uploadfile_amount,
+      uploadfile_currency: invoice.uploadfile_currency,
+      uploadfile_check_cash: doc.overdue_invoice_check_cash,
+      uploadfile_check_no: doc.overdue_invoice_check_no,
+      uploadfile_received_from: doc.overdue_invoice_received_from,
+      uploadfile_receipt_no: receipt_no,
+      uploadfil_release_date: curDate,
+      uploadfil_release_user_id: user.user_id,
+      uploadfile_bank_reference_no: doc.overdue_invoice_bank_reference_no,
+    })
 
-  let invoiceContainers = await tb_invoice_container.findAll({
-    where: {
-      overdue_invoice_containers_invoice_uploadfile_id : file_id
-    }
-  })
-  for(let incon of invoiceContainers) {
-    let con = await tb_container.findOne({
+    let invoiceContainers = await tb_invoice_container.findAll({
       where: {
-        invoice_containers_id : incon.overdue_invoice_containers_invoice_containers_id
+        overdue_invoice_containers_invoice_uploadfile_id : file_id
       }
     })
-    con.invoice_containers_empty_return_receipt_date = curDate
-    con.invoice_containers_empty_return_receipt_release_date = curDate
-    con.invoice_containers_empty_return_date_receipt = incon.overdue_invoice_containers_return_date
-    con.invoice_containers_empty_return_overdue_days_receipt = incon.overdue_invoice_containers_overdue_days
-    con.invoice_containers_empty_return_overdue_amount_receipt = incon.overdue_invoice_containers_overdue_amount
-    con.invoice_containers_empty_return_date_receipt_no = receipt_no
-    if(incon.overdue_invoice_containers_overdue_deduction) {
-      con.invoice_containers_empty_return_overdue_deduction = new Decimal(con.invoice_containers_empty_return_overdue_deduction ? con.invoice_containers_empty_return_overdue_deduction : 0).plus(new Decimal(incon.overdue_invoice_containers_overdue_deduction)).toNumber()
-    }
-    con.save()
+    for(let incon of invoiceContainers) {
+      let con = await tb_container.findOne({
+        where: {
+          invoice_containers_id : incon.overdue_invoice_containers_invoice_containers_id
+        }
+      })
+      con.invoice_containers_empty_return_receipt_date = curDate
+      con.invoice_containers_empty_return_receipt_release_date = curDate
+      con.invoice_containers_empty_return_date_receipt = incon.overdue_invoice_containers_return_date
+      con.invoice_containers_empty_return_overdue_days_receipt = incon.overdue_invoice_containers_overdue_days
+      con.invoice_containers_empty_return_overdue_amount_receipt = incon.overdue_invoice_containers_overdue_amount
+      con.invoice_containers_empty_return_date_receipt_no = receipt_no
+      if(incon.overdue_invoice_containers_overdue_deduction) {
+        con.invoice_containers_empty_return_overdue_deduction = new Decimal(con.invoice_containers_empty_return_overdue_deduction ? con.invoice_containers_empty_return_overdue_deduction : 0).plus(new Decimal(incon.overdue_invoice_containers_overdue_deduction)).toNumber()
+      }
+      con.save()
 
-    incon.overdue_invoice_containers_receipt_date = curDate
-    incon.save()
+      incon.overdue_invoice_containers_receipt_date = curDate
+      incon.save()
+    }
+    invoice.uploadfile_receipt_no = receipt_no
+    invoice.save()
+    return common.success({ url: fileInfo.url })
+  } catch(e) {
+    return common.error('generate_file_01')
   }
-  invoice.uploadfile_receipt_no = receipt_no
-  invoice.save()
-  return common.success({ url: fileInfo.url })
 }

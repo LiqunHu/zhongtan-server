@@ -148,7 +148,6 @@ exports.receiptAct = async req => {
   theDeposit.updated_at = curDate
   theDeposit.deposit_receipt_release_date = curDate
   theDeposit.deposit_work_state = 'W'
-  await theDeposit.save()
 
   let renderData = {}
   renderData.fixed_deposit_receipt_no = theDeposit.deposit_receipt_no
@@ -167,32 +166,34 @@ exports.receiptAct = async req => {
   renderData.user_name = commonUser.user_name
   renderData.user_phone = commonUser.user_phone
   renderData.user_email = commonUser.user_email
-  let fileInfo = await common.ejs2Pdf('fixedReceipt.ejs', renderData, 'zhongtan')
-
-  await tb_uploadfile.destroy({
-    where: {
+  try {
+    let fileInfo = await common.ejs2Pdf('fixedReceipt.ejs', renderData, 'zhongtan')
+    await theDeposit.save()
+    await tb_uploadfile.destroy({
+      where: {
+        api_name: 'FIXED-RECEIPT',
+        uploadfile_index1: theDeposit.fixed_deposit_id
+      }
+    })
+    await tb_uploadfile.create({
       api_name: 'FIXED-RECEIPT',
-      uploadfile_index1: theDeposit.fixed_deposit_id
-    }
-  })
-
-  await tb_uploadfile.create({
-    api_name: 'FIXED-RECEIPT',
-    user_id: user.user_id,
-    uploadfile_index1: theDeposit.fixed_deposit_id,
-    uploadfile_name: fileInfo.name,
-    uploadfile_url: fileInfo.url,
-    uploadfile_currency: theDeposit.deposit_currency,
-    uploadfile_amount: theDeposit.deposit_amount,
-    uploadfile_check_cash: theDeposit.deposit_check_cash,
-    uploadfile_check_no: theDeposit.deposit_check_cash_no,
-    uploadfile_received_from: theCustomer.user_name,
-    uploadfile_receipt_no: theDeposit.deposit_receipt_no,
-    uploadfil_release_date: curDate,
-    uploadfil_release_user_id: user.user_id
-  })
-
-  return common.success({ url: fileInfo.url })
+      user_id: user.user_id,
+      uploadfile_index1: theDeposit.fixed_deposit_id,
+      uploadfile_name: fileInfo.name,
+      uploadfile_url: fileInfo.url,
+      uploadfile_currency: theDeposit.deposit_currency,
+      uploadfile_amount: theDeposit.deposit_amount,
+      uploadfile_check_cash: theDeposit.deposit_check_cash,
+      uploadfile_check_no: theDeposit.deposit_check_cash_no,
+      uploadfile_received_from: theCustomer.user_name,
+      uploadfile_receipt_no: theDeposit.deposit_receipt_no,
+      uploadfil_release_date: curDate,
+      uploadfil_release_user_id: user.user_id
+    })
+    return common.success({ url: fileInfo.url })
+  } catch(e) {
+    return common.error('generate_file_01')
+  }
 }
 
 exports.releaseAct = async req => {

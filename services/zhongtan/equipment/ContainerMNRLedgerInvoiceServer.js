@@ -251,33 +251,35 @@ exports.invoiceAct = async req => {
     renderData.user_name = commonUser.user_name
     renderData.user_phone = commonUser.user_phone
     renderData.user_email = commonUser.user_email
-    let fileInfo = await common.ejs2Pdf('mnrInvoice.ejs', renderData, 'zhongtan')
-    await tb_uploadfile.destroy({
-      where: {
+    try {
+      let fileInfo = await common.ejs2Pdf('mnrInvoice.ejs', renderData, 'zhongtan')
+      await tb_uploadfile.destroy({
+        where: {
+          api_name: 'MNR-INVOICE',
+          uploadfile_index1: mnr.container_mnr_ledger_id
+        }
+      })
+      await tb_uploadfile.create({
         api_name: 'MNR-INVOICE',
-        uploadfile_index1: mnr.container_mnr_ledger_id
-      }
-    })
-    await tb_uploadfile.create({
-      api_name: 'MNR-INVOICE',
-      user_id: user.user_id,
-      uploadfile_index1: mnr.container_mnr_ledger_id,
-      uploadfile_name: fileInfo.name,
-      uploadfile_url: fileInfo.url,
-      uploadfile_currency: 'USD',
-      uploadfile_state: 'PB', // TODO state PM => PB
-      uploadfile_amount: mnr.mnr_ledger_actual_charge_amount,
-      uploadfile_customer_id: customer.user_id,
-      uploadfile_invoice_no: invoiceNo
-    })
-
-    mnr.mnr_ledger_reedit_flg = GLBConfig.DISABLE
-    
-    mnr.mnr_ledger_invoice_date = moment().format('YYYY-MM-DD HH:mm:ss')
-    mnr.mnr_ledger_invoice_no = invoiceNo
-    await mnr.save()
+        user_id: user.user_id,
+        uploadfile_index1: mnr.container_mnr_ledger_id,
+        uploadfile_name: fileInfo.name,
+        uploadfile_url: fileInfo.url,
+        uploadfile_currency: 'USD',
+        uploadfile_state: 'PB', // TODO state PM => PB
+        uploadfile_amount: mnr.mnr_ledger_actual_charge_amount,
+        uploadfile_customer_id: customer.user_id,
+        uploadfile_invoice_no: invoiceNo
+      })
+      mnr.mnr_ledger_reedit_flg = GLBConfig.DISABLE
+      mnr.mnr_ledger_invoice_date = moment().format('YYYY-MM-DD HH:mm:ss')
+      mnr.mnr_ledger_invoice_no = invoiceNo
+      await mnr.save()
+      return common.success()
+    } catch(e) {
+      return common.error('generate_file_01')
+    }
   }
-  return common.success()
 }
 
 exports.searchContainerAct = async req => {

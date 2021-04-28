@@ -510,7 +510,6 @@ exports.emptyInvoiceAct = async req => {
       s.invoice_containers_empty_return_date = con.invoice_containers_empty_return_date
       s.invoice_containers_empty_return_overdue_days = con.invoice_containers_empty_return_overdue_days
       s.invoice_containers_empty_return_overdue_amount = con.invoice_containers_empty_return_overdue_amount_invoice
-     
       queryStr = `SELECT * FROM tbl_zhongtan_overdue_invoice_containers WHERE overdue_invoice_containers_invoice_containers_id= ? AND  overdue_invoice_containers_receipt_date IS NOT NULL AND overdue_invoice_containers_receipt_date != '' ORDER BY overdue_invoice_containers_receipt_date DESC LIMIT 1`
       replacements = [con.invoice_containers_id]
       let rcon = await model.simpleSelect(queryStr, replacements)
@@ -541,39 +540,44 @@ exports.emptyInvoiceAct = async req => {
     }
     renderData.demurrageTotal = formatCurrency(demurrageTotal)
     renderData.demurrageTotalStr = numberToText(demurrageTotal)
-    let fileInfo = await common.ejs2Pdf('demurrage.ejs', renderData, 'zhongtan')
-    let invoice_file = await tb_uploadfile.create({
-      api_name: 'OVERDUE-INVOICE',
-      user_id: user.user_id,
-      uploadfile_index1: bl.invoice_masterbi_id,
-      uploadfile_name: fileInfo.name,
-      uploadfile_url: fileInfo.url,
-      uploadfile_currency: 'USD',
-      uploadfile_state: 'PB', // TODO state PM => PB
-      uploadfile_amount: demurrageTotal,
-      uploadfile_customer_id: customer.user_id,
-      uploadfile_invoice_no: invoiceNo
-    })
-    for(let s of selection) {
-      let discharge_date = vessel.invoice_vessel_ata
-      if(s.invoice_containers_edi_discharge_date) {
-        discharge_date = s.invoice_containers_edi_discharge_date
-      }
-      await tb_invoice_container.create({
-        overdue_invoice_containers_invoice_uploadfile_id: invoice_file.uploadfile_id,
-        overdue_invoice_containers_invoice_masterbi_id: s.invoice_masterbi_id,
-        overdue_invoice_containers_invoice_containers_id: s.invoice_containers_id,
-        overdue_invoice_containers_return_date: s.invoice_containers_empty_return_date,
-        overdue_invoice_containers_overdue_days: s.invoice_containers_empty_return_overdue_days,
-        overdue_invoice_containers_overdue_amount: s.invoice_containers_empty_return_overdue_amount,
-        overdue_invoice_containers_overdue_free_days: s.invoice_containers_empty_return_overdue_free_days,
-        overdue_invoice_containers_overdue_increase_days: s.overdue_days,
-        overdue_invoice_containers_overdue_invoice_amount: s.overdue_amount,
-        overdue_invoice_containers_overdue_discharge_date: discharge_date,
-        overdue_invoice_containers_overdue_staring_date: s.starting_date
+    try {
+      let fileInfo = await common.ejs2Pdf('demurrage.ejs', renderData, 'zhongtan')
+      let invoice_file = await tb_uploadfile.create({
+        api_name: 'OVERDUE-INVOICE',
+        user_id: user.user_id,
+        uploadfile_index1: bl.invoice_masterbi_id,
+        uploadfile_name: fileInfo.name,
+        uploadfile_url: fileInfo.url,
+        uploadfile_currency: 'USD',
+        uploadfile_state: 'PB', // TODO state PM => PB
+        uploadfile_amount: demurrageTotal,
+        uploadfile_customer_id: customer.user_id,
+        uploadfile_invoice_no: invoiceNo
       })
+      
+      for(let s of selection) {
+        let discharge_date = vessel.invoice_vessel_ata
+        if(s.invoice_containers_edi_discharge_date) {
+          discharge_date = s.invoice_containers_edi_discharge_date
+        }
+        await tb_invoice_container.create({
+          overdue_invoice_containers_invoice_uploadfile_id: invoice_file.uploadfile_id,
+          overdue_invoice_containers_invoice_masterbi_id: s.invoice_masterbi_id,
+          overdue_invoice_containers_invoice_containers_id: s.invoice_containers_id,
+          overdue_invoice_containers_return_date: s.invoice_containers_empty_return_date,
+          overdue_invoice_containers_overdue_days: s.invoice_containers_empty_return_overdue_days,
+          overdue_invoice_containers_overdue_amount: s.invoice_containers_empty_return_overdue_amount,
+          overdue_invoice_containers_overdue_free_days: s.invoice_containers_empty_return_overdue_free_days,
+          overdue_invoice_containers_overdue_increase_days: s.overdue_days,
+          overdue_invoice_containers_overdue_invoice_amount: s.overdue_amount,
+          overdue_invoice_containers_overdue_discharge_date: discharge_date,
+          overdue_invoice_containers_overdue_staring_date: s.starting_date
+        })
+      }
+      return common.success()
+    } catch(e) {
+      return common.error('generate_file_01')
     }
-    return common.success()
   } else {
     return common.error('equipment_03')
   }
@@ -690,7 +694,6 @@ exports.emptyReInvoiceAct = async req => {
       s.invoice_containers_empty_return_date = con.invoice_containers_empty_return_date
       s.invoice_containers_empty_return_overdue_days = con.invoice_containers_empty_return_overdue_days
       s.invoice_containers_empty_return_overdue_amount = con.invoice_containers_empty_return_overdue_amount_invoice
-      
       let queryStr = `SELECT * FROM tbl_zhongtan_overdue_invoice_containers WHERE overdue_invoice_containers_invoice_containers_id= ? AND  overdue_invoice_containers_receipt_date IS NOT NULL AND overdue_invoice_containers_receipt_date != '' ORDER BY overdue_invoice_containers_receipt_date DESC LIMIT 1`
       let replacements = [con.invoice_containers_id]
       let rcon = await model.simpleSelect(queryStr, replacements)
@@ -760,40 +763,45 @@ exports.emptyReInvoiceAct = async req => {
     }
     renderData.demurrageTotal = formatCurrency(demurrageTotal)
     renderData.demurrageTotalStr = numberToText(demurrageTotal)
-    let fileInfo = await common.ejs2Pdf('demurrage.ejs', renderData, 'zhongtan')
-    let invoice_file = await tb_uploadfile.create({
-      api_name: 'OVERDUE-INVOICE',
-      user_id: user.user_id,
-      uploadfile_index1: bl.invoice_masterbi_id,
-      uploadfile_name: fileInfo.name,
-      uploadfile_url: fileInfo.url,
-      uploadfile_currency: 'USD',
-      uploadfile_state: 'PB', // TODO state PM => PB
-      uploadfile_amount: demurrageTotal,
-      uploadfile_customer_id: customer.user_id,
-      uploadfile_invoice_no: invoiceNo
-    })
-    for(let s of selection) {
-      let discharge_date = vessel.invoice_vessel_ata
-      if(s.invoice_containers_edi_discharge_date) {
-        discharge_date = s.invoice_containers_edi_discharge_date
-      }
-      await tb_invoice_container.create({
-        overdue_invoice_containers_invoice_uploadfile_id: invoice_file.uploadfile_id,
-        overdue_invoice_containers_invoice_masterbi_id: s.invoice_masterbi_id,
-        overdue_invoice_containers_invoice_containers_id: s.invoice_containers_id,
-        overdue_invoice_containers_return_date: s.invoice_containers_empty_return_date,
-        overdue_invoice_containers_overdue_days: s.invoice_containers_empty_return_overdue_days,
-        overdue_invoice_containers_overdue_amount: s.invoice_containers_empty_return_overdue_amount,
-        overdue_invoice_containers_overdue_free_days: s.invoice_containers_empty_return_overdue_free_days,
-        overdue_invoice_containers_overdue_increase_days: s.overdue_days,
-        overdue_invoice_containers_overdue_invoice_amount: s.overdue_amount,
-        overdue_invoice_containers_overdue_discharge_date: discharge_date,
-        overdue_invoice_containers_overdue_staring_date: s.starting_date,
-        overdue_invoice_containers_overdue_deduction: s.overdue_invoice_containers_overdue_deduction
+    try {
+      let fileInfo = await common.ejs2Pdf('demurrage.ejs', renderData, 'zhongtan')
+      let invoice_file = await tb_uploadfile.create({
+        api_name: 'OVERDUE-INVOICE',
+        user_id: user.user_id,
+        uploadfile_index1: bl.invoice_masterbi_id,
+        uploadfile_name: fileInfo.name,
+        uploadfile_url: fileInfo.url,
+        uploadfile_currency: 'USD',
+        uploadfile_state: 'PB', // TODO state PM => PB
+        uploadfile_amount: demurrageTotal,
+        uploadfile_customer_id: customer.user_id,
+        uploadfile_invoice_no: invoiceNo
       })
+      
+      for(let s of selection) {
+        let discharge_date = vessel.invoice_vessel_ata
+        if(s.invoice_containers_edi_discharge_date) {
+          discharge_date = s.invoice_containers_edi_discharge_date
+        }
+        await tb_invoice_container.create({
+          overdue_invoice_containers_invoice_uploadfile_id: invoice_file.uploadfile_id,
+          overdue_invoice_containers_invoice_masterbi_id: s.invoice_masterbi_id,
+          overdue_invoice_containers_invoice_containers_id: s.invoice_containers_id,
+          overdue_invoice_containers_return_date: s.invoice_containers_empty_return_date,
+          overdue_invoice_containers_overdue_days: s.invoice_containers_empty_return_overdue_days,
+          overdue_invoice_containers_overdue_amount: s.invoice_containers_empty_return_overdue_amount,
+          overdue_invoice_containers_overdue_free_days: s.invoice_containers_empty_return_overdue_free_days,
+          overdue_invoice_containers_overdue_increase_days: s.overdue_days,
+          overdue_invoice_containers_overdue_invoice_amount: s.overdue_amount,
+          overdue_invoice_containers_overdue_discharge_date: discharge_date,
+          overdue_invoice_containers_overdue_staring_date: s.starting_date,
+          overdue_invoice_containers_overdue_deduction: s.overdue_invoice_containers_overdue_deduction
+        })
+      }
+      return common.success()
+    } catch(e) {
+      return common.error('generate_file_01')
     }
-    return common.success()
   } else {
     return common.error('equipment_03')
   }

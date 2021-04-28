@@ -174,45 +174,49 @@ exports.shipmentReceiptAct = async req => {
   renderData.user_name = commonUser.user_name
   renderData.user_phone = commonUser.user_phone
   renderData.user_email = commonUser.user_email
-  let fileInfo = await common.ejs2Pdf('shipmentReceipt.ejs', renderData, 'zhongtan')
-  let ruf = await tb_uploadfile.create({
-    api_name: 'SHIPMENT-RECEIPT',
-    user_id: user.user_id,
-    uploadfile_index1: invoice.uploadfile_index1,
-    uploadfile_index3: invoice.uploadfile_id,
-    uploadfile_name: fileInfo.name,
-    uploadfile_url: fileInfo.url,
-    uploadfile_acttype: 'shipment',
-    uploadfile_amount: invoice.uploadfile_amount,
-    uploadfile_currency: invoice.uploadfile_currency,
-    uploadfile_check_cash: doc.shipment_receipt_check_cash,
-    uploadfile_check_no: doc.shipment_receipt_check_no,
-    uploadfile_received_from: customer.user_name,
-    uploadfile_customer_id: customer.user_id,
-    uploadfile_receipt_no: receipt_no,
-    uploadfil_release_date: curDate,
-    uploadfil_release_user_id: user.user_id,
-    uploadfile_bank_reference_no: doc.shipment_receipt_bank_reference_no
-  })
-  invoice.uploadfile_index3 = ruf.uploadfile_id
-  invoice.uploadfile_receipt_no = receipt_no
-  await invoice.save()
-  let sf = await tb_shipment_fee.findAll({
-    where: {
-      shipment_fee_invoice_id: invoice.uploadfile_id
+  try {
+    let fileInfo = await common.ejs2Pdf('shipmentReceipt.ejs', renderData, 'zhongtan')
+    let ruf = await tb_uploadfile.create({
+      api_name: 'SHIPMENT-RECEIPT',
+      user_id: user.user_id,
+      uploadfile_index1: invoice.uploadfile_index1,
+      uploadfile_index3: invoice.uploadfile_id,
+      uploadfile_name: fileInfo.name,
+      uploadfile_url: fileInfo.url,
+      uploadfile_acttype: 'shipment',
+      uploadfile_amount: invoice.uploadfile_amount,
+      uploadfile_currency: invoice.uploadfile_currency,
+      uploadfile_check_cash: doc.shipment_receipt_check_cash,
+      uploadfile_check_no: doc.shipment_receipt_check_no,
+      uploadfile_received_from: customer.user_name,
+      uploadfile_customer_id: customer.user_id,
+      uploadfile_receipt_no: receipt_no,
+      uploadfil_release_date: curDate,
+      uploadfil_release_user_id: user.user_id,
+      uploadfile_bank_reference_no: doc.shipment_receipt_bank_reference_no
+    })
+    invoice.uploadfile_index3 = ruf.uploadfile_id
+    invoice.uploadfile_receipt_no = receipt_no
+    await invoice.save()
+    let sf = await tb_shipment_fee.findAll({
+      where: {
+        shipment_fee_invoice_id: invoice.uploadfile_id
+      }
+    })
+    if(sf) {
+      for(let s of sf) {
+        s.shipment_fee_status = 'RE'
+        s.shipment_fee_receipt_by = user.user_id
+        s.shipment_fee_receipt_at = curDate
+        s.shipment_fee_receipt_no = receipt_no
+        s.shipment_fee_receipt_id = ruf.uploadfile_id
+        await s.save()
+      }
     }
-  })
-  if(sf) {
-    for(let s of sf) {
-      s.shipment_fee_status = 'RE'
-      s.shipment_fee_receipt_by = user.user_id
-      s.shipment_fee_receipt_at = curDate
-      s.shipment_fee_receipt_no = receipt_no
-      s.shipment_fee_receipt_id = ruf.uploadfile_id
-      await s.save()
-    }
+    return common.success({ url: fileInfo.url })
+  } catch(e) {
+    return common.error('generate_file_01')
   }
-  return common.success({ url: fileInfo.url })
 }
 
 exports.exportCollectAct = async (req, res) => {

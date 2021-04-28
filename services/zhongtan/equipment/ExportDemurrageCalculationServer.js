@@ -1,3 +1,4 @@
+const moment = require('moment')
 const Decimal = require('decimal.js')
 const common = require('../../../util/CommonUtil')
 const GLBConfig = require('../../../util/GLBConfig')
@@ -16,6 +17,9 @@ const tb_shipment_fee = model.zhongtan_export_shipment_fee
 
 exports.initAct = async () => {
   let returnData = {}
+  let queryStr = `SELECT export_vessel_id, CONCAT(export_vessel_name, '/', export_vessel_voyage) export_vessel FROM tbl_zhongtan_export_proforma_vessel WHERE state = 1 ORDER BY STR_TO_DATE(export_vessel_etd, '%d/%m/%Y') DESC`
+  let replacements = []
+  returnData['VESSELS'] = await model.simpleSelect(queryStr, replacements)
   returnData['CONTAINER_SIZE'] = await tb_container_size.findAll({
     attributes: ['container_size_code', 'container_size_name'],
     where: {
@@ -46,6 +50,10 @@ exports.searchAct = async req => {
   let replacements = []
 
   if(doc.search_data) {
+    if (doc.search_data.export_vessel_id) {
+      queryStr += ' and a.export_vessel_id = ? '
+      replacements.push(doc.search_data.export_vessel_id)
+    }
     if (doc.search_data.export_container_bl) {
       queryStr += ' and a.export_container_bl like ? '
       replacements.push('%' + doc.search_data.export_container_bl + '%')
@@ -54,9 +62,16 @@ exports.searchAct = async req => {
       queryStr += ' and a.export_container_no like ? '
       replacements.push('%' + doc.search_data.export_container_no + '%')
     }
-    if (doc.search_data.export_vessel_name) {
-      queryStr += ' and b.export_vessel_name like ? '
-      replacements.push('%' + doc.search_data.export_vessel_name + '%')
+    if (doc.search_data.export_vessel_id) {
+      queryStr += ' and a.export_vessel_id = ? '
+      replacements.push(doc.search_data.export_vessel_id)
+    }
+    if (doc.search_data.loading_date && doc.search_data.loading_date.length > 1 && doc.search_data.loading_date[0] && doc.search_data.loading_date[1]) {
+      let start_date = doc.search_data.loading_date[0]
+      let end_date = doc.search_data.loading_date[1]
+      queryStr += ` AND a.export_container_edi_loading_date >= ? and a.export_container_edi_loading_date < ? `
+      replacements.push(start_date)
+      replacements.push(moment(end_date, 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
     }
   }
   queryStr += ' ORDER BY b.export_vessel_id DESC, a.export_container_bl, a.export_container_no'

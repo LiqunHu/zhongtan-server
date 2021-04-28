@@ -467,7 +467,7 @@ exports.applyPaymentAct = async req => {
       logistics_verification_cntr_owner: ids[1],
       logistics_verification_cargo_type: ids[2],
       logistics_verification_api_name: api_name,
-      logistics_verification_state: 'PB',
+      logistics_verification_state: 'PM',
       logistics_verification_amount: applyAmount.toNumber(),
       logistics_verification_create_user: user.user_id,
     })
@@ -476,7 +476,7 @@ exports.applyPaymentAct = async req => {
         logistics_verification_id: ver.logistics_verification_id,
         shipment_list_id: d.shipment_list_id,
         logistics_freight_api_name: api_name,
-        logistics_freight_state: 'PB',
+        logistics_freight_state: 'PM',
         logistics_freight_amount: d.shipment_list_advance_payment
       })
       let sl = await tb_shipment_list.findOne({
@@ -708,7 +708,7 @@ exports.applyPaymentExtraAct = async req => {
     logistics_verification_cntr_owner: extra.payment_extra_cntr_owner,
     logistics_verification_cargo_type: extra.payment_extra_cargo_type,
     logistics_verification_api_name: 'PAYMENT EXTRA',
-    logistics_verification_state: 'PB',
+    logistics_verification_state: 'PM',
     logistics_verification_amount: doc.payment_extra_amount,
     logistics_verification_create_user: user.user_id,
   })
@@ -716,7 +716,7 @@ exports.applyPaymentExtraAct = async req => {
     logistics_verification_id: ver.logistics_verification_id,
     shipment_list_id: extra.payment_extra_id,
     logistics_freight_api_name: 'PAYMENT EXTRA',
-    logistics_freight_state: 'PB',
+    logistics_freight_state: 'PM',
     logistics_freight_amount: doc.payment_extra_amount
   })
 

@@ -928,36 +928,39 @@ exports.invoiceShipmentAct = async req => {
           renderData.user_name = commonUser.user_name
           renderData.user_phone = commonUser.user_phone
           renderData.user_email = commonUser.user_email
-
-          let fileInfo = await common.ejs2Pdf(bl.bk_cancellation_status === GLBConfig.ENABLE ? 'cancellationInvoice.ejs' : 'shipmentInvoice.ejs', renderData, 'zhongtan')
-          let invoice_file = await tb_uploadfile.create({
-            api_name: 'SHIPMENT-INVOICE',
-            user_id: user.user_id,
-            uploadfile_index1: bl.export_masterbl_id,
-            uploadfile_name: fileInfo.name,
-            uploadfile_url: fileInfo.url,
-            uploadfile_currency: 'USD',
-            uploadfile_state: 'AP', // TODO state PM => PB
-            uploadfile_amount: totalReceivable,
-            uploadfile_customer_id: invoices[0].shipment_fee_party,
-            uploadfile_invoice_no: invoiceNo,
-            uploadfil_release_date: curDate,
-            uploadfil_release_user_id: user.user_id
-          })
-          for(let i of invoices) {
-            let sf = await tb_shipment_fee.findOne({
-              where: {
-                shipment_fee_id: i.shipment_fee_id
-              }
+          try {
+            let fileInfo = await common.ejs2Pdf(bl.bk_cancellation_status === GLBConfig.ENABLE ? 'cancellationInvoice.ejs' : 'shipmentInvoice.ejs', renderData, 'zhongtan')
+            let invoice_file = await tb_uploadfile.create({
+              api_name: 'SHIPMENT-INVOICE',
+              user_id: user.user_id,
+              uploadfile_index1: bl.export_masterbl_id,
+              uploadfile_name: fileInfo.name,
+              uploadfile_url: fileInfo.url,
+              uploadfile_currency: 'USD',
+              uploadfile_state: 'AP', // TODO state PM => PB
+              uploadfile_amount: totalReceivable,
+              uploadfile_customer_id: invoices[0].shipment_fee_party,
+              uploadfile_invoice_no: invoiceNo,
+              uploadfil_release_date: curDate,
+              uploadfil_release_user_id: user.user_id
             })
-            if(sf) {
-              sf.shipment_fee_status = 'IN'
-              sf.shipment_fee_invoice_by = user.user_id
-              sf.shipment_fee_invoice_at = curDate
-              sf.shipment_fee_invoice_id = invoice_file.uploadfile_id
-              sf.shipment_fee_invoice_no = invoiceNo
-              await sf.save()
+            for(let i of invoices) {
+              let sf = await tb_shipment_fee.findOne({
+                where: {
+                  shipment_fee_id: i.shipment_fee_id
+                }
+              })
+              if(sf) {
+                sf.shipment_fee_status = 'IN'
+                sf.shipment_fee_invoice_by = user.user_id
+                sf.shipment_fee_invoice_at = curDate
+                sf.shipment_fee_invoice_id = invoice_file.uploadfile_id
+                sf.shipment_fee_invoice_no = invoiceNo
+                await sf.save()
+              }
             }
+          } catch(e) {
+            return common.error('generate_file_01')
           }
         }
       }

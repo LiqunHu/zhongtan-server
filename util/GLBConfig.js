@@ -449,11 +449,15 @@ module.exports = {
     { id: 'PB', text: 'Pending at Business' },
     { id: 'BD', text: 'Business Declined' }
   ],
+  LOGISTICS_FREIGHT_STATE_MANAGER: [
+    { id: 'PM', text: 'Pending at Manager' },
+    { id: 'MD', text: 'Manager Declined' }
+  ],
   LOGISTICS_FREIGHT_STATE: [
-    { id: 'PB', text: 'Pending at Business' },
-    { id: 'BD', text: 'Business Declined' },
     { id: 'PM', text: 'Pending at Manager' },
     { id: 'MD', text: 'Manager Declined' },
+    { id: 'PB', text: 'Pending at Business' },
+    { id: 'BD', text: 'Business Declined' },
     { id: 'AP', text: 'All Approved' },
     { id: 'UN', text: 'UNDO' }
   ],

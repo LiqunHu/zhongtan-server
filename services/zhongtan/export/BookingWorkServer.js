@@ -843,7 +843,7 @@ exports.generateInvoiceAct = async req => {
     billlading.billlading_state = GLBConfig.BLSTATUS_INVOICE
     billlading.billlading_invoice_time = new Date()
     billlading.billlading_invoice_operator = user.user_id
-    await billlading.save()
+    
 
     let renderData = JSON.parse(JSON.stringify(billlading))
 
@@ -884,7 +884,6 @@ exports.generateInvoiceAct = async req => {
         container_info: ''
       })
     }
-
     renderData.invoice_freight = common.money2Str(billlading.billlading_invoice_freight)
     renderData.invoice_blanding = common.money2Str(billlading.billlading_invoice_blanding)
     renderData.invoice_tasac = common.money2Str(billlading.billlading_invoice_tasac)
@@ -905,17 +904,21 @@ exports.generateInvoiceAct = async req => {
     )
 
     // let fileInfo = await common.ejs2xlsx('INVOICETemplate.xlsx', renderData, 'zhongtan')
-    let fileInfo = await common.ejs2Pdf('invoice.ejs', renderData, 'zhongtan')
+    try {
+      let fileInfo = await common.ejs2Pdf('invoice.ejs', renderData, 'zhongtan')
+      await billlading.save()
+      await tb_uploadfile.create({
+        api_name: 'BOOKING-INVOICE',
+        user_id: user.user_id,
+        uploadfile_index1: billlading.billlading_id,
+        uploadfile_name: fileInfo.name,
+        uploadfile_url: fileInfo.url
+      })
 
-    await tb_uploadfile.create({
-      api_name: 'BOOKING-INVOICE',
-      user_id: user.user_id,
-      uploadfile_index1: billlading.billlading_id,
-      uploadfile_name: fileInfo.name,
-      uploadfile_url: fileInfo.url
-    })
-
-    return common.success()
+      return common.success()
+    } catch(e) {
+      return common.error('generate_file_01')
+    }
   }
 }
 

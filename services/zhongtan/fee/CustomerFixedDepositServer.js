@@ -252,10 +252,8 @@ exports.invoiceAct = async req => {
   if (!theCustomer) {
     return common.error('import_04')
   }
-
   theDeposit.deposit_invoice_date = new Date()
   theDeposit.updated_at = new Date()
-  await theDeposit.save()
 
   let renderData = {}
   renderData.fixed_deposit_carrier = 'A'
@@ -271,28 +269,29 @@ exports.invoiceAct = async req => {
   renderData.fixed_deposit_currency = theDeposit.deposit_currency
   renderData.user_name = user.user_name
   renderData.user_email = user.user_email
-
-  let fileInfo = await common.ejs2Pdf('fixedInvoice.ejs', renderData, 'zhongtan')
-
-  await tb_uploadfile.destroy({
-    where: {
+  try {
+    let fileInfo = await common.ejs2Pdf('fixedInvoice.ejs', renderData, 'zhongtan')
+    await theDeposit.save()
+    await tb_uploadfile.destroy({
+      where: {
+        api_name: 'FIXED-INVOICE',
+        uploadfile_index1: theDeposit.fixed_deposit_id
+      }
+    })
+    await tb_uploadfile.create({
       api_name: 'FIXED-INVOICE',
-      uploadfile_index1: theDeposit.fixed_deposit_id
-    }
-  })
-
-  await tb_uploadfile.create({
-    api_name: 'FIXED-INVOICE',
-    user_id: user.user_id,
-    uploadfile_index1: theDeposit.fixed_deposit_id,
-    uploadfile_name: fileInfo.name,
-    uploadfile_url: fileInfo.url,
-    uploadfile_currency: theDeposit.deposit_currency,
-    uploadfile_state: 'PB',
-    uploadfile_invoice_no: 'CTS/' + renderData.fixed_deposit_carrier + '/' + renderData.fixed_deposit_number + '/' + renderData.fixed_deposit_invoice_no
-  })
-
-  return common.success()
+      user_id: user.user_id,
+      uploadfile_index1: theDeposit.fixed_deposit_id,
+      uploadfile_name: fileInfo.name,
+      uploadfile_url: fileInfo.url,
+      uploadfile_currency: theDeposit.deposit_currency,
+      uploadfile_state: 'PB',
+      uploadfile_invoice_no: 'CTS/' + renderData.fixed_deposit_carrier + '/' + renderData.fixed_deposit_number + '/' + renderData.fixed_deposit_invoice_no
+    })
+    return common.success()
+  } catch(e) {
+    return common.error('generate_file_01')
+  }
 }
 
 exports.releaseAct = async req => {

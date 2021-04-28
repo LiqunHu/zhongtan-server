@@ -194,7 +194,6 @@ exports.receiptAct = async req => {
       doc.billlading_receipt_type + moment().format('YYYYMMDD') + ('000000000000000' + billlading.billlading_id).slice(-4)
     billlading.billlading_receipt_operator = user.user_id
     billlading.billlading_receipt_time = new Date()
-    await billlading.save()
 
     let renderData = JSON.parse(JSON.stringify(billlading))
     renderData.receipt_date = moment().format('MMM DD, YYYY')
@@ -209,18 +208,20 @@ exports.receiptAct = async req => {
     )
 
     renderData.sum_fee_str = _.capitalize(writtenNumber(renderData.sum_fee))
-
-    let fileInfo = await common.ejs2Pdf('receipt.ejs', renderData, 'zhongtan')
-
-    await tb_uploadfile.create({
-      api_name: 'BOOKING-RECEIPT',
-      user_id: user.user_id,
-      uploadfile_index1: billlading.billlading_id,
-      uploadfile_name: fileInfo.name,
-      uploadfile_url: fileInfo.url
-    })
-
-    return common.success({ url: fileInfo.url })
+    try {
+      let fileInfo = await common.ejs2Pdf('receipt.ejs', renderData, 'zhongtan')
+      await billlading.save()
+      await tb_uploadfile.create({
+        api_name: 'BOOKING-RECEIPT',
+        user_id: user.user_id,
+        uploadfile_index1: billlading.billlading_id,
+        uploadfile_name: fileInfo.name,
+        uploadfile_url: fileInfo.url
+      })
+      return common.success({ url: fileInfo.url })
+    } catch(e) {
+      return common.error('generate_file_01')
+    }
   }
 }
 

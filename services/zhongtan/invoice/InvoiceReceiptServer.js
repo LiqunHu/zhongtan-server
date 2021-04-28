@@ -458,8 +458,6 @@ exports.downloadReceiptAct = async req => {
   if(common.checkDoState(bl)) {
     bl.invoice_masterbi_receipt_release_date = curDate
   }
-  await bl.save()
-
   let renderData = JSON.parse(JSON.stringify(bl))
   renderData.receipt_type = receipt_type
   renderData.receipt_date = moment().format('MMM DD, YYYY')
@@ -475,26 +473,30 @@ exports.downloadReceiptAct = async req => {
   renderData.user_name = commonUser.user_name
   renderData.user_phone = commonUser.user_phone
   renderData.user_email = commonUser.user_email
-  let fileInfo = await common.ejs2Pdf('receipta.ejs', renderData, 'zhongtan')
-  await tb_uploadfile.create({
-    api_name: 'RECEIPT-RECEIPT',
-    user_id: user.user_id,
-    uploadfile_index1: bl.invoice_masterbi_id,
-    uploadfile_name: fileInfo.name,
-    uploadfile_url: fileInfo.url,
-    uploadfile_acttype: doc.checkType,
-    uploadfile_amount: doc.invoice_masterbi_receipt_amount,
-    uploadfile_currency: doc.invoice_masterbi_receipt_currency,
-    uploadfile_check_cash: doc.invoice_masterbi_check_cash,
-    uploadfile_check_no: doc.invoice_masterbi_check_no,
-    uploadfile_received_from: doc.invoice_masterbi_received_from,
-    uploadfile_receipt_no: bl.invoice_masterbi_receipt_no,
-    uploadfil_release_date: curDate,
-    uploadfil_release_user_id: user.user_id,
-    uploadfile_bank_reference_no: doc.invoice_masterbi_bank_reference_no,
-  })
-
-  return common.success({ url: fileInfo.url })
+  try {
+    let fileInfo = await common.ejs2Pdf('receipta.ejs', renderData, 'zhongtan')
+    await tb_uploadfile.create({
+      api_name: 'RECEIPT-RECEIPT',
+      user_id: user.user_id,
+      uploadfile_index1: bl.invoice_masterbi_id,
+      uploadfile_name: fileInfo.name,
+      uploadfile_url: fileInfo.url,
+      uploadfile_acttype: doc.checkType,
+      uploadfile_amount: doc.invoice_masterbi_receipt_amount,
+      uploadfile_currency: doc.invoice_masterbi_receipt_currency,
+      uploadfile_check_cash: doc.invoice_masterbi_check_cash,
+      uploadfile_check_no: doc.invoice_masterbi_check_no,
+      uploadfile_received_from: doc.invoice_masterbi_received_from,
+      uploadfile_receipt_no: bl.invoice_masterbi_receipt_no,
+      uploadfil_release_date: curDate,
+      uploadfil_release_user_id: user.user_id,
+      uploadfile_bank_reference_no: doc.invoice_masterbi_bank_reference_no,
+    })
+    await bl.save()
+    return common.success({ url: fileInfo.url })
+  } catch(e) {
+    return common.error('generate_file_01')
+  }
 }
 
 exports.doReleaseAct = async req => {

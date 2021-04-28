@@ -169,36 +169,40 @@ exports.receiptAct = async req => {
   renderData.user_name = commonUser.user_name
   renderData.user_phone = commonUser.user_phone
   renderData.user_email = commonUser.user_email
-  let fileInfo = await common.ejs2Pdf('mnrReceipt.ejs', renderData, 'zhongtan')
-  await tb_uploadfile.create({
-    api_name: 'MNR-RECEIPT',
-    user_id: user.user_id,
-    uploadfile_index1: invoice.uploadfile_index1,
-    uploadfile_index3: invoice.uploadfile_id,
-    uploadfile_name: fileInfo.name,
-    uploadfile_url: fileInfo.url,
-    uploadfile_acttype: 'MNR',
-    uploadfile_amount: invoice.uploadfile_amount,
-    uploadfile_currency: invoice.uploadfile_currency,
-    uploadfile_check_cash: doc.mnr_invoice_check_cash,
-    uploadfile_check_no: doc.mnr_invoice_check_no,
-    uploadfile_received_from: doc.received_from,
-    uploadfile_receipt_no: receipt_no,
-    uploadfil_release_date: curDate,
-    uploadfil_release_user_id: user.user_id,
-    uploadfile_bank_reference_no: doc.mnr_invoice_bank_reference_no,
-  })
-  invoice.uploadfile_receipt_no = receipt_no
-  invoice.save()
+  try {
+    let fileInfo = await common.ejs2Pdf('mnrReceipt.ejs', renderData, 'zhongtan')
+    await tb_uploadfile.create({
+      api_name: 'MNR-RECEIPT',
+      user_id: user.user_id,
+      uploadfile_index1: invoice.uploadfile_index1,
+      uploadfile_index3: invoice.uploadfile_id,
+      uploadfile_name: fileInfo.name,
+      uploadfile_url: fileInfo.url,
+      uploadfile_acttype: 'MNR',
+      uploadfile_amount: invoice.uploadfile_amount,
+      uploadfile_currency: invoice.uploadfile_currency,
+      uploadfile_check_cash: doc.mnr_invoice_check_cash,
+      uploadfile_check_no: doc.mnr_invoice_check_no,
+      uploadfile_received_from: doc.received_from,
+      uploadfile_receipt_no: receipt_no,
+      uploadfil_release_date: curDate,
+      uploadfil_release_user_id: user.user_id,
+      uploadfile_bank_reference_no: doc.mnr_invoice_bank_reference_no,
+    })
+    invoice.uploadfile_receipt_no = receipt_no
+    invoice.save()
 
-  mnr.mnr_ledger_receipt_amount = invoice.uploadfile_amount
-  mnr.mnr_ledger_receipt_date = moment(curDate).format('YYYY-MM-DD HH:mm:ss')
-  mnr.mnr_ledger_receipt_no = receipt_no
-  mnr.mnr_ledger_check_cash = doc.mnr_invoice_check_cash
-  mnr.mnr_ledger_check_no = doc.mnr_invoice_check_no
-  mnr.mnr_ledger_bank_reference_no = doc.mnr_invoice_bank_reference_no
-  mnr.save()
-  return common.success({ url: fileInfo.url })
+    mnr.mnr_ledger_receipt_amount = invoice.uploadfile_amount
+    mnr.mnr_ledger_receipt_date = moment(curDate).format('YYYY-MM-DD HH:mm:ss')
+    mnr.mnr_ledger_receipt_no = receipt_no
+    mnr.mnr_ledger_check_cash = doc.mnr_invoice_check_cash
+    mnr.mnr_ledger_check_no = doc.mnr_invoice_check_no
+    mnr.mnr_ledger_bank_reference_no = doc.mnr_invoice_bank_reference_no
+    mnr.save()
+    return common.success({ url: fileInfo.url })
+  } catch(e) {
+    return common.error('generate_file_01')
+  }
 }
 
 exports.searchCustomerAct = async req => {
