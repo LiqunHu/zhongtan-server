@@ -9,7 +9,7 @@ const moment = require('moment')
 const ejsExcel = require('ejsexcel')
 const JSZip = require('jszip')
 const Docxtemplater = require('docxtemplater')
-const puppeteerBrowser = require('../../util/PuppeteerBrowser')
+const puppeteerBrowser = require('../util/PuppeteerBrowser')
 
 const config = require('../app/config')
 const Error = require('./Error')

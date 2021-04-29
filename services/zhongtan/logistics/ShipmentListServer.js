@@ -1,8 +1,10 @@
 const moment = require('moment')
+const Decimal = require('decimal.js')
 const common = require('../../../util/CommonUtil')
 const model = require('../../../app/model')
 const GLBConfig = require('../../../util/GLBConfig')
 const opSrv = require('../../common/system/OperationPasswordServer')
+const freightSrv = require('../logistics/TBLFreightConfigServer')
 
 const tb_shipment_list = model.zhongtan_logistics_shipment_list
 
@@ -202,6 +204,7 @@ exports.addAct = async req => {
 
 exports.modifyAct = async req => {
   let doc = common.docValidate(req)
+  let oldData = doc.old
   let modifyData = doc.new
   if(modifyData) {
     let modifyRow = await tb_shipment_list.findOne({
@@ -218,13 +221,14 @@ exports.modifyAct = async req => {
       modifyRow.shipment_list_truck_plate = modifyData.shipment_list_truck_plate
       modifyRow.shipment_list_ata_destination = modifyData.shipment_list_ata_destination
       modifyRow.shipment_list_delivery_date = modifyData.shipment_list_delivery_date
-      modifyRow.shipment_list_vendor = modifyData.shipment_list_vendor
+      modifyRow.shipment_list_vendor = modifyData.shipment_list_vendor ? modifyData.shipment_list_vendor : null
       modifyRow.shipment_list_remark = modifyData.shipment_list_remark
       modifyRow.shipment_list_ata_tz_border = modifyData.shipment_list_ata_tz_border
       modifyRow.shipment_list_ata_foreing_border = modifyData.shipment_list_ata_foreing_border
       modifyRow.shipment_list_border_release_date = modifyData.shipment_list_border_release_date
       await modifyRow.save()
-      if(modifyData.shipment_list_vendor) {
+      if((oldData.shipment_list_vendor && oldData.shipment_list_vendor !== modifyData.shipment_list_vendor) 
+          || modifyData.shipment_list_vendor && oldData.shipment_list_vendor !== modifyData.shipment_list_vendor) {
         // 更新同提单号
         let sameRows = await tb_shipment_list.findAll({
           where: {
@@ -235,8 +239,11 @@ exports.modifyAct = async req => {
         if(sameRows && sameRows.length > 0) {
           for(let s of sameRows) {
             if(s.shipment_list_id !== modifyData.shipment_list_id) {
-              s.shipment_list_vendor = modifyData.shipment_list_vendor
+              s.shipment_list_vendor = modifyData.shipment_list_vendor ? modifyData.shipment_list_vendor : null
               await s.save()
+            }
+            if(modifyData.shipment_list_vendor) {
+              await this.updateShipmentFreight(s.shipment_list_id)
             }
           }
         }
@@ -356,5 +363,35 @@ exports.checkPasswordAct = async req => {
     return common.success()
   } else {
     return common.error('auth_24')
+  }
+}
+
+
+exports.updateShipmentFreight = async (shipment_list_id) => {
+  let sp = await tb_shipment_list.findOne({
+    where: {
+      shipment_list_id: shipment_list_id,
+      state: GLBConfig.ENABLE
+    }
+  })
+  if(sp) {
+    let freight = await freightSrv.countShipmentFreight(sp.shipment_list_vendor, sp.shipment_list_business_type, sp.shipment_list_cargo_type, 
+      sp.shipment_list_business_type === 'I' ? 'TZDAR' : sp.shipment_list_port_of_loading, 
+      sp.shipment_list_business_type === 'I' ? sp.shipment_list_port_of_destination : 'TZDAR', 
+      sp.shipment_list_cntr_owner, sp.shipment_list_size_type, sp.shipment_list_business_type === 'I' ? sp.shipment_list_discharge_date : sp.shipment_list_loading_date)
+    if(freight) {
+      if(freight.freight_config_amount && sp.shipment_list_payment_status === '0') {
+        sp.shipment_list_total_freight = freight.freight_config_amount
+        sp.shipment_list_advance_payment = freight.freight_config_advance_amount
+        sp.shipment_list_advance_percent = freight.freight_config_advance
+        sp.shipment_list_balance_payment = new Decimal(freight.freight_config_amount).sub(freight.freight_config_advance_amount).toNumber()
+        sp.shipment_list_payment_status = '1'
+      }
+      if(freight.freight_config_amount_receivable && sp.shipment_list_receivable_status === '0') {
+        sp.shipment_list_receivable_freight = freight.freight_config_amount_receivable
+        sp.shipment_list_receivable_status = '1'
+      }
+      sp.save()
+    }
   }
 }

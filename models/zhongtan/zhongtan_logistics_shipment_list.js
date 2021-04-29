@@ -178,5 +178,56 @@ module.exports = db.defineModel('tbl_zhongtan_logistics_shipment_list', {
     // 额外费用先令最后支付日期
     type: db.STRING(20),
     allowNull: true
+  },
+  shipment_list_receivable_status: {
+    // 应收状态
+    type: db.STRING(5),
+    defaultValue: '0',
+    allowNull: false
+  },
+  shipment_list_receivable_freight: {
+    // 应收运费
+    type: db.STRING(20),
+    allowNull: true
+  },
+  shipment_list_receivable_freight_invoice: {
+    // 应收运费发票
+    type: db.STRING(20),
+    allowNull: true
+  },
+  shipment_list_receivable_freight_receipt: {
+    // 应收运费收据
+    type: db.STRING(20),
+    allowNull: true
+  },
+  shipment_list_receivable_extra_usd: {
+    // 额外应收美元合计
+    type: db.STRING(20),
+    allowNull: true
+  },
+  shipment_list_receivable_extra_tzs: {
+    // 额外应收先令合计
+    type: db.STRING(20),
+    allowNull: true
+  },
+  shipment_list_receivable_extra_usd_invoice: {
+    // 额外应收美元最后开票时间
+    type: db.STRING(20),
+    allowNull: true
+  },
+  shipment_list_receivable_extra_usd_receipt: {
+    // 额外应收美元最后收据时间
+    type: db.STRING(20),
+    allowNull: true
+  },
+  shipment_list_receivable_extra_tzs_invoice: {
+    // 额外应收先令最后开票时间
+    type: db.STRING(20),
+    allowNull: true
+  },
+  shipment_list_receivable_extra_tzs_receipt: {
+    // 额外应收先令最后收据时间
+    type: db.STRING(20),
+    allowNull: true
   }
 })

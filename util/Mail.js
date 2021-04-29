@@ -11,6 +11,7 @@ const common = require('../util/CommonUtil')
 const cal_config_srv = require('../services/zhongtan/equipment/OverdueCalculationConfigServer')
 const empty_stock_srv = require('../services/zhongtan/equipment/EmptyStockManagementServer')
 const cal_demurrage_srv = require('../services/zhongtan/equipment/ExportDemurrageCalculationServer')
+const freight_srv = require('../services/zhongtan/logistics/ShipmentListServer')
 
 const tb_invoice_containers = model.zhongtan_invoice_containers
 const tb_vessel = model.zhongtan_invoice_vessel
@@ -705,6 +706,8 @@ const updateShipmentList = async (ediData) => {
         }
       }
     }
+    await sl.save()
+    freight_srv.updateShipmentFreight(sl.shipment_list_id)
   }
 }
 

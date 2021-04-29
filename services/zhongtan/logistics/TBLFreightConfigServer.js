@@ -199,3 +199,26 @@ exports.deleteAct = async req => {
     return common.error('equipment_02')
   }
 }
+
+/**
+ * 
+ * @param {*} vendor 供应商
+ * @param {*} business_type 进出口
+ * @param {*} cargo_type 货物类型
+ * @param {*} freight_pol 起运点
+ * @param {*} feight_pod 目的地
+ * @param {*} carrier 代理
+ * @param {*} container 箱型尺寸
+ * @param {*} transport_date 运输日期
+ */
+exports.countShipmentFreight = async (vendor, business_type, cargo_type, freight_pol, feight_pod, carrier, container, transport_date) => {
+  let queryStr = `select * from tbl_zhongtan_freight_config where state = ? AND freight_config_vendor = ? AND freight_config_business_type = ? 
+      AND freight_config_cargo_type = ? AND freight_config_pol = ? AND freight_config_pod = ? AND freight_config_carrier = ? 
+      AND freight_config_size_type = ? AND freight_config_enabled_date <= ? order by freight_config_enabled_date desc, freight_config_id desc limit 1`
+  let replacements = [GLBConfig.ENABLE, vendor, business_type, cargo_type, freight_pol, feight_pod, carrier, container, transport_date]
+  let result = await model.simpleSelect(queryStr, replacements)
+  if(result && result.length === 1) {
+    return result[0]
+  } 
+  return null
+}

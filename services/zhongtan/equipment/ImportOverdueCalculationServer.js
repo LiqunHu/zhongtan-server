@@ -8,6 +8,7 @@ const seq = require('../../../util/Sequence')
 const mailer = require('../../../util/Mail')
 const cal_config_srv = require('./OverdueCalculationConfigServer')
 const opSrv = require('../../common/system/OperationPasswordServer')
+const freight_srv = require('../logistics/ShipmentListServer')
 const Op = model.Op
 
 const tb_user = model.common_user
@@ -334,6 +335,7 @@ exports.ediCalculationSaveAct = async req => {
         sl.shipment_list_discharge_date = doc.invoice_containers_edi_discharge_date ? moment(doc.invoice_containers_edi_discharge_date, 'DD/MM/YYYY').format('YYYY-MM-DD') : sl.shipment_list_discharge_date
         sl.shipment_list_empty_return_date = doc.invoice_containers_actually_return_date ? moment(doc.invoice_containers_actually_return_date, 'DD/MM/YYYY').format('YYYY-MM-DD') : sl.shipment_list_empty_return_date 
         await sl.save()
+        freight_srv.updateShipmentFreight(sl.shipment_list_id)
       }
     }
     return common.success()

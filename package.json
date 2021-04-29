@@ -22,6 +22,7 @@
     "body-parser": "^1.18.3",
     "cookie-parser": "^1.4.3",
     "cors": "^2.8.4",
+    "decimal.js": "^10.2.1",
     "docxtemplater": "^3.9.9",
     "ejs": "^2.6.1",
     "ejsexcel": "^3.5.3",
@@ -53,7 +54,7 @@
     "nodemailer": "^5.1.1",
     "number2text": "^1.1.0",
     "pdf2json": "^1.2.0",
-    "puppeteer": "6.0.0",
+    "puppeteer": "^6.0.0",
     "request": "^2.87.0",
     "request-promise": "^4.2.2",
     "sequelize": "^4.41.1",
@@ -63,8 +64,7 @@
     "written-number": "^0.9.1",
     "ws": "^5.2.0",
     "xlsx": "^0.15.4",
-    "xml-js": "1.6.11",
-    "decimal.js": "^10.2.1"
+    "xml-js": "1.6.11"
   },
   "devDependencies": {
     "rimraf": "^2.6.2",

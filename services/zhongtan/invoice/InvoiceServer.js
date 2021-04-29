@@ -10,6 +10,7 @@ const mailer = require('../../../util/Mail')
 const cal_config_srv = require('../equipment/OverdueCalculationConfigServer')
 const opSrv = require('../../common/system/OperationPasswordServer')
 const adsSrv = require('../configuration/AllotDepotServer')
+const freight_srv = require('../logistics/ShipmentListServer')
 const Op = model.Op
 
 const tb_user = model.common_user
@@ -1905,6 +1906,7 @@ exports.changeblAct = async req => {
           s.shipment_list_port_of_destination = b.invoice_masterbi_destination ? b.invoice_masterbi_destination : s.shipment_list_port_of_destination
           s.shipment_list_port_of_loading = b.invoice_masterbi_loading ? b.invoice_masterbi_loading : s.shipment_list_port_of_loading
           await s.save()
+          freight_srv.updateShipmentFreight(s.shipment_list_id)
         }
       }
     }

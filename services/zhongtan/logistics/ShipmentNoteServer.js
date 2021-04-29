@@ -4,6 +4,7 @@ const common = require('../../../util/CommonUtil')
 const model = require('../../../app/model')
 const GLBConfig = require('../../../util/GLBConfig')
 const opSrv = require('../../common/system/OperationPasswordServer')
+const freightSrv = require('../logistics/TBLFreightConfigServer')
 
 const tb_shipment_list = model.zhongtan_logistics_shipment_list
 const tb_verification = model.zhongtan_logistics_verification
@@ -183,14 +184,14 @@ exports.searchShipmentListAct = async req => {
     total = result.length
     for(let r of result) {
       r._checked = false
-      let freight = await countShipmentPayment(r.shipment_list_vendor, r.shipment_list_business_type, r.shipment_list_cargo_type, 
+      let freight = await freightSrv.countShipmentFreight(r.shipment_list_vendor, r.shipment_list_business_type, r.shipment_list_cargo_type, 
         r.shipment_list_business_type === 'I' ? 'TZDAR' : r.shipment_list_port_of_loading, r.shipment_list_business_type === 'I' ? r.shipment_list_port_of_destination : 'TZDAR', r.shipment_list_cntr_owner, r.shipment_list_size_type, r.shipment_list_business_type === 'I' ? r.shipment_list_discharge_date : r.shipment_list_loading_date)
       if(freight) {
         r._disabled = false
         r.shipment_list_total_freight = freight.freight_config_amount
         r.shipment_list_advance_payment = freight.freight_config_advance_amount
         r.shipment_list_advance_percent = freight.freight_config_advance
-        r.shipment_list_balance_payment = new Decimal(freight.freight_config_amount).sub(freight.freight_config_advance_amount)
+        r.shipment_list_balance_payment = new Decimal(freight.freight_config_amount).sub(freight.freight_config_advance_amount).toNumber()
       } else {
         r._disabled = true
       }
@@ -207,29 +208,6 @@ exports.searchShipmentListAct = async req => {
   returnData.total = total
   returnData.rows = rows
   return common.success(returnData)
-}
-
-/**
- * 
- * @param {*} vendor 供应商
- * @param {*} business_type 进出口
- * @param {*} cargo_type 货物类型
- * @param {*} freight_pol 起运点
- * @param {*} feight_pod 目的地
- * @param {*} carrier 代理
- * @param {*} container 箱型尺寸
- * @param {*} transport_date 运输日期
- */
-const countShipmentPayment = async (vendor, business_type, cargo_type, freight_pol, feight_pod, carrier, container, transport_date) => {
-  let queryStr = `select freight_config_amount, freight_config_advance, freight_config_advance_amount from tbl_zhongtan_freight_config where state = ? AND freight_config_vendor = ? AND freight_config_business_type = ? 
-      AND freight_config_cargo_type = ? AND freight_config_pol = ? AND freight_config_pod = ? AND freight_config_carrier = ? 
-      AND freight_config_size_type = ? AND freight_config_enabled_date <= ? order by freight_config_enabled_date desc, freight_config_id desc limit 1`
-  let replacements = [GLBConfig.ENABLE, vendor, business_type, cargo_type, freight_pol, feight_pod, carrier, container, transport_date]
-  let result = await model.simpleSelect(queryStr, replacements)
-  if(result && result.length === 1) {
-    return result[0]
-  } 
-  return null
 }
 
 exports.addAct = async req => {
@@ -393,10 +371,12 @@ exports.applyPaymentSearchAct = async req => {
         if(p.shipment_list_business_type === 'I') {
           if(!p.shipment_list_discharge_date || !p.shipment_list_empty_return_date) {
             p._disabled = true
+            p.disabled_title = 'Empty Returned Not'
           }
         } else if(p.shipment_list_business_type === 'E') {
           if(!p.shipment_list_depot_gate_out_date || !p.shipment_list_loading_date) {
             p._disabled = true
+            p.disabled_title = 'Empty Returned Not'
           }
         }
         retData.balance_list.push(p)
@@ -426,6 +406,28 @@ exports.applyPaymentSearchAct = async req => {
       }
     }
     retData.advance_total = retData.advance_list.length
+    // 判断预付是否包含所有箱子
+    if(retData.advance_list && retData.advance_list.length > 0) {
+      let bgs = await common.groupingJson(retData.advance_list, 'shipment_list_bill_no')
+      if(bgs && bgs.length > 0) {
+        for(let bg of bgs) {
+          let blcount = await tb_shipment_list.count({
+            where: {
+              shipment_list_bill_no: bg.id,
+              state: GLBConfig.ENABLE
+            }
+          })
+          if(blcount !== bg.data.length) {
+            for(let al of retData.advance_list) {
+              if(al.shipment_list_bill_no === bg.id) {
+                al._disabled = true
+                al.disabled_title = 'Must Select All B/L#'
+              }
+            }
+          }
+        }
+      }
+    }
     retData.balance_total = retData.balance_list.length
     retData.extra_total = retData.extra_list.length
   }
