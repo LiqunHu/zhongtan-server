@@ -11,6 +11,7 @@ const tb_verification = model.zhongtan_logistics_verification
 const tb_verification_freight = model.zhongtan_logistics_verification_freight
 const tb_uploadfile = model.zhongtan_uploadfile
 const tb_payment_extra = model.zhongtan_logistics_payment_extra
+const tb_user = model.common_user
 
 exports.initAct = async () => {
   let returnData = {}
@@ -28,7 +29,10 @@ exports.initAct = async () => {
   }
   returnData.VENDOR = VENDOR
   returnData.RECEIPT_CURRENCY = GLBConfig.RECEIPT_CURRENCY
-  returnData.PAYMENT_STATUS = GLBConfig.FREIGHT_PAYMENT_STATUS
+  returnData.RECEIVABLE_STATUS = GLBConfig.FREIGHT_RECEIVABLE_STATUS
+  queryStr = `SELECT user_id, user_name FROM tbl_common_user WHERE state = '1' AND user_type = ? ORDER BY user_name`
+  replacements = [GLBConfig.TYPE_CUSTOMER]
+  returnData['COMMON_CUSTOMER'] = await model.simpleSelect(queryStr, replacements)
   return common.success(returnData)
 }
 
@@ -41,9 +45,9 @@ exports.searchAct = async req => {
   returnData.total = result.count
   let rows = []
   if(result.data && result.data.length > 0) {
-    // 支付状态 0：未添加，1：已添加，2：申请预付，3预付支付，4申请余款，5余款支付，6申请额外费用，7额外费用支付
+    // 应收状态 0：未添加，1：已添加，2：申请发票，3已开发票，4已开收据，5申请额外发票，6已开额外发票，7已开额外收据
     for(let d of result.data) {
-      if(d.shipment_list_payment_status === '2' || d.shipment_list_payment_status === '4' || d.shipment_list_payment_status === '6') {
+      if(d.shipment_list_receivable_status === '2' || d.shipment_list_receivable_status === '3' || d.shipment_list_receivable_status === '5' || d.shipment_list_receivable_status === '6') {
         d._disabled = true
       } else {
         d._disabled = false
@@ -51,7 +55,7 @@ exports.searchAct = async req => {
       d._checked = false
       queryStr = `SELECT u.*, cu.user_name FROM tbl_zhongtan_uploadfile u LEFT JOIN tbl_common_user cu ON u.uploadfil_release_user_id = cu.user_id WHERE u.state = ? AND uploadfile_index1 IN (
                   SELECT logistics_verification_id FROM tbl_zhongtan_logistics_verification_freight WHERE state = ? AND shipment_list_id = ? AND logistics_freight_state = 'AP') 
-                  AND api_name IN ('PAYMENT ADVANCE', 'PAYMENT BALANCE') ORDER BY api_name`
+                  AND api_name IN ('FREIGHT INVOICE', 'FREIGHT RECEIPT') ORDER BY uploadfile_id DESC`
       let replacements = [GLBConfig.ENABLE, GLBConfig.ENABLE, d.shipment_list_id]
       let paymentFiles = await model.simpleSelect(queryStr, replacements)
       let files = []
@@ -65,14 +69,16 @@ exports.searchAct = async req => {
             date: moment(pf.created_at).format('YYYY-MM-DD HH:mm:ss'),
             url: pf.uploadfile_url,
             file_id : pf.uploadfile_id,
-            relation_id: pf.uploadfile_index1
+            relation_id: pf.uploadfile_index1,
+            receipt_no: pf.uploadfile_receipt_no,
+            customer_id: pf.uploadfile_customer_id
           })
         }
       }
       queryStr = `SELECT u.*, cu.user_name FROM tbl_zhongtan_uploadfile u LEFT JOIN tbl_common_user cu ON u.user_id = cu.user_id WHERE u.state = ? AND uploadfile_index1 IN (
         SELECT logistics_verification_id FROM tbl_zhongtan_logistics_verification_freight WHERE state = ? AND logistics_freight_state = 'AP' 
-        AND shipment_list_id IN (SELECT payment_extra_id FROM tbl_zhongtan_logistics_payment_extra WHERE state = 1 AND payment_extra_type = 'P' AND payment_extra_status = '7' AND payment_extra_shipment_id = ?)) 
-        AND api_name IN ('PAYMENT EXTRA') ORDER BY api_name`
+        AND shipment_list_id IN (SELECT payment_extra_id FROM tbl_zhongtan_logistics_payment_extra WHERE state = 1 AND payment_extra_type = 'R' AND payment_extra_status = '6' AND payment_extra_shipment_id = ?)) 
+        AND api_name IN ('EXTRA INVOICE', 'EXTRA RECEIPT') ORDER BY uploadfile_id DESC`
       replacements = [GLBConfig.ENABLE, GLBConfig.ENABLE, d.shipment_list_id]
       let extraFiles = await model.simpleSelect(queryStr, replacements)
       if(extraFiles) {
@@ -85,7 +91,9 @@ exports.searchAct = async req => {
             date: moment(ex.created_at).format('YYYY-MM-DD HH:mm:ss'),
             url: ex.uploadfile_url,
             file_id : ex.uploadfile_id,
-            relation_id: ex.uploadfile_index1
+            relation_id: ex.uploadfile_index1,
+            receipt_no: ex.uploadfile_receipt_no,
+            customer_id: ex.uploadfile_customer_id
           })
         }
       }
@@ -98,10 +106,11 @@ exports.searchAct = async req => {
 }
 
 const queryWhereJoin = async (param) => {
-  let queryStr = `select s.*, v.vendor_code as shipment_list_vendor_code, v.vendor_name as shipment_list_vendor_name from tbl_zhongtan_logistics_shipment_list s 
+  let queryStr = `select s.*, v.vendor_code as shipment_list_vendor_code, v.vendor_name as shipment_list_vendor_name, u.user_name as shipment_list_invoice_customer from tbl_zhongtan_logistics_shipment_list s 
                   left join (SELECT shipment_list_bill_no, IFNULL(shipment_list_discharge_date, shipment_list_depot_gate_out_date) AS sort_date FROM tbl_zhongtan_logistics_shipment_list GROUP BY shipment_list_bill_no) ss ON s.shipment_list_bill_no = ss.shipment_list_bill_no
                   left join tbl_common_vendor v on s.shipment_list_vendor = v.vendor_id 
-                  where s.state = ? and shipment_list_payment_status <> '0' `
+                  left join tbl_common_user u on s.shipment_list_customer = u.user_id 
+                  where s.state = ? `
   let replacements = [GLBConfig.ENABLE]
   let searchPara = param.searchPara
   if(searchPara) {
@@ -163,121 +172,19 @@ const queryWhereJoin = async (param) => {
       }
     }
     if(searchPara.shipment_list_vendor) {
-      queryStr = queryStr + ' and s.shipment_list_vendor like ? '
-      replacements.push('%' + searchPara.shipment_list_vendor + '%')
+      queryStr = queryStr + ' and s.shipment_list_vendor = ? '
+      replacements.push(searchPara.shipment_list_vendor)
+    }
+    if(searchPara.shipment_list_customer) {
+      queryStr = queryStr + ' and (s.shipment_list_customer = ? or s.shipment_list_extra_customer = ?) '
+      replacements.push(searchPara.shipment_list_customer)
+      replacements.push(searchPara.shipment_list_customer)
     }
   }
   return {
     queryStr: queryStr,
     replacements: replacements
   }
-}
-
-exports.searchShipmentListAct = async req => {
-  let doc = common.docValidate(req),
-    returnData = {}
-  let search_bl = '%' + doc.search_data.bill_no + '%'
-  let queryStr = `select s.*, v.vendor_code as shipment_list_vendor_code, v.vendor_name as shipment_list_vendor_name 
-                  from tbl_zhongtan_logistics_shipment_list s left join tbl_common_vendor v on s.shipment_list_vendor = v.vendor_id where s.state = ? and shipment_list_payment_status = '0' and shipment_list_bill_no like ?`
-  let replacements = [GLBConfig.ENABLE, search_bl]
-  let result = await model.simpleSelect(queryStr, replacements)
-  let total = 0
-  let rows = []
-  if(result && result.length > 0) {
-    total = result.length
-    for(let r of result) {
-      r._checked = false
-      let freight = await freightSrv.countShipmentFreight(r.shipment_list_vendor, r.shipment_list_business_type, r.shipment_list_cargo_type, 
-        r.shipment_list_business_type === 'I' ? 'TZDAR' : r.shipment_list_port_of_loading, r.shipment_list_business_type === 'I' ? r.shipment_list_port_of_destination : 'TZDAR', r.shipment_list_cntr_owner, r.shipment_list_size_type, r.shipment_list_business_type === 'I' ? r.shipment_list_discharge_date : r.shipment_list_loading_date)
-      if(freight) {
-        r._disabled = false
-        r.shipment_list_total_freight = freight.freight_config_amount
-        r.shipment_list_advance_payment = freight.freight_config_advance_amount
-        r.shipment_list_advance_percent = freight.freight_config_advance
-        r.shipment_list_balance_payment = new Decimal(freight.freight_config_amount).sub(freight.freight_config_advance_amount).toNumber()
-      } else {
-        r._disabled = true
-      }
-      rows.push(r)
-    }
-    for(let r1 of rows) {
-      for(let r2 of rows) {
-        if(r1.shipment_list_bill_no === r2.shipment_list_bill_no && r1._disabled) {
-          r2._disabled = true
-        }
-      }
-    }
-  }
-  returnData.total = total
-  returnData.rows = rows
-  return common.success(returnData)
-}
-
-exports.addAct = async req => {
-  let doc = common.docValidate(req)
-  let addData = doc.add_shipment_list
-  if(addData) {
-    for(let d of addData) {
-      let sm = await tb_shipment_list.findOne({
-        where: {
-          shipment_list_id: d.shipment_list_id,
-          state: GLBConfig.ENABLE
-        }
-      })
-      if(sm) {
-        sm.shipment_list_payment_status = '1'
-        sm.shipment_list_total_freight = d.shipment_list_total_freight
-        sm.shipment_list_advance_payment = d.shipment_list_advance_payment
-        sm.shipment_list_advance_percent = d.shipment_list_advance_percent
-        sm.shipment_list_balance_payment = d.shipment_list_balance_payment
-        await sm.save()
-      }
-    }
-  }
-  return common.success()
-}
-
-exports.modifyAct = async req => {
-  let doc = common.docValidate(req)
-  let modifyData = doc.new
-  if(modifyData) {
-    let modifyRow = await tb_shipment_list.findOne({
-      where: {
-        shipment_list_id: modifyData.shipment_list_id,
-        state: GLBConfig.ENABLE
-      }
-    })
-    if(modifyRow) {
-      modifyRow.shipment_list_port_of_loading = modifyData.shipment_list_port_of_loading
-      modifyRow.shipment_list_dar_customs_release_date = modifyData.shipment_list_dar_customs_release_date
-      modifyRow.shipment_list_truck_departure_date = modifyData.shipment_list_truck_departure_date
-      modifyRow.shipment_list_truck_plate = modifyData.shipment_list_truck_plate
-      modifyRow.shipment_list_ata_destination = modifyData.shipment_list_ata_destination
-      modifyRow.shipment_list_delivery_date = modifyData.shipment_list_delivery_date
-      modifyRow.shipment_list_vendor = modifyData.shipment_list_vendor
-      modifyRow.shipment_list_remark = modifyData.shipment_list_remark
-      modifyRow.shipment_list_ata_tz_border = modifyData.shipment_list_ata_tz_border
-      modifyRow.shipment_list_ata_foreing_border = modifyData.shipment_list_ata_foreing_border
-      modifyRow.shipment_list_border_release_date = modifyData.shipment_list_border_release_date
-      await modifyRow.save()
-    }
-  }
-  return common.success()
-}
-
-exports.deleteAct = async req => {
-  let doc = common.docValidate(req)
-  let sl = await tb_shipment_list.findOne({
-    where: {
-      shipment_list_id: doc.shipment_list_id,
-      state: GLBConfig.ENABLE
-    }
-  })
-  if(sl) {
-    sl.shipment_list_payment_status = '0'
-    await sl.save()
-  }
-  return common.success()
 }
 
 exports.exportAct = async (req, res) => {
@@ -296,11 +203,6 @@ exports.exportAct = async (req, res) => {
       r.shipment_list_in_date = r.shipment_list_depot_gate_out_date
       r.shipment_list_out_date = r.shipment_list_loading_date
     }
-    if(r.shipment_list_in_date && r.shipment_list_out_date) {
-      r.empty_returned_or_not = 'YES'
-    } else {
-      r.empty_returned_or_not = 'NO'
-    }
     if(r.shipment_list_cargo_type === 'LOCAL') {
       r.shipment_list_cargo_type = 'IMPORT'
     }
@@ -312,7 +214,7 @@ exports.exportAct = async (req, res) => {
   }
   jsData.push(transits)
   jsData.push(imports)
-  let filepath = await common.ejs2xlsx('LogisticsPaymentNoteTemplate.xlsx', jsData)
+  let filepath = await common.ejs2xlsx('LogisticsFreightInvoice.xlsx', jsData)
   res.sendFile(filepath)
 }
 
@@ -326,154 +228,172 @@ exports.checkPasswordAct = async req => {
   }
 }
 
-exports.applyPaymentSearchAct = async req => {
+exports.getInvoiceDataAct = async req => {
   let doc = common.docValidate(req)
-  let paymentList = []
+  // 应收状态 0：未添加，1：已添加，2：申请发票，3已开发票，4已开收据，5申请额外发票，6已开额外发票，7已开额外收据
+  let collectionList = []
   if(doc.paymentSelectedAll) {
     let queryWhere = await queryWhereJoin(doc)
-    let queryStr = queryWhere.queryStr + ` AND shipment_list_payment_status IN ('1', '3', '5', '7')`
+    let queryStr = queryWhere.queryStr + ` AND shipment_list_receivable_status IN ('0', '1')`
     queryStr = queryStr + ' ORDER BY ss.sort_date DESC, ss.shipment_list_bill_no, s.shipment_list_container_no'
-    paymentList = await model.simpleSelect(queryStr, queryWhere.replacements)
+    collectionList = await model.simpleSelect(queryStr, queryWhere.replacements)
   } else if(doc.selection && doc.selection.length > 0){
     let sels = []
     for(let s of doc.selection) {
       sels.push(s.shipment_list_id)
     }
     let queryStr = `select s.*, v.vendor_code as shipment_list_vendor_code, v.vendor_name as shipment_list_vendor_name from tbl_zhongtan_logistics_shipment_list s 
-                  left join tbl_common_vendor v on s.shipment_list_vendor = v.vendor_id where s.state = ? and shipment_list_payment_status IN ('1', '3', '5', '7') and shipment_list_id IN (?) 
+                  left join tbl_common_vendor v on s.shipment_list_vendor = v.vendor_id where s.state = ? and shipment_list_receivable_status IN ('0', '1') and shipment_list_id IN (?) 
                   ORDER BY IFNULL(shipment_list_discharge_date, shipment_list_depot_gate_out_date) DESC, shipment_list_bill_no, shipment_list_container_no`
     let replacements = [GLBConfig.ENABLE, sels]
-    paymentList = await model.simpleSelect(queryStr, replacements)
+    collectionList = await model.simpleSelect(queryStr, replacements)
   }
-  let retData = {
-    advance_list : [], // status: 1
-    advance_total: 0,
-    balance_list : [], // status: 3
-    balance_total: 0,
-    extra_list : [], // status: 5, 7
-    extra_total: 0
-  }
-  if(paymentList && paymentList.length > 0) {
-    for(let p of paymentList) {
-      p._checked = false
-      p._disabled = false
-      if(p.shipment_list_payment_status === '1') {
-        for(let al of retData.advance_list) {
-          if(al.shipment_list_vendor !== p.shipment_list_vendor) {
-            return common.error('logistics_01')
+  if(collectionList && collectionList.length > 0) {
+    let bgs = await common.groupingJson(collectionList, 'shipment_list_bill_no')
+    if(bgs && bgs.length > 0) {
+      for(let bg of bgs) {
+        let blcount = await tb_shipment_list.count({
+          where: {
+            shipment_list_bill_no: bg.id,
+            state: GLBConfig.ENABLE
           }
-        }
-        retData.advance_list.push(p)
-      } else if(p.shipment_list_payment_status === '3') {
-        for(let al of retData.balance_list) {
-          if(al.shipment_list_vendor !== p.shipment_list_vendor) {
-            return common.error('logistics_02')
-          }
-        }
-        p.shipment_list_balance_payment_edit = false
-        if(p.shipment_list_business_type === 'I') {
-          if(!p.shipment_list_discharge_date || !p.shipment_list_empty_return_date) {
-            p._disabled = true
-            p.disabled_title = 'Empty Returned Not'
-          }
-        } else if(p.shipment_list_business_type === 'E') {
-          if(!p.shipment_list_depot_gate_out_date || !p.shipment_list_loading_date) {
-            p._disabled = true
-            p.disabled_title = 'Empty Returned Not'
-          }
-        }
-        retData.balance_list.push(p)
-      } else if(p.shipment_list_payment_status === '5' || p.shipment_list_payment_status === '7') {
-        for(let al of retData.extra_list) {
-          if(al.shipment_list_vendor !== p.shipment_list_vendor) {
-            return common.error('logistics_03')
-          }
-        }
-        p.extra_files = []
-        let queryStr = `SELECT u.*, cu.user_name FROM tbl_zhongtan_uploadfile u LEFT JOIN tbl_common_user cu ON u.user_id = cu.user_id WHERE u.state = '1' AND api_name = 'PAYMENT EXTRA ATTACHMENT' AND uploadfile_index1 IN (
-          SELECT payment_extra_id FROM tbl_zhongtan_logistics_payment_extra WHERE state = 1 AND payment_extra_type = 'P' AND payment_extra_bl_no = ? AND payment_extra_status = '7')`
-        let replacements = [p.shipment_list_bill_no]
-        let extraFiles = await model.simpleSelect(queryStr, replacements)
-        if(extraFiles && extraFiles.length > 0) {
-          for(let f of extraFiles) {
-            p.extra_files.push({
-              amount: f.uploadfile_amount,
-              currency: f.uploadfile_currency,
-              url: f.uploadfile_url,
-              created_by: f.user_name,
-              created_at: moment(f.created_at).format('YYYY-MM-DD HH:mm:ss')
-            })
-          }
-        }
-        retData.extra_list.push(p)
-      }
-    }
-    retData.advance_total = retData.advance_list.length
-    // 判断预付是否包含所有箱子
-    if(retData.advance_list && retData.advance_list.length > 0) {
-      let bgs = await common.groupingJson(retData.advance_list, 'shipment_list_bill_no')
-      if(bgs && bgs.length > 0) {
-        for(let bg of bgs) {
-          let blcount = await tb_shipment_list.count({
-            where: {
-              shipment_list_bill_no: bg.id,
-              state: GLBConfig.ENABLE
-            }
-          })
-          if(blcount !== bg.data.length) {
-            for(let al of retData.advance_list) {
-              if(al.shipment_list_bill_no === bg.id) {
-                al._disabled = true
-                al.disabled_title = 'Must Select All B/L#'
-              }
-            }
-          }
+        })
+        if(blcount !== bg.data.length) {
+          return common.error('logistics_08')
         }
       }
     }
-    retData.balance_total = retData.balance_list.length
-    retData.extra_total = retData.extra_list.length
+    let ogs = await common.groupingJson(collectionList, 'shipment_list_cntr_owner')
+    if(ogs && ogs.length > 1) {
+      return common.error('logistics_10')
+    }
+    for(let c of collectionList) {
+      if(c.shipment_list_business_type === 'I') {
+        if(!c.shipment_list_discharge_date || !c.shipment_list_empty_return_date) {
+          return common.error('logistics_07')
+        }
+      } else if(c.shipment_list_business_type === 'E') {
+        if(!c.shipment_list_depot_gate_out_date || !c.shipment_list_loading_date) {
+          return common.error('logistics_07')
+        }
+      }
+    }
+    let invoice_customer = ''
+    let invoice_amount = 0
+    let invoice_disabled = false
+    if(collectionList[0].shipment_list_cntr_owner.indexOf('COS') >= 0) {
+      let defaultCOSCO = await tb_user.findOne({
+        where: {
+          user_username: 'COSCO',
+          state: GLBConfig.ENABLE
+        }
+      })
+      if(defaultCOSCO) {
+        invoice_customer = defaultCOSCO.user_id
+      }
+    } else {
+      let defaultOOCL = await tb_user.findOne({
+        where: {
+          user_username: 'OOCL',
+          state: GLBConfig.ENABLE
+        }
+      })
+      if(defaultOOCL) {
+        invoice_customer = defaultOOCL.user_id
+      }
+    }
+    for(let c of collectionList) {
+      // 根据默认客户计算费用
+      let freight = await freightSrv.countShipmentFreight(invoice_customer, c.shipment_list_business_type, c.shipment_list_cargo_type, 
+        c.shipment_list_business_type === 'I' ? 'TZDAR' : c.shipment_list_port_of_loading, c.shipment_list_business_type === 'I' ? c.shipment_list_port_of_destination : 'TZDAR', 
+        c.shipment_list_cntr_owner, c.shipment_list_size_type, c.shipment_list_business_type === 'I' ? c.shipment_list_discharge_date : c.shipment_list_loading_date, 'R')
+      if(freight && freight.freight_config_amount) {
+        c.shipment_list_receivable_freight = freight.freight_config_amount
+        invoice_amount = new Decimal(invoice_amount).plus(freight.freight_config_amount)
+      } else {
+        invoice_disabled = true
+      }
+    }
+    let retData = {
+      invoice_list : collectionList,
+      invoice_total: collectionList.length,
+      invoice_customer: invoice_customer,
+      invoice_amount: invoice_amount,
+      invoice_disabled: invoice_disabled
+    }
+    return common.success(retData)
+  } else {
+    return common.error('logistics_06')
   }
-  return common.success(retData)
 }
 
-exports.applyPaymentAct = async req => {
+exports.calculationInvoiceAct = async req => {
+  let doc = common.docValidate(req)
+  let invoice_customer = doc.invoiceCustomer
+  let calculationData = doc.calculationData
+  if(calculationData && calculationData.length > 0) {
+    let retData = {
+      invoice_amount: 0,
+      invoice_list : [],
+      invoice_total: 0
+    }
+    let total_invoice_amount = 0
+    for(let c of calculationData) {
+      let dbc = await tb_shipment_list.findOne({
+        where: {
+          shipment_list_id: c.shipment_list_id,
+          state: GLBConfig.ENABLE
+        }
+      })
+      if(dbc) {
+        let freight = await freightSrv.countShipmentFreight(invoice_customer, dbc.shipment_list_business_type, dbc.shipment_list_cargo_type, 
+          dbc.shipment_list_business_type === 'I' ? 'TZDAR' : dbc.shipment_list_port_of_loading, dbc.shipment_list_business_type === 'I' ? dbc.shipment_list_port_of_destination : 'TZDAR', 
+          dbc.shipment_list_cntr_owner, dbc.shipment_list_size_type, dbc.shipment_list_business_type === 'I' ? dbc.shipment_list_discharge_date : dbc.shipment_list_loading_date, 'R')
+        if(freight && freight.freight_config_amount) {
+          dbc.shipment_list_receivable_freight = freight.freight_config_amount
+          total_invoice_amount = new Decimal(total_invoice_amount).plus(freight.freight_config_amount)
+          retData.invoice_list.push(JSON.parse(JSON.stringify(dbc)))
+        } else {
+          return common.error('logistics_09')
+        }
+      } else {
+        return common.error('logistics_09')
+      }
+    }
+    retData.invoice_amount = total_invoice_amount.toNumber()
+    retData.invoice_total = retData.invoice_list.length
+    return common.success(retData)
+  } else {
+    return common.error('logistics_06')
+  }
+}
+
+exports.freightInvoiceAct = async req => {
   let doc = common.docValidate(req), user = req.user
-  let applyData = doc.applyData
-  let vgs = await common.groupingJson(applyData, 'shipment_list_vendor')
-  if(vgs.length > 1) {
-    return common.error('logistics_04')
+  let invoice_customer = doc.invoiceCustomer
+  let invoice_data = doc.invoiceData
+  for(let i of invoice_data) {
+    i.grouping_type = i.shipment_list_business_type + '_' + i.shipment_list_cntr_owner + '_' + i.shipment_list_cargo_type
   }
-  for(let a of applyData) {
-    a.grouping_type = a.shipment_list_business_type + '_' + a.shipment_list_cntr_owner + '_' + a.shipment_list_cargo_type
-  }
-  let gts = await common.groupingJson(doc.applyData, 'grouping_type')
-  let api_name = 'PAYMENT ADVANCE'
-  // 支付状态 0：未添加，1：已添加，2：申请预付，3预付支付，4申请余款，5余款支付，6申请额外费用，7额外费用支付
-  let payment_status = '2'
-  if(doc.applyAction === 'BALANCE') {
-    api_name = 'PAYMENT BALANCE'
-    payment_status = '4'
-  }
+  // 应收状态 0：未添加，1：已添加，2：申请发票，3已开发票，4已开收据，5申请额外发票，6已开额外发票，7已开额外收据
+  let gts = await common.groupingJson(invoice_data, 'grouping_type')
+  let api_name = 'FREIGHT INVOICE'
+  let invoice_status = '2'
   for(let g of gts) {
     let ids = g.id.split('_')
     let data = g.data
-    let applyAmount = 0
+    let invoiceAmount = 0
     for(let d of data) {
-      if(doc.applyAction === 'ADVANCE') {
-        applyAmount = new Decimal(applyAmount).plus(d.shipment_list_advance_payment)
-      } else if(doc.applyAction === 'BALANCE') {
-        applyAmount = new Decimal(applyAmount).plus(d.shipment_list_balance_payment)
-      }
+      invoiceAmount = new Decimal(invoiceAmount).plus(d.shipment_list_receivable_freight)
     }
     let ver = await tb_verification.create({
-      logistics_verification_vendor: vgs[0].id,
+      logistics_verification_vendor: invoice_customer,
       logistics_verification_business_type: ids[0],
       logistics_verification_cntr_owner: ids[1],
       logistics_verification_cargo_type: ids[2],
       logistics_verification_api_name: api_name,
       logistics_verification_state: 'PM',
-      logistics_verification_amount: applyAmount.toNumber(),
+      logistics_verification_amount: invoiceAmount.toNumber(),
       logistics_verification_create_user: user.user_id,
     })
     for(let d of data) {
@@ -482,7 +402,7 @@ exports.applyPaymentAct = async req => {
         shipment_list_id: d.shipment_list_id,
         logistics_freight_api_name: api_name,
         logistics_freight_state: 'PM',
-        logistics_freight_amount: d.shipment_list_advance_payment
+        logistics_freight_amount: d.shipment_list_receivable_freight
       })
       let sl = await tb_shipment_list.findOne({
         where: {
@@ -490,14 +410,16 @@ exports.applyPaymentAct = async req => {
           state: GLBConfig.ENABLE
         }
       })
-      sl.shipment_list_payment_status = payment_status
+      sl.shipment_list_receivable_status = invoice_status
+      sl.shipment_list_customer = invoice_customer
+      sl.shipment_list_receivable_freight = d.shipment_list_receivable_freight
       await sl.save()
     }
   }
   return common.success()
 }
 
-exports.undoPaymentAct = async req => {
+exports.undoFreightAct = async req => {
   let doc = common.docValidate(req), user = req.user, curDate = new Date()
   let file = await tb_uploadfile.findOne({
     where: {
@@ -520,19 +442,17 @@ exports.undoPaymentAct = async req => {
     ver.logistics_verification_undo_user = user.user_id
     ver.logistics_verification_undo_time = curDate
     await ver.save()
-
     let vfs = await tb_verification_freight.findAll({
       where: {
         logistics_verification_id: ver.logistics_verification_id,
         state: GLBConfig.ENABLE
       }
     })
-
     if(vfs) {
       for(let v of vfs) {
         v.logistics_freight_state = 'UN'
         await v.save()
-        if(ver.logistics_verification_api_name === 'PAYMENT ADVANCE' || ver.logistics_verification_api_name === 'PAYMENT BALANCE') {
+        if(ver.logistics_verification_api_name === 'FREIGHT INVOICE') {
           let sp = await tb_shipment_list.findOne({
             where: {
               shipment_list_id: v.shipment_list_id,
@@ -541,18 +461,17 @@ exports.undoPaymentAct = async req => {
           })
           if(sp) {
             // 支付状态 0：未添加，1：已添加，2：申请预付，3预付支付，4申请余款，5余款支付，6申请额外费用，7额外费用支付
-            if(ver.logistics_verification_api_name === 'PAYMENT ADVANCE') {
-              sp.shipment_list_payment_status = '1'
-            } else if(ver.logistics_verification_api_name === 'PAYMENT BALANCE') {
-              sp.shipment_list_payment_status = '3'
-            }
+            sp.shipment_list_receivable_status = '0'
+            sp.shipment_list_receivable_freight = null
+            sp.shipment_list_receivable_freight_invoice = null
+            sp.shipment_list_customer = null
             await sp.save()
           }
-        } else {
+        } else if(ver.logistics_verification_api_name === 'EXTRA INVOICE') {
           let extra = await tb_payment_extra.findOne({
             where: {
               payment_extra_id: v.shipment_list_id,
-              payment_extra_type: 'P',
+              payment_extra_type: 'R',
               state: GLBConfig.ENABLE
             }
           })
@@ -567,47 +486,45 @@ exports.undoPaymentAct = async req => {
             })
             if(sp) {
               if(extra.payment_extra_amount_usd) {
-                if(extra.payment_extra_amount_usd === sp.shipment_list_extra_charges_usd) {
-                  sp.shipment_list_extra_charges_usd = null
-                  sp.shipment_list_extra_charges_usd_date = null
+                if(extra.payment_extra_amount_usd === sp.shipment_list_receivable_extra_usd) {
+                  sp.shipment_list_receivable_extra_usd = null
+                  sp.shipment_list_receivable_extra_usd_invoice = null
                 } else {
-                  sp.shipment_list_extra_charges_usd = new Decimal(sp.shipment_list_extra_charges_usd).sub(extra.payment_extra_amount_usd).toNumber()
+                  sp.shipment_list_receivable_extra_usd = new Decimal(sp.shipment_list_receivable_extra_usd).sub(extra.payment_extra_amount_usd).toNumber()
                   let queryStr = `SELECT DATE_FORMAT(logistics_verification_manager_time, '%Y-%m-%d') AS payment_date 
                                   FROM tbl_zhongtan_logistics_verification WHERE state = 1 AND logistics_verification_api_name = 'PAYMENT EXTRA' AND logistics_verification_state = 'AP' 
-                                  AND logistics_verification_id IN (SELECT logistics_verification_id FROM tbl_zhongtan_logistics_verification_freight WHERE state = 1 AND logistics_freight_api_name = 'PAYMENT EXTRA' 
-                                  AND shipment_list_id IN (SELECT MAX(payment_extra_id) FROM tbl_zhongtan_logistics_payment_extra WHERE state = 1 AND payment_extra_type = 'P' AND payment_extra_status = '7' 
+                                  AND logistics_verification_id IN (SELECT logistics_verification_id FROM tbl_zhongtan_logistics_verification_freight WHERE state = 1 AND logistics_freight_api_name = 'EXTRA INVOICE' 
+                                  AND shipment_list_id IN (SELECT MAX(payment_extra_id) FROM tbl_zhongtan_logistics_payment_extra WHERE state = 1 AND payment_extra_type = 'R' AND payment_extra_status = '6' 
                                   AND payment_extra_bl_no = ? AND payment_extra_amount_usd IS NOT NULL))`
                   let replacements = [sp.shipment_list_bill_no]
                   let apextras = await model.simpleSelect(queryStr, replacements)
                   if(apextras && apextras.length > 0) {
-                    sp.shipment_list_extra_charges_usd_date = apextras[0].payment_date
+                    sp.shipment_list_receivable_extra_usd_invoice = apextras[0].payment_date
                   }
                 }
-                sp.shipment_list_total_freight = new Decimal(sp.shipment_list_total_freight).sub(extra.payment_extra_amount_usd).toNumber()
               } else if(extra.payment_extra_amount_tzs){
-                if(extra.payment_extra_amount_tzs === sp.shipment_list_extra_charges_tzs) {
-                  sp.shipment_list_extra_charges_tzs = null
-                  sp.shipment_list_extra_charges_tzs_date = null
+                if(extra.payment_extra_amount_tzs === sp.shipment_list_receivable_extra_tzs) {
+                  sp.shipment_list_receivable_extra_tzs = null
+                  sp.shipment_list_receivable_extra_tzs_invoice = null
                 } else {
-                  sp.shipment_list_extra_charges_tzs = new Decimal(sp.shipment_list_extra_charges_tzs).sub(extra.payment_extra_amount_tzs).toNumber()
+                  sp.shipment_list_receivable_extra_tzs = new Decimal(sp.shipment_list_receivable_extra_tzs).sub(extra.payment_extra_amount_tzs).toNumber()
                   let queryStr = `SELECT DATE_FORMAT(logistics_verification_manager_time, '%Y-%m-%d') AS payment_date 
                                   FROM tbl_zhongtan_logistics_verification WHERE state = 1 AND logistics_verification_api_name = 'PAYMENT EXTRA' AND logistics_verification_state = 'AP' 
-                                  AND logistics_verification_id IN (SELECT logistics_verification_id FROM tbl_zhongtan_logistics_verification_freight WHERE state = 1 AND logistics_freight_api_name = 'PAYMENT EXTRA' 
-                                  AND shipment_list_id IN (SELECT MAX(payment_extra_id) FROM tbl_zhongtan_logistics_payment_extra WHERE state = 1 AND payment_extra_type = 'P' AND payment_extra_status = '7' 
+                                  AND logistics_verification_id IN (SELECT logistics_verification_id FROM tbl_zhongtan_logistics_verification_freight WHERE state = 1 AND logistics_freight_api_name = 'EXTRA EXTRA' 
+                                  AND shipment_list_id IN (SELECT MAX(payment_extra_id) FROM tbl_zhongtan_logistics_payment_extra WHERE state = 1 AND payment_extra_type = 'R' AND payment_extra_status = '6' 
                                   AND payment_extra_bl_no = ? AND payment_extra_amount_tzs IS NOT NULL))`
                   let replacements = [sp.shipment_list_bill_no]
                   let apextras = await model.simpleSelect(queryStr, replacements)
                   if(apextras && apextras.length > 0) {
-                    sp.shipment_list_extra_charges_tzs_date = apextras[0].payment_date
+                    sp.shipment_list_receivable_extra_tzs_invoice = apextras[0].payment_date
                   }
                 }
-                sp.shipment_list_total_freight_tzs = new Decimal(sp.shipment_list_total_freight_tzs).sub(extra.payment_extra_amount_tzs).toNumber()
               }
               await sp.save()
             }
             let extra_file = await tb_uploadfile.findOne({
               where: {
-                api_name: 'PAYMENT EXTRA ATTACHMENT',
+                api_name: 'EXTRA EXTRA ATTACHMENT',
                 uploadfile_index1: extra.payment_extra_id,
                 state: GLBConfig.ENABLE
               }
@@ -620,7 +537,7 @@ exports.undoPaymentAct = async req => {
           let exist_extras = await tb_payment_extra.findAll({
             where: {
               payment_extra_bl_no: extra.payment_extra_bl_no,
-              payment_extra_type: 'P',
+              payment_extra_type: 'R',
               state: GLBConfig.ENABLE
             }
           })
@@ -633,9 +550,9 @@ exports.undoPaymentAct = async req => {
           if(shipment_list && shipment_list.length > 0) {
             for (let sl of shipment_list) {
               if(!exist_extras || exist_extras.length <= 0) {
-                sl.shipment_list_payment_status = '5'
+                sl.shipment_list_receivable_status = '4'
               } else {
-                sl.shipment_list_payment_status = '7'
+                sl.shipment_list_receivable_status = '7'
               }
               await sl.save()
             }
@@ -647,66 +564,102 @@ exports.undoPaymentAct = async req => {
   return common.success()
 }
 
-exports.paymentBalanceEditAct = async req => {
-  let doc = common.docValidate(req)
-  let sp = await tb_shipment_list.findOne({
-    where: {
-      shipment_list_id: doc.new.shipment_list_id,
-      state: GLBConfig.ENABLE
-    }
-  })
-  if(sp) {
-    sp.shipment_list_balance_payment = doc.new.shipment_list_balance_payment
-    sp.shipment_list_total_freight = new Decimal(sp.shipment_list_advance_payment).plus(sp.shipment_list_balance_payment).toNumber()
-    await sp.save()
-  }
-  return common.success()
-}
-
 exports.uploadAct = async req => {
   let fileInfo = await common.fileSaveTemp(req)
   return common.success(fileInfo)
 }
 
-exports.applyPaymentExtraAct = async req => {
+exports.getExtraDataAct = async req => {
+  let doc = common.docValidate(req)
+  // 应收状态 0：未添加，1：已添加，2：申请发票，3已开发票，4已开收据，5申请额外发票，6已开额外发票，7已开额外收据
+  let collectionList = []
+  if(doc.paymentSelectedAll) {
+    let queryWhere = await queryWhereJoin(doc)
+    let queryStr = queryWhere.queryStr + ` AND shipment_list_receivable_status IN ('4', '7')`
+    queryStr = queryStr + ' ORDER BY ss.sort_date DESC, ss.shipment_list_bill_no, s.shipment_list_container_no'
+    collectionList = await model.simpleSelect(queryStr, queryWhere.replacements)
+  } else if(doc.selection && doc.selection.length > 0){
+    let sels = []
+    for(let s of doc.selection) {
+      sels.push(s.shipment_list_id)
+    }
+    let queryStr = `select s.*, v.vendor_code as shipment_list_vendor_code, v.vendor_name as shipment_list_vendor_name from tbl_zhongtan_logistics_shipment_list s 
+                  left join tbl_common_vendor v on s.shipment_list_vendor = v.vendor_id where s.state = ? and shipment_list_receivable_status IN ('4', '7') and shipment_list_id IN (?) 
+                  ORDER BY IFNULL(shipment_list_discharge_date, shipment_list_depot_gate_out_date) DESC, shipment_list_bill_no, shipment_list_container_no`
+    let replacements = [GLBConfig.ENABLE, sels]
+    collectionList = await model.simpleSelect(queryStr, replacements)
+  }
+  if(collectionList && collectionList.length > 0) {
+    let bgs = await common.groupingJson(collectionList, 'shipment_list_bill_no')
+    if(bgs && bgs.length > 0) {
+      for(let bg of bgs) {
+        let blcount = await tb_shipment_list.count({
+          where: {
+            shipment_list_bill_no: bg.id,
+            state: GLBConfig.ENABLE
+          }
+        })
+        if(blcount !== bg.data.length) {
+          return common.error('logistics_08')
+        }
+      }
+    }
+    if(bgs && bgs.length > 1) {
+      return common.error('logistics_11')
+    }
+    let retData = {
+      extra_shipment_id: collectionList[0].shipment_list_id,
+      extra_bl : collectionList[0].shipment_list_bill_no,
+      extra_customer: collectionList[0].shipment_list_extra_customer ? collectionList[0].shipment_list_extra_customer : collectionList[0].shipment_list_customer,
+      extra_cntr_owner: collectionList[0].shipment_list_cntr_owner,
+      extra_business_type: collectionList[0].shipment_list_business_type,
+      extra_cargo_type: collectionList[0].shipment_list_cargo_type
+    }
+    return common.success(retData)
+  } else {
+    return common.error('logistics_12')
+  }
+}
+
+exports.freightExtraAct = async req => {
   let doc = common.docValidate(req), user = req.user
-  let queryStr = `SELECT * FROM tbl_zhongtan_logistics_payment_extra WHERE state = ? AND payment_extra_type = 'P' AND payment_extra_bl_no = ? `
-  let replacements = [GLBConfig.ENABLE, doc.payment_extra_bl_no]
+  let queryStr = `SELECT * FROM tbl_zhongtan_logistics_payment_extra WHERE state = ? AND payment_extra_type = 'R' AND payment_extra_bl_no = ? `
+  let replacements = [GLBConfig.ENABLE, doc.freight_extra_bl_no]
   let exist_extras = await model.simpleSelect(queryStr, replacements)
-  let exist_shipment_id = doc.payment_extra_shipment_id
+  let exist_shipment_id = doc.freight_extra_shipment_id
   if(exist_extras) {
     for(let e of exist_extras) {
-      if(e.payment_extra_status === '6') {
+      if(e.shipment_list_receivable_status === '5') {
         return common.error('logistics_05')
       }
       exist_shipment_id = e.payment_extra_shipment_id
     }
   }
   let extra = await tb_payment_extra.create({
-    payment_extra_bl_no: doc.payment_extra_bl_no,
+    payment_extra_bl_no: doc.freight_extra_bl_no,
     payment_extra_shipment_id: exist_shipment_id,
-    payment_extra_vendor: doc.payment_extra_vendor,
-    payment_extra_cntr_owner: doc.payment_extra_cntr_owner,
-    payment_extra_business_type: doc.payment_extra_business_type,
-    payment_extra_cargo_type: doc.payment_extra_cargo_type,
-    payment_extra_amount_usd: doc.payment_extra_currency === 'USD' ? doc.payment_extra_amount : null,
-    payment_extra_amount_tzs: doc.payment_extra_currency === 'TZS' ? doc.payment_extra_amount : null,
-    payment_extra_status: '6',
-    payment_extra_type: 'P',
+    payment_extra_vendor: doc.freight_extra_customer,
+    payment_extra_cntr_owner: doc.freight_extra_cntr_owner,
+    payment_extra_business_type: doc.freight_extra_business_type,
+    payment_extra_cargo_type: doc.freight_extra_cargo_type,
+    payment_extra_amount_usd: doc.freight_extra_currency === 'USD' ? doc.freight_extra_amount : null,
+    payment_extra_amount_tzs: doc.freight_extra_currency === 'TZS' ? doc.freight_extra_amount : null,
+    payment_extra_status: '5',
+    payment_extra_type: 'R',
     payment_extra_created_by: user.user_id
   })
-  if(doc.payment_extra_files && doc.payment_extra_files.length > 0) {
-    for(let f of doc.payment_extra_files) {
+  if(doc.freight_extra_files && doc.freight_extra_files.length > 0) {
+    for(let f of doc.freight_extra_files) {
       let fileInfo = await common.fileSaveMongo(f.response.info.path, 'zhongtan')
       await tb_uploadfile.create({
-        api_name: 'PAYMENT EXTRA ATTACHMENT',
+        api_name: 'EXTRA INVOICE ATTACHMENT',
         user_id: user.user_id,
         uploadfile_index1: extra.payment_extra_id,
         uploadfile_name: fileInfo.name,
         uploadfile_url: fileInfo.url,
         uploadfile_state: 'AP',
-        uploadfile_amount: doc.payment_extra_amount,
-        uploadfile_currency: doc.payment_extra_currency
+        uploadfile_amount: doc.freight_extra_amount,
+        uploadfile_currency: doc.freight_extra_currency
       })
     }
   }
@@ -715,21 +668,21 @@ exports.applyPaymentExtraAct = async req => {
     logistics_verification_business_type: extra.payment_extra_business_type,
     logistics_verification_cntr_owner: extra.payment_extra_cntr_owner,
     logistics_verification_cargo_type: extra.payment_extra_cargo_type,
-    logistics_verification_api_name: 'PAYMENT EXTRA',
+    logistics_verification_api_name: 'EXTRA INVOICE',
     logistics_verification_state: 'PM',
-    logistics_verification_amount: doc.payment_extra_amount,
+    logistics_verification_amount: doc.freight_extra_amount,
     logistics_verification_create_user: user.user_id,
   })
   await tb_verification_freight.create({
     logistics_verification_id: ver.logistics_verification_id,
     shipment_list_id: extra.payment_extra_id,
-    logistics_freight_api_name: 'PAYMENT EXTRA',
+    logistics_freight_api_name: 'EXTRA INVOICE',
     logistics_freight_state: 'PM',
-    logistics_freight_amount: doc.payment_extra_amount
+    logistics_freight_amount: doc.freight_extra_amount
   })
 
   queryStr = `SELECT * FROM tbl_zhongtan_logistics_shipment_list WHERE state = ? AND shipment_list_bill_no = ? `
-  replacements = [GLBConfig.ENABLE, doc.payment_extra_bl_no]
+  replacements = [GLBConfig.ENABLE, doc.freight_extra_bl_no]
   let shipment_list = await model.simpleSelect(queryStr, replacements)
   if(shipment_list) {
     for(let sl of shipment_list) {
@@ -739,7 +692,7 @@ exports.applyPaymentExtraAct = async req => {
           state: GLBConfig.ENABLE
         }
       })
-      s.shipment_list_payment_status = '6'
+      s.shipment_list_receivable_status = '5'
       await s.save()
     }
   }

@@ -100,5 +100,12 @@ module.exports = {
   logistics_03: 'Extra can not selected diffrent vendor',
   logistics_04: 'Apply Payment can not selected diffrent vendor',
   logistics_05: 'apply payment extra already exists',
+  logistics_06: 'Please select Freight B/L#',
+  logistics_07: 'Freight container must be return',
+  logistics_08: 'Freight must be all container',
+  logistics_09: 'Freight cannot calculate',
+  logistics_10: 'Please select same cntr owner',
+  logistics_11: 'Please select same B/L#',
+  logistics_12: 'Please select Receipt Freight B/L#',
   generate_file_01: 'system error, Please refresh data and retry.'
 }

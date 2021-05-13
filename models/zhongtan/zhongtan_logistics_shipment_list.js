@@ -179,6 +179,16 @@ module.exports = db.defineModel('tbl_zhongtan_logistics_shipment_list', {
     type: db.STRING(20),
     allowNull: true
   },
+  shipment_list_customer: {
+    // 受瞟客户
+    type: db.STRING(50),
+    allowNull: true
+  },
+  shipment_list_extra_customer: {
+    // 额外费用客户
+    type: db.STRING(50),
+    allowNull: true
+  },
   shipment_list_receivable_status: {
     // 应收状态
     type: db.STRING(5),

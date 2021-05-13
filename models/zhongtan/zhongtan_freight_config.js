@@ -7,8 +7,14 @@ module.exports = db.defineModel('tbl_zhongtan_freight_config', {
     autoIncrement: true,
     primaryKey: true
   },
+  freight_config_Type: {
+    // 费用类型
+    type: db.STRING(5),
+    allowNull: false,
+    defaultValue: 'P',
+  },
   freight_config_vendor: {
-    // 供应商
+    // 供应商/客户
     type: db.STRING(50),
     allowNull: false
   },
@@ -61,10 +67,5 @@ module.exports = db.defineModel('tbl_zhongtan_freight_config', {
     // 启用日期
     type: db.STRING(20),
     allowNull: false
-  },
-  freight_config_amount_receivable: {
-    // 应收费用
-    type: db.STRING(20),
-    allowNull: true
   }
 })

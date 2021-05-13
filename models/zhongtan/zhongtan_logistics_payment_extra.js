@@ -58,4 +58,10 @@ module.exports = db.defineModel('tbl_zhongtan_logistics_payment_extra', {
     type: db.STRING(50),
     allowNull: false
   },
+  payment_extra_type: {
+    // 额外费用类别
+    type: db.STRING(20),
+    defaultValue: 'P',
+    allowNull: false
+  }
 })

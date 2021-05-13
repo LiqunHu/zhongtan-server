@@ -4,7 +4,7 @@ const common = require('../../../util/CommonUtil')
 const model = require('../../../app/model')
 const mailer = require('../../../util/Mail')
 
-const tb_verificatione = model.zhongtan_export_verification
+const tb_verification = model.zhongtan_export_verification
 const tb_verification_log = model.zhongtan_export_verification_log
 const tb_user = model.common_user
 const tb_edi_depot = model.zhongtan_edi_depot
@@ -56,7 +56,7 @@ exports.searchAct = async req => {
 exports.approveAct = async req => {
   let doc = common.docValidate(req),
     user = req.user, curDate = new Date()
-  let verificatione = await tb_verificatione.findOne({
+  let verificatione = await tb_verification.findOne({
     where: {
       export_verification_id: doc.export_verification_id,
       export_verification_state: 'PM',
@@ -171,7 +171,7 @@ exports.approveAct = async req => {
 exports.declineAct = async req => {
   let doc = common.docValidate(req),
     user = req.user, curDate = new Date()
-  let verificatione = await tb_verificatione.findOne({
+  let verificatione = await tb_verification.findOne({
     where: {
       export_verification_id: doc.export_verification_id,
       export_verification_state: 'PM',
@@ -237,7 +237,7 @@ exports.declineAct = async req => {
 
 exports.verificationDetailAct = async req => {
   let doc = common.docValidate(req)
-  let ver = await tb_verificatione.findOne({
+  let ver = await tb_verification.findOne({
     where: {
       export_verification_id: doc.export_verification_id,
       state: GLBConfig.ENABLE

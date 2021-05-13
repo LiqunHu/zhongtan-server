@@ -12,7 +12,7 @@ const tb_container_size = model.zhongtan_container_size
 const tb_container = model.zhongtan_export_proforma_container
 const tb_uploadfile = model.zhongtan_uploadfile
 const tb_edi_depot = model.zhongtan_edi_depot
-const tb_verificatione = model.zhongtan_export_verification
+const tb_verification = model.zhongtan_export_verification
 const tb_shipment_fee = model.zhongtan_export_shipment_fee
 
 exports.initAct = async () => {
@@ -358,7 +358,7 @@ exports.mergeDemurrage2Shipment = async (export_vessel_id, export_container_bl, 
           let sfl = await model.simpleSelect(queryStr, replacements)
           if(sfl && sfl.length > 0) {
             for(let sl of sfl) {
-              let ve = await tb_verificatione.findOne({
+              let ve = await tb_verification.findOne({
                 where: {
                   export_verification_id: sl.shipment_relation_id,
                   state: GLBConfig.ENABLE

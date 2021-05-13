@@ -68,6 +68,8 @@ router.post('/equipment/ExportDemurrageCalculation/:method', services.ExportDemu
 
 router.post('/logistics/ShipmentList/:method', services.ShipmentListControl)
 router.post('/logistics/ShipmentNote/:method', services.ShipmentNoteControl)
+router.post('/logistics/FreightCollection/:method', services.FreightCollectionControl)
+router.post('/logistics/FreightReceipt/:method', services.FreightReceiptControl)
 router.post('/logistics/TBLFreightConfig/:method', services.TBLFreightConfigControl)
 router.post('/logistics/BusinessVerification/:method', services.LogisticsBusinessVerificationControl)
 router.post('/logistics/ManagerVerification/:method', services.LogisticsManagerVerificationControl)

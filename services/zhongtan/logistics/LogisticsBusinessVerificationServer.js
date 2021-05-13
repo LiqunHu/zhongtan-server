@@ -7,7 +7,7 @@ const seq = require('../../../util/Sequence')
 const numberToText = require('number2text')
 
 const tb_user = model.common_user
-const tb_verificatione = model.zhongtan_logistics_verification
+const tb_verification = model.zhongtan_logistics_verification
 const tb_verification_freight = model.zhongtan_logistics_verification_freight
 const tb_shipment_list = model.zhongtan_logistics_shipment_list
 const tb_vendor = model.common_vendor
@@ -24,8 +24,13 @@ exports.initAct = async () => {
 exports.searchAct = async req => {
   let doc = common.docValidate(req)
   let returnData = {}
-  let queryStr = `select v.*, CONCAT(cv.vendor_code, '/', cv.vendor_name) AS vendor, c.user_name from tbl_zhongtan_logistics_verification v 
-                LEFT JOIN tbl_common_vendor cv ON v.logistics_verification_vendor = cv.vendor_id 
+  let queryStr = `select v.*, c.user_name,
+                CASE WHEN LOCATE('INVOICE', v.logistics_verification_api_name) > 0 THEN
+                  (SELECT user_name FROM tbl_common_user WHERE user_id = v.logistics_verification_vendor)
+                ELSE
+                  (SELECT vendor_name FROM tbl_common_vendor WHERE vendor_id = v.logistics_verification_vendor)
+                END vendor 
+                from tbl_zhongtan_logistics_verification v 
                 LEFT JOIN tbl_common_user c ON v.logistics_verification_create_user = c.user_id
                 WHERE v.state = ?`
   let replacements = [GLBConfig.ENABLE]
@@ -65,7 +70,7 @@ exports.searchAct = async req => {
 exports.approveAct = async req => {
   let doc = common.docValidate(req),
     user = req.user, curDate = new Date()
-  let ver = await tb_verificatione.findOne({
+  let ver = await tb_verification.findOne({
     where: {
       logistics_verification_id: doc.logistics_verification_id,
       state: GLBConfig.ENABLE
@@ -73,14 +78,9 @@ exports.approveAct = async req => {
   })
   if(ver) {
     ver.logistics_verification_state = 'AP'
-    ver.logistics_verification_manager_user = user.user_id
-    ver.logistics_verification_manager_time = curDate
+    ver.logistics_verification_business_user = user.user_id
+    ver.logistics_verification_business_time = curDate
     await ver.save()
-    let vendor = await tb_vendor.findOne({
-      where: {
-        vendor_id: ver.logistics_verification_vendor
-      }
-    })
     let vfs = await tb_verification_freight.findAll({
       where: {
         logistics_verification_id: ver.logistics_verification_id,
@@ -93,7 +93,9 @@ exports.approveAct = async req => {
       for(let v of vfs) {
         v.logistics_freight_state = 'AP'
         await v.save()
-        if(ver.logistics_verification_api_name === 'PAYMENT ADVANCE' || ver.logistics_verification_api_name === 'PAYMENT BALANCE') {
+        if(ver.logistics_verification_api_name === 'PAYMENT ADVANCE' 
+            || ver.logistics_verification_api_name === 'PAYMENT BALANCE' 
+            || ver.logistics_verification_api_name === 'FREIGHT INVOICE') {
           let pt = await tb_shipment_list.findOne({
             where: {
               shipment_list_id: v.shipment_list_id,
@@ -111,12 +113,17 @@ exports.approveAct = async req => {
               pt.shipment_list_payment_status = '5'
               pt.shipment_list_balance_payment_date = moment().format('YYYY-MM-DD')
               await pt.save()
+            } else if(ver.logistics_verification_api_name === 'FREIGHT INVOICE') {
+              pt.shipment_list_receivable_status = '3'
+              pt.shipment_list_receivable_freight_invoice = moment().format('YYYY-MM-DD')
+              await pt.save()
             }
           }
         } else if(ver.logistics_verification_api_name === 'PAYMENT EXTRA') {
           let ex = await tb_payment_extra.findOne({
             where: {
               payment_extra_id: v.shipment_list_id,
+              payment_extra_type: 'P',
               state: GLBConfig.ENABLE
             }
           })
@@ -156,12 +163,60 @@ exports.approveAct = async req => {
               }
             }
           }
+        } else if(ver.logistics_verification_api_name === 'EXTRA INVOICE') {
+          let ex = await tb_payment_extra.findOne({
+            where: {
+              payment_extra_id: v.shipment_list_id,
+              payment_extra_type: 'R',
+              state: GLBConfig.ENABLE
+            }
+          })
+          if(ex) {
+            extras.push(ex)
+            ex.payment_extra_status = '6'
+            await ex.save()
+            let shipment_list = await tb_shipment_list.findAll({
+              where: {
+                shipment_list_bill_no: ex.payment_extra_bl_no,
+                state: GLBConfig.ENABLE
+              }
+            })
+            if(shipment_list && shipment_list.length > 0) {
+              for (let sl of shipment_list) {
+                sl.shipment_list_receivable_status = '6'
+                if(sl.shipment_list_id == ex.payment_extra_shipment_id) {
+                  sl.shipment_list_extra_customer = ex.payment_extra_vendor
+                  if(ex.payment_extra_amount_usd) {
+                    if(sl.shipment_list_receivable_extra_usd) {
+                      sl.shipment_list_receivable_extra_usd = new Decimal(sl.shipment_list_receivable_extra_usd).plus(ex.payment_extra_amount_usd).toNumber()
+                    } else {
+                      sl.shipment_list_receivable_extra_usd = ex.payment_extra_amount_usd
+                    }
+                    sl.shipment_list_receivable_extra_usd_invoice = moment().format('YYYY-MM-DD')
+                  } else if(ex.payment_extra_amount_tzs) {
+                    if(sl.shipment_list_receivable_extra_tzs) {
+                      sl.shipment_list_receivable_extra_tzs = new Decimal(sl.shipment_list_receivable_extra_tzs).plus(ex.payment_extra_amount_tzs).toNumber()
+                    } else {
+                      sl.shipment_list_receivable_extra_tzs = ex.payment_extra_amount_tzs
+                    }
+                    sl.shipment_list_receivable_extra_tzs_invoice = moment().format('YYYY-MM-DD')
+                  }
+                }
+                await sl.save()
+              }
+            }
+          }
         }
       }
       // 生成对应支付单
       if(ver.logistics_verification_api_name === 'PAYMENT ADVANCE' 
             || ver.logistics_verification_api_name === 'PAYMENT BALANCE' 
             || ver.logistics_verification_api_name === 'PAYMENT EXTRA') {
+        let vendor = await tb_vendor.findOne({
+          where: {
+            vendor_id: ver.logistics_verification_vendor
+          }
+        })
         let payment_no = await seq.genLogisticsSeq('CT-L')
         let renderData = {}
         renderData.vendor_code = vendor.vendor_code
@@ -183,20 +238,20 @@ exports.approveAct = async req => {
             renderData.prepared_by = prepared.user_name
           }
         }
-        if(ver.logistics_verification_business_user) {
+        if(ver.logistics_verification_manager_user) {
           let checked = await tb_user.findOne({
             where: {
-              user_id: ver.logistics_verification_business_user
+              user_id: ver.logistics_verification_manager_user
             }
           })
           if(checked) {
             renderData.checked_by = checked.user_name
           }
         }
-        if(ver.logistics_verification_manager_user) {
+        if(ver.logistics_verification_business_user) {
           let approve = await tb_user.findOne({
             where: {
-              user_id: ver.logistics_verification_manager_user
+              user_id: ver.logistics_verification_business_user
             }
           })
           if(approve) {
@@ -291,6 +346,106 @@ exports.approveAct = async req => {
             uploadfil_release_user_id: user.user_id
           })
         }
+      } else if(ver.logistics_verification_api_name === 'FREIGHT INVOICE') {
+        let customer = await tb_user.findOne({
+          where: {
+            user_id: ver.logistics_verification_vendor
+          }
+        })
+        // 生成发票
+        let freight_no = await seq.genLogisticsSeq('CT-L')
+        let renderData = {}
+        renderData.customer_name = customer ? customer.user_name : ''
+        renderData.freight_no = freight_no
+        renderData.freight_total = formatCurrency(ver.logistics_verification_amount)
+        renderData.freight_total_str = numberToText(ver.logistics_verification_amount)
+        if(ver.logistics_verification_create_user) {
+          let prepared = await tb_user.findOne({
+            where: {
+              user_id: ver.logistics_verification_create_user
+            }
+          })
+          if(prepared) {
+            renderData.prepared_by = prepared.user_name
+          }
+        }
+        let freight_list = []
+        for(let p of payments) {
+          freight_list.push({
+            bl: p.shipment_list_bill_no,
+            container_no: p.shipment_list_container_no,
+            size_type: p.shipment_list_size_type,
+            fnd: p.shipment_list_business_type === 'I' ?  p.shipment_list_port_of_destination : p.shipment_list_port_of_loading,
+            amount: p.shipment_list_receivable_freight
+          })
+        }
+        renderData.freight_list = freight_list
+        let fileInfo = await common.ejs2Pdf('freightInvoice.ejs', renderData, 'zhongtan')
+        await tb_uploadfile.create({
+          api_name: 'FREIGHT INVOICE',
+          user_id: user.user_id,
+          uploadfile_index1: ver.logistics_verification_id,
+          uploadfile_name: fileInfo.name,
+          uploadfile_url: fileInfo.url,
+          uploadfile_acttype: 'invoice',
+          uploadfile_amount: ver.logistics_verification_amount,
+          uploadfile_currency: 'USD',
+          uploadfile_received_from: customer.user_name,
+          uploadfile_customer_id: customer.user_id,
+          uploadfile_invoice_no: freight_no,
+          uploadfil_release_date: curDate,
+          uploadfil_release_user_id: user.user_id
+        })
+      } else if(ver.logistics_verification_api_name === 'EXTRA INVOICE') {
+        let customer = await tb_user.findOne({
+          where: {
+            user_id: ver.logistics_verification_vendor
+          }
+        })
+        // 生成发票
+        let freight_no = await seq.genLogisticsSeq('CT-L')
+        let renderData = {}
+        renderData.customer_name = customer ? customer.user_name : ''
+        renderData.freight_no = freight_no
+        renderData.freight_total = formatCurrency(ver.logistics_verification_amount)
+        renderData.freight_total_str = numberToText(ver.logistics_verification_amount)
+        if(ver.logistics_verification_create_user) {
+          let prepared = await tb_user.findOne({
+            where: {
+              user_id: ver.logistics_verification_create_user
+            }
+          })
+          if(prepared) {
+            renderData.prepared_by = prepared.user_name
+          }
+        }
+        let freight_list = []
+        let extra_currency = 'USD'
+        for(let e of extras) {
+          freight_list.push({
+            bl: e.payment_extra_bl_no,
+            amount: e.payment_extra_amount_usd ? e.payment_extra_amount_usd : e.payment_extra_amount_tzs
+          })
+          extra_currency = e.payment_extra_amount_usd ? 'USD' : 'TZS'
+        }
+        renderData.freight_list = freight_list
+        renderData.extra_currency = extra_currency
+        let fileInfo = await common.ejs2Pdf('freightExtra.ejs', renderData, 'zhongtan')
+        await tb_uploadfile.create({
+          api_name: 'EXTRA INVOICE',
+          user_id: user.user_id,
+          uploadfile_index1: ver.logistics_verification_id,
+          uploadfile_name: fileInfo.name,
+          uploadfile_url: fileInfo.url,
+          uploadfile_acttype: 'invoice',
+          uploadfile_amount: ver.logistics_verification_amount,
+          uploadfile_currency: extra_currency,
+          uploadfile_received_from: customer.user_name,
+          uploadfile_customer_id: customer.user_id,
+          uploadfile_invoice_no: freight_no,
+          uploadfil_release_date: curDate,
+          uploadfil_release_user_id: user.user_id
+        })
       }
     }
   }
@@ -300,7 +455,7 @@ exports.approveAct = async req => {
 exports.declineAct = async req => {
   let doc = common.docValidate(req),
     user = req.user, curDate = new Date()
-  let ver = await tb_verificatione.findOne({
+  let ver = await tb_verification.findOne({
     where: {
       logistics_verification_id: doc.logistics_verification_id,
       state: GLBConfig.ENABLE
@@ -341,6 +496,7 @@ exports.declineAct = async req => {
           let extra = await tb_payment_extra.findOne({
             where: {
               payment_extra_id: v.shipment_list_id,
+              payment_extra_type: 'P',
               state: GLBConfig.ENABLE
             }
           })
@@ -362,6 +518,7 @@ exports.declineAct = async req => {
           let exist_extras = await tb_payment_extra.findAll({
             where: {
               payment_extra_bl_no: extra.payment_extra_bl_no,
+              payment_extra_type: 'P',
               state: GLBConfig.ENABLE
             }
           })
@@ -381,6 +538,52 @@ exports.declineAct = async req => {
               await sl.save()
             }
           }
+        } else if(ver.logistics_verification_api_name === 'EXTRA INVOICE') {
+          let extra = await tb_payment_extra.findOne({
+            where: {
+              payment_extra_id: v.shipment_list_id,
+              payment_extra_type: 'R',
+              state: GLBConfig.ENABLE
+            }
+          })
+          if(extra) {
+            extra.state = GLBConfig.DISABLE
+            await extra.save()
+            let extra_file = await tb_uploadfile.findOne({
+              where: {
+                api_name: 'EXTRA INVOICE ATTACHMENT',
+                uploadfile_index1: extra.payment_extra_id,
+                state: GLBConfig.ENABLE
+              }
+            })
+            if(extra_file) {
+              extra_file.state = GLBConfig.DISABLE
+              await extra_file.save()
+            }
+          }
+          let exist_extras = await tb_payment_extra.findAll({
+            where: {
+              payment_extra_bl_no: extra.payment_extra_bl_no,
+              payment_extra_type: 'R',
+              state: GLBConfig.ENABLE
+            }
+          })
+          let shipment_list = await tb_shipment_list.findAll({
+            where: {
+              shipment_list_bill_no: extra.payment_extra_bl_no,
+              state: GLBConfig.ENABLE
+            }
+          })
+          if(shipment_list && shipment_list.length > 0) {
+            for (let sl of shipment_list) {
+              if(!exist_extras || exist_extras.length <= 0) {
+                sl.shipment_list_receivable_status = '4'
+              } else {
+                sl.shipment_list_receivable_status = '7'
+              }
+              await sl.save()
+            }
+          }
         }
       }
     }
@@ -390,7 +593,7 @@ exports.declineAct = async req => {
 
 exports.verificationDetailAct = async req => {
   let doc = common.docValidate(req)
-  let ver = await tb_verificatione.findOne({
+  let ver = await tb_verification.findOne({
     where: {
       logistics_verification_id: doc.logistics_verification_id,
       state: GLBConfig.ENABLE
@@ -407,10 +610,64 @@ exports.verificationDetailAct = async req => {
       returnData = await model.simpleSelect(queryStr, replacements)
     } else if(ver.logistics_verification_api_name === 'PAYMENT EXTRA') {
       let queryStr = `SELECT pe.*, CONCAT(cv.vendor_code, '/', cv.vendor_name) AS vendor FROM tbl_zhongtan_logistics_verification_freight vf 
-                      LEFT JOIN tbl_zhongtan_logistics_payment_extra pe ON vf.shipment_list_id = pe.payment_extra_id 
+                      LEFT JOIN tbl_zhongtan_logistics_payment_extra pe ON vf.shipment_list_id = pe.payment_extra_id AND pe.payment_extra_type = 'P'
                       LEFT JOIN tbl_common_vendor cv ON pe.payment_extra_vendor = cv.vendor_id WHERE vf.state = 1 AND vf.logistics_verification_id = ?`
       let replacements = [doc.logistics_verification_id]
+      let extras = await model.simpleSelect(queryStr, replacements)
+      if(extras) {
+        for(let e of extras) {
+          let ej = JSON.parse(JSON.stringify(e))
+          let ea = await tb_uploadfile.findAll({
+            where: {
+              api_name: 'PAYMENT EXTRA ATTACHMENT',
+              uploadfile_index1: ej.payment_extra_id,
+              state: GLBConfig.ENABLE
+            }
+          })
+          ej.files = []
+          if(ea) {
+            for(let a of ea) {
+              ej.files.push({
+                url: a.uploadfile_url
+              })
+            }
+          }
+          returnData.push(ej)
+        }
+      }
+    } else if(ver.logistics_verification_api_name === 'FREIGHT INVOICE') {
+      let queryStr = `SELECT sl.*, cv.user_name AS vendor FROM tbl_zhongtan_logistics_verification_freight vf 
+                      LEFT JOIN tbl_zhongtan_logistics_shipment_list sl ON vf.shipment_list_id = sl.shipment_list_id 
+                      LEFT JOIN tbl_common_user cv ON sl.shipment_list_customer = cv.user_id WHERE vf.state = 1 AND vf.logistics_verification_id = ?`
+      let replacements = [doc.logistics_verification_id]
       returnData = await model.simpleSelect(queryStr, replacements)
+    } else if(ver.logistics_verification_api_name === 'EXTRA INVOICE') {
+      let queryStr = `SELECT pe.*, cv.user_name AS vendor FROM tbl_zhongtan_logistics_verification_freight vf 
+                      LEFT JOIN tbl_zhongtan_logistics_payment_extra pe ON vf.shipment_list_id = pe.payment_extra_id AND pe.payment_extra_type = 'R'
+                      LEFT JOIN tbl_common_user cv ON pe.payment_extra_vendor = cv.user_id WHERE vf.state = 1 AND vf.logistics_verification_id = ?`
+      let replacements = [doc.logistics_verification_id]
+      let extras = await model.simpleSelect(queryStr, replacements)
+      if(extras) {
+        for(let e of extras) {
+          let ej = JSON.parse(JSON.stringify(e))
+          let ea = await tb_uploadfile.findAll({
+            where: {
+              api_name: 'EXTRA INVOICE ATTACHMENT',
+              uploadfile_index1: ej.payment_extra_id,
+              state: GLBConfig.ENABLE
+            }
+          })
+          ej.files = []
+          if(ea) {
+            for(let a of ea) {
+              ej.files.push({
+                url: a.uploadfile_url
+              })
+            }
+          }
+          returnData.push(ej)
+        }
+      }
     }
   }
   return common.success(returnData)

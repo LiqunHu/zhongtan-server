@@ -445,6 +445,15 @@ module.exports = {
     { id: '6', text: 'EXTRA CHARGES' },  // 申请额外费用
     { id: '7', text: 'EXTRA PAYMENT' }  // 额外费用支付
   ],
+  FREIGHT_RECEIVABLE_STATUS: [
+    // 应收状态 0：未添加，1：已添加，2：申请发票，3已开发票，4已开收据，5申请额外发票，6已开额外发票，7已开额外收据
+    { id: '2', text: 'APPLY FREIGHT' },  // 申请发票
+    { id: '3', text: 'FREIGHT INVOICE' },  // 已开发票
+    { id: '4', text: 'FREIGHT RECEIPT' },  // 已开收据
+    { id: '5', text: 'APPLY EXTRA' },  // 申请额外发票
+    { id: '6', text: 'EXTRA INVOICE' },  // 已开额外发票
+    { id: '7', text: 'EXTRA RECEIPT' }  // 已开额外收据
+  ],
   LOGISTICS_FREIGHT_STATE_BUSINESS: [
     { id: 'PB', text: 'Pending at Business' },
     { id: 'BD', text: 'Business Declined' }
@@ -460,5 +469,9 @@ module.exports = {
     { id: 'BD', text: 'Business Declined' },
     { id: 'AP', text: 'All Approved' },
     { id: 'UN', text: 'UNDO' }
+  ],
+  LOGISTICS_FREIGHT_TYPE: [
+    { id: 'R', text: 'Collection' }, // 应收
+    { id: 'P', text: 'Payment' }  // 应付
   ],
 }

@@ -19,22 +19,54 @@ exports.initAct = async () => {
     order: [['freight_place_code', 'ASC']]
   })
   returnData['BUSINESS_TYPE'] = GLBConfig.BUSINESS_TYPE
-  queryStr = `SELECT vendor_id, vendor_code, vendor_name FROM tbl_common_vendor WHERE state = ? ORDER BY vendor_code`
+  returnData['FREIGHT_TYPE'] = GLBConfig.LOGISTICS_FREIGHT_TYPE
+  queryStr = `SELECT vendor_id, vendor_code, vendor_name FROM tbl_common_vendor WHERE state = ? ORDER BY vendor_name`
   replacements = [GLBConfig.ENABLE]
   returnData['COMMON_VENDOR'] = await model.simpleSelect(queryStr, replacements)
+  queryStr = `SELECT user_id, user_name FROM tbl_common_user WHERE state = '1' AND user_type = ? ORDER BY user_name`
+  replacements = [GLBConfig.TYPE_CUSTOMER]
+  returnData['COMMON_CUSTOMER'] = await model.simpleSelect(queryStr, replacements)
   return common.success(returnData)
 }
 
 exports.searchAct = async req => {
   let doc = common.docValidate(req)
   let returnData = {}
-
-  let queryStr = `select fc.*, cv.vendor_code, cv.vendor_name from tbl_zhongtan_freight_config fc left join tbl_common_vendor cv on fc.freight_config_vendor = cv.vendor_id where fc.state = '1'`
+  let queryStr = `select fc.*, CASE fc.freight_config_Type
+                  WHEN 'R' THEN
+                    (SELECT user_name FROM tbl_common_user WHERE user_id = fc.freight_config_vendor)
+                  ELSE
+                    (SELECT vendor_name FROM tbl_common_vendor WHERE vendor_id = fc.freight_config_vendor)
+                  END vendor_user
+                  from tbl_zhongtan_freight_config fc WHERE state = 1`
   let replacements = []
   if(doc.search_data) {
-    if (doc.search_data.freight_config_vendor) {
-      queryStr += ' and fc.freight_config_vendor = ?'
-      replacements.push(doc.search_data.freight_config_vendor)
+    if (doc.search_data.freight_config_Type) {
+      queryStr += ' and fc.freight_config_Type = ?'
+      replacements.push(doc.search_data.freight_config_Type)
+      if (doc.search_data.freight_config_Type === 'P' && doc.search_data.freight_config_vendor) {
+        queryStr += ' and fc.freight_config_vendor = ?'
+        replacements.push(doc.search_data.freight_config_vendor)
+      }
+      if (doc.search_data.freight_config_Type === 'R' && doc.search_data.freight_config_customer) {
+        queryStr += ' and fc.freight_config_vendor = ?'
+        replacements.push(doc.search_data.freight_config_customer)
+      }
+    } else {
+      if (doc.search_data.freight_config_vendor && doc.search_data.freight_config_customer){
+        queryStr += ' and (fc.freight_config_vendor = ? or fc.freight_config_vendor = ?)'
+        replacements.push(doc.search_data.freight_config_vendor)
+        replacements.push(doc.search_data.freight_config_customer)
+      } else {
+        if (doc.search_data.freight_config_vendor) {
+          queryStr += ' and fc.freight_config_vendor = ?'
+          replacements.push(doc.search_data.freight_config_vendor)
+        }
+        if (doc.search_data.freight_config_customer) {
+          queryStr += ' and fc.freight_config_vendor = ?'
+          replacements.push(doc.search_data.freight_config_customer)
+        }
+      }
     }
     if (doc.search_data.freight_config_business_type) {
       queryStr += ' and fc.freight_config_business_type = ?'
@@ -65,12 +97,10 @@ exports.searchAct = async req => {
       replacements.push(doc.search_data.freight_config_enabled_date)
     }
   }
-  queryStr += ' order by fc.freight_config_enabled_date desc, cv.vendor_code'
+  queryStr += ' order by fc.freight_config_enabled_date desc'
   let result = await model.queryWithCount(doc, queryStr, replacements)
-
   returnData.total = result.count
   returnData.rows = result.data
-
   return common.success(returnData)
 }
 
@@ -85,6 +115,7 @@ exports.addAct = async req => {
       for(let d of doc.freight_config_pod) {
         let exist = await tb_freight_config.findOne({
           where: {
+            freight_config_Type: doc.freight_config_Type,
             freight_config_vendor: doc.freight_config_vendor,
             freight_config_business_type: doc.freight_config_business_type,
             freight_config_cargo_type: doc.freight_config_cargo_type,
@@ -97,6 +128,7 @@ exports.addAct = async req => {
         })
         if(!exist) {
           await tb_freight_config.create({
+            freight_config_Type: doc.freight_config_Type,
             freight_config_vendor: doc.freight_config_vendor,
             freight_config_business_type: doc.freight_config_business_type,
             freight_config_cargo_type: doc.freight_config_cargo_type,
@@ -107,8 +139,7 @@ exports.addAct = async req => {
             freight_config_amount: doc.freight_config_amount,
             freight_config_advance: doc.freight_config_advance,
             freight_config_advance_amount: doc.freight_config_advance_amount,
-            freight_config_enabled_date: freight_config_enabled_date,
-            freight_config_amount_receivable: doc.freight_config_amount_receivable,
+            freight_config_enabled_date: freight_config_enabled_date
           })
         }
       }
@@ -116,6 +147,7 @@ exports.addAct = async req => {
       for(let l of doc.freight_config_pol) {
         let exist = await tb_freight_config.findOne({
           where: {
+            freight_config_Type: doc.freight_config_Type,
             freight_config_vendor: doc.freight_config_vendor,
             freight_config_business_type: doc.freight_config_business_type,
             freight_config_cargo_type: doc.freight_config_cargo_type,
@@ -129,6 +161,7 @@ exports.addAct = async req => {
         })
         if(!exist) {
           await tb_freight_config.create({
+            freight_config_Type: doc.freight_config_Type,
             freight_config_vendor: doc.freight_config_vendor,
             freight_config_business_type: doc.freight_config_business_type,
             freight_config_cargo_type: doc.freight_config_cargo_type,
@@ -139,8 +172,7 @@ exports.addAct = async req => {
             freight_config_amount: doc.freight_config_amount,
             freight_config_advance: doc.freight_config_advance,
             freight_config_advance_amount: doc.freight_config_advance_amount,
-            freight_config_enabled_date: freight_config_enabled_date,
-            freight_config_amount_receivable: doc.freight_config_amount_receivable,
+            freight_config_enabled_date: freight_config_enabled_date
           })
         }
       }
@@ -174,7 +206,6 @@ exports.modifyAct = async req => {
     obj.freight_config_advance = doc.new.freight_config_advance
     obj.freight_config_advance_amount = doc.new.freight_config_advance_amount
     obj.freight_config_enabled_date = freight_config_enabled_date
-    obj.freight_config_amount_receivable = doc.new.freight_config_amount_receivable
     await obj.save()
     return common.success()
   } else {
@@ -211,11 +242,11 @@ exports.deleteAct = async req => {
  * @param {*} container 箱型尺寸
  * @param {*} transport_date 运输日期
  */
-exports.countShipmentFreight = async (vendor, business_type, cargo_type, freight_pol, feight_pod, carrier, container, transport_date) => {
-  let queryStr = `select * from tbl_zhongtan_freight_config where state = ? AND freight_config_vendor = ? AND freight_config_business_type = ? 
+exports.countShipmentFreight = async (vendor, business_type, cargo_type, freight_pol, feight_pod, carrier, container, transport_date, freight_Type = 'P') => {
+  let queryStr = `select * from tbl_zhongtan_freight_config where state = ? AND freight_config_Type = ? AND freight_config_vendor = ? AND freight_config_business_type = ? 
       AND freight_config_cargo_type = ? AND freight_config_pol = ? AND freight_config_pod = ? AND freight_config_carrier = ? 
       AND freight_config_size_type = ? AND freight_config_enabled_date <= ? order by freight_config_enabled_date desc, freight_config_id desc limit 1`
-  let replacements = [GLBConfig.ENABLE, vendor, business_type, cargo_type, freight_pol, feight_pod, carrier, container, transport_date]
+  let replacements = [GLBConfig.ENABLE, freight_Type, vendor, business_type, cargo_type, freight_pol, feight_pod, carrier, container, transport_date]
   let result = await model.simpleSelect(queryStr, replacements)
   if(result && result.length === 1) {
     return result[0]

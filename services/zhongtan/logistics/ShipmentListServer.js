@@ -29,7 +29,9 @@ exports.initAct = async () => {
 exports.searchAct = async req => {
   let doc = common.docValidate(req),
     returnData = {}
-  let queryStr = `select s.*, v.vendor_code as shipment_list_vendor_code, v.vendor_name as shipment_list_vendor_name from tbl_zhongtan_logistics_shipment_list s left join tbl_common_vendor v on s.shipment_list_vendor = v.vendor_id where s.state = ?`
+  let queryStr = `select s.*, v.vendor_code as shipment_list_vendor_code, v.vendor_name as shipment_list_vendor_name from tbl_zhongtan_logistics_shipment_list s 
+                  left join (SELECT shipment_list_bill_no, IFNULL(shipment_list_discharge_date, shipment_list_depot_gate_out_date) AS sort_date FROM tbl_zhongtan_logistics_shipment_list GROUP BY shipment_list_bill_no) ss ON s.shipment_list_bill_no = ss.shipment_list_bill_no
+                  left join tbl_common_vendor v on s.shipment_list_vendor = v.vendor_id where s.state = ?`
   let replacements = [GLBConfig.ENABLE]
   let searchPara = doc.searchPara
   if(searchPara) {
@@ -87,7 +89,7 @@ exports.searchAct = async req => {
       replacements.push('%' + searchPara.shipment_list_vendor + '%')
     }
   }
-  queryStr = queryStr + ' ORDER BY IFNULL(shipment_list_discharge_date, shipment_list_depot_gate_out_date) DESC, shipment_list_bill_no, shipment_list_container_no'
+  queryStr = queryStr + ' ORDER BY ss.sort_date DESC, ss.shipment_list_bill_no, s.shipment_list_container_no'
   let result = await model.queryWithCount(doc, queryStr, replacements)
   returnData.total = result.count
   returnData.rows = result.data
@@ -386,10 +388,6 @@ exports.updateShipmentFreight = async (shipment_list_id) => {
         sp.shipment_list_advance_percent = freight.freight_config_advance
         sp.shipment_list_balance_payment = new Decimal(freight.freight_config_amount).sub(freight.freight_config_advance_amount).toNumber()
         sp.shipment_list_payment_status = '1'
-      }
-      if(freight.freight_config_amount_receivable && sp.shipment_list_receivable_status === '0') {
-        sp.shipment_list_receivable_freight = freight.freight_config_amount_receivable
-        sp.shipment_list_receivable_status = '1'
       }
       sp.save()
     }
