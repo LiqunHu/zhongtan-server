@@ -120,6 +120,7 @@ exports.declineAct = async req => {
         await v.save()
         if(ver.logistics_verification_api_name === 'PAYMENT ADVANCE' 
             || ver.logistics_verification_api_name === 'PAYMENT BALANCE' 
+            || ver.logistics_verification_api_name === 'PAYMENT FULL' 
             || ver.logistics_verification_api_name === 'FREIGHT INVOICE') {
           let sp = await tb_shipment_list.findOne({
             where: {
@@ -128,7 +129,7 @@ exports.declineAct = async req => {
             }
           })
           if(sp) {
-            if(ver.logistics_verification_api_name === 'PAYMENT ADVANCE') {
+            if(ver.logistics_verification_api_name === 'PAYMENT ADVANCE' || ver.logistics_verification_api_name === 'PAYMENT FULL') {
               sp.shipment_list_payment_status = '1'
             } else if(ver.logistics_verification_api_name === 'PAYMENT BALANCE') {
               sp.shipment_list_payment_status = '3'
@@ -247,7 +248,7 @@ exports.verificationDetailAct = async req => {
   let returnData = []
   if(ver) {
     // 托单审核
-    if(ver.logistics_verification_api_name === 'PAYMENT ADVANCE' || ver.logistics_verification_api_name === 'PAYMENT BALANCE') {
+    if(ver.logistics_verification_api_name === 'PAYMENT ADVANCE' || ver.logistics_verification_api_name === 'PAYMENT BALANCE' || ver.logistics_verification_api_name === 'PAYMENT FULL') {
       let queryStr = `SELECT sl.*, CONCAT(cv.vendor_code, '/', cv.vendor_name) AS vendor FROM tbl_zhongtan_logistics_verification_freight vf 
                       LEFT JOIN tbl_zhongtan_logistics_shipment_list sl ON vf.shipment_list_id = sl.shipment_list_id 
                       LEFT JOIN tbl_common_vendor cv ON sl.shipment_list_vendor = cv.vendor_id WHERE vf.state = 1 AND vf.logistics_verification_id = ?`

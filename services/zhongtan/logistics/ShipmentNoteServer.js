@@ -51,7 +51,7 @@ exports.searchAct = async req => {
       d._checked = false
       queryStr = `SELECT u.*, cu.user_name FROM tbl_zhongtan_uploadfile u LEFT JOIN tbl_common_user cu ON u.uploadfil_release_user_id = cu.user_id WHERE u.state = ? AND uploadfile_index1 IN (
                   SELECT logistics_verification_id FROM tbl_zhongtan_logistics_verification_freight WHERE state = ? AND shipment_list_id = ? AND logistics_freight_state = 'AP') 
-                  AND api_name IN ('PAYMENT ADVANCE', 'PAYMENT BALANCE') ORDER BY api_name`
+                  AND api_name IN ('PAYMENT ADVANCE', 'PAYMENT BALANCE', 'PAYMENT FULL') ORDER BY api_name`
       let replacements = [GLBConfig.ENABLE, GLBConfig.ENABLE, d.shipment_list_id]
       let paymentFiles = await model.simpleSelect(queryStr, replacements)
       let files = []
@@ -482,7 +482,59 @@ exports.applyPaymentAct = async req => {
         shipment_list_id: d.shipment_list_id,
         logistics_freight_api_name: api_name,
         logistics_freight_state: 'PM',
-        logistics_freight_amount: d.shipment_list_advance_payment
+        logistics_freight_amount: doc.applyAction === 'ADVANCE' ? d.shipment_list_advance_payment : d.shipment_list_balance_payment
+      })
+      let sl = await tb_shipment_list.findOne({
+        where: {
+          shipment_list_id: d.shipment_list_id,
+          state: GLBConfig.ENABLE
+        }
+      })
+      sl.shipment_list_payment_status = payment_status
+      await sl.save()
+    }
+  }
+  return common.success()
+}
+
+exports.applyFullPaymentAct = async req => {
+  let doc = common.docValidate(req), user = req.user
+  let applyData = doc.applyData
+  let vgs = await common.groupingJson(applyData, 'shipment_list_vendor')
+  if(vgs.length > 1) {
+    return common.error('logistics_04')
+  }
+  for(let a of applyData) {
+    a.grouping_type = a.shipment_list_business_type + '_' + a.shipment_list_cntr_owner + '_' + a.shipment_list_cargo_type
+  }
+  let gts = await common.groupingJson(doc.applyData, 'grouping_type')
+  let api_name = 'PAYMENT FULL'
+  // 支付状态 0：未添加，1：已添加，2：申请预付，3预付支付，4申请余款，5余款支付，6申请额外费用，7额外费用支付，8全款支付
+  let payment_status = '8'
+  for(let g of gts) {
+    let ids = g.id.split('_')
+    let data = g.data
+    let applyAmount = 0
+    for(let d of data) {
+      applyAmount = new Decimal(applyAmount).plus(d.shipment_list_total_freight)
+    }
+    let ver = await tb_verification.create({
+      logistics_verification_vendor: vgs[0].id,
+      logistics_verification_business_type: ids[0],
+      logistics_verification_cntr_owner: ids[1],
+      logistics_verification_cargo_type: ids[2],
+      logistics_verification_api_name: api_name,
+      logistics_verification_state: 'PM',
+      logistics_verification_amount: applyAmount.toNumber(),
+      logistics_verification_create_user: user.user_id,
+    })
+    for(let d of data) {
+      await tb_verification_freight.create({
+        logistics_verification_id: ver.logistics_verification_id,
+        shipment_list_id: d.shipment_list_id,
+        logistics_freight_api_name: api_name,
+        logistics_freight_state: 'PM',
+        logistics_freight_amount: d.shipment_list_total_freight
       })
       let sl = await tb_shipment_list.findOne({
         where: {
@@ -532,7 +584,9 @@ exports.undoPaymentAct = async req => {
       for(let v of vfs) {
         v.logistics_freight_state = 'UN'
         await v.save()
-        if(ver.logistics_verification_api_name === 'PAYMENT ADVANCE' || ver.logistics_verification_api_name === 'PAYMENT BALANCE') {
+        if(ver.logistics_verification_api_name === 'PAYMENT ADVANCE' 
+            || ver.logistics_verification_api_name === 'PAYMENT BALANCE' 
+            || ver.logistics_verification_api_name === 'PAYMENT FULL') {
           let sp = await tb_shipment_list.findOne({
             where: {
               shipment_list_id: v.shipment_list_id,
@@ -541,7 +595,7 @@ exports.undoPaymentAct = async req => {
           })
           if(sp) {
             // 支付状态 0：未添加，1：已添加，2：申请预付，3预付支付，4申请余款，5余款支付，6申请额外费用，7额外费用支付
-            if(ver.logistics_verification_api_name === 'PAYMENT ADVANCE') {
+            if(ver.logistics_verification_api_name === 'PAYMENT ADVANCE' || ver.logistics_verification_api_name === 'PAYMENT FULL') {
               sp.shipment_list_payment_status = '1'
             } else if(ver.logistics_verification_api_name === 'PAYMENT BALANCE') {
               sp.shipment_list_payment_status = '3'

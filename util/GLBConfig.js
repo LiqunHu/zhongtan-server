@@ -435,7 +435,7 @@ module.exports = {
     { id: 'E', text: 'EXPORT' } // 出口
   ],
   FREIGHT_PAYMENT_STATUS: [
-    // 支付状态 0：未添加，1：已添加，2：申请预付，3预付支付，4申请余款，5余款支付，6申请额外费用，7额外费用支付
+    // 支付状态 0：未添加，1：已添加，2：申请预付，3预付支付，4申请余款，5余款支付，6申请额外费用，7额外费用支付，8全款支付
     { id: '0', text: 'NEW' }, // 新建
     { id: '1', text: 'NEW PAYMENT NOTE' }, // 已添加
     { id: '2', text: 'APPLY ADVANCE' },  // 申请预付
@@ -443,7 +443,8 @@ module.exports = {
     { id: '4', text: 'APPLY BALANCE' },  // 申请余款
     { id: '5', text: 'BALANCE PAYMENT' },  // 余款支付
     { id: '6', text: 'EXTRA CHARGES' },  // 申请额外费用
-    { id: '7', text: 'EXTRA PAYMENT' }  // 额外费用支付
+    { id: '7', text: 'EXTRA PAYMENT' },  // 额外费用支付
+    { id: '8', text: 'APPLY FULL' }  // 全款支付
   ],
   FREIGHT_RECEIVABLE_STATUS: [
     // 应收状态 0：未添加，1：已添加，2：申请发票，3已开发票，4已开收据，5申请额外发票，6已开额外发票，7已开额外收据

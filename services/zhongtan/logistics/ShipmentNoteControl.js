@@ -27,6 +27,8 @@ module.exports = async (req, res) => {
       ret = await srv.applyPaymentSearchAct(req)
     } else if (method === 'applyPayment') {
       ret = await srv.applyPaymentAct(req)
+    } else if (method === 'applyFullPayment') {
+      ret = await srv.applyFullPaymentAct(req)
     } else if (method === 'undoPayment') {
       ret = await srv.undoPaymentAct(req)
     } else if(method === 'paymentBalanceEdit') {

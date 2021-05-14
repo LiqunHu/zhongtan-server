@@ -95,6 +95,7 @@ exports.approveAct = async req => {
         await v.save()
         if(ver.logistics_verification_api_name === 'PAYMENT ADVANCE' 
             || ver.logistics_verification_api_name === 'PAYMENT BALANCE' 
+            || ver.logistics_verification_api_name === 'PAYMENT FULL' 
             || ver.logistics_verification_api_name === 'FREIGHT INVOICE') {
           let pt = await tb_shipment_list.findOne({
             where: {
@@ -109,7 +110,7 @@ exports.approveAct = async req => {
               pt.shipment_list_payment_status = '3'
               pt.shipment_list_advance_payment_date = moment().format('YYYY-MM-DD')
               await pt.save()
-            } else if(ver.logistics_verification_api_name === 'PAYMENT BALANCE') {
+            } else if(ver.logistics_verification_api_name === 'PAYMENT BALANCE' || ver.logistics_verification_api_name === 'PAYMENT FULL') {
               pt.shipment_list_payment_status = '5'
               pt.shipment_list_balance_payment_date = moment().format('YYYY-MM-DD')
               await pt.save()
@@ -211,6 +212,7 @@ exports.approveAct = async req => {
       // 生成对应支付单
       if(ver.logistics_verification_api_name === 'PAYMENT ADVANCE' 
             || ver.logistics_verification_api_name === 'PAYMENT BALANCE' 
+            || ver.logistics_verification_api_name === 'PAYMENT FULL' 
             || ver.logistics_verification_api_name === 'PAYMENT EXTRA') {
         let vendor = await tb_vendor.findOne({
           where: {
@@ -309,6 +311,34 @@ exports.approveAct = async req => {
             uploadfile_name: fileInfo.name,
             uploadfile_url: fileInfo.url,
             uploadfile_acttype: 'balance',
+            uploadfile_amount: ver.logistics_verification_amount,
+            uploadfile_currency: 'USD',
+            uploadfile_received_from: vendor.vendor_name,
+            uploadfile_customer_id: vendor.vendor_id,
+            uploadfile_invoice_no: payment_no,
+            uploadfil_release_date: curDate,
+            uploadfil_release_user_id: user.user_id
+          })
+        } else if(ver.logistics_verification_api_name === 'PAYMENT FULL') {
+          let payment_list = []
+          for(let p of payments) {
+            payment_list.push({
+              bl: p.shipment_list_bill_no,
+              container_no: p.shipment_list_container_no,
+              size_type: p.shipment_list_size_type,
+              fnd: p.shipment_list_business_type === 'I' ?  p.shipment_list_port_of_destination : p.shipment_list_port_of_loading,
+              amount: p.shipment_list_total_freight
+            })
+          }
+          renderData.payment_list = payment_list
+          let fileInfo = await common.ejs2Pdf('paymentFull.ejs', renderData, 'zhongtan')
+          await tb_uploadfile.create({
+            api_name: 'PAYMENT FULL',
+            user_id: user.user_id,
+            uploadfile_index1: ver.logistics_verification_id,
+            uploadfile_name: fileInfo.name,
+            uploadfile_url: fileInfo.url,
+            uploadfile_acttype: 'full',
             uploadfile_amount: ver.logistics_verification_amount,
             uploadfile_currency: 'USD',
             uploadfile_received_from: vendor.vendor_name,
@@ -477,7 +507,10 @@ exports.declineAct = async req => {
       for(let v of vfs) {
         v.logistics_freight_state = 'BD'
         await v.save()
-        if(ver.logistics_verification_api_name === 'PAYMENT ADVANCE' || ver.logistics_verification_api_name === 'PAYMENT BALANCE') {
+        if(ver.logistics_verification_api_name === 'PAYMENT ADVANCE' 
+            || ver.logistics_verification_api_name === 'PAYMENT BALANCE'
+            || ver.logistics_verification_api_name === 'PAYMENT FULL' 
+            || ver.logistics_verification_api_name === 'FREIGHT INVOICE') {
           let sp = await tb_shipment_list.findOne({
             where: {
               shipment_list_id: v.shipment_list_id,
@@ -485,10 +518,12 @@ exports.declineAct = async req => {
             }
           })
           if(sp) {
-            if(ver.logistics_verification_api_name === 'PAYMENT ADVANCE') {
+            if(ver.logistics_verification_api_name === 'PAYMENT ADVANCE' || ver.logistics_verification_api_name === 'PAYMENT FULL') {
               sp.shipment_list_payment_status = '1'
             } else if(ver.logistics_verification_api_name === 'PAYMENT BALANCE') {
               sp.shipment_list_payment_status = '3'
+            } else if(ver.logistics_verification_api_name === 'FREIGHT INVOICE') {
+              sp.shipment_list_receivable_status = '1'
             }
             await sp.save()
           }
@@ -602,7 +637,7 @@ exports.verificationDetailAct = async req => {
   let returnData = []
   if(ver) {
     // 托单审核
-    if(ver.logistics_verification_api_name === 'PAYMENT ADVANCE' || ver.logistics_verification_api_name === 'PAYMENT BALANCE') {
+    if(ver.logistics_verification_api_name === 'PAYMENT ADVANCE' || ver.logistics_verification_api_name === 'PAYMENT BALANCE' || ver.logistics_verification_api_name === 'PAYMENT FULL') {
       let queryStr = `SELECT sl.*, CONCAT(cv.vendor_code, '/', cv.vendor_name) AS vendor FROM tbl_zhongtan_logistics_verification_freight vf 
                       LEFT JOIN tbl_zhongtan_logistics_shipment_list sl ON vf.shipment_list_id = sl.shipment_list_id 
                       LEFT JOIN tbl_common_vendor cv ON sl.shipment_list_vendor = cv.vendor_id WHERE vf.state = 1 AND vf.logistics_verification_id = ?`
