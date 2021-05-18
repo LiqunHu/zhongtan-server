@@ -24,6 +24,8 @@ const tb_export_proforma_containers = model.zhongtan_export_proforma_container
 const tb_email = model.zhongtan_edi_mail
 
 const transporter = nodemailer.createTransport(config.mailConfig)
+const transporterIM = nodemailer.createTransport(config.tempImMailConfig)
+const transporterEX = nodemailer.createTransport(config.tempExMailConfig)
 
 const sendMail = async (to, subject, text, html) => {
   let info = await transporter.sendMail({
@@ -37,17 +39,44 @@ const sendMail = async (to, subject, text, html) => {
 }
 
 const sendEdiMail = async (from, to, cc, bcc, subject, text, html, attachments) => {
-  let info = await transporter.sendMail({
-    from: from, // sender address
-    to: to, // list of receivers
-    cc: cc || '', // list of Carbon Copy
-    bcc: bcc || '', // list of Blind Carbon Copy
-    subject: subject || '', // Subject line
-    text: text || '', // plain text body
-    html: html || '',
-    attachments: attachments // html body
-  })
-  return info
+  // TODO
+  if(from === 'impops_sinotaship@163.com') {
+    let info = await transporterIM.sendMail({
+      from: from, // sender address
+      to: to, // list of receivers
+      cc: cc || '', // list of Carbon Copy
+      bcc: bcc || '', // list of Blind Carbon Copy
+      subject: subject || '', // Subject line
+      text: text || '', // plain text body
+      html: html || '',
+      attachments: attachments // html body
+    })
+    return info
+  } else if(from === 'expops_sinotaship@163.com') {
+    let info = await transporterEX.sendMail({
+      from: from, // sender address
+      to: to, // list of receivers
+      cc: cc || '', // list of Carbon Copy
+      bcc: bcc || '', // list of Blind Carbon Copy
+      subject: subject || '', // Subject line
+      text: text || '', // plain text body
+      html: html || '',
+      attachments: attachments // html body
+    })
+    return info
+  } else {
+    let info = await transporter.sendMail({
+      from: from, // sender address
+      to: to, // list of receivers
+      cc: cc || '', // list of Carbon Copy
+      bcc: bcc || '', // list of Blind Carbon Copy
+      subject: subject || '', // Subject line
+      text: text || '', // plain text body
+      html: html || '',
+      attachments: attachments // html body
+    })
+    return info
+  }
 }
 
 const imap = new Imap(config.sysEdiMailConfig)

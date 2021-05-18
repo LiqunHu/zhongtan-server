@@ -387,7 +387,7 @@ module.exports = {
   STORING_ORDER_EMAIL_SENDER: 'equipmentcontrol@sinotaship.com',
   STORING_ORDER_CARBON_COPY: 'DEMURRAGE@SINOTASHIP.COM',
   STORING_ORDER_BLIND_CARBON_COPY: '540301291@qq.com',
-  ICD_EDI_EMAIL_SENDER: 'OPERATIONS@SINOTASHIP.COM',
+  ICD_EDI_EMAIL_SENDER: 'impops_sinotaship@163.com', //'OPERATIONS@SINOTASHIP.COM',
   USER_CUSTOMER_TYPE_ALL: '0',
   USER_CUSTOMER_TYPE_AGENT: '1',
   USER_CUSTOMER_TYPE_CONSIGNEE: '2',
@@ -413,7 +413,7 @@ module.exports = {
     { id: 'MD', text: 'Commercial Declined' },
     { id: 'AP', text: 'Commercial Approved' }
   ],
-  EMPTY_RELEASE_EMAIL_SENDER: 'DEMURRAGE@SINOTASHIP.COM',
+  EMPTY_RELEASE_EMAIL_SENDER: 'expops_sinotaship@163.com', //'DEMURRAGE@SINOTASHIP.COM',
   EMPTY_RELEASE_CARBON_COPY: 'export@sinotaship.com;demurrage@sinotaship.com',
   EXPORT_FEE_TYPE: [
     { id: 'R', text: 'Receivable' }, // 应收
