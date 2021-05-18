@@ -28,7 +28,7 @@ module.exports = db.defineModel('tbl_common_user', {
     allowNull: false
   },
   user_phone: {
-    type: db.STRING(20),
+    type: db.STRING(100),
     defaultValue: '',
     allowNull: false
   },
