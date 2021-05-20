@@ -520,6 +520,9 @@ const checkDoState = bl => {
       return true
     }
   } else {
+    if(!bl.invoice_masterbi_freight) {
+      bl.invoice_masterbi_freight = 'PREPAID'
+    }
     if(bl.invoice_masterbi_cargo_type === 'IM' && bl.invoice_masterbi_freight === 'PREPAID') {
       // deposit， invoice fee two fee two incoice
       if(bl.invoice_masterbi_deposit_receipt_date && bl.invoice_masterbi_invoice_receipt_date) {
