@@ -696,6 +696,27 @@ const groupingJson = async(arr, key) => {
   return dest
 }
 
+const jsonFindOne = async(arr, key, value) => {
+  for(var i = 0; i < arr.length; i++){
+      var ai = arr[i]
+      if(ai[key] && value && ai[key].toString() === value.toString()) {
+        return ai
+      }
+  }
+  return null
+}
+
+const jsonFindAll = async(arr, key, value) => {
+  let ret = []
+  for(var i = 0; i < arr.length; i++){
+      var ai = arr[i]
+      if(ai[key] && value && ai[key].toString() === value.toString()) {
+        ret.push(ai)
+      }
+  }
+  return ret
+}
+
 module.exports = {
   docValidate: docValidate,
   reqTrans: reqTrans,
@@ -735,5 +756,7 @@ module.exports = {
   valueFilter: valueFilter,
   jsonTrim: jsonTrim,
   depot2Edi: depot2Edi,
-  groupingJson: groupingJson
+  groupingJson: groupingJson,
+  jsonFindOne: jsonFindOne,
+  jsonFindAll: jsonFindAll
 }
