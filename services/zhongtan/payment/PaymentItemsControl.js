@@ -1,6 +1,6 @@
 const common = require('../../../util/CommonUtil')
 const logger = require('../../../app/logger').createLogger(__filename)
-const srv = require('./ImportOverdueStatisticsServer')
+const srv = require('./PaymentItemsServer')
 
 module.exports = async (req, res) => {
   try {
@@ -11,11 +11,13 @@ module.exports = async (req, res) => {
       ret = await srv.initAct(req)
     } else if (method === 'search') {
       ret = await srv.searchAct(req)
-    } else if (method === 'exportData') {
-      return await srv.exportDataAct(req, res)
-    } else if (method === 'checkPassword') {
-      ret = await srv.checkPasswordAct(req)
-    } 
+    } else if (method === 'add') {
+      ret = await srv.addAct(req)
+    } else if (method === 'modify') {
+      ret = await srv.modifyAct(req)
+    } else if (method === 'delete') {
+      ret = await srv.deleteAct(req)
+    }
     common.sendData(res, ret)
   } catch (error) {
     common.sendFault(res, error)

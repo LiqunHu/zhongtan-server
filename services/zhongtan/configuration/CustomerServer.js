@@ -80,7 +80,9 @@ exports.addAct = async req => {
       user_zipcode: doc.user_zipcode,
       user_customer_type: doc.user_customer_type,
       user_tin: doc.user_tin ? doc.user_tin.trim() : '',
-      user_vrn: doc.user_vrn ? doc.user_vrn.trim() : ''
+      user_vrn: doc.user_vrn ? doc.user_vrn.trim() : '',
+      user_bank_account_usd: doc.user_bank_account_usd ? doc.user_bank_account_usd.trim() : '',
+      user_bank_account_tzs: doc.user_bank_account_tzs ? doc.user_bank_account_tzs.trim() : ''
     })
 
     await tb_user_groups.create({
@@ -120,6 +122,8 @@ exports.modifyAct = async req => {
     modiuser.user_customer_type = doc.new.user_customer_type
     modiuser.user_tin = doc.new.user_tin ? doc.new.user_tin.trim() : ''
     modiuser.user_vrn = doc.new.user_vrn ? doc.new.user_vrn.trim() : ''
+    modiuser.user_bank_account_usd = doc.new.user_bank_account_usd ? doc.new.user_bank_account_usd.trim() : ''
+    modiuser.user_bank_account_tzs = doc.new.user_bank_account_tzs ? doc.new.user_bank_account_tzs.trim() : ''
     await modiuser.save()
 
     let returnData = JSON.parse(JSON.stringify(modiuser))

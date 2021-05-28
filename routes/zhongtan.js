@@ -74,4 +74,9 @@ router.post('/logistics/TBLFreightConfig/:method', services.TBLFreightConfigCont
 router.post('/logistics/BusinessVerification/:method', services.LogisticsBusinessVerificationControl)
 router.post('/logistics/ManagerVerification/:method', services.LogisticsManagerVerificationControl)
 
+router.post('/payment/PaymentItems/:method', services.PaymentItemsControl)
+router.post('/payment/PaymentAdvice/:method', services.PaymentAdviceControl)
+router.post('/payment/BusinessVerification/:method', services.PaymentBusinessVerificationControl)
+router.post('/payment/ManagerVerification/:method', services.PaymentManagerVerificationControl)
+
 module.exports = router

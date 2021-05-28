@@ -475,4 +475,30 @@ module.exports = {
     { id: 'R', text: 'Collection' }, // 应收
     { id: 'P', text: 'Payment' }  // 应付
   ],
+  PAYMENT_STATUS: [
+    // 支付状态 1：申请支付，2：已支付
+    { id: '1', text: 'APPLY PAYMENT' },  // 申请支付
+    { id: '2', text: 'PAYMENTED' },  // 已支付
+  ],
+  PAYMENT_METHOD: [
+    { id: 'CASH', text: 'CASH' },
+    { id: 'REMITTANCE', text: 'REMITTANCE' }, 
+    { id: 'CHEQUE', text: 'CHEQUE' }, 
+  ],
+  PAYMENT_BUSINESS_STATE: [
+    { id: 'PB', text: 'Pending at Business' },
+    { id: 'BD', text: 'Business Declined' }
+  ],
+  PAYMENT_MANAGER_STATE: [
+    { id: 'PM', text: 'Pending at Manager' },
+    { id: 'MD', text: 'Manager Declined' }
+  ],
+  PAYMENT_VERIFICATION_STATE: [
+    { id: 'PB', text: 'Pending at Business' },
+    { id: 'BD', text: 'Business Declined' },
+    { id: 'PM', text: 'Pending at Manager' },
+    { id: 'MD', text: 'Manager Declined' },
+    { id: 'AP', text: 'All Approved' },
+    { id: 'UN', text: 'UNDO' }
+  ],
 }

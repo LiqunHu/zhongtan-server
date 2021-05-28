@@ -121,4 +121,12 @@ module.exports = db.defineModel('tbl_common_user', {
     type: db.STRING(50),
     allowNull: true
   },
+  user_bank_account_usd: {
+    type: db.STRING(50),
+    allowNull: true
+  },
+  user_bank_account_tzs: {
+    type: db.STRING(50),
+    allowNull: true
+  },
 })

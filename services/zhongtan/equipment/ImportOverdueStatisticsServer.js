@@ -2,7 +2,7 @@ const moment = require('moment')
 const common = require('../../../util/CommonUtil')
 const GLBConfig = require('../../../util/GLBConfig')
 const model = require('../../../app/model')
-
+const opSrv = require('../../common/system/OperationPasswordServer')
 const cal_config_srv = require('../equipment/OverdueCalculationConfigServer')
 const tb_container_size = model.zhongtan_container_size
 
@@ -290,4 +290,14 @@ exports.exportDataAct = async(req, res) => {
   let filepath = await common.ejs2xlsx('OverdueTemplate.xlsx', renderData)
 
   res.sendFile(filepath)
+}
+
+exports.checkPasswordAct = async req => {
+  let doc = common.docValidate(req)
+  let check = await opSrv.checkPassword(doc.action, doc.checkPassword)
+  if(check) {
+    return common.success()
+  } else {
+    return common.error('auth_24')
+  }
 }
