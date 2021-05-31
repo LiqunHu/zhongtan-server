@@ -242,7 +242,7 @@ exports.getBookingShipmentAct = async req => {
               shipment_fee_supplement: GLBConfig.DISABLE,
               shipment_fee_fixed_amount: fee_data.fee_amount === '$' ? GLBConfig.DISABLE : GLBConfig.ENABLE,
               shipment_fee_amount: fee_data.fee_amount === '$' ? '' : fee_data.fee_amount,
-              shipment_fee_currency: fee_data.fee_currency
+              shipment_fee_currency: fee_data.fee_currency ? fee_data.fee_currency : 'USD'
             })
           }
         }
@@ -262,7 +262,7 @@ exports.getBookingShipmentAct = async req => {
             shipment_fee_supplement: GLBConfig.DISABLE,
             shipment_fee_fixed_amount: fee_data.fee_amount === '$' ? GLBConfig.DISABLE : GLBConfig.ENABLE,
             shipment_fee_amount: fee_data.fee_amount === '$' ? '' : fee_data.fee_amount,
-            shipment_fee_currency: fee_data.fee_currency
+            shipment_fee_currency: fee_data.fee_currency ? fee_data.fee_currency : 'USD'
           })
         }
       }
@@ -308,7 +308,7 @@ exports.getBookingShipmentAct = async req => {
               shipment_fee_supplement: GLBConfig.DISABLE,
               shipment_fee_fixed_amount: fee_data.fee_amount === '$' ?GLBConfig.DISABLE : GLBConfig.ENABLE,
               shipment_fee_amount: fee_data.fee_amount === '$' ? '' : fee_data.fee_amount,
-              shipment_fee_currency: fee_data.fee_currency
+              shipment_fee_currency: fee_data.fee_currency ? fee_data.fee_currency : 'USD'
             })
           }
         }
@@ -328,7 +328,7 @@ exports.getBookingShipmentAct = async req => {
             shipment_fee_supplement: GLBConfig.DISABLE,
             shipment_fee_fixed_amount: fee_data.fee_amount === '$' ? GLBConfig.DISABLE : GLBConfig.ENABLE,
             shipment_fee_amount: fee_data.fee_amount === '$' ? '' : fee_data.fee_amount,
-            shipment_fee_currency: fee_data.fee_currency
+            shipment_fee_currency: fee_data.fee_currency ? fee_data.fee_currency : 'USD'
           })
         }
       }
@@ -446,7 +446,7 @@ exports.saveShipmentAct = async req => {
             sm.shipment_fee_party = r.shipment_fee_party
             sm.shipment_fee_fixed_amount = r.shipment_fee_fixed_amount
             sm.shipment_fee_amount = r.shipment_fee_amount
-            sm.shipment_fee_currency = r.shipment_fee_currency
+            sm.shipment_fee_currency = r.shipment_fee_currency ? r.shipment_fee_currency : 'USD'
             if(sm.shipment_fee_status === 'NE') {
               sm.shipment_fee_status = 'SA'
             }
@@ -464,7 +464,7 @@ exports.saveShipmentAct = async req => {
             shipment_fee_party: r.shipment_fee_party,
             shipment_fee_fixed_amount: r.shipment_fee_fixed_amount,
             shipment_fee_amount: r.shipment_fee_amount,
-            shipment_fee_currency: r.shipment_fee_currency,
+            shipment_fee_currency: r.shipment_fee_currency ? r.shipment_fee_currency : 'USD',
             shipment_fee_status: 'SA',
             shipment_fee_save_by: user.user_id,
             shipment_fee_save_at: new Date()
@@ -494,7 +494,7 @@ exports.saveShipmentAct = async req => {
             sm.shipment_fee_party = r.shipment_fee_party
             sm.shipment_fee_fixed_amount = r.shipment_fee_fixed_amount
             sm.shipment_fee_amount = r.shipment_fee_amount
-            sm.shipment_fee_currency = r.shipment_fee_currency
+            sm.shipment_fee_currency = r.shipment_fee_currency ? r.shipment_fee_currency : 'USD'
             if(sm.shipment_fee_status === 'NE') {
               sm.shipment_fee_status = 'SA'
             }
@@ -512,7 +512,7 @@ exports.saveShipmentAct = async req => {
             shipment_fee_party: r.shipment_fee_party,
             shipment_fee_fixed_amount: r.shipment_fee_fixed_amount,
             shipment_fee_amount: r.shipment_fee_amount,
-            shipment_fee_currency: r.shipment_fee_currency,
+            shipment_fee_currency: r.shipment_fee_currency ? r.shipment_fee_currency : 'USD',
             shipment_fee_status: 'SA',
             shipment_fee_save_by: user.user_id,
             shipment_fee_save_at: new Date()
