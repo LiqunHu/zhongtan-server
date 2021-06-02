@@ -286,7 +286,7 @@ exports.queryDemurrageRules = async (cargo_type, discharge_port, carrier, contai
       let baseEnabledDate = ''
       if(enabled_date && enabledDates.length > 0) {
         for(let d of enabledDates) {
-          if(moment(enabled_date, 'DD/MM/YYYY').isAfter(moment(d))) {
+          if(moment(enabled_date, 'DD/MM/YYYY').isSameOrAfter(moment(d))) {
             baseEnabledDate = d
             break
           }

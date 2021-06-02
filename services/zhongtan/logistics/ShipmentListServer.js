@@ -36,48 +36,48 @@ exports.searchAct = async req => {
   let searchPara = doc.searchPara
   if(searchPara) {
     if(searchPara.shipment_list_bill_no) {
-      queryStr = queryStr + ' and shipment_list_bill_no like ? '
+      queryStr = queryStr + ' and s.shipment_list_bill_no like ? '
       replacements.push('%' + searchPara.shipment_list_bill_no + '%')
     }
     if(searchPara.shipment_list_cntr_owner) {
-      queryStr = queryStr + ' and shipment_list_cntr_owner = ? '
+      queryStr = queryStr + ' and s.shipment_list_cntr_owner = ? '
       replacements.push(searchPara.shipment_list_cntr_owner)
     }
     if(searchPara.shipment_list_cargo_type) {
-      queryStr = queryStr + ' and shipment_list_cargo_type = ? '
+      queryStr = queryStr + ' and s.shipment_list_cargo_type = ? '
       replacements.push(searchPara.shipment_list_cargo_type)
     }
     if(searchPara.shipment_list_business_type) {
-      queryStr = queryStr + ' and shipment_list_business_type = ? '
+      queryStr = queryStr + ' and s.shipment_list_business_type = ? '
       replacements.push(searchPara.shipment_list_business_type)
       if(searchPara.shipment_list_in_date && searchPara.shipment_list_in_date.length > 1) {
         if(searchPara.shipment_list_business_type === 'I') {
-          queryStr = queryStr + ' and shipment_list_discharge_date >= ? and shipment_list_discharge_date <= ? '
+          queryStr = queryStr + ' and s.shipment_list_discharge_date >= ? and s.shipment_list_discharge_date <= ? '
         } else {
-          queryStr = queryStr + ' and shipment_list_depot_gate_out_date >= ? and shipment_list_depot_gate_out_date <= ? '
+          queryStr = queryStr + ' and s.shipment_list_depot_gate_out_date >= ? and s.shipment_list_depot_gate_out_date <= ? '
         }
         replacements.push(searchPara.shipment_list_in_date[0])
         replacements.push(searchPara.shipment_list_in_date[1])
       }
       if(searchPara.shipment_list_out_date && searchPara.shipment_list_out_date.length > 1) {
         if(searchPara.shipment_list_business_type === 'I') {
-          queryStr = queryStr + ' and shipment_list_empty_return_date >= ? and shipment_list_empty_return_date <= ? '
+          queryStr = queryStr + ' and s.shipment_list_empty_return_date >= ? and s.shipment_list_empty_return_date <= ? '
         } else {
-          queryStr = queryStr + ' and shipment_list_loading_date >= ? and shipment_list_loading_date <= ? '
+          queryStr = queryStr + ' and s.shipment_list_loading_date >= ? and s.shipment_list_loading_date <= ? '
         }
         replacements.push(searchPara.shipment_list_out_date[0])
         replacements.push(searchPara.shipment_list_out_date[1])
       }
     } else {
       if(searchPara.shipment_list_in_date && searchPara.shipment_list_in_date.length > 1) {
-        queryStr = queryStr + ' and ((shipment_list_discharge_date >= ? and shipment_list_discharge_date <= ?) OR (shipment_list_depot_gate_out_date >= ? and shipment_list_depot_gate_out_date <= ?)) '
+        queryStr = queryStr + ' and ((s.shipment_list_discharge_date >= ? and s.shipment_list_discharge_date <= ?) OR (s.shipment_list_depot_gate_out_date >= ? and s.shipment_list_depot_gate_out_date <= ?)) '
         replacements.push(searchPara.shipment_list_in_date[0])
         replacements.push(searchPara.shipment_list_in_date[1])
         replacements.push(searchPara.shipment_list_in_date[0])
         replacements.push(searchPara.shipment_list_in_date[1])
       }
       if(searchPara.shipment_list_out_date && searchPara.shipment_list_out_date.length > 1) {
-        queryStr = queryStr + ' and ((shipment_list_empty_return_date >= ? and shipment_list_empty_return_date <= ?) or (shipment_list_loading_date >= ? and shipment_list_loading_date <= ?)) '
+        queryStr = queryStr + ' and ((s.shipment_list_empty_return_date >= ? and s.shipment_list_empty_return_date <= ?) or (s.shipment_list_loading_date >= ? and s.shipment_list_loading_date <= ?)) '
         replacements.push(searchPara.shipment_list_out_date[0])
         replacements.push(searchPara.shipment_list_out_date[1])
         replacements.push(searchPara.shipment_list_in_date[0])
@@ -85,7 +85,7 @@ exports.searchAct = async req => {
       }
     }
     if(searchPara.shipment_list_vendor) {
-      queryStr = queryStr + ' and shipment_list_vendor like ? '
+      queryStr = queryStr + ' and s.shipment_list_vendor like ? '
       replacements.push('%' + searchPara.shipment_list_vendor + '%')
     }
   }
@@ -277,48 +277,48 @@ exports.exportAct = async (req, res) => {
   let searchPara = doc.searchPara
   if(searchPara) {
     if(searchPara.shipment_list_bill_no) {
-      queryStr = queryStr + ' and shipment_list_bill_no like ? '
+      queryStr = queryStr + ' and s.shipment_list_bill_no like ? '
       replacements.push('%' + searchPara.shipment_list_bill_no + '%')
     }
     if(searchPara.shipment_list_cntr_owner) {
-      queryStr = queryStr + ' and shipment_list_cntr_owner = ? '
+      queryStr = queryStr + ' and s.shipment_list_cntr_owner = ? '
       replacements.push(searchPara.shipment_list_cntr_owner)
     }
     if(searchPara.shipment_list_cargo_type) {
-      queryStr = queryStr + ' and shipment_list_cargo_type = ? '
+      queryStr = queryStr + ' and s.shipment_list_cargo_type = ? '
       replacements.push(searchPara.shipment_list_cargo_type)
     }
     if(searchPara.shipment_list_business_type) {
-      queryStr = queryStr + ' and shipment_list_business_type = ? '
+      queryStr = queryStr + ' and s.shipment_list_business_type = ? '
       replacements.push(searchPara.shipment_list_business_type)
       if(searchPara.shipment_list_in_date && searchPara.shipment_list_in_date.length > 1) {
         if(searchPara.shipment_list_business_type === 'I') {
-          queryStr = queryStr + ' and shipment_list_discharge_date >= ? and shipment_list_discharge_date <= ? '
+          queryStr = queryStr + ' and s.shipment_list_discharge_date >= ? and s.shipment_list_discharge_date <= ? '
         } else {
-          queryStr = queryStr + ' and shipment_list_depot_gate_out_date >= ? and shipment_list_depot_gate_out_date <= ? '
+          queryStr = queryStr + ' and s.shipment_list_depot_gate_out_date >= ? and s.shipment_list_depot_gate_out_date <= ? '
         }
         replacements.push(searchPara.shipment_list_in_date[0])
         replacements.push(searchPara.shipment_list_in_date[1])
       }
       if(searchPara.shipment_list_out_date && searchPara.shipment_list_out_date.length > 1) {
         if(searchPara.shipment_list_business_type === 'I') {
-          queryStr = queryStr + ' and shipment_list_empty_return_date >= ? and shipment_list_empty_return_date <= ? '
+          queryStr = queryStr + ' and s.shipment_list_empty_return_date >= ? and s.shipment_list_empty_return_date <= ? '
         } else {
-          queryStr = queryStr + ' and shipment_list_loading_date >= ? and shipment_list_loading_date <= ? '
+          queryStr = queryStr + ' and s.shipment_list_loading_date >= ? and s.shipment_list_loading_date <= ? '
         }
         replacements.push(searchPara.shipment_list_out_date[0])
         replacements.push(searchPara.shipment_list_out_date[1])
       }
     } else {
       if(searchPara.shipment_list_in_date && searchPara.shipment_list_in_date.length > 1) {
-        queryStr = queryStr + ' and ((shipment_list_discharge_date >= ? and shipment_list_discharge_date <= ?) OR (shipment_list_depot_gate_out_date >= ? and shipment_list_depot_gate_out_date <= ?)) '
+        queryStr = queryStr + ' and ((s.shipment_list_discharge_date >= ? and s.shipment_list_discharge_date <= ?) OR (s.shipment_list_depot_gate_out_date >= ? and s.shipment_list_depot_gate_out_date <= ?)) '
         replacements.push(searchPara.shipment_list_in_date[0])
         replacements.push(searchPara.shipment_list_in_date[1])
         replacements.push(searchPara.shipment_list_in_date[0])
         replacements.push(searchPara.shipment_list_in_date[1])
       }
       if(searchPara.shipment_list_out_date && searchPara.shipment_list_out_date.length > 1) {
-        queryStr = queryStr + ' and ((shipment_list_empty_return_date >= ? and shipment_list_empty_return_date <= ?) or (shipment_list_loading_date >= ? and shipment_list_loading_date <= ?)) '
+        queryStr = queryStr + ' and ((s.shipment_list_empty_return_date >= ? and s.shipment_list_empty_return_date <= ?) or (s.shipment_list_loading_date >= ? and s.shipment_list_loading_date <= ?)) '
         replacements.push(searchPara.shipment_list_out_date[0])
         replacements.push(searchPara.shipment_list_out_date[1])
         replacements.push(searchPara.shipment_list_in_date[0])
@@ -326,11 +326,11 @@ exports.exportAct = async (req, res) => {
       }
     }
     if(searchPara.shipment_list_vendor) {
-      queryStr = queryStr + ' and shipment_list_vendor = ?  '
+      queryStr = queryStr + ' and s.shipment_list_vendor = ?  '
       replacements.push(searchPara.shipment_list_vendor)
     }
   }
-  queryStr = queryStr + ' ORDER BY shipment_list_id DESC'
+  queryStr = queryStr + ' ORDER BY s.shipment_list_id DESC'
   let result = await model.simpleSelect(queryStr, replacements)
   let jsData = []
   let transits = []
