@@ -967,7 +967,6 @@ exports.downloadDoAct = async req => {
   if(!doc.invoice_masterbi_delivery_to || !doc.invoice_masterbi_valid_to) {
     return common.error('do_01')
   }
-
   let dc = await tb_user.findOne({
     where: {
       user_name: doc.invoice_masterbi_delivery_to,
@@ -986,7 +985,20 @@ exports.downloadDoAct = async req => {
     // 临时限制，OOLU开头的提单不能选择AFICD堆场
     return common.error('do_06')
   }
-
+  if(!doc.doDeliverToEdit) {
+    // 无权限D/O 判断代理是否开过收据
+    let rcount = await tb_uploadfile.count({
+      where: {
+        api_name : 'RECEIPT-RECEIPT',
+        uploadfile_index1: bl.invoice_masterbi_id,
+        uploadfile_received_from: doc.invoice_masterbi_delivery_to,
+        state: GLBConfig.ENABLE
+      }
+    })
+    if(rcount <= 0) {
+      return common.error('do_07')
+    }
+  }
   let delivery_order_no = ('000000000000000' + bl.invoice_masterbi_id).slice(-8)
   bl.invoice_masterbi_delivery_to = doc.invoice_masterbi_delivery_to
   bl.invoice_masterbi_do_date = moment().format('YYYY-MM-DD')

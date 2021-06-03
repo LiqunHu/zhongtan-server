@@ -526,10 +526,16 @@ exports.saveShipmentAct = async req => {
 
 exports.removeShipmentAct = async req => {
   let doc = common.docValidate(req)
-  let queryStr = `SELECT shipment_fee_id FROM tbl_zhongtan_export_shipment_fee WHERE state = ? AND shipment_fee_id IN (?)`
+  let queryStr = `SELECT shipment_fee_id, shipment_fee_type, fee_data_fixed, fee_data_code FROM tbl_zhongtan_export_shipment_fee WHERE state = ? AND shipment_fee_id IN (?)`
   let replacements = [GLBConfig.ENABLE, doc.remove_ids]
   let rms = await model.simpleSelect(queryStr, replacements)
   if(rms && rms.length > 0) {
+    let unremoveFee = ['BLF', 'FAF', 'OFT']
+    for(let r of rms) {
+      if(r.shipment_fee_type === 'P' && r.fee_data_fixed === '1' && unremoveFee.indexOf(r.fee_data_code) >= 0) {
+        return common.error('export_02')
+      }
+    }
     let removeStatus = ['NE', 'SA', 'DE', 'UN']
     for(let r of rms) {
       let rm = await tb_shipment_fee.findOne({

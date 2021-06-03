@@ -45,7 +45,7 @@ module.exports = db.defineModel('tbl_zhongtan_payment_advice', {
   payment_advice_bank_account: {
     // 收款方银行账号
     type: db.STRING(50),
-    allowNull: false
+    allowNull: true
   },
   payment_advice_remarks: {
     // 客户
