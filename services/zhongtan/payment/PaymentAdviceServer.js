@@ -20,6 +20,24 @@ exports.initAct = async () => {
   queryStr = `SELECT payment_items_code, payment_items_name FROM tbl_zhongtan_payment_items WHERE state = '1' ORDER BY payment_items_code`
   replacements = []
   returnData.PAYMENT_ITEMS = await model.simpleSelect(queryStr, replacements)
+
+  returnData.VESSELS = []
+  queryStr = `SELECT CONCAT(invoice_vessel_name, '/',invoice_vessel_voyage) AS vessel_voyage FROM tbl_zhongtan_invoice_vessel WHERE state = 1 GROUP BY invoice_vessel_name, invoice_vessel_voyage ORDER BY STR_TO_DATE(invoice_vessel_ata, '%d/%m/%Y') DESC;`
+  replacements = []
+  let imVs = await model.simpleSelect(queryStr, replacements)
+  if(imVs) {
+    for(let i of imVs) {
+      returnData.VESSELS.push(i)
+    }
+  }
+  queryStr = `SELECT CONCAT(export_vessel_name, '/',export_vessel_voyage) AS vessel_voyage FROM tbl_zhongtan_export_vessel WHERE state = 1 GROUP BY export_vessel_name, export_vessel_voyage ORDER BY STR_TO_DATE(export_vessel_etd, '%d/%m/%Y') DESC;`
+  replacements = []
+  let exVs = await model.simpleSelect(queryStr, replacements)
+  if(exVs) {
+    for(let e of exVs) {
+      returnData.VESSELS.push(e)
+    }
+  }
   return common.success(returnData)
 }
 
@@ -27,7 +45,7 @@ exports.searchAct = async req => {
   let doc = common.docValidate(req)
   let returnData = {}
 
-  let queryStr = `select pa.*, cb.user_name as payment_advice_beneficiary_name, cr.user_name as payment_advice_remarks_name, pi.payment_items_name as payment_advice_items_name
+  let queryStr = `select pa.*, CONCAT(pa.payment_advice_vessel, '/', pa.payment_advice_voyage) AS payment_advice_vessel_voyage, cb.user_name as payment_advice_beneficiary_name, cr.user_name as payment_advice_remarks_name, pi.payment_items_name as payment_advice_items_name
                   from tbl_zhongtan_payment_advice pa left join tbl_common_user cb on pa.payment_advice_beneficiary = cb.user_id 
                   left join tbl_common_user cr on pa.payment_advice_remarks = cr.user_id
                   left join tbl_zhongtan_payment_items pi on pa.payment_advice_items = pi.payment_items_code
@@ -94,6 +112,13 @@ exports.searchAct = async req => {
           d.payment_advice_check = true
         }
       }
+      d.atta_files = await tb_uploadfile.findAll({
+        where: {
+          uploadfile_index1: d.payment_advice_id,
+          api_name: 'PAYMENT ADVICE ATTACHMENT',
+          state: GLBConfig.ENABLE
+        }
+      })
       rows.push(d)
     }
   }
@@ -114,7 +139,12 @@ exports.addAct = async req => {
   if (addObj) {
     return common.error('payment_01')
   }
-
+  let payment_advice_vessel = null
+  let payment_advice_voyage = null
+  if(doc.payment_advice_vessel_voyage) {
+    payment_advice_vessel = doc.payment_advice_vessel_voyage.split('/')[0]
+    payment_advice_voyage = doc.payment_advice_vessel_voyage.split('/')[1]
+  }
   let obj = await tb_payment_advice.create({
     payment_advice_method: doc.payment_advice_method,
     payment_advice_items: doc.payment_advice_items,
@@ -124,9 +154,26 @@ exports.addAct = async req => {
     payment_advice_currency: doc.payment_advice_currency,
     payment_advice_bank_account: doc.payment_advice_bank_account,
     payment_advice_remarks: doc.payment_advice_remarks,
-    payment_advice_status: '1'
+    payment_advice_status: '1',
+    payment_advice_vessel: payment_advice_vessel,
+    payment_advice_voyage: payment_advice_voyage,
   })
 
+  if(doc.payment_atta_files && doc.payment_atta_files.length > 0) {
+    for(let f of doc.payment_atta_files) {
+      let fileInfo = await common.fileSaveMongo(f.response.info.path, 'zhongtan')
+      await tb_uploadfile.create({
+        api_name: 'PAYMENT ADVICE ATTACHMENT',
+        user_id: user.user_id,
+        uploadfile_index1: obj.payment_advice_id,
+        uploadfile_name: fileInfo.name,
+        uploadfile_url: fileInfo.url,
+        uploadfile_state: 'AP',
+        uploadfile_amount: doc.payment_advice_amount,
+        uploadfile_currency: doc.payment_advice_currency
+      })
+    }
+  }
   await tb_payment_verification.create({
     payment_advice_id: obj.payment_advice_id,
     payment_verification_state: 'PB',
@@ -136,7 +183,7 @@ exports.addAct = async req => {
 }
 
 exports.modifyAct = async req => {
-  let doc = common.docValidate(req)
+  let doc = common.docValidate(req), user = req.user
   let obj = await tb_payment_advice.findOne({
     where: {
       payment_advice_id: doc.old.payment_advice_id,
@@ -163,6 +210,12 @@ exports.modifyAct = async req => {
     if (updateObj) {
       return common.error('payment_01')
     }
+    let payment_advice_vessel = null
+    let payment_advice_voyage = null
+    if(doc.new.payment_advice_vessel_voyage) {
+      payment_advice_vessel = doc.new.payment_advice_vessel_voyage.split('/')[0]
+      payment_advice_voyage = doc.new.payment_advice_vessel_voyage.split('/')[1]
+    }
     obj.payment_advice_method = doc.new.payment_advice_method
     obj.payment_advice_items = doc.new.payment_advice_items
     obj.payment_advice_inv_cntrl = doc.new.payment_advice_inv_cntrl
@@ -171,6 +224,23 @@ exports.modifyAct = async req => {
     obj.payment_advice_currency = doc.new.payment_advice_currency
     obj.payment_advice_bank_account = doc.new.payment_advice_bank_account
     obj.payment_advice_remarks = doc.new.payment_advice_remarks
+    obj.payment_advice_vessel = payment_advice_vessel
+    obj.payment_advice_voyage = payment_advice_voyage
+    if(doc.new.payment_atta_files && doc.new.payment_atta_files.length > 0) {
+      for(let f of doc.new.payment_atta_files) {
+        let fileInfo = await common.fileSaveMongo(f.response.info.path, 'zhongtan')
+        await tb_uploadfile.create({
+          api_name: 'PAYMENT ADVICE ATTACHMENT',
+          user_id: user.user_id,
+          uploadfile_index1: obj.payment_advice_id,
+          uploadfile_name: fileInfo.name,
+          uploadfile_url: fileInfo.url,
+          uploadfile_state: 'AP',
+          uploadfile_amount: doc.payment_advice_amount,
+          uploadfile_currency: doc.payment_advice_currency
+        })
+      }
+    }
     await obj.save()
 
     if(ver) {
@@ -268,4 +338,9 @@ exports.exportAct = async (req, res) => {
   let result = await model.simpleSelect(queryStr, replacements)
   let filepath = await common.ejs2xlsx('PaymentAdvice.xlsx', result)
   res.sendFile(filepath)
+}
+
+exports.uploadAct = async req => {
+  let fileInfo = await common.fileSaveTemp(req)
+  return common.success(fileInfo)
 }

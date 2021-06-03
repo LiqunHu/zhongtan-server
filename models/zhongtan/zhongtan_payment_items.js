@@ -14,7 +14,7 @@ module.exports = db.defineModel('tbl_zhongtan_payment_items', {
   },
   payment_items_name: {
     // 费用名称
-    type: db.STRING(20),
+    type: db.STRING(100),
     allowNull: false
   }
 })

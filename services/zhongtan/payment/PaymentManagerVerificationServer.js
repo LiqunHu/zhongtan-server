@@ -50,6 +50,13 @@ exports.searchAct = async req => {
     for(let d of result.data) {
       let dd = JSON.parse(JSON.stringify(d))
       dd.created_at = moment(d.created_at).format('YYYY-MM-DD HH:mm:ss')
+      dd.atta_files = await tb_uploadfile.findAll({
+        where: {
+          uploadfile_index1: dd.payment_advice_id,
+          api_name: 'PAYMENT ADVICE ATTACHMENT',
+          state: GLBConfig.ENABLE
+        }
+      })
       rows.push(dd)
     }
   }

@@ -56,5 +56,15 @@ module.exports = db.defineModel('tbl_zhongtan_payment_advice', {
     // 状态
     type: db.STRING(20),
     allowNull: false
+  },
+  payment_advice_vessel: {
+    // 船名
+    type: db.STRING(20),
+    allowNull: true
+  },
+  payment_advice_voyage: {
+    // 航次
+    type: db.STRING(20),
+    allowNull: true
   }
 })
