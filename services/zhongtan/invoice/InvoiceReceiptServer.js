@@ -60,13 +60,8 @@ exports.searchVoyageAct = async req => {
     vessels = []
 
   if (doc.bl) {
-    queryStr = `select
-      a.*, b.user_name
-    from
-      tbl_zhongtan_invoice_masterbl a
-    LEFT JOIN tbl_common_user b ON b.user_id = a.invoice_masterbi_customer_id
-    WHERE
-      a.invoice_masterbi_bl = ?`
+    queryStr = `select a.*, b.user_name from tbl_zhongtan_invoice_masterbl a 
+                  LEFT JOIN tbl_common_user b ON b.user_id = a.invoice_masterbi_customer_id WHERE a.invoice_masterbi_bl = ?`
     replacements = [doc.bl]
     let result = await model.queryWithCount(doc, queryStr, replacements)
     returnData.masterbl.total = result.count
@@ -104,9 +99,7 @@ exports.searchVoyageAct = async req => {
       })
     }
   } else {
-    queryStr = `select * from tbl_zhongtan_invoice_vessel
-                    where state = '1'`
-
+    queryStr = `select * from tbl_zhongtan_invoice_vessel where state = '1'`
     if (doc.start_date) {
       queryStr += ' and created_at >= ? and created_at <= ?'
       replacements.push(doc.start_date)
@@ -186,13 +179,9 @@ exports.getMasterbiDataAct = async req => {
   let doc = common.docValidate(req),
     returnData = {}
 
-  let queryStr = `select
-    a.*, b.user_name
-  from
-    tbl_zhongtan_invoice_masterbl a
+  let queryStr = `select a.*, b.user_name from tbl_zhongtan_invoice_masterbl a
   LEFT JOIN tbl_common_user b ON b.user_id = a.invoice_masterbi_customer_id
-  WHERE
-    a.invoice_vessel_id = ?`
+  WHERE a.invoice_vessel_id = ?`
   let replacements = [doc.invoice_vessel_id]
   let result = await model.queryWithCount(doc, queryStr, replacements)
   returnData.total = result.count

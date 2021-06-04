@@ -987,16 +987,21 @@ exports.downloadDoAct = async req => {
   }
   if(!doc.doDeliverToEdit) {
     // 无权限D/O 判断代理是否开过收据
-    let rcount = await tb_uploadfile.count({
-      where: {
-        api_name : 'RECEIPT-RECEIPT',
-        uploadfile_index1: bl.invoice_masterbi_id,
-        uploadfile_received_from: doc.invoice_masterbi_delivery_to,
-        state: GLBConfig.ENABLE
+    let queryStr = `SELECT * FROM tbl_zhongtan_uploadfile WHERE state = ? AND uploadfile_index1 = ? AND api_name IN (?) ORDER BY uploadfile_id DESC`
+    let replacements = [GLBConfig.ENABLE, bl.invoice_masterbi_id, ['RECEIPT-DEPOSIT', 'RECEIPT-RECEIPT']]
+    let deposits = await model.simpleSelect(queryStr, replacements)
+    if(deposits && deposits.length > 0) {
+      if(deposits[0].api_name === 'RECEIPT-DEPOSIT') {
+        let deliveryFlg = false
+        for(let d of deposits) {
+          if(d.api_name === 'RECEIPT-RECEIPT' && d.uploadfile_received_from === doc.invoice_masterbi_delivery_to) {
+            deliveryFlg = true
+          }
+        }
+        if(!deliveryFlg) {
+          return common.error('do_07')
+        }
       }
-    })
-    if(rcount <= 0) {
-      return common.error('do_07')
     }
   }
   let delivery_order_no = ('000000000000000' + bl.invoice_masterbi_id).slice(-8)
