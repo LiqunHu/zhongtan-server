@@ -129,4 +129,8 @@ module.exports = db.defineModel('tbl_common_user', {
     type: db.STRING(50),
     allowNull: true
   },
+  export_split_shipment: {
+    type: db.JSON,
+    allowNull: true
+  },
 })

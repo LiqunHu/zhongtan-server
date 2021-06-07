@@ -455,6 +455,10 @@ module.exports = {
     { id: '6', text: 'EXTRA INVOICE' },  // 已开额外发票
     { id: '7', text: 'EXTRA RECEIPT' }  // 已开额外收据
   ],
+  LOGISTICS_FREIGHT_STATE_SECTION: [
+    { id: 'PS', text: 'Pending at Section' },
+    { id: 'SD', text: 'Section Declined' }
+  ],
   LOGISTICS_FREIGHT_STATE_BUSINESS: [
     { id: 'PB', text: 'Pending at Business' },
     { id: 'BD', text: 'Business Declined' }
@@ -464,6 +468,8 @@ module.exports = {
     { id: 'MD', text: 'Manager Declined' }
   ],
   LOGISTICS_FREIGHT_STATE: [
+    { id: 'PS', text: 'Pending at Section' },
+    { id: 'SD', text: 'Section Declined' },
     { id: 'PM', text: 'Pending at Manager' },
     { id: 'MD', text: 'Manager Declined' },
     { id: 'PB', text: 'Pending at Business' },
@@ -485,6 +491,10 @@ module.exports = {
     { id: 'REMITTANCE', text: 'REMITTANCE' }, 
     { id: 'CHEQUE', text: 'CHEQUE' }, 
   ],
+  PAYMENT_SECTION_STATE: [
+    { id: 'PS', text: 'Pending at Section' },
+    { id: 'SD', text: 'Section Declined' }
+  ],
   PAYMENT_BUSINESS_STATE: [
     { id: 'PB', text: 'Pending at Business' },
     { id: 'BD', text: 'Business Declined' }
@@ -494,6 +504,8 @@ module.exports = {
     { id: 'MD', text: 'Manager Declined' }
   ],
   PAYMENT_VERIFICATION_STATE: [
+    { id: 'PS', text: 'Pending at Section' },
+    { id: 'SD', text: 'Section Declined' },
     { id: 'PB', text: 'Pending at Business' },
     { id: 'BD', text: 'Business Declined' },
     { id: 'PM', text: 'Pending at Manager' },

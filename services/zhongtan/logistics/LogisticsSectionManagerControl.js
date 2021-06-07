@@ -1,6 +1,6 @@
 const common = require('../../../util/CommonUtil')
 const logger = require('../../../app/logger').createLogger(__filename)
-const srv = require('./PaymentManagerVerificationServer')
+const srv = require('./LogisticsSectionManagerServer')
 
 module.exports = async (req, res) => {
   try {
@@ -15,6 +15,8 @@ module.exports = async (req, res) => {
       ret = await srv.approveAct(req)
     } else if (method === 'decline') {
       ret = await srv.declineAct(req)
+    } else if (method === 'verificationDetail') {
+      ret = await srv.verificationDetailAct(req)
     }
     
     common.sendData(res, ret)

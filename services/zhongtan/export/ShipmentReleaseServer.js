@@ -217,7 +217,7 @@ exports.getBookingShipmentAct = async req => {
     queryStr = `SELECT f.*, u.uploadfile_url, c.user_name AS shipment_fee_submit_by_user FROM tbl_zhongtan_export_shipment_fee f 
                 LEFT JOIN tbl_zhongtan_uploadfile u ON f.shipment_fee_invoice_id = u.uploadfile_id AND u.state = ? AND u.api_name = ? 
                 LEFT JOIN tbl_common_user c ON f.shipment_fee_submit_by = c.user_id
-                WHERE f.state = ? AND f.shipment_fee_type = ? AND f.export_masterbl_id = ? ORDER BY FIELD(f.shipment_fee_status, 'NE', 'DE', 'UN', 'SA', 'SU', 'IN', 'RE', 'BA')`
+                WHERE f.state = ? AND f.shipment_fee_type = ? AND f.export_masterbl_id = ? ORDER BY IFNULL(shipment_fee_invoice_no, FIELD(f.shipment_fee_status, 'NE', 'DE', 'UN', 'SA', 'SU', 'IN', 'RE', 'BA'))`
     replacements = [GLBConfig.ENABLE, 'SHIPMENT-INVOICE', GLBConfig.ENABLE, 'R', doc.export_masterbl_id]
     let shipment_receivable = await model.simpleSelect(queryStr, replacements)
     if(shipment_receivable && shipment_receivable.length > 0) {
@@ -579,8 +579,8 @@ exports.submitShipmentAct = async req => {
       }
     })
     let submitStatus = ['SA', 'DE', 'UN']
-    let submitReceivable = [], submitPayable = []
-    let totalReceivable = 0, totalPayable = 0
+    let submitReceivable = [], submitPayable = [], submitSplit = []
+    let totalReceivable = 0, totalPayable = 0, totalSplit = 0
     if(shipment_receivable && shipment_receivable.length > 0) {
       for(let s of shipment_receivable) {
         if(s.shipment_fee_id) {
@@ -592,8 +592,18 @@ exports.submitShipmentAct = async req => {
           })
           if(sm.shipment_fee_type === 'R' && submitStatus.indexOf(sm.shipment_fee_status) >= 0 
               && sm.shipment_fee_party && sm.fee_data_code && sm.shipment_fee_amount && new Decimal(sm.shipment_fee_amount) !== 0) {
-                submitReceivable.push(sm)
-                totalReceivable = new Decimal(totalReceivable).plus(new Decimal(sm.shipment_fee_amount))
+            let sfCustomer = await tb_user.findOne({
+              where: {
+                user_id: sm.shipment_fee_party
+              }
+            })
+            if(sfCustomer && sfCustomer.export_split_shipment && sfCustomer.export_split_shipment.indexOf(sm.fee_data_code) >= 0) {
+              submitSplit.push(sm)
+              totalSplit = new Decimal(totalReceivable).plus(new Decimal(sm.shipment_fee_amount))
+            } else {
+              submitReceivable.push(sm)
+              totalReceivable = new Decimal(totalReceivable).plus(new Decimal(sm.shipment_fee_amount))
+            }
           }
         }
       }
@@ -645,6 +655,35 @@ exports.submitShipmentAct = async req => {
         await s.save()
       }
       for(let s of submitPayable) {
+        await tb_shipment_fee_log.create({
+          shipment_fee_id: s.shipment_fee_id,
+          shipment_relation_id: verification.export_verification_id,
+          export_masterbl_id: export_masterbl_id,
+          shipment_fee_status_pre: s.shipment_fee_status,
+          shipment_fee_status: 'SU',
+          shipment_fee_amount_pre: s.shipment_fee_amount,
+          shipment_fee_amount: s.shipment_fee_amount,
+          shipment_fee_submit_by: user.user_id,
+          shipment_fee_submit_at: curDate
+        })
+        s.shipment_fee_status = 'SU'
+        s.shipment_fee_submit_by = user.user_id
+        s.shipment_fee_submit_at = curDate
+        await s.save()
+      }
+    }
+
+    if(submitSplit && submitSplit.length > 0) {
+      // 有可提交的应收应付费用
+      let verification = await tb_export_verification.create({
+        export_masterbl_id: export_masterbl_id,
+        export_verification_api_name: 'SHIPMENT RELEASE',
+        export_verification_bl: bl.export_masterbl_bl,
+        export_verification_state: 'PM',
+        export_verification_create_user: user.user_id,
+        export_verification_shipment_receivable: Decimal.isDecimal(totalSplit) ? totalSplit.toNumber() : totalSplit
+      })
+      for(let s of submitSplit) {
         await tb_shipment_fee_log.create({
           shipment_fee_id: s.shipment_fee_id,
           shipment_relation_id: verification.export_verification_id,
@@ -869,10 +908,19 @@ exports.invoiceShipmentAct = async req => {
     if(invoice_shipment && invoice_shipment.length > 0) {
       let renderParty = {}
       for(let i of invoice_shipment) {
-        if(!renderParty[i.shipment_fee_party]) {
-          renderParty[i.shipment_fee_party] = []
+        let inCustomer = await tb_user.findOne({
+          where: {
+            user_id: i.shipment_fee_party
+          }
+        })
+        let split_party = i.shipment_fee_party
+        if(inCustomer && inCustomer.export_split_shipment && inCustomer.export_split_shipment.indexOf(i.fee_data_code) >= 0) {
+          split_party += '#split'
         }
-        renderParty[i.shipment_fee_party].push(i)
+        if(!renderParty[split_party]) {
+          renderParty[split_party] = []
+        }
+        renderParty[split_party].push(i)
       }
       for(let rp in renderParty) {
         let invoices = renderParty[rp]

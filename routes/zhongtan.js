@@ -73,10 +73,12 @@ router.post('/logistics/FreightReceipt/:method', services.FreightReceiptControl)
 router.post('/logistics/TBLFreightConfig/:method', services.TBLFreightConfigControl)
 router.post('/logistics/BusinessVerification/:method', services.LogisticsBusinessVerificationControl)
 router.post('/logistics/ManagerVerification/:method', services.LogisticsManagerVerificationControl)
+router.post('/logistics/SectionManager/:method', services.LogisticsSectionManagerControl)
 
 router.post('/payment/PaymentItems/:method', services.PaymentItemsControl)
 router.post('/payment/PaymentAdvice/:method', services.PaymentAdviceControl)
 router.post('/payment/BusinessVerification/:method', services.PaymentBusinessVerificationControl)
 router.post('/payment/ManagerVerification/:method', services.PaymentManagerVerificationControl)
+router.post('/payment/SectionManager/:method', services.PaymentSectionManagerControl)
 
 module.exports = router

@@ -15,8 +15,6 @@ module.exports = async (req, res) => {
       ret = await srv.approveAct(req)
     } else if (method === 'decline') {
       ret = await srv.declineAct(req)
-    } else if (method === 'verificationDetail') {
-      ret = await srv.verificationDetailAct(req)
     }
     
     common.sendData(res, ret)

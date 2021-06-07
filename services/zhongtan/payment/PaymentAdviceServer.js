@@ -104,7 +104,7 @@ exports.searchAct = async req => {
         let count = await tb_payment_verification.count({
           where: {
             payment_advice_id: d.payment_advice_id,
-            payment_verification_state: 'PM',
+            [Op.or]: [{ payment_verification_state: 'PB' }, { payment_verification_state: 'PM' }],
             state: GLBConfig.ENABLE
           }
         })
@@ -176,7 +176,7 @@ exports.addAct = async req => {
   }
   await tb_payment_verification.create({
     payment_advice_id: obj.payment_advice_id,
-    payment_verification_state: 'PB',
+    payment_verification_state: 'PS',
     payment_verification_create_user: user.user_id
   })
   return common.success(obj)
@@ -242,9 +242,8 @@ exports.modifyAct = async req => {
       }
     }
     await obj.save()
-
     if(ver) {
-      ver.payment_verification_state = 'PB'
+      ver.payment_verification_state = 'PS'
       await ver.save()
     }
     return common.success(obj)

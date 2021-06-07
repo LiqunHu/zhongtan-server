@@ -14,6 +14,9 @@ exports.initAct = async () => {
   let returnData = {
     USER_CUSTOMER_TYPE: GLBConfig.USER_CUSTOMER_TYPE
   }
+  let queryStr = `SELECT fee_data_code, fee_data_name FROM tbl_zhongtan_export_fee_data WHERE state = 1 GROUP BY fee_data_code ORDER BY fee_data_code`
+  let replacements = []
+  returnData.EXPORT_SHIPMENTS= await model.simpleSelect(queryStr, replacements)
   return common.success(returnData)
 }
 
@@ -82,7 +85,8 @@ exports.addAct = async req => {
       user_tin: doc.user_tin ? doc.user_tin.trim() : '',
       user_vrn: doc.user_vrn ? doc.user_vrn.trim() : '',
       user_bank_account_usd: doc.user_bank_account_usd ? doc.user_bank_account_usd.trim() : '',
-      user_bank_account_tzs: doc.user_bank_account_tzs ? doc.user_bank_account_tzs.trim() : ''
+      user_bank_account_tzs: doc.user_bank_account_tzs ? doc.user_bank_account_tzs.trim() : '',
+      export_split_shipment: doc.export_split_shipment ? doc.export_split_shipment : []
     })
 
     await tb_user_groups.create({
@@ -124,6 +128,7 @@ exports.modifyAct = async req => {
     modiuser.user_vrn = doc.new.user_vrn ? doc.new.user_vrn.trim() : ''
     modiuser.user_bank_account_usd = doc.new.user_bank_account_usd ? doc.new.user_bank_account_usd.trim() : ''
     modiuser.user_bank_account_tzs = doc.new.user_bank_account_tzs ? doc.new.user_bank_account_tzs.trim() : ''
+    modiuser.export_split_shipment = doc.new.export_split_shipment ? doc.new.export_split_shipment : []
     await modiuser.save()
 
     let returnData = JSON.parse(JSON.stringify(modiuser))

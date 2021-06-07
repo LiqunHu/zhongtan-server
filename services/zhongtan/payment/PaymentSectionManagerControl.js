@@ -1,6 +1,6 @@
 const common = require('../../../util/CommonUtil')
 const logger = require('../../../app/logger').createLogger(__filename)
-const srv = require('./PaymentManagerVerificationServer')
+const srv = require('./PaymentSectionManagerServer')
 
 module.exports = async (req, res) => {
   try {
