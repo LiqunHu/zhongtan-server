@@ -77,8 +77,12 @@ router.post('/logistics/SectionManager/:method', services.LogisticsSectionManage
 
 router.post('/payment/PaymentItems/:method', services.PaymentItemsControl)
 router.post('/payment/PaymentAdvice/:method', services.PaymentAdviceControl)
-router.post('/payment/BusinessVerification/:method', services.PaymentBusinessVerificationControl)
-router.post('/payment/ManagerVerification/:method', services.PaymentManagerVerificationControl)
 router.post('/payment/SectionManager/:method', services.PaymentSectionManagerControl)
+router.post('/payment/BusinessVerification/:method', services.PaymentBusinessVerificationControl)
+router.post('/payment/ShippingManager/:method', services.PaymentShippingVerificationControl)
+router.post('/payment/ManagerVerification/:method', services.PaymentManagerVerificationControl)
+router.post('/payment/UnusualInvoice/:method', services.UnusualInvoiceControl)
+router.post('/payment/UnusualReceipt/:method', services.UnusualReceiptControl)
+router.post('/payment/UnusualCommercial/:method', services.UnusualCommercialControl)
 
 module.exports = router

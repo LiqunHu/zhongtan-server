@@ -458,7 +458,7 @@ exports.downloadReceiptAct = async req => {
     renderData.check_cash = 'Cheque/ ' + bl.invoice_masterbi_check_no
   }
   renderData.sum_fee = parseFloat(bl.invoice_masterbi_receipt_amount.replace(/,/g, '') || 0)
-  renderData.sum_fee_str = numberToText(renderData.sum_fee)
+  renderData.sum_fee_str = numberToText(renderData.sum_fee, 'english')
   renderData.user_name = commonUser.user_name
   renderData.user_phone = commonUser.user_phone
   renderData.user_email = commonUser.user_email

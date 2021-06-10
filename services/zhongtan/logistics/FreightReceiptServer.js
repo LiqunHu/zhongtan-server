@@ -257,7 +257,7 @@ exports.freightReceiptAct = async req => {
       renderData.freight_received_from = invoice_customer.user_name
       renderData.freight_receipt_currency = invoice_file.uploadfile_currency
       renderData.sum_fee = invoice_file.uploadfile_amount
-      renderData.sum_fee_str = numberToText(invoice_file.uploadfile_amount)
+      renderData.sum_fee_str = numberToText(invoice_file.uploadfile_amount, 'english')
       if (doc.freight_check_cash === 'CASH') {
         renderData.check_cash = 'Cash'
       } else if (doc.freight_check_cash === 'TRANSFER') {

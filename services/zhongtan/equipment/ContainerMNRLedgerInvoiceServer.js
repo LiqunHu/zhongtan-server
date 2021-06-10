@@ -242,11 +242,11 @@ exports.invoiceAct = async req => {
     renderData.decsription = mnr.mnr_ledger_description
     renderData.mnrAmount = mnr.mnr_ledger_actual_charge_amount
     renderData.mnrTotal = formatCurrency(mnr.mnr_ledger_actual_charge_amount)
-    renderData.mnrTotalStr = numberToText(mnr.mnr_ledger_actual_charge_amount)
+    renderData.mnrTotalStr = numberToText(mnr.mnr_ledger_actual_charge_amount, 'english')
     if(mnr.mnr_ledger_actual_charge_amount && mnr.mnr_ledger_actual_charge_amount.indexOf('-') < 0) {
-      renderData.mnrTotalStr = numberToText(mnr.mnr_ledger_actual_charge_amount)
+      renderData.mnrTotalStr = numberToText(mnr.mnr_ledger_actual_charge_amount, 'english')
     } else {
-      renderData.mnrTotalStr = 'MINUS ' + numberToText(new Decimal(mnr.mnr_ledger_actual_charge_amount).absoluteValue())
+      renderData.mnrTotalStr = 'MINUS ' + numberToText(new Decimal(mnr.mnr_ledger_actual_charge_amount).absoluteValue(), 'english')
     }
     renderData.user_name = commonUser.user_name
     renderData.user_phone = commonUser.user_phone

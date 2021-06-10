@@ -162,9 +162,9 @@ exports.receiptAct = async req => {
   renderData.sum_fee = parseFloat(invoice.uploadfile_amount.replace(/,/g, '') || 0)
 
   if(invoice.uploadfile_amount && invoice.uploadfile_amount.indexOf('-') < 0) {
-    renderData.sum_fee_str = numberToText(invoice.uploadfile_amount)
+    renderData.sum_fee_str = numberToText(invoice.uploadfile_amount, 'english')
   } else {
-    renderData.sum_fee_str = 'MINUS ' + numberToText(new Decimal(invoice.uploadfile_amount).absoluteValue())
+    renderData.sum_fee_str = 'MINUS ' + numberToText(new Decimal(invoice.uploadfile_amount).absoluteValue(), 'english')
   }
   renderData.user_name = commonUser.user_name
   renderData.user_phone = commonUser.user_phone

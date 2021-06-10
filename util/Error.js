@@ -114,4 +114,6 @@ module.exports = {
   payment_02: 'Edit payment advice do not exist',
   payment_03: 'Edit payment advice already verification',
   payment_04: 'Edit payment advice already approved',
+  unusual_01: 'already invoice, can not delete',
+  unusual_02: 'Edit unusual invoice do not exist',
 }

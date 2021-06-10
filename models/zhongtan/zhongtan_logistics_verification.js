@@ -62,5 +62,15 @@ module.exports = db.defineModel('tbl_zhongtan_logistics_verification', {
   logistics_verification_undo_time: {
     type: db.DATE,
     allowNull: true
+  },
+  logistics_verification_section_user: {
+    // 部门审核人
+    type: db.STRING(50),
+    allowNull: true
+  },
+  logistics_verification_section_time: {
+    // 部门审核时间
+    type: db.DATE,
+    allowNull: true
   }
 })

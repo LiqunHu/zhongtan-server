@@ -213,6 +213,19 @@ let genPaymentAdviceSeq = async () => {
   }
 }
 
+let genUnusualSeq = async () => {
+  try {
+    let queryRst = await sequelize.query("select nextval('UnusualSeq') num", {
+      type: sequelize.QueryTypes.SELECT
+    }) 
+    let currentIndex = moment().format('YYYYMMDD') + '-' + ('000' + queryRst[0].num).slice(-3)
+    return currentIndex
+  } catch (error) {
+    logger.error(error)
+    return error
+  }
+}
+
 module.exports = {
   genUserID: genUserID,
   genReceiptNo: genReceiptNo,
@@ -228,5 +241,6 @@ module.exports = {
   genShipmentInvoiceSeq: genShipmentInvoiceSeq,
   genShipmentReceiptSeq: genShipmentReceiptSeq,
   genLogisticsSeq: genLogisticsSeq,
-  genPaymentAdviceSeq: genPaymentAdviceSeq
+  genPaymentAdviceSeq: genPaymentAdviceSeq,
+  genUnusualSeq: genUnusualSeq
 }

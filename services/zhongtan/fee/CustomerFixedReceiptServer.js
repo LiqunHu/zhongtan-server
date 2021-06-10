@@ -155,7 +155,7 @@ exports.receiptAct = async req => {
   renderData.fixed_deposit_received_from = theCustomer.user_name
   renderData.fixed_deposit_currency = theDeposit.deposit_currency
   renderData.fixed_deposit_amount = parseFloat(theDeposit.deposit_amount.replace(/,/g, '') || 0)
-  renderData.fixed_deposit_amount_str = numberToText(renderData.fixed_deposit_amount)
+  renderData.fixed_deposit_amount_str = numberToText(renderData.fixed_deposit_amount, 'english')
   if (theDeposit.deposit_check_cash === 'CASH') {
     renderData.fixed_deposit_check_cash = 'Cash'
   } else if (theDeposit.deposit_check_cash === 'TRANSFER') {

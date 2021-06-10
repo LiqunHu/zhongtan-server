@@ -541,7 +541,7 @@ exports.emptyInvoiceAct = async req => {
       demurrageTotal += parseFloat(s.overdue_amount)
     }
     renderData.demurrageTotal = formatCurrency(demurrageTotal)
-    renderData.demurrageTotalStr = numberToText(demurrageTotal)
+    renderData.demurrageTotalStr = numberToText(demurrageTotal, 'english')
     try {
       let fileInfo = await common.ejs2Pdf('demurrage.ejs', renderData, 'zhongtan')
       let invoice_file = await tb_uploadfile.create({
@@ -764,7 +764,7 @@ exports.emptyReInvoiceAct = async req => {
       }
     }
     renderData.demurrageTotal = formatCurrency(demurrageTotal)
-    renderData.demurrageTotalStr = numberToText(demurrageTotal)
+    renderData.demurrageTotalStr = numberToText(demurrageTotal, 'english')
     try {
       let fileInfo = await common.ejs2Pdf('demurrage.ejs', renderData, 'zhongtan')
       let invoice_file = await tb_uploadfile.create({

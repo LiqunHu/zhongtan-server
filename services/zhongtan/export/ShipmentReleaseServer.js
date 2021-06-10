@@ -975,9 +975,9 @@ exports.invoiceShipmentAct = async req => {
           totalReceivable = Decimal.isDecimal(totalReceivable) ? totalReceivable.toNumber() : totalReceivable
           renderData.totalReceivable = totalReceivable
           if(totalReceivable > 0) {
-            renderData.totalReceivableStr = numberToText(totalReceivable)
+            renderData.totalReceivableStr = numberToText(totalReceivable, 'english')
           } else {
-            renderData.totalReceivableStr = 'MINUS ' + numberToText(new Decimal(totalReceivable).absoluteValue())
+            renderData.totalReceivableStr = 'MINUS ' + numberToText(new Decimal(totalReceivable).absoluteValue(), 'english')
           }
           renderData.user_name = commonUser.user_name
           renderData.user_phone = commonUser.user_phone

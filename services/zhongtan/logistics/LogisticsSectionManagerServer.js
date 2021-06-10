@@ -72,9 +72,9 @@ exports.approveAct = async req => {
     }
   })
   if(ver) {
-    ver.logistics_verification_state = 'PM'
-    ver.logistics_verification_manager_user = user.user_id
-    ver.logistics_verification_manager_time = curDate
+    ver.logistics_verification_state = 'PB'
+    ver.logistics_verification_section_user = user.user_id
+    ver.logistics_verification_section_time = curDate
     await ver.save()
 
     let vfs = await tb_verification_freight.findAll({
@@ -85,7 +85,7 @@ exports.approveAct = async req => {
     })
     if(vfs) {
       for(let v of vfs) {
-        v.logistics_freight_state = 'PM'
+        v.logistics_freight_state = 'PB'
         await v.save()
       }
     }
@@ -104,8 +104,8 @@ exports.declineAct = async req => {
   })
   if(ver) {
     ver.logistics_verification_state = 'SD'
-    ver.logistics_verification_business_user = user.user_id
-    ver.logistics_verification_business_time = curDate
+    ver.logistics_verification_section_user = user.user_id
+    ver.logistics_verification_section_time = curDate
     await ver.save()
 
     let vfs = await tb_verification_freight.findAll({

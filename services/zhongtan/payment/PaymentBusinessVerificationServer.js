@@ -19,7 +19,7 @@ exports.searchAct = async req => {
   let queryStr = `select pv.payment_verification_id, pv.payment_verification_state, pv.payment_advice_id, pa.*, cu.user_name AS payment_verification_create_user_name, cb.user_name as payment_advice_beneficiary_name, cr.user_name as payment_advice_remarks_name, pi.payment_items_name as payment_advice_items_name 
                   from tbl_zhongtan_payment_verification pv
                   LEFT JOIN tbl_zhongtan_payment_advice pa ON pv.payment_advice_id = pa.payment_advice_id AND pa.state = '1' 
-                  LEFT JOIN tbl_common_user cu ON pv.payment_verification_create_user = cu.user_id AND pa.state = '1' 
+                  LEFT JOIN tbl_common_user cu ON pv.payment_verification_create_user = cu.user_id
                   left join tbl_common_user cb on pa.payment_advice_beneficiary = cb.user_id 
                   left join tbl_common_user cr on pa.payment_advice_remarks = cr.user_id
                   left join tbl_zhongtan_payment_items pi on pa.payment_advice_items = pi.payment_items_code
@@ -69,7 +69,7 @@ exports.approveAct = async req => {
       }
     })
   if(ver) {
-    ver.payment_verification_state = 'PM'
+    ver.payment_verification_state = 'PSM'
     ver.payment_verification_business_user = user.user_id
     ver.payment_verification_business_time = curDate
     await ver.save()

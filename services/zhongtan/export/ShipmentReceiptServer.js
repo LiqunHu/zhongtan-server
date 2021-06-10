@@ -166,9 +166,9 @@ exports.shipmentReceiptAct = async req => {
   }
   renderData.shipment_receipt_sum_fee = parseFloat(invoice.uploadfile_amount.replace(/,/g, '') || 0)
   if(renderData.shipment_receipt_sum_fee >= 0) {
-    renderData.shipment_receipt_sum_fee_str = numberToText(renderData.shipment_receipt_sum_fee)
+    renderData.shipment_receipt_sum_fee_str = numberToText(renderData.shipment_receipt_sum_fee, 'english')
   } else {
-    renderData.shipment_receipt_sum_fee_str = 'MINUS ' + numberToText(new Decimal(renderData.shipment_receipt_sum_fee).absoluteValue())
+    renderData.shipment_receipt_sum_fee_str = 'MINUS ' + numberToText(new Decimal(renderData.shipment_receipt_sum_fee).absoluteValue(), 'english')
   }
 
   renderData.user_name = commonUser.user_name

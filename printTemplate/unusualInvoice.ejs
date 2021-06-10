@@ -113,159 +113,147 @@
                     </tr>
                     <tr>
                         <td valign="middle" rowspan="1" colspan="11" align="center" >
-                            <div class="font_28">PAYMENT NOTE</div>
+                            <div class="font_28">INVOICE</div>
                         </td>
                     </tr>
                     <tr>
                         <td valign="middle" rowspan="1" colspan="2">
-                            VENDOR CODE          :
+                            MESSRS          :
                         </td>
-                        <td valign="middle" rowspan="1" colspan="4">
-                            <%=ejsData.vendor_code%>
+                        <td valign="middle" rowspan="1" colspan="6">
+                            <%=ejsData.unusualParty%>
+                        </td>
+                        <td valign="middle" rowspan="1" colspan="1">
+                            TIN#          :
                         </td>
                         <td valign="middle" rowspan="1" colspan="2">
-                            REFERENCE#          :
+                            <%=ejsData.partyTin%>
                         </td>
-                        <td valign="middle" rowspan="1" colspan="3">
-                            <%=ejsData.payment_no%>
+                    </tr>
+                    <tr>
+                        <td valign="middle" rowspan="2" colspan="2">
+                            ADDRESS        :
+                        </td>
+                        <td valign="middle" rowspan="2" colspan="6">
+                            <%=ejsData.partyAddress%>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td valign="middle" rowspan="1" colspan="3" align="right">
+                            <%=ejsData.cargoType%>
                         </td>
                     </tr>
                     <tr>
                         <td valign="middle" rowspan="1" colspan="2">
-                            TO        :
+                            DATE            :
                         </td>
-                        <td valign="middle" rowspan="1" colspan="9">
-                            <%=ejsData.vendor_name%>
+                        <td valign="middle" rowspan="1" colspan="3" >
+                            <%=ejsData.invoiceDate%>
+                        </td>
+                        <td valign="middle" rowspan="1" colspan="4" align="right">
+                            INVOICE NUMBER:
+                        </td>
+                        <td valign="middle" rowspan="1" colspan="2" align="right">
+                            <%=ejsData.invoiceNo%>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td valign="middle" rowspan="1" colspan="2">
+                            RE: M.V:
+                        </td>
+                        <td valign="middle" rowspan="1" colspan="2">
+                            <%=ejsData.vesselName%>
+                        </td>
+                        <td valign="middle" rowspan="1" colspan="1">
+                            VOY
+                        </td>
+                        <td valign="middle" rowspan="1" colspan="2">
+                            <%=ejsData.voyageNumber%>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td valign="middle" rowspan="1" colspan="2">
+                            B/L #
+                        </td>
+                        <td valign="middle" rowspan="1" colspan="5" align="center" >
+                            <%=ejsData.unusualBl%>
                         </td>
                     </tr>
                     <tr>
                         <td valign="middle" rowspan="1" colspan="11">
-                            Pls find below TBL charges:
+                            CHARGES:
                         </td>
                     </tr>
                     <tr class="b_top b_bottom b_left b_right">
                         <td valign="middle"  rowspan="1" colspan="3" align="center" class="b_right">
-                            B/L#
+                            Description
                         </td>
-                        <td valign="middle" rowspan="1" colspan="2" align="center" class="b_right">
-                            Container #
+                        <td valign="middle" rowspan="1" colspan="5" align="center" class="b_right">
+                            Charge Item
                         </td>
-                        <td valign="middle" rowspan="1" colspan="2"  align="center" class="b_right">
-                            Type
-                        </td>
-                        <td valign="middle" rowspan="1" colspan="2"  align="center"  class="b_right">
-                            FND
-                        </td>
-                        <td valign="middle" rowspan="1" colspan="2"  align="center">
-                            Advance <%= ejsData.advance_percent %>
+                        <td valign="middle" rowspan="1" colspan="3"  align="center" class="b_right">
+                            Charges In USD
                         </td>
                     </tr>
-                    <%for (var i = 0; i < ejsData.payment_list.length; i++) {%>
-                        <tr class="b_bottom b_left b_right">
-                            <td valign="middle"  rowspan="1" colspan="3" align="center" class="b_right">
-                                <%= ejsData.payment_list[i].bl %>
-                            </td>
-                            <td valign="middle" rowspan="1" colspan="2"  align="center" class="b_right">
-                                <%= ejsData.payment_list[i].container_no %>
-                            </td>
-                            <td valign="middle" rowspan="1" colspan="2"  align="center" class="b_right">
-                                <%= ejsData.payment_list[i].size_type %>
-                            </td>
-                            <td valign="middle" rowspan="1" colspan="2"  align="center" class="b_right">
-                                <%= ejsData.payment_list[i].fnd %>
-                            </td>
-                            <td valign="middle" rowspan="1" colspan="2"  align="center">
-                                <%= ejsData.payment_list[i].amount %>
-                            </td>
-                        </tr>
-                    <%}-%>
+                    <tr class="b_bottom b_left b_right">
+                        <td valign="middle"  rowspan="1" colspan="3" align="center" class="b_right">
+                            &nbsp;
+                        </td>
+                        <td valign="middle" rowspan="1" colspan="5"  align="center" class="b_right">
+                            <%= ejsData.unusualItems %>
+                        </td>
+                        <td valign="middle" rowspan="1" colspan="3"  align="center" class="b_right">
+                            <%= ejsData.unusualAmount %>
+                        </td>
+                    </tr>
                     <tr class="b_top b_bottom b_left b_right">
                         <td valign="middle" rowspan="1" colspan="3" align="center" class="b_right" style="font-weight:bold;">
                             SUM
                         </td>
-                        <td valign="middle" rowspan="1" colspan="8" align="center">
-                            <%=ejsData.payment_total%>
+                        <td valign="middle" rowspan="1" colspan="8" align="right">
+                            <%=ejsData.totalUnusualAmount%>
                         </td>
                     </tr>
                     <tr class="b_top b_bottom b_left b_right">
                         <td valign="middle" rowspan="1" colspan="3" align="center" class="b_right" style="font-weight:bold;">
                             SAY
                         </td>
-                        <td valign="middle" rowspan="1" colspan="8" align="center">
-                            <%=ejsData.payment_total_str%> USD ONLY
+                        <td valign="middle" rowspan="1" colspan="8" align="right">
+                            <%=ejsData.totalUnusualAmountStr%> US DOLLARS ONLY
                         </td>
                     </tr>
                     <tr>
-                        <td valign="middle" rowspan="1" colspan="2" align="left" style="padding-top:10px;">
-                            PREPARED BY
-                        </td>
-                        <td valign="middle" rowspan="1" colspan="3" align="left" style="padding-top:10px;">
-                            SECTION MANAGER
-                        </td>
-                        <td valign="middle" rowspan="1" colspan="3" align="left" style="padding-top:10px;">
-                            CHECKED BY
-                        </td>
-                        <td valign="middle" rowspan="1" colspan="3" align="left" style="padding-top:10px;">
-                            SHIPPING MANAGER
+                        <td valign="middle" rowspan="1" colspan="11" align="left" style="padding-top:10px;">
+                            Prepared by:
                         </td>
                     </tr>
                     <tr>
-                        <td valign="middle" rowspan="1" colspan="2" align="center" style="padding-top:10px;">
-                            <%=ejsData.prepared_by%>
-                        </td>
-                        <td valign="middle" rowspan="1" colspan="3" align="center" style="padding-top:10px;">
-                            <%=ejsData.section_by%>
-                        </td>
-                        <td valign="middle" rowspan="1" colspan="3" align="center" style="padding-top:10px;">
-                            <%=ejsData.checked_by%>
-                        </td>
-                        <td valign="middle" rowspan="1" colspan="3" align="center" style="padding-top:10px;">
-                            <%=ejsData.approve_by%>
+                        <td valign="middle" rowspan="1" colspan="11" align="left" style="padding-top:10px; padding-bottom:20px;">
+                            <%=ejsData.user_name%>
+                            <% if (ejsData.user_phone) { %>
+                                &nbsp;&nbsp;&nbsp;&nbsp;Tel:&nbsp;&nbsp;<%=ejsData.user_phone%>
+                            <% } %>
+                            <a href="<%=ejsData.user_email%>"><%=ejsData.user_email%></a>
                         </td>
                     </tr>
                     <tr>
-                        <td valign="middle" rowspan="1" colspan="11" align="left" style="padding-top:15px;">
-                            VENDOR's Bank Account Info:
+                        <td valign="middle" rowspan="1" colspan="11" align="left" style="padding-top:7px; padding-bottom:7px; border: 1px solid #333333;">
+                            Cash payment unacceptable, Please pay through bank remittance/cheque/deposit.<br>
+                            Also please remark B/L# when you pay. Thanks!
                         </td>
                     </tr>
-                    <tr class="b_top b_bottom b_left b_right">
-                        <td valign="middle" rowspan="1" colspan="3" align="left" style="padding-top:10px;" class="b_right">
-                            Beneficiary Name:
-                        </td>
-                        <td valign="middle" rowspan="1" colspan="8" align="left" style="padding-top:10px;">
-                            <%=ejsData.vendor_name%>
-                        </td>
-                    </tr>
-                    <tr class="b_bottom b_left b_right">
-                        <td valign="middle" rowspan="1" colspan="3" align="left" style="padding-top:10px;" class="b_right">
-                            Bank Name:
-                        </td>
-                        <td valign="middle" rowspan="1" colspan="8" align="left" style="padding-top:10px;">
-                            <%=ejsData.vendor_bank_name%>
-                        </td>
-                    </tr>
-                    <tr class="b_bottom b_left b_right">
-                        <td valign="middle" rowspan="1" colspan="3" align="left" style="padding-top:10px;" class="b_right">
-                            Bank ADD:
-                        </td>
-                        <td valign="middle" rowspan="1" colspan="8" align="left" style="padding-top:10px;">
-                            <%=ejsData.vendor_bank_address%>
-                        </td>
-                    </tr>
-                    <tr class="b_bottom b_left b_right">
-                        <td valign="middle" rowspan="1" colspan="3" align="left" style="padding-top:10px;" class="b_right">
-                            Account No:
-                        </td>
-                        <td valign="middle" rowspan="1" colspan="8" align="left" style="padding-top:10px;">
-                            <%=ejsData.vendor_account_no%>
-                        </td>
-                    </tr>
-                    <tr class="b_bottom b_left b_right">
-                        <td valign="middle" rowspan="1" colspan="3" align="left" style="padding-top:10px;" class="b_right">
-                            SWIFT Code:
-                        </td>
-                        <td valign="middle" rowspan="1" colspan="8" align="left" style="padding-top:10px;">
-                            <%=ejsData.vendor_swift_code%>
+                    <tr>
+                        <td valign="middle" rowspan="1" colspan="11" align="left" style="padding-top:10px;">
+                            SINOTASHIP's Bank Account Info:<br>
+                            <b>Bank Name: Citibank Tanzania Ltd</b><br>
+                            Beneficiary Name: Chinese-Tanzanian Joint Shipping Company<br>
+                            SWIFT Code: CITITZTZ<br>
+                            USD A/C NO.: 100114038<br>
+                            <b>Bank Name: Exim Bank Tanzania Limited</b><br>
+                            Bank Address: Exim Tower, 1404/45, Ghana Avenue, P.O.Box 1431, Dar Es Salaam<br>
+                            Beneficiary Name: Chinese-Tanzanian Joint Shipping Company<br>
+                            SWIFT Code: EXTNTZTZ<br>
+                            USD A/C NO.: 370000152
                         </td>
                     </tr>
                 </tbody>

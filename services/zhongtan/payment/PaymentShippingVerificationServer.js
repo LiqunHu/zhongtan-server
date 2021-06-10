@@ -8,7 +8,7 @@ const tb_uploadfile = model.zhongtan_uploadfile
 
 exports.initAct = async () => {
   let returnData = {
-    SECTION_STATE: GLBConfig.PAYMENT_SECTION_STATE
+    PAYMENT_STATE: GLBConfig.PAYMENT_SHIPPING_STATE
   }
   return common.success(returnData)
 }
@@ -69,9 +69,9 @@ exports.approveAct = async req => {
       }
     })
   if(ver) {
-    ver.payment_verification_state = 'PB'
-    ver.payment_verification_section_user = user.user_id
-    ver.payment_verification_section_time = curDate
+    ver.payment_verification_state = 'PM'
+    ver.payment_verification_shipping_user = user.user_id
+    ver.payment_verification_shipping_time = curDate
     await ver.save()
    }
   return common.success()
@@ -87,9 +87,9 @@ exports.declineAct = async req => {
     }
   })
   if(ver) {
-    ver.payment_verification_state = 'SD'
-    ver.payment_verification_section_user = user.user_id
-    ver.payment_verification_section_time = curDate
+    ver.payment_verification_state = 'SMD'
+    ver.payment_verification_shipping_user = user.user_id
+    ver.payment_verification_shipping_time = curDate
     await ver.save()
   }
   return common.success()

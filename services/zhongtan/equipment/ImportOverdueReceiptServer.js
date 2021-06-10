@@ -148,7 +148,7 @@ exports.doReceiptAct = async req => {
     renderData.check_cash = 'Cheque/ ' + doc.overdue_invoice_check_no
   }
   renderData.sum_fee = parseFloat(invoice.uploadfile_amount.replace(/,/g, '') || 0)
-  renderData.sum_fee_str = numberToText(renderData.sum_fee)
+  renderData.sum_fee_str = numberToText(renderData.sum_fee, 'english')
   renderData.user_name = commonUser.user_name
   renderData.user_phone = commonUser.user_phone
   renderData.user_email = commonUser.user_email

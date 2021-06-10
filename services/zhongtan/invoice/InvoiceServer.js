@@ -1384,7 +1384,7 @@ exports.depositDoAct = async req => {
       } else {
         renderData.sum_fee = parseFloat('0'.replace(/,/g, '') || 0)
       }
-      renderData.sum_fee_str = numberToText(renderData.sum_fee)
+      renderData.sum_fee_str = numberToText(renderData.sum_fee, 'english')
       renderData.user_name = commonUser.user_name
       renderData.user_phone = commonUser.user_phone
       renderData.user_email = commonUser.user_email

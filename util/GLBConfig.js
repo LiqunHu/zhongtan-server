@@ -470,10 +470,10 @@ module.exports = {
   LOGISTICS_FREIGHT_STATE: [
     { id: 'PS', text: 'Pending at Section' },
     { id: 'SD', text: 'Section Declined' },
-    { id: 'PM', text: 'Pending at Manager' },
-    { id: 'MD', text: 'Manager Declined' },
     { id: 'PB', text: 'Pending at Business' },
     { id: 'BD', text: 'Business Declined' },
+    { id: 'PM', text: 'Pending at Manager' },
+    { id: 'MD', text: 'Manager Declined' },
     { id: 'AP', text: 'All Approved' },
     { id: 'UN', text: 'UNDO' }
   ],
@@ -499,18 +499,36 @@ module.exports = {
     { id: 'PB', text: 'Pending at Business' },
     { id: 'BD', text: 'Business Declined' }
   ],
+  PAYMENT_SHIPPING_STATE: [
+    { id: 'PSM', text: 'Pending at Shipping' },
+    { id: 'SMD', text: 'Shipping Declined' },
+  ],
   PAYMENT_MANAGER_STATE: [
-    { id: 'PM', text: 'Pending at Manager' },
-    { id: 'MD', text: 'Manager Declined' }
+    { id: 'PM', text: 'Pending at Financial' },
+    { id: 'MD', text: 'Financial Declined' }
   ],
   PAYMENT_VERIFICATION_STATE: [
     { id: 'PS', text: 'Pending at Section' },
     { id: 'SD', text: 'Section Declined' },
     { id: 'PB', text: 'Pending at Business' },
     { id: 'BD', text: 'Business Declined' },
-    { id: 'PM', text: 'Pending at Manager' },
-    { id: 'MD', text: 'Manager Declined' },
+    { id: 'PSM', text: 'Pending at Shipping' },
+    { id: 'SMD', text: 'Shipping Declined' },
+    { id: 'PM', text: 'Pending at Financial' },
+    { id: 'MD', text: 'Financial Declined' },
     { id: 'AP', text: 'All Approved' },
     { id: 'UN', text: 'UNDO' }
   ],
+  UNUSUAL_STATUS: [
+    // 支付状态 1：申请，2：发票 3: 收据
+    { id: '1', text: 'APPLY' },  // 申请
+    { id: '2', text: 'INVOICE' },  // 发票
+    { id: '3', text: 'RECEIPT' },  // 收据
+  ],
+  UNUSUAL_VERIFICATION_STATE: [
+    { id: 'PC', text: 'Pending at Commercial' },
+    { id: 'CD', text: 'Commercial Declined' },
+    { id: 'AP', text: 'All Approved' },
+    { id: 'UN', text: 'UNDO' }
+  ]
 }
