@@ -16,7 +16,7 @@ exports.initAct = async () => {
 exports.searchAct = async req => {
   let doc = common.docValidate(req)
   let returnData = {}
-  let queryStr = `select pv.payment_verification_id, pv.payment_verification_state, pv.payment_advice_id, pa.*, cu.user_name AS payment_verification_create_user_name, cb.user_name as payment_advice_beneficiary_name, cr.user_name as payment_advice_remarks_name, pi.payment_items_name as payment_advice_items_name 
+  let queryStr = `select pv.payment_verification_id, pv.payment_verification_state, pv.payment_advice_id, pa.*, CONCAT(pa.payment_advice_vessel, '/', pa.payment_advice_voyage) AS payment_advice_vessel_voyage, cu.user_name AS payment_verification_create_user_name, cb.user_name as payment_advice_beneficiary_name, cr.user_name as payment_advice_remarks_name, pi.payment_items_name as payment_advice_items_name 
                   from tbl_zhongtan_payment_verification pv
                   LEFT JOIN tbl_zhongtan_payment_advice pa ON pv.payment_advice_id = pa.payment_advice_id AND pa.state = '1' 
                   LEFT JOIN tbl_common_user cu ON pv.payment_verification_create_user = cu.user_id
