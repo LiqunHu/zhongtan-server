@@ -101,8 +101,9 @@ exports.searchShipmentListAct = async req => {
     returnData = {}
   let search_bl = '%' + doc.search_data.bill_no + '%'
   // IMPORT
-  let queryStr = `SELECT * FROM tbl_zhongtan_invoice_containers c LEFT JOIN tbl_zhongtan_invoice_masterbl b 
-                  ON c.invoice_vessel_id = b.invoice_vessel_id AND c.invoice_containers_bl = b.invoice_masterbi_bl 
+  let queryStr = `SELECT *, v.invoice_vessel_name, v.invoice_vessel_voyage, v.invoice_vessel_ata FROM tbl_zhongtan_invoice_containers c 
+                  LEFT JOIN tbl_zhongtan_invoice_masterbl b ON c.invoice_vessel_id = b.invoice_vessel_id AND c.invoice_containers_bl = b.invoice_masterbi_bl 
+                  LEFT JOIN tbl_zhongtan_invoice_vessel v ON c.invoice_vessel_id = v.invoice_vessel_id
                   WHERE c.state = ? AND b.state = ? AND b.invoice_masterbi_bl LIKE ? 
                   AND NOT EXISTS (SELECT 1 FROM tbl_zhongtan_logistics_shipment_list s WHERE s.state = ? AND s.shipment_list_bill_no = c.invoice_containers_bl AND s.shipment_list_container_no = c.invoice_containers_no) 
                   ORDER BY b.invoice_masterbi_bl, c.invoice_containers_no`
@@ -132,13 +133,17 @@ exports.searchShipmentListAct = async req => {
       r.shipment_list_port_of_loading = d.invoice_masterbi_loading
       r.shipment_list_empty_return_date = d.invoice_containers_actually_return_date ? moment(d.invoice_containers_actually_return_date, 'DD/MM/YYYY').format('YYYY-MM-DD') : ''
       r.shipment_list_cargo_weight = d.invoice_containers_weight
+      r.shipment_list_vessel_name = d.invoice_vessel_name
+      r.shipment_list_vessel_voyage = d.invoice_vessel_voyage
+      r.shipment_list_vessel_ata = d.invoice_vessel_ata ? moment(d.invoice_vessel_ata, 'DD/MM/YYYY').format('YYYY-MM-DD') : ''
       r._checked = false
       rows.push(r)
     }
   }
   // EXPORT
-  queryStr = `SELECT * FROM tbl_zhongtan_export_proforma_container c LEFT JOIN tbl_zhongtan_export_proforma_masterbl b 
-              ON c.export_vessel_id = b.export_vessel_id AND c.export_container_bl = b.export_masterbl_bl 
+  queryStr = `SELECT c.*, b.*, v.export_vessel_name, v.export_vessel_voyage, v.export_vessel_etd FROM tbl_zhongtan_export_proforma_container c 
+              LEFT JOIN tbl_zhongtan_export_proforma_masterbl b ON c.export_vessel_id = b.export_vessel_id AND c.export_container_bl = b.export_masterbl_bl
+              LEFT JOIN tbl_zhongtan_export_proforma_vessel v ON c.export_vessel_id = v.export_vessel_id
               WHERE c.state = ? AND b.state = ? AND b.export_masterbl_bl LIKE ? 
               AND NOT EXISTS (SELECT 1 FROM tbl_zhongtan_logistics_shipment_list s WHERE s.state = ? AND s.shipment_list_bill_no = c.export_container_bl AND s.shipment_list_container_no = c.export_container_no) 
               ORDER BY b.export_masterbl_bl, c.export_container_no`
@@ -170,6 +175,9 @@ exports.searchShipmentListAct = async req => {
         r.shipment_list_loading_date = d.export_container_edi_loading_date ? moment(d.export_container_edi_loading_date, 'DD/MM/YYYY').format('YYYY-MM-DD') : ''
       }
       r.shipment_list_cargo_weight = d.export_container_cargo_weight
+      r.shipment_list_vessel_name = d.export_vessel_name
+      r.shipment_list_vessel_voyage = d.export_vessel_voyage
+      r.shipment_list_vessel_etd = d.export_vessel_etd ? moment(d.export_vessel_etd, 'DD/MM/YYYY').format('YYYY-MM-DD') : ''
       r._checked = false
       rows.push(r)
     }
@@ -197,7 +205,11 @@ exports.addAct = async req => {
         shipment_list_empty_return_date: d.shipment_list_empty_return_date ? d.shipment_list_empty_return_date : null,
         shipment_list_depot_gate_out_date: d.shipment_list_depot_gate_out_date ? d.shipment_list_depot_gate_out_date : null,
         shipment_list_loading_date: d.shipment_list_loading_date ? d.shipment_list_loading_date : null,
-        shipment_list_cargo_weight: d.shipment_list_cargo_weight
+        shipment_list_cargo_weight: d.shipment_list_cargo_weight,
+        shipment_list_vessel_name: d.shipment_list_vessel_name,
+        shipment_list_vessel_voyage: d.shipment_list_vessel_voyage,
+        shipment_list_vessel_ata: d.shipment_list_vessel_ata,
+        shipment_list_vessel_etd: d.shipment_list_vessel_etd
       })
     }
   }
@@ -368,6 +380,39 @@ exports.checkPasswordAct = async req => {
   }
 }
 
+exports.updateShipmentEDI = async (business_type, bl, container_no, discharge_date, empty_return_date, gate_out_date, loading_date) => {
+  let sl = await tb_shipment_list.findOne({
+    where: {
+      shipment_list_business_type: business_type,
+      shipment_list_bill_no: bl,
+      shipment_list_container_no: container_no,
+      state: GLBConfig.ENABLE
+    }
+  })
+  if(sl) {
+    if(sl.shipment_list_business_type === 'I') {
+      sl.shipment_list_discharge_date = discharge_date ? moment(discharge_date, 'DD/MM/YYYY').format('YYYY-MM-DD') : sl.shipment_list_discharge_date
+      sl.shipment_list_empty_return_date = empty_return_date ? moment(empty_return_date, 'DD/MM/YYYY').format('YYYY-MM-DD') : sl.shipment_list_empty_return_date 
+    } else {
+      sl.shipment_list_depot_gate_out_date = gate_out_date ? moment(gate_out_date, 'DD/MM/YYYY').format('YYYY-MM-DD') : sl.shipment_list_depot_gate_out_date
+      sl.shipment_list_loading_date = loading_date ? moment(loading_date, 'DD/MM/YYYY').format('YYYY-MM-DD') : sl.shipment_list_loading_date 
+    }
+    let freight = await freightSrv.countShipmentFreight(sl.shipment_list_vendor, sl.shipment_list_business_type, sl.shipment_list_cargo_type, 
+      sl.shipment_list_business_type === 'I' ? 'TZDAR' : sl.shipment_list_port_of_loading, 
+      sl.shipment_list_business_type === 'I' ? sl.shipment_list_port_of_destination : 'TZDAR', 
+      sl.shipment_list_cntr_owner, sl.shipment_list_size_type, sl.shipment_list_business_type === 'I' ? sl.shipment_list_discharge_date : sl.shipment_list_loading_date)
+    if(freight) {
+      if(freight.freight_config_amount && sl.shipment_list_payment_status === '0') {
+        sl.shipment_list_total_freight = freight.freight_config_amount
+        sl.shipment_list_advance_payment = freight.freight_config_advance_amount
+        sl.shipment_list_advance_percent = freight.freight_config_advance
+        sl.shipment_list_balance_payment = new Decimal(freight.freight_config_amount).sub(freight.freight_config_advance_amount).toNumber()
+        sl.shipment_list_payment_status = '1'
+      }
+    }
+    await sl.save()
+  }
+}
 
 exports.updateShipmentFreight = async (shipment_list_id) => {
   let sp = await tb_shipment_list.findOne({
@@ -380,7 +425,8 @@ exports.updateShipmentFreight = async (shipment_list_id) => {
     let freight = await freightSrv.countShipmentFreight(sp.shipment_list_vendor, sp.shipment_list_business_type, sp.shipment_list_cargo_type, 
       sp.shipment_list_business_type === 'I' ? 'TZDAR' : sp.shipment_list_port_of_loading, 
       sp.shipment_list_business_type === 'I' ? sp.shipment_list_port_of_destination : 'TZDAR', 
-      sp.shipment_list_cntr_owner, sp.shipment_list_size_type, sp.shipment_list_business_type === 'I' ? sp.shipment_list_discharge_date : sp.shipment_list_loading_date)
+      sp.shipment_list_cntr_owner, sp.shipment_list_size_type, 
+      sp.shipment_list_business_type === 'I' ? (sp.shipment_list_discharge_date ? sp.shipment_list_discharge_date : sp.shipment_list_vessel_ata) : (sp.shipment_list_loading_date ? sp.shipment_list_loading_date : sp.shipment_list_vessel_etd))
     if(freight) {
       if(freight.freight_config_amount && sp.shipment_list_payment_status === '0') {
         sp.shipment_list_total_freight = freight.freight_config_amount
@@ -389,7 +435,7 @@ exports.updateShipmentFreight = async (shipment_list_id) => {
         sp.shipment_list_balance_payment = new Decimal(freight.freight_config_amount).sub(freight.freight_config_advance_amount).toNumber()
         sp.shipment_list_payment_status = '1'
       }
-      sp.save()
+      await sp.save()
     }
   }
 }

@@ -87,10 +87,10 @@ exports.searchAct = async req => {
         }
       }
       if(d.invoice_containers_empty_return_invoice_date) {
-        d.invoice_containers_empty_return_invoice_date = moment(d.invoice_containers_empty_return_invoice_date).format('YYYY-MM-DD HH:ss')
+        d.invoice_containers_empty_return_invoice_date = moment(d.invoice_containers_empty_return_invoice_date).format('YYYY-MM-DD HH:mm')
       }
       if(d.invoice_containers_empty_return_receipt_date) {
-        d.invoice_containers_empty_return_receipt_date = moment(d.invoice_containers_empty_return_receipt_date).format('YYYY-MM-DD HH:ss')
+        d.invoice_containers_empty_return_receipt_date = moment(d.invoice_containers_empty_return_receipt_date).format('YYYY-MM-DD HH:mm')
       }
       if(d.invoice_containers_empty_return_overdue_amount && d.invoice_containers_actually_return_overdue_amount) {
         d.invoice_containers_actually_balance = parseFloat(d.invoice_containers_actually_balance) - parseFloat(d.invoice_containers_actually_return_overdue_amount)
@@ -117,7 +117,7 @@ exports.searchAct = async req => {
           if(ifile) {
             invoice_data.push({
               invoice_no: ifile.uploadfile_invoice_no,
-              invoice_date: moment(ifile.created_at).format('YYYY-MM-DD HH:ss'),
+              invoice_date: moment(ifile.created_at).format('YYYY-MM-DD HH:mm'),
               invoice_amount: rcons[i].overdue_invoice_containers_overdue_invoice_amount
             })
             let rfile = await tb_uploadfile.findOne({
@@ -130,7 +130,7 @@ exports.searchAct = async req => {
                 if(moment(moment(rfile.created_at).format('YYYY-MM-DD')).isBetween(moment(doc.search_data.receipt_date[0]), moment(doc.search_data.receipt_date[1]), null, '[]')) {
                   receipt_data.push({
                     receipt_no: rfile.uploadfile_receipt_no,
-                    receipt_date: moment(rfile.created_at).format('YYYY-MM-DD HH:ss'),
+                    receipt_date: moment(rfile.created_at).format('YYYY-MM-DD HH:mm'),
                     bank_reference_no: rfile.uploadfile_bank_reference_no,
                     check_no: rfile.uploadfile_check_no
                   })
@@ -140,7 +140,7 @@ exports.searchAct = async req => {
               } else {
                 receipt_data.push({
                   receipt_no: rfile.uploadfile_receipt_no,
-                  receipt_date: moment(rfile.created_at).format('YYYY-MM-DD HH:ss'),
+                  receipt_date: moment(rfile.created_at).format('YYYY-MM-DD HH:mm'),
                   bank_reference_no: rfile.uploadfile_bank_reference_no,
                   check_no: rfile.uploadfile_check_no
                 })
@@ -252,7 +252,7 @@ exports.exportDemurrageReportAct = async(req, res) => {
           }
         })
         if(ifile) {
-          retRow.invoice_date = moment(ifile.created_at).format('YYYY-MM-DD HH:ss')
+          retRow.invoice_date = moment(ifile.created_at).format('YYYY-MM-DD HH:mm')
           retRow.invoice_no = ifile.uploadfile_invoice_no
           let rfile = await tb_uploadfile.findOne({
             where: {
@@ -262,7 +262,7 @@ exports.exportDemurrageReportAct = async(req, res) => {
           if(rfile) {
             if (doc.search_data.receipt_date && doc.search_data.receipt_date.length > 1) {
               if(moment(moment(rfile.created_at).format('YYYY-MM-DD')).isBetween(moment(doc.search_data.receipt_date[0]), moment(doc.search_data.receipt_date[1]), null, '[]')) {
-                retRow.receipt_date = moment(rfile.created_at).format('YYYY-MM-DD HH:ss')
+                retRow.receipt_date = moment(rfile.created_at).format('YYYY-MM-DD HH:mm')
                 retRow.receipt_no = rfile.uploadfile_receipt_no
                 retRow.bank_reference_no = rfile.uploadfile_bank_reference_no
                 retRow.check_no = rfile.uploadfile_check_no
@@ -270,7 +270,7 @@ exports.exportDemurrageReportAct = async(req, res) => {
                 continue
               }
             } else {
-              retRow.receipt_date = moment(rfile.created_at).format('YYYY-MM-DD HH:ss')
+              retRow.receipt_date = moment(rfile.created_at).format('YYYY-MM-DD HH:mm')
               retRow.receipt_no = rfile.uploadfile_receipt_no
               retRow.bank_reference_no = rfile.uploadfile_bank_reference_no
               retRow.check_no = rfile.uploadfile_check_no
@@ -497,7 +497,7 @@ exports.exportDemurrageAdminReportAct = async(req, res) => {
         // })
         let ifile = await common.jsonFindOne(inv_files, 'uploadfile_id', rcons[i].overdue_invoice_containers_invoice_uploadfile_id)
         if(ifile) {
-          retRow.invoice_date = moment(ifile.created_at).format('YYYY-MM-DD HH:ss')
+          retRow.invoice_date = moment(ifile.created_at).format('YYYY-MM-DD HH:mm')
           retRow.invoice_no = ifile.uploadfile_invoice_no
           // let rfile = await tb_uploadfile.findOne({
           //   where: {
@@ -508,7 +508,7 @@ exports.exportDemurrageAdminReportAct = async(req, res) => {
           if(rfile) {
             if (doc.search_data.receipt_date && doc.search_data.receipt_date.length > 1) {
               if(moment(moment(rfile.created_at).format('YYYY-MM-DD')).isBetween(moment(doc.search_data.receipt_date[0]), moment(doc.search_data.receipt_date[1]), null, '[]')) {
-                retRow.receipt_date = moment(rfile.created_at).format('YYYY-MM-DD HH:ss')
+                retRow.receipt_date = moment(rfile.created_at).format('YYYY-MM-DD HH:mm')
                 retRow.receipt_no = rfile.uploadfile_receipt_no
                 retRow.bank_reference_no = rfile.uploadfile_bank_reference_no
                 retRow.check_no = rfile.uploadfile_check_no
@@ -516,7 +516,7 @@ exports.exportDemurrageAdminReportAct = async(req, res) => {
                 continue
               }
             } else {
-              retRow.receipt_date = moment(rfile.created_at).format('YYYY-MM-DD HH:ss')
+              retRow.receipt_date = moment(rfile.created_at).format('YYYY-MM-DD HH:mm')
               retRow.receipt_no = rfile.uploadfile_receipt_no
               retRow.bank_reference_no = rfile.uploadfile_bank_reference_no
               retRow.check_no = rfile.uploadfile_check_no

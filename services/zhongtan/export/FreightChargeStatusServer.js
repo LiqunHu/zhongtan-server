@@ -4,6 +4,7 @@ const common = require('../../../util/CommonUtil')
 const GLBConfig = require('../../../util/GLBConfig')
 const model = require('../../../app/model')
 const cal_demurrage_srv = require('../equipment/ExportDemurrageCalculationServer')
+const opSrv = require('../../common/system/OperationPasswordServer')
 
 const tb_vessel = model.zhongtan_export_vessel
 const tb_bl = model.zhongtan_export_masterbl
@@ -39,10 +40,11 @@ exports.initAct = async () => {
 exports.searchAct = async req => {
   let doc = common.docValidate(req)
   let returnData = {}
-  let queryStr = `SELECT b.export_masterbl_id, b.export_masterbl_bl, b.export_masterbl_cargo_type, b.export_masterbl_port_of_load, b.export_masterbl_port_of_discharge, b.export_masterbl_shipper_company, b.loading_list_import, b.proforma_import, b.bk_cancellation_status,
+  let queryStr = `SELECT b.export_masterbl_id, b.export_masterbl_bl, b.export_masterbl_cargo_type, b.export_masterbl_port_of_load, b.export_masterbl_port_of_discharge, b.export_masterbl_shipper_company, b.loading_list_import, b.proforma_import, b.bk_cancellation_status, b.shipment_list_bl_print, b.shipment_list_bl_print_user, u.user_name AS shipment_list_bl_print_user_name, b.shipment_list_bl_print_time,
                   v.export_vessel_id, v.export_vessel_name, v.export_vessel_voyage, v.export_vessel_etd, f.total_count, f.receipt_count, f.total_amount
                   from tbl_zhongtan_export_proforma_masterbl b 
                   LEFT JOIN tbl_zhongtan_export_proforma_vessel v ON b.export_vessel_id = v.export_vessel_id 
+                  LEFT JOIN tbl_common_user u ON b.shipment_list_bl_print_user = u.user_id
                   LEFT JOIN (SELECT export_masterbl_id, COUNT(1) AS total_count, COUNT(if(shipment_fee_status = 'RE', 1, null)) AS receipt_count, SUM(shipment_fee_amount) AS total_amount FROM tbl_zhongtan_export_shipment_fee WHERE state = '1' AND shipment_fee_type = 'R' GROUP BY export_masterbl_id) f ON f.export_masterbl_id = b.export_masterbl_id 
                   WHERE b.state = 1 `
   let replacements = []
@@ -140,10 +142,11 @@ exports.searchAct = async req => {
 
 exports.exportFreightAct = async (req, res) => {
   let doc = common.docValidate(req)
-  let queryStr = `SELECT b.export_masterbl_id, b.export_masterbl_bl, b.export_masterbl_cargo_type, b.export_masterbl_port_of_load, b.export_masterbl_port_of_discharge, b.export_masterbl_shipper_company, b.bk_cancellation_status, 
+  let queryStr = `SELECT b.export_masterbl_id, b.export_masterbl_bl, b.export_masterbl_cargo_type, b.export_masterbl_port_of_load, b.export_masterbl_port_of_discharge, b.export_masterbl_shipper_company, b.bk_cancellation_status, b.shipment_list_bl_print, b.shipment_list_bl_print_user, u.user_name AS shipment_list_bl_print_user_name, b.shipment_list_bl_print_time,
                   v.export_vessel_id, v.export_vessel_name, v.export_vessel_voyage, v.export_vessel_etd, f.total_count, f.receipt_count, f.total_amount
                   from tbl_zhongtan_export_proforma_masterbl b 
                   LEFT JOIN tbl_zhongtan_export_proforma_vessel v ON b.export_vessel_id = v.export_vessel_id 
+                  LEFT JOIN tbl_common_user u ON b.shipment_list_bl_print_user = u.user_id
                   LEFT JOIN (SELECT export_masterbl_id, COUNT(1) AS total_count, COUNT(if(shipment_fee_status = 'RE', 1, null)) AS receipt_count, SUM(shipment_fee_amount) AS total_amount FROM tbl_zhongtan_export_shipment_fee WHERE state = '1' AND shipment_fee_type = 'R' GROUP BY export_masterbl_id) f ON f.export_masterbl_id = b.export_masterbl_id 
                   WHERE b.state = 1 `
   let replacements = []
@@ -200,6 +203,9 @@ exports.exportFreightAct = async (req, res) => {
       if(fees && fees.length > 0) {
         for(let f of fees) {
           renderData.push({
+            bl_print: r.shipment_list_bl_print,
+            bl_print_user_name: r.shipment_list_bl_print_user_name,
+            bl_print_time: r.shipment_list_bl_print_time,
             bl: r.export_masterbl_bl,
             bl_status: (r.total_count === r.receipt_count && r.receipt_count > 0) ? 'RELEASE' : 'HOLD',
             vessel_voyage: r.export_vessel_name + ' ' + r.export_vessel_voyage,
@@ -217,6 +223,9 @@ exports.exportFreightAct = async (req, res) => {
         }
       } else {
         renderData.push({
+          bl_print: r.shipment_list_bl_print,
+          bl_print_user_name: r.shipment_list_bl_print_user_name,
+          bl_print_time: r.shipment_list_bl_print_time,
           bl: r.export_masterbl_bl,
           bl_status: 'HOLD',
           vessel_voyage: r.export_vessel_name + ' ' + r.export_vessel_voyage,
@@ -503,4 +512,35 @@ exports.loadingListDataAct = async req => {
     }
   }
   return common.success()
+}
+
+exports.blPrintAct = async req => {
+  let doc = common.docValidate(req), user = req.user
+  let bl = await tb_proforma_bl.findOne({
+    where: {
+      export_masterbl_id: doc.export_masterbl_id,
+      state: GLBConfig.ENABLE
+    }
+  })
+  if(bl) {
+    if(bl.shipment_list_bl_print === 'YES') {
+      bl.shipment_list_bl_print = 'NO'
+    } else {
+      bl.shipment_list_bl_print = 'YES'
+    }
+    bl.shipment_list_bl_print_user = user.user_id
+    bl.shipment_list_bl_print_time = moment().format('YYYY-MM-DD HH:mm:ss')
+    await bl.save()
+  }
+  return common.success()
+}
+
+exports.checkPasswordAct = async req => {
+  let doc = common.docValidate(req)
+  let check = await opSrv.checkPassword(doc.action, doc.checkPassword)
+  if(check) {
+    return common.success()
+  } else {
+    return common.error('auth_24')
+  }
 }

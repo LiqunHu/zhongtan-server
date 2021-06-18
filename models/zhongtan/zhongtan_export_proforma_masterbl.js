@@ -152,5 +152,18 @@ module.exports = db.defineModel('tbl_zhongtan_export_proforma_masterbl', {
     type: db.STRING(5),
     defaultValue: '0',
     allowNull: false
+  },
+  shipment_list_bl_print: {
+    type: db.STRING(5),
+    defaultValue: 'NO',
+    allowNull: false
+  },
+  shipment_list_bl_print_user: {
+    type: db.STRING(50),
+    allowNull: true
+  },
+  shipment_list_bl_print_time: {
+    type: db.STRING(20),
+    allowNull: true
   }
 })

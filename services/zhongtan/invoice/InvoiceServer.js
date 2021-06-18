@@ -1923,7 +1923,7 @@ exports.changeblAct = async req => {
           s.shipment_list_port_of_destination = b.invoice_masterbi_destination ? b.invoice_masterbi_destination : s.shipment_list_port_of_destination
           s.shipment_list_port_of_loading = b.invoice_masterbi_loading ? b.invoice_masterbi_loading : s.shipment_list_port_of_loading
           await s.save()
-          freight_srv.updateShipmentFreight(s.shipment_list_id)
+          await freight_srv.updateShipmentFreight(s.shipment_list_id)
         }
       }
     }

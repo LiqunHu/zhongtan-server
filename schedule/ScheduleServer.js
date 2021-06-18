@@ -147,9 +147,22 @@ const importEmptyStockContainer = async () => {
   }
 }
 
+
+const resetPaymentAdviceNo = async () => {
+  try{
+    // Payment advice No. Seq
+    let queryStr = `UPDATE seqmysql SET currentValue = 0 WHERE seqname = 'PaymentAdviceSeq';`
+    let replacements = []
+    await model.simpleUpdate(queryStr, replacements)
+  } finally {
+    // continue regardless of error
+  }
+}
+
 module.exports = {
   resetDemurrageReceiptSeq: resetDemurrageReceiptSeq,
   calculationCurrentOverdueDays: calculationCurrentOverdueDays,
   expireFixedDepositCheck: expireFixedDepositCheck,
-  importEmptyStockContainer: importEmptyStockContainer
+  importEmptyStockContainer: importEmptyStockContainer,
+  resetPaymentAdviceNo: resetPaymentAdviceNo
 }

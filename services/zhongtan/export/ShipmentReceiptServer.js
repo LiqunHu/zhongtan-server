@@ -33,6 +33,7 @@ exports.searchVesselAct = async req => {
   let etd_start_date = doc.etd_start_date
   let etd_end_date = doc.etd_end_date
   let vessel_name = doc.vessel_name
+  let invoice_no = doc.invoice_no
   let masterbi_bl = doc.masterbi_bl
   let queryStr =  `SELECT * FROM tbl_zhongtan_export_proforma_vessel v `
   let replacements = []
@@ -41,6 +42,10 @@ exports.searchVesselAct = async req => {
     replacements.push('%' + masterbi_bl + '%')
   } else {
     queryStr = queryStr + ` WHERE v.state = '1' `
+  }
+  if(invoice_no) {
+    queryStr = queryStr + ` AND v.export_vessel_id IN (SELECT export_vessel_id FROM tbl_zhongtan_export_proforma_masterbl WHERE export_masterbl_id IN (SELECT DISTINCT(export_masterbl_id) FROM tbl_zhongtan_export_shipment_fee WHERE state = '1' AND shipment_fee_invoice_no LIKE ?))`
+    replacements.push('%' + invoice_no + '%')
   }
   if(etd_start_date && etd_end_date) {
     queryStr = queryStr + ` AND STR_TO_DATE(v.export_vessel_etd, "%d/%m/%Y") >= ? AND STR_TO_DATE(v.export_vessel_etd, "%d/%m/%Y") <= ? `
@@ -78,12 +83,17 @@ exports.searchBlAct = async req => {
   let doc = common.docValidate(req)
   let returnData = {}
   let export_vessel_id = doc.export_vessel_id
+  let invoice_no = doc.invoice_no
   let masterbi_bl = doc.masterbi_bl
   let queryStr =  `select * from tbl_zhongtan_export_proforma_masterbl b WHERE b.export_vessel_id = ? AND b.state = ?`
   let replacements = [export_vessel_id, GLBConfig.ENABLE]
   if(masterbi_bl) {
     queryStr = queryStr + ` AND b.export_masterbl_bl LIKE ?`
     replacements.push('%' + masterbi_bl + '%')
+  }
+  if(invoice_no) {
+    queryStr = queryStr + ` AND b.export_masterbl_id IN (SELECT DISTINCT(export_masterbl_id) FROM tbl_zhongtan_export_shipment_fee WHERE state = '1' AND shipment_fee_invoice_no LIKE ?)`
+    replacements.push('%' + invoice_no + '%')
   }
   let bls = await model.queryWithCount(doc, queryStr, replacements)
   returnData.total = bls.count
@@ -253,6 +263,8 @@ exports.exportCollectAct = async (req, res) => {
     receivable_map.set('DEMURRAGE FEE', 'receivable_demurrage')
     receivable_map.set('LIFT ON/OFF', 'receivable_lofo')
     receivable_map.set('FAF', 'receivable_faf')
+    receivable_map.set('AMF', 'receivable_amf')
+    receivable_map.set('ADJ', 'receivable_adj')
     let payable_map = new Map()
     payable_map.set('B/L FEE', 'payable_bl')
     payable_map.set('OCEAN FREIGHT', 'payable_ocean')

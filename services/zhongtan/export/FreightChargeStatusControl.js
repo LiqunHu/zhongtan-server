@@ -17,6 +17,12 @@ module.exports = async (req, res) => {
       ret = await srv.uploadAct(req)
     } else if (method === 'loadingListData') {
       ret = await srv.loadingListDataAct(req)
+    } else if (method === 'loadingListData') {
+      ret = await srv.loadingListDataAct(req)
+    } else if (method === 'blPrint') {
+      ret = await srv.blPrintAct(req)
+    } else if (method === 'checkPassword') {
+      ret = await srv.checkPasswordAct(req)
     } 
     
     common.sendData(res, ret)

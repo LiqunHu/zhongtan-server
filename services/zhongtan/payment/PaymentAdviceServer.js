@@ -85,6 +85,7 @@ exports.searchAct = async req => {
     }
   }
 
+  queryStr += ' order by payment_advice_id desc'
   let result = await model.queryWithCount(doc, queryStr, replacements)
 
   returnData.total = result.count
@@ -334,6 +335,7 @@ exports.exportAct = async (req, res) => {
       replacements.push(doc.payment_advice_remarks)
     }
   }
+  queryStr += ' order by payment_advice_id desc'
   let result = await model.simpleSelect(queryStr, replacements)
   let filepath = await common.ejs2xlsx('PaymentAdvice.xlsx', result)
   res.sendFile(filepath)

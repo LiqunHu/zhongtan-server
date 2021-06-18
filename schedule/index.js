@@ -6,5 +6,6 @@ module.exports = {
   resetDemurrageReceiptSeq: schedule_srv.resetDemurrageReceiptSeq,
   calculationCurrentOverdueDays: schedule_srv.calculationCurrentOverdueDays,
   expireFixedDepositCheck: schedule_srv.expireFixedDepositCheck ,
-  importEmptyStockContainer : schedule_srv.importEmptyStockContainer
+  importEmptyStockContainer : schedule_srv.importEmptyStockContainer,
+  resetPaymentAdviceNo : schedule_srv.resetPaymentAdviceNo
 }

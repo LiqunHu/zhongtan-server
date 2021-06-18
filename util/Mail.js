@@ -736,7 +736,7 @@ const updateShipmentList = async (ediData) => {
       }
     }
     await sl.save()
-    freight_srv.updateShipmentFreight(sl.shipment_list_id)
+    await freight_srv.updateShipmentFreight(sl.shipment_list_id)
   }
 }
 

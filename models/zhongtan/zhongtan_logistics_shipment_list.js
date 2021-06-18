@@ -239,5 +239,25 @@ module.exports = db.defineModel('tbl_zhongtan_logistics_shipment_list', {
     // 额外应收先令最后收据时间
     type: db.STRING(20),
     allowNull: true
+  },
+  shipment_list_vessel_ata: {
+    // 进口开港
+    type: db.DATEONLY,
+    allowNull: true
+  },
+  shipment_list_vessel_etd: {
+    // 出口截港
+    type: db.DATEONLY,
+    allowNull: true
+  },
+  shipment_list_vessel_name: {
+    // 船名
+    type: db.STRING(50),
+    allowNull: true
+  },
+  shipment_list_vessel_voyage: {
+    // 航次
+    type: db.STRING(50),
+    allowNull: true
   }
 })
