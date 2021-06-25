@@ -54,21 +54,21 @@
                 <thead class="b_bottom">
                   <tr style="height: 20px;"></tr>
                   <tr valign="top">
-                    <th>MARKS &<br />NUMBERS</th>
-                    <th>PCS/QTY</th>
-                    <th>COMMODITY</th>
-                    <th>NET WT<br />KGM/</th>
-                    <th>MEASUREMENT<br />CBM</th>
+                    <th style="width: 15%;">MARKS &<br />NUMBERS</th>
+                    <th style="width: 15%;">PCS/QTY</th>
+                    <th style="width: 40%;">COMMODITY</th>
+                    <th style="width: 15%;">NET WT<br />KGM/</th>
+                    <th style="width: 15%;">MEASUREMENT<br />CBM</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr style="height: 20px;"></tr>
                   <tr>
-                    <td><%= ejsData.invoice_masterbi_shipping_mark %></td>
-                    <td><%= ejsData.invoice_masterbi_package_no %><%= ejsData.invoice_masterbi_package_unit %></td>
-                    <td><%= ejsData.invoice_masterbi_goods_description %></td>
-                    <td><%= ejsData.invoice_masterbi_gross_weight %><%= ejsData.invoice_masterbi_gross_weight_unit %></td>
-                    <td><%= ejsData.invoice_masterbi_gross_volume %><%= ejsData.invoice_masterbi_gross_volume_unit %></td>
+                    <td style="word-wrap: break-word;"><%= ejsData.invoice_masterbi_shipping_mark %></td>
+                    <td style="word-wrap: break-word;"><%= ejsData.invoice_masterbi_package_no %><%= ejsData.invoice_masterbi_package_unit %></td>
+                    <td style="word-wrap: break-word;"><%= ejsData.invoice_masterbi_goods_description %></td>
+                    <td style="word-wrap: break-word;"><%= ejsData.invoice_masterbi_gross_weight %><%= ejsData.invoice_masterbi_gross_weight_unit %></td>
+                    <td style="word-wrap: break-word;"><%= ejsData.invoice_masterbi_gross_volume %><%= ejsData.invoice_masterbi_gross_volume_unit %></td>
                   </tr>
                   <tr style="height: 30px;"></tr>
                   <tr style="text-align: right;">
