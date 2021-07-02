@@ -439,3 +439,44 @@ exports.updateShipmentFreight = async (shipment_list_id) => {
     }
   }
 }
+
+exports.refreshAct = async req => {
+  let doc = common.docValidate(req)
+  let sl = await tb_shipment_list.findOne({
+    where: {
+      shipment_list_id: doc.shipment_list_id,
+      state: GLBConfig.ENABLE
+    }
+  })
+  if(sl) {
+    if(sl.shipment_list_business_type === 'I'){
+      let queryStr = `SELECT c.invoice_containers_edi_discharge_date, c.invoice_containers_actually_return_date FROM tbl_zhongtan_invoice_containers c 
+                  LEFT JOIN tbl_zhongtan_invoice_masterbl b ON c.invoice_vessel_id = b.invoice_vessel_id AND c.invoice_containers_bl = b.invoice_masterbi_bl 
+                  WHERE c.state = ? AND b.state = ? AND b.invoice_masterbi_bl = ? AND c.invoice_containers_no = ? `
+      let replacements = [GLBConfig.ENABLE, GLBConfig.ENABLE, sl.shipment_list_bill_no, sl.shipment_list_container_no]
+      let ret_import = await model.simpleSelect(queryStr, replacements)
+      if(ret_import && ret_import.length > 0) {
+        let im = ret_import[0]
+        sl.shipment_list_discharge_date = im.invoice_containers_edi_discharge_date ? moment(im.invoice_containers_edi_discharge_date, 'DD/MM/YYYY').format('YYYY-MM-DD') : sl.shipment_list_discharge_date
+        sl.shipment_list_empty_return_date = im.invoice_containers_actually_return_date ? moment(im.invoice_containers_actually_return_date, 'DD/MM/YYYY').format('YYYY-MM-DD') : sl.shipment_list_empty_return_date
+      }
+    } else {
+      let queryStr = `SELECT * FROM tbl_zhongtan_export_proforma_container c 
+                LEFT JOIN tbl_zhongtan_export_proforma_masterbl b ON c.export_vessel_id = b.export_vessel_id AND c.export_container_bl = b.export_masterbl_bl
+                WHERE c.state = ? AND b.state = ? AND b.export_masterbl_bl = ? AND c.export_container_no = ? `
+      let replacements = [GLBConfig.ENABLE, GLBConfig.ENABLE, sl.shipment_list_bill_no, sl.shipment_list_container_no]
+      let ret_export = await model.simpleSelect(queryStr, replacements)
+      if(ret_export && ret_export.length > 0) {
+        let ex = ret_export[0]
+        sl.shipment_list_depot_gate_out_date = ex.export_container_edi_depot_gate_out_date ? moment(ex.export_container_edi_depot_gate_out_date, 'DD/MM/YYYY').format('YYYY-MM-DD') : sl.shipment_list_depot_gate_out_date
+        if(sl.shipment_list_cntr_owner === 'COS') {
+          sl.shipment_list_loading_date = ex.export_container_edi_wharf_gate_in_date ? moment(ex.export_container_edi_wharf_gate_in_date, 'DD/MM/YYYY').format('YYYY-MM-DD') : sl.shipment_list_loading_date
+        } else if(sl.shipment_list_cntr_owner === 'OOL') {
+          sl.shipment_list_loading_date = ex.export_container_edi_loading_date ? moment(ex.export_container_edi_loading_date, 'DD/MM/YYYY').format('YYYY-MM-DD') : sl.shipment_list_loading_date
+        }
+      }
+    }
+    await sl.save()
+  }
+  return common.success()
+}

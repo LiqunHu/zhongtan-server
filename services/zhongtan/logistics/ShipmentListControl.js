@@ -23,6 +23,8 @@ module.exports = async (req, res) => {
       ret = await srv.deleteAct(req)
     } else if (method === 'checkPassword') {
       ret = await srv.checkPasswordAct(req)
+    } else if (method === 'refresh') {
+      ret = await srv.refreshAct(req)
     } 
 
     common.sendData(res, ret)
