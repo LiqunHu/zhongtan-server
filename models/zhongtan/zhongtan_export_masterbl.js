@@ -125,5 +125,21 @@ module.exports = db.defineModel('tbl_zhongtan_export_masterbl', {
     type: db.STRING(10),
     defaultValue: 'LOCAL',
     allowNull: false
+  },
+  export_masterbl_firm_booking: {
+    // 放箱堆场
+    type: db.STRING(10),
+    defaultValue: 'NO',
+    allowNull: false
+  },
+  export_masterbl_firm_booking_user: {
+    // 放箱堆场
+    type: db.STRING(50),
+    allowNull: true
+  },
+  export_masterbl_firm_booking_time: {
+    // 放箱堆场
+    type: db.STRING(20),
+    allowNull: true
   }
 })

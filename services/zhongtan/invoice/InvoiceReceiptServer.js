@@ -59,44 +59,69 @@ exports.searchVoyageAct = async req => {
     replacements = [],
     vessels = []
 
-  if (doc.bl) {
-    queryStr = `select a.*, b.user_name from tbl_zhongtan_invoice_masterbl a 
-                  LEFT JOIN tbl_common_user b ON b.user_id = a.invoice_masterbi_customer_id WHERE a.invoice_masterbi_bl = ?`
-    replacements = [doc.bl]
+  if (doc.bl || doc.invoice_no) {
+    queryStr = `select a.*, b.user_name from tbl_zhongtan_invoice_masterbl a LEFT JOIN tbl_common_user b ON b.user_id = a.invoice_masterbi_customer_id WHERE a.state = ? `
+    replacements = [GLBConfig.ENABLE]
+    if(doc.bl) {
+      queryStr += `  AND a.invoice_masterbi_bl = ? `
+      replacements.push(doc.bl)
+    }
+    if(doc.invoice_no) {
+      queryStr += `  AND a.invoice_masterbi_id in (SELECT uploadfile_index1 FROM tbl_zhongtan_uploadfile WHERE state = ? AND api_name in ('RECEIPT-FEE', 'RECEIPT-DEPOSIT') AND uploadfile_invoice_no LIKE ?) `
+      replacements.push(GLBConfig.ENABLE)
+      replacements.push('%' + doc.invoice_no)
+    }
     let result = await model.queryWithCount(doc, queryStr, replacements)
     returnData.masterbl.total = result.count
     returnData.masterbl.rows = []
 
+    let diff_vessel = []
     for (let b of result.data) {
-      let d = JSON.parse(JSON.stringify(b))
-      d.customerINFO = [
-        {
-          id: d.invoice_masterbi_customer_id,
-          text: d.user_name
+      if(diff_vessel && diff_vessel.length > 0) {
+        if(!common.isContain(diff_vessel, b.invoice_vessel_id)) {
+          diff_vessel.push(b.invoice_vessel_id)
         }
-      ]
-      if (d.invoice_masterbi_tasac && d.invoice_masterbi_tasac_receipt 
-        && parseFloat(d.invoice_masterbi_tasac) > parseFloat(d.invoice_masterbi_tasac_receipt)) {
-          d.invoice_masterbi_tasac = parseFloat(d.invoice_masterbi_tasac) - parseFloat(d.invoice_masterbi_tasac_receipt)
-      } else if(d.invoice_masterbi_tasac && d.invoice_masterbi_tasac_receipt ){
-        d.invoice_masterbi_tasac = ''
+      } else {
+        diff_vessel.push(b.invoice_vessel_id)
       }
-      d.invoice_masterbi_do_release_date_fmt = moment(d.invoice_masterbi_do_release_date).format('DD/MM/YYYY hh:mm')
-      d.invoice_masterbi_invoice_release_date_fmt = moment(d.invoice_masterbi_invoice_release_date).format('DD/MM/YYYY hh:mm')
-      d.invoice_masterbi_receipt_release_date_fmt = moment(d.invoice_masterbi_receipt_release_date).format('DD/MM/YYYY hh:mm')
-      d.invoice_container_deposit_currency = 'USD'
-      d.invoice_ocean_freight_fee_currency = 'USD'
-      d.invoice_fee_currency = 'USD'
-      d = await this.getMasterbiFiles(d)
-      returnData.masterbl.rows.push(d)
     }
-
-    if (result.data.length > 0) {
-      vessels = await tb_vessel.findAll({
-        where: {
-          invoice_vessel_id: result.data[0].invoice_vessel_id
+    if(!diff_vessel || diff_vessel.length <= 1) {
+      for (let b of result.data) {
+        let d = JSON.parse(JSON.stringify(b))
+        d.customerINFO = [
+          {
+            id: d.invoice_masterbi_customer_id,
+            text: d.user_name
+          }
+        ]
+        if (d.invoice_masterbi_tasac && d.invoice_masterbi_tasac_receipt 
+          && parseFloat(d.invoice_masterbi_tasac) > parseFloat(d.invoice_masterbi_tasac_receipt)) {
+            d.invoice_masterbi_tasac = parseFloat(d.invoice_masterbi_tasac) - parseFloat(d.invoice_masterbi_tasac_receipt)
+        } else if(d.invoice_masterbi_tasac && d.invoice_masterbi_tasac_receipt ){
+          d.invoice_masterbi_tasac = ''
         }
-      })
+        d.invoice_masterbi_do_release_date_fmt = moment(d.invoice_masterbi_do_release_date).format('DD/MM/YYYY hh:mm')
+        d.invoice_masterbi_invoice_release_date_fmt = moment(d.invoice_masterbi_invoice_release_date).format('DD/MM/YYYY hh:mm')
+        d.invoice_masterbi_receipt_release_date_fmt = moment(d.invoice_masterbi_receipt_release_date).format('DD/MM/YYYY hh:mm')
+        d.invoice_container_deposit_currency = 'USD'
+        d.invoice_ocean_freight_fee_currency = 'USD'
+        d.invoice_fee_currency = 'USD'
+        d = await this.getMasterbiFiles(d)
+        returnData.masterbl.rows.push(d)
+      }
+    }
+    if (diff_vessel.length > 0) {
+      for (let b of diff_vessel) {
+        let ves = await tb_vessel.findOne({
+          where: {
+            invoice_vessel_id: b,
+            state: GLBConfig.ENABLE
+          }
+        })
+        if(ves) {
+          vessels.push(ves)
+        }
+      }
     }
   } else {
     queryStr = `select * from tbl_zhongtan_invoice_vessel where state = '1'`
@@ -183,6 +208,15 @@ exports.getMasterbiDataAct = async req => {
   LEFT JOIN tbl_common_user b ON b.user_id = a.invoice_masterbi_customer_id
   WHERE a.invoice_vessel_id = ?`
   let replacements = [doc.invoice_vessel_id]
+  if (doc.bl) {
+    queryStr += `  AND a.invoice_masterbi_bl = ? `
+    replacements.push(doc.bl)
+  }
+  if(doc.invoice_no) {
+    queryStr += `  AND a.invoice_masterbi_id in (SELECT uploadfile_index1 FROM tbl_zhongtan_uploadfile WHERE state = ? AND api_name in ('RECEIPT-FEE', 'RECEIPT-DEPOSIT') AND uploadfile_invoice_no LIKE ?) `
+    replacements.push(GLBConfig.ENABLE)
+    replacements.push('%' + doc.invoice_no)
+  }
   let result = await model.queryWithCount(doc, queryStr, replacements)
   returnData.total = result.count
   returnData.rows = []
@@ -250,7 +284,8 @@ exports.getMasterbiFiles = async d => {
         url: f.uploadfile_url,
         state: f.uploadfile_state,
         release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
-        release_user: f.user_name
+        release_user: f.user_name,
+        invoice_no: f.uploadfile_invoice_no
       })
       d.invoice_masterbi_deposit_state = f.uploadfile_state
       if (f.uploadfile_currency) {
@@ -277,7 +312,8 @@ exports.getMasterbiFiles = async d => {
         url: f.uploadfile_url,
         state: f.uploadfile_state,
         release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
-        release_user: f.user_name
+        release_user: f.user_name,
+        invoice_no: f.uploadfile_invoice_no
       })
       d.invoice_fee_state = f.uploadfile_state
       if (f.uploadfile_currency) {

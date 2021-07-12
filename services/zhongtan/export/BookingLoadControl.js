@@ -35,7 +35,11 @@ module.exports = async (req, res) => {
       ret = await srv.bookingDataSaveAct(req)
     } else if (method === 'bkCancellationFeeSave') {
       ret = await srv.bkCancellationFeeSave(req)
-    } 
+    } else if (method === 'frimBooking') {
+      ret = await srv.frimBookingAct(req)
+    } else if (method === 'bookingExport') {
+      return await srv.bookingExportAct(req, res)
+    }
     
     common.sendData(res, ret)
   } catch (error) {

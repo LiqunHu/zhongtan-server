@@ -17,6 +17,10 @@ module.exports = async (req, res) => {
       ret = await srv.declineAct(req)
     } else if (method === 'verificationDetail') {
       ret = await srv.verificationDetailAct(req)
+    } else if (method === 'checkPassword') {
+      ret = await srv.checkPasswordAct(req)
+    } else if (method === 'export') {
+      return await srv.exportAct(req, res)
     }
     
     common.sendData(res, ret)

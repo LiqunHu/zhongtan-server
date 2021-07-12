@@ -47,5 +47,9 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_default_fee', {
     type: db.STRING(2),
     allowNull: false,
     defaultValue: '0'
+  },
+  fee_pol_mark: {
+    type: db.STRING(200),
+    allowNull: true
   }
 })

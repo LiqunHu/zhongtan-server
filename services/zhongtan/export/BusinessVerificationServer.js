@@ -3,6 +3,7 @@ const GLBConfig = require('../../../util/GLBConfig')
 const common = require('../../../util/CommonUtil')
 const model = require('../../../app/model')
 const mailer = require('../../../util/Mail')
+const opSrv = require('../../common/system/OperationPasswordServer')
 
 const tb_verification = model.zhongtan_export_verification
 const tb_verification_log = model.zhongtan_export_verification_log
@@ -17,14 +18,19 @@ exports.initAct = async () => {
   let returnData = {
     RELEASE_STATE: GLBConfig.RELEASE_STATE
   }
+  let queryStr = `SELECT export_vessel_id, CONCAT(export_vessel_name, '/', export_vessel_voyage) export_vessel_voyage FROM tbl_zhongtan_export_vessel WHERE state = 1 GROUP BY export_vessel_name, export_vessel_voyage ORDER BY export_vessel_name, export_vessel_voyage DESC`
+  let replacements = []
+  returnData['VESSEL_VOYAGES'] = await model.simpleSelect(queryStr, replacements)
   return common.success(returnData)
 }
 
 exports.searchAct = async req => {
   let doc = common.docValidate(req)
   let returnData = {}
-  let queryStr = `select a.*, b.export_masterbl_bl, b.export_masterbl_cargo_type, c.user_name as apply_user, d.user_name as empty_release_party from tbl_zhongtan_export_verification a 
+  let queryStr = `select a.*, b.export_masterbl_bl, b.export_masterbl_cargo_type, c.user_name as apply_user, d.user_name as empty_release_party, v.export_vessel_name, v.export_vessel_voyage 
+                from tbl_zhongtan_export_verification a 
                 LEFT JOIN tbl_zhongtan_export_masterbl b ON a.export_masterbl_id = b.export_masterbl_id 
+                LEFT JOIN tbl_zhongtan_export_vessel v ON v.export_vessel_id = b.export_vessel_id 
                 LEFT JOIN tbl_common_user c ON a.export_verification_create_user = c.user_id
                 LEFT JOIN tbl_common_user d ON a.export_verification_agent = d.user_id
                 WHERE a.state = '1' AND a.export_verification_api_name IN (?)`
@@ -34,7 +40,10 @@ exports.searchAct = async req => {
     queryStr += ' AND a.export_verification_state = ?'
     replacements.push(doc.verification_state)
   }
-
+  if(doc.verification_vessel_id) {
+    queryStr += ' AND b.export_vessel_id = ?'
+    replacements.push(doc.verification_vessel_id)
+  }
   if (doc.bl) {
     queryStr += ' AND b.export_masterbl_bl = ?'
     replacements.push(doc.bl)
@@ -49,7 +58,14 @@ exports.searchAct = async req => {
   queryStr = queryStr + " order by a.export_verification_id desc"
   let result = await model.queryWithCount(doc, queryStr, replacements)
   returnData.total = result.count
-  returnData.rows = result.data
+  let rows = []
+  if(result.data) {
+    for(let d of result.data) {
+      d.created_at = moment(d.created_at).format('YYYY-MM-DD HH:mm:ss')
+      rows.push(d)
+    }
+  }
+  returnData.rows = rows
   return common.success(returnData)
 }
 
@@ -323,4 +339,76 @@ exports.verificationDetailAct = async req => {
     }
   }
   return common.success(returnData)
+}
+
+exports.checkPasswordAct = async req => {
+  let doc = common.docValidate(req)
+  let check = await opSrv.checkPassword(doc.action, doc.checkPassword)
+  if(check) {
+    return common.success()
+  } else {
+    return common.error('auth_24')
+  }
+}
+
+
+exports.exportAct = async (req, res) => {
+  let doc = common.docValidate(req)
+  let queryStr = `select a.*, b.export_masterbl_bl, b.export_masterbl_cargo_type, c.user_name as apply_user, d.user_name as empty_release_party, v.export_vessel_name, v.export_vessel_voyage 
+                from tbl_zhongtan_export_verification a 
+                LEFT JOIN tbl_zhongtan_export_masterbl b ON a.export_masterbl_id = b.export_masterbl_id 
+                LEFT JOIN tbl_zhongtan_export_vessel v ON v.export_vessel_id = b.export_vessel_id 
+                LEFT JOIN tbl_common_user c ON a.export_verification_create_user = c.user_id
+                LEFT JOIN tbl_common_user d ON a.export_verification_agent = d.user_id
+                WHERE a.state = '1' AND a.export_verification_api_name IN (?)`
+  let api_name = ['EMPTY RELEASE']
+  let replacements = [api_name]
+  if (doc.verification_state) {
+    queryStr += ' AND a.export_verification_state = ?'
+    replacements.push(doc.verification_state)
+  }
+  if(doc.verification_vessel_id) {
+    queryStr += ' AND b.export_vessel_id = ?'
+    replacements.push(doc.verification_vessel_id)
+  }
+  if (doc.bl) {
+    queryStr += ' AND b.export_masterbl_bl = ?'
+    replacements.push(doc.bl)
+  }
+
+  if (doc.start_date && doc.end_date) {
+    queryStr += ' and a.created_at >= ? and a.created_at < ? '
+    replacements.push(doc.start_date)
+    replacements.push(moment(doc.end_date, 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
+  }
+
+  queryStr = queryStr + " order by a.export_verification_id desc"
+  let result = await model.simpleSelect(queryStr, replacements)
+  let renderData = []
+  if(result && result.length > 0) {
+    for(let r of result) {
+      let numbers = []
+      let types = []
+      if(r.export_verification_quantity.indexOf(';') >= 0) {
+        let sts = r.export_verification_quantity.split(';')
+        for(let st of sts) {
+          if(st) {
+            let s = st.split('x')
+            numbers.push(s[0])
+            types.push(s[1])
+          }
+        }
+      } else {
+        let st = r.export_verification_quantity.split('x')
+        numbers.push(st[0])
+        types.push(st[1])
+      }
+      r.export_verification_container_number = numbers.join('\r\n')
+      r.export_verification_container_type = types.join('\r\n')
+      r.created_at = moment(r.created_at).format('YYYY-MM-DD HH:mm:ss')
+      renderData.push(r)
+    }
+  }
+  let filepath = await common.ejs2xlsx('ExportBusinessVerification.xlsx', renderData)
+  res.sendFile(filepath)
 }

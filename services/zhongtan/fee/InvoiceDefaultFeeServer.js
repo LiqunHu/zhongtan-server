@@ -60,14 +60,38 @@ exports.searchAct = async req => {
 
 exports.createAct = async req => {
   let doc = common.docValidate(req), user = req.user
-  let oldFee = await tb_default_fee.findOne({
+  let oldFees = await tb_default_fee.findAll({
     where: {
       fee_cargo_type: doc.fee_cargo_type,
       fee_name: doc.fee_name,
       state: GLBConfig.ENABLE
     }
   })
-  if(oldFee && ((oldFee.fee_type === 'BL') || (oldFee.fee_type === 'CON' && oldFee.fee_container_size === doc.fee_container_size))) {
+  let can_create = true
+  if(oldFees) {
+    for(let f of oldFees) {
+      if(f.fee_type === 'BL') {
+        can_create = false
+        break
+      } else {
+        if(doc.fee_pol_mark) {
+          if(f.fee_pol_mark) {
+            let pms = doc.fee_pol_mark.split(',')
+            for(let pm of pms) {
+              if(f.fee_pol_mark.toUpperCase().indexOf(pm.toUpperCase())) {
+                can_create = false
+                break
+              }
+            }
+          }
+        } else if(f.fee_container_size === doc.fee_container_size && !f.fee_pol_mark) {
+          can_create = false
+          break
+        }
+      }
+    }
+  }
+  if(!can_create) {
     return common.error('fee_01')
   } else {
     await tb_default_fee.create({
@@ -78,7 +102,8 @@ exports.createAct = async req => {
       fee_amount: doc.fee_amount,
       fee_currency: doc.fee_currency,
       user_id: user.user_id,
-      is_necessary: doc.is_necessary ? GLBConfig.ENABLE : GLBConfig.DISABLE
+      is_necessary: doc.is_necessary ? GLBConfig.ENABLE : GLBConfig.DISABLE,
+      fee_pol_mark: doc.fee_pol_mark
     })
   }
   return common.success()
@@ -99,6 +124,7 @@ exports.updateAct = async req => {
     } else {
       updateFee.is_necessary = GLBConfig.DISABLE
     }
+    updateFee.fee_pol_mark = doc.new.fee_pol_mark
     updateFee.updated_at = new Date()
     await updateFee.save()
   }

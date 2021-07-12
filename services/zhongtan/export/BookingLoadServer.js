@@ -22,6 +22,9 @@ exports.initAct = async () => {
   let queryStr = `SELECT fee_data_code, fee_data_name FROM tbl_zhongtan_export_fee_data WHERE state = 1 AND fee_data_code IN ('LOO', 'DND') GROUP BY fee_data_code ORDER BY fee_data_code DESC`
   let replacements = []
   returnData['BK_CANCELLATION_FEE'] = await model.simpleSelect(queryStr, replacements)
+  queryStr = `SELECT export_vessel_id, CONCAT(export_vessel_name, '/', export_vessel_voyage) export_vessel_voyage FROM tbl_zhongtan_export_vessel WHERE state = 1 GROUP BY export_vessel_name, export_vessel_voyage ORDER BY export_vessel_name, export_vessel_voyage DESC`
+  replacements = []
+  returnData['VESSEL_VOYAGES'] = await model.simpleSelect(queryStr, replacements)
   return common.success(returnData)
 }
 
@@ -624,24 +627,28 @@ exports.searchVesselAct = async req => {
   let doc = common.docValidate(req)
   let etd_start_date = doc.etd_start_date
   let etd_end_date = doc.etd_end_date
-  let vessel_name = doc.vessel_name
+  let vessel_id = doc.vessel_id
   let masterbi_bl = doc.masterbi_bl
-  let queryStr =  `SELECT * FROM tbl_zhongtan_export_vessel v `
+  let firm_booking = doc.firm_booking
+  let queryStr =  `SELECT * FROM tbl_zhongtan_export_vessel v WHERE v.state = '1'`
   let replacements = []
   if(masterbi_bl) {
-    queryStr = queryStr + ` LEFT JOIN tbl_zhongtan_export_masterbl b ON v.export_vessel_id = b.export_vessel_id WHERE v.state = '1' AND b.state = '1' AND b.export_masterbl_bl like ? `
+    queryStr = queryStr + ` AND v.export_vessel_id IN (SELECT export_vessel_id from tbl_zhongtan_export_masterbl WHERE state = '1' AND export_masterbl_bl like ? )`
     replacements.push('%' + masterbi_bl + '%')
-  } else {
-    queryStr = queryStr + ` WHERE v.state = '1' `
+  } 
+
+  if(firm_booking) {
+    queryStr = queryStr + ` AND v.export_vessel_id IN (SELECT export_vessel_id from tbl_zhongtan_export_masterbl WHERE state = '1' AND export_masterbl_firm_booking = ? )`
+    replacements.push(firm_booking)
   }
   if(etd_start_date && etd_end_date) {
     queryStr = queryStr + ` AND STR_TO_DATE(v.export_vessel_etd, "%d/%m/%Y") >= ? AND STR_TO_DATE(v.export_vessel_etd, "%d/%m/%Y") <= ? `
     replacements.push(moment(etd_start_date, 'YYYY-MM-DD').format('YYYY-MM-DD'))
     replacements.push(moment(etd_end_date, 'YYYY-MM-DD').format('YYYY-MM-DD'))
   }
-  if(vessel_name) {
-    queryStr = queryStr + ` AND v.export_vessel_name LIKE ? `
-    replacements.push('%' + vessel_name + '%')
+  if(vessel_id) {
+    queryStr = queryStr + ` AND v.export_vessel_id = ? `
+    replacements.push(vessel_id)
   }
   queryStr = queryStr + ` ORDER BY STR_TO_DATE(v.export_vessel_etd, "%d/%m/%Y") DESC `
   let vessels =  await model.simpleSelect(queryStr, replacements)
@@ -671,11 +678,16 @@ exports.searchBlAct = async req => {
   let returnData = {}
   let export_vessel_id = doc.export_vessel_id
   let masterbi_bl = doc.masterbi_bl
+  let firm_booking = doc.firm_booking
   let queryStr =  `select * from tbl_zhongtan_export_masterbl b WHERE b.export_vessel_id = ? AND b.state = ?`
   let replacements = [export_vessel_id, GLBConfig.ENABLE]
   if(masterbi_bl) {
     queryStr = queryStr + ` AND b.export_masterbl_bl LIKE ?`
     replacements.push('%' + masterbi_bl + '%')
+  }
+  if(firm_booking) {
+    queryStr = queryStr + ` AND export_masterbl_firm_booking = ?`
+    replacements.push(firm_booking)
   }
   let bls = await model.queryWithCount(doc, queryStr, replacements)
   returnData.total = bls.count
@@ -753,11 +765,16 @@ exports.searchContainerAct = async req => {
   let returnData = {}
   let export_vessel_id = doc.export_vessel_id
   let masterbi_bl = doc.masterbi_bl
+  let firm_booking = doc.firm_booking
   let queryStr =  `select * from tbl_zhongtan_export_container c WHERE c.export_vessel_id = ? AND c.state = ?`
   let replacements = [export_vessel_id, GLBConfig.ENABLE]
   if(masterbi_bl) {
     queryStr = queryStr + ` AND c.export_container_bl LIKE ?`
     replacements.push('%' + masterbi_bl + '%')
+  }
+  if(firm_booking) {
+    queryStr = queryStr + ` AND c.export_container_bl IN (SELECT export_masterbl_bl FROM tbl_zhongtan_export_masterbl WHERE state = 1 AND export_vessel_id = ? AND export_masterbl_firm_booking = ?)`
+    replacements.push(export_vessel_id, firm_booking)
   }
   let cons = await model.queryWithCount(doc, queryStr, replacements)
   returnData.total = cons.count
@@ -1144,4 +1161,184 @@ exports.bkCancellationFeeSave = async req => {
     }
   }
   return common.success()
+}
+
+exports.frimBookingAct = async req => {
+  let doc = common.docValidate(req), user = req.user
+  let bl = await tb_bl.findOne({
+    where: {
+      state: GLBConfig.ENABLE,
+      export_masterbl_id: doc.export_masterbl_id
+    }
+  })
+  if(bl) {
+    if(bl.export_masterbl_firm_booking === 'YES') {
+      bl.export_masterbl_firm_booking = 'NO'
+    } else {
+      bl.export_masterbl_firm_booking = 'YES'
+    }
+    bl.export_masterbl_firm_booking_user = user.user_id
+    bl.export_masterbl_firm_booking_time = moment().format('YYYY-MM-DD HH:mm:ss')
+    await bl.save()
+  }
+  return common.success()
+}
+
+exports.bookingExportAct = async (req, res) => {
+  let doc = common.docValidate(req)
+  let etd_start_date = doc.etd_start_date
+  let etd_end_date = doc.etd_end_date
+  let masterbi_bl = doc.masterbi_bl
+  let vessel_id = doc.vessel_id
+  let firm_booking = doc.firm_booking
+  let renderData = []
+  let vessel_sheet = []
+  let bl_sheet = []
+  let container_sheet = []
+  let queryStr = ``
+  let replacements = []
+  if(masterbi_bl || firm_booking) {
+    queryStr = `SELECT mb.*, sc.count_size_type FROM tbl_zhongtan_export_masterbl mb 
+              LEFT JOIN (SELECT a.export_container_bl, a.export_vessel_id, GROUP_CONCAT(group_size_type) count_size_type FROM ((SELECT export_container_bl, export_vessel_id, CONCAT(COUNT(export_container_size_type), 'x', export_container_size_type) group_size_type FROM tbl_zhongtan_export_container WHERE state = 1 GROUP BY export_container_bl, export_vessel_id, export_container_size_type)) a GROUP BY a.export_container_bl, a.export_vessel_id) sc ON mb.export_masterbl_bl = sc.export_container_bl AND mb.export_vessel_id = sc.export_vessel_id 
+              WHERE state = 1 `
+    if(masterbi_bl) {
+      queryStr += ` AND export_masterbl_bl LIKE ?`
+      replacements.push('%'+ masterbi_bl + '%')
+    }
+    if(firm_booking) {
+      queryStr += ` AND export_masterbl_firm_booking = ?`
+      replacements.push(firm_booking)
+    }      
+    let bls = await model.simpleSelect(queryStr, replacements)
+    if(bls && bls.length > 0) {
+      for(let b of bls) {
+        let numbers = []
+        let types = []
+        if(b.count_size_type) {
+          if(b.count_size_type.indexOf(',') >= 0) {
+            let sts = b.count_size_type.split(',')
+            for(let st of sts) {
+              if(st) {
+                let s = st.split('x')
+                numbers.push(s[0])
+                types.push(s[1])
+              }
+            }
+          } else {
+            let st = b.count_size_type.split('x')
+            numbers.push(st[0])
+            types.push(st[1])
+          }
+        }
+        b.export_masterbl_container_number = numbers.join('\r\n')
+        b.export_masterbl_container_type = types.join('\r\n')
+        bl_sheet.push(b)
+
+        queryStr = `SELECT * FROM tbl_zhongtan_export_vessel WHERE state = '1' AND export_vessel_id = ?`
+        replacements = [b.export_vessel_id]
+        let vessels = await model.simpleSelect(queryStr, replacements)
+        if(vessels && vessels.length > 0) {
+          for(let v of vessels) {
+            vessel_sheet.push(v)
+          }
+        }
+
+        queryStr = `SELECT * FROM tbl_zhongtan_export_container WHERE state = '1' AND export_vessel_id = ? AND export_container_bl = ? `
+        replacements = [b.export_vessel_id, b.export_masterbl_bl]
+        let containers = await model.simpleSelect(queryStr, replacements)
+        if(containers && containers.length > 0) {
+          for(let c of containers) {
+            container_sheet.push(c)
+          }
+        }
+      }
+    }
+  } else {
+    queryStr = `SELECT * FROM tbl_zhongtan_export_vessel WHERE state = '1' `
+    if(etd_start_date && etd_end_date) {
+      queryStr = queryStr + ` AND STR_TO_DATE(export_vessel_etd, "%d/%m/%Y") >= ? AND STR_TO_DATE(export_vessel_etd, "%d/%m/%Y") <= ? `
+      replacements.push(moment(etd_start_date, 'YYYY-MM-DD').format('YYYY-MM-DD'))
+      replacements.push(moment(etd_end_date, 'YYYY-MM-DD').format('YYYY-MM-DD'))
+    }
+    if(vessel_id) {
+      queryStr = queryStr + ` AND export_vessel_id = ? `
+      replacements.push(vessel_id)
+    }
+    queryStr = queryStr + ` ORDER BY STR_TO_DATE(export_vessel_etd, "%d/%m/%Y") DESC `
+    let vessels = await model.simpleSelect(queryStr, replacements)
+
+    queryStr = `SELECT mb.*, sc.count_size_type FROM tbl_zhongtan_export_masterbl mb 
+              LEFT JOIN (SELECT a.export_container_bl, a.export_vessel_id, GROUP_CONCAT(group_size_type) count_size_type FROM ((SELECT export_container_bl, export_vessel_id, CONCAT(COUNT(export_container_size_type), 'x', export_container_size_type) group_size_type FROM tbl_zhongtan_export_container WHERE state = 1 GROUP BY export_container_bl, export_vessel_id, export_container_size_type)) a GROUP BY a.export_container_bl, a.export_vessel_id) sc ON mb.export_masterbl_bl = sc.export_container_bl AND mb.export_vessel_id = sc.export_vessel_id 
+              WHERE state = 1 AND mb.export_vessel_id IN (SELECT export_vessel_id FROM tbl_zhongtan_export_vessel WHERE state = '1' `
+    if(etd_start_date && etd_end_date) {
+      queryStr = queryStr + ` AND STR_TO_DATE(export_vessel_etd, "%d/%m/%Y") >= ? AND STR_TO_DATE(export_vessel_etd, "%d/%m/%Y") <= ? `
+      replacements.push(moment(etd_start_date, 'YYYY-MM-DD').format('YYYY-MM-DD'))
+      replacements.push(moment(etd_end_date, 'YYYY-MM-DD').format('YYYY-MM-DD'))
+    }
+    if(vessel_id) {
+      queryStr = queryStr + ` AND export_vessel_id = ? `
+      replacements.push(vessel_id)
+    }
+    queryStr = queryStr + `) `
+    let bls = await model.simpleSelect(queryStr, replacements)
+
+    queryStr = `SELECT * FROM tbl_zhongtan_export_container WHERE state = '1' AND export_vessel_id IN (SELECT export_vessel_id FROM tbl_zhongtan_export_vessel WHERE state = '1' `
+    if(etd_start_date && etd_end_date) {
+      queryStr = queryStr + ` AND STR_TO_DATE(export_vessel_etd, "%d/%m/%Y") >= ? AND STR_TO_DATE(export_vessel_etd, "%d/%m/%Y") <= ? `
+      replacements.push(moment(etd_start_date, 'YYYY-MM-DD').format('YYYY-MM-DD'))
+      replacements.push(moment(etd_end_date, 'YYYY-MM-DD').format('YYYY-MM-DD'))
+    }
+    if(vessel_id) {
+      queryStr = queryStr + ` AND export_vessel_id = ? `
+      replacements.push(vessel_id)
+    }
+    queryStr = queryStr + `) `
+    let containers = await model.simpleSelect(queryStr, replacements)
+
+    if(vessels && vessels.length > 0) {
+      for(let v of vessels) {
+        vessel_sheet.push(v)
+        if(bls) {
+          for(let b of bls) {
+            if(b.export_vessel_id === v.export_vessel_id) {
+              let numbers = []
+              let types = []
+              if(b.count_size_type) {
+                if(b.count_size_type.indexOf(',') >= 0) {
+                  let sts = b.count_size_type.split(',')
+                  for(let st of sts) {
+                    if(st) {
+                      let s = st.split('x')
+                      numbers.push(s[0])
+                      types.push(s[1])
+                    }
+                  }
+                } else {
+                  let st = b.count_size_type.split('x')
+                  numbers.push(st[0])
+                  types.push(st[1])
+                }
+              }
+              b.export_masterbl_container_number = numbers.join('\r\n')
+              b.export_masterbl_container_type = types.join('\r\n')
+              bl_sheet.push(b)
+
+              if(containers) {
+                for(let c of containers) {
+                  if(c.export_vessel_id === v.export_vessel_id && c.export_container_bl === b.export_masterbl_bl) {
+                    container_sheet.push(c)
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  renderData.push(vessel_sheet)
+  renderData.push(bl_sheet)
+  renderData.push(container_sheet)
+  let filepath = await common.ejs2xlsx('BOOKINGSTATISTICS.xlsx', renderData)
+  res.sendFile(filepath)
 }
