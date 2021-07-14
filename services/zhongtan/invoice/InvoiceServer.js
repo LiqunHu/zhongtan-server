@@ -2341,7 +2341,7 @@ exports.searchFixedDepositAct = async req => {
     let polMatch = false
     for(let f of defaultFees) {
       for(let c of continers) {
-        if(f.fee_container_size === c.invoice_containers_size) {
+        if(f.fee_container_size === c.invoice_containers_size && f.fee_name.indexOf('TASAC') >= 0) {
           let bl_pol_mark = bl.invoice_masterbi_loading ? bl.invoice_masterbi_loading.substring(0, 2) : ''
           if(f.fee_pol_mark) {
             if(bl_pol_mark && f.fee_pol_mark.toUpperCase().indexOf(bl_pol_mark.toUpperCase()) >= 0) {
