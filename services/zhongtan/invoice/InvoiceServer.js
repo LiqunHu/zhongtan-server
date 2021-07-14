@@ -2374,6 +2374,9 @@ exports.searchFixedDepositAct = async req => {
         if(!renderData[column]) {
           renderData[column] = 0
         }
+        if(column === 'invoice_masterbi_deposit'){
+          polMatch = false
+        }
         for(let c of continers) {
           let match = false
           if(f.fee_container_size === c.invoice_containers_size) {
