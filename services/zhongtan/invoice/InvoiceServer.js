@@ -2374,20 +2374,21 @@ exports.searchFixedDepositAct = async req => {
         if(!renderData[column]) {
           renderData[column] = 0
         }
-        if(column === 'invoice_masterbi_deposit'){
-          polMatch = false
-        }
         for(let c of continers) {
           let match = false
           if(f.fee_container_size === c.invoice_containers_size) {
-            let bl_pol_mark = bl.invoice_masterbi_loading ? bl.invoice_masterbi_loading.substring(0, 2) : ''
-            if(polMatch) {
-              if(f.fee_pol_mark) {
-                if(bl_pol_mark && f.fee_pol_mark.toUpperCase().indexOf(bl_pol_mark.toUpperCase()) >= 0) {
-                  match = true
+            if(column === 'invoice_masterbi_tasac') {
+              let bl_pol_mark = bl.invoice_masterbi_loading ? bl.invoice_masterbi_loading.substring(0, 2) : ''
+              if(polMatch) {
+                if(f.fee_pol_mark) {
+                  if(bl_pol_mark && f.fee_pol_mark.toUpperCase().indexOf(bl_pol_mark.toUpperCase()) >= 0) {
+                    match = true
+                  }
                 }
+              } else if(!f.fee_pol_mark) {
+                match = true
               }
-            } else if(!f.fee_pol_mark) {
+            } else {
               match = true
             }
           }
