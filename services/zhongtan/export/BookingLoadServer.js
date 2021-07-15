@@ -134,11 +134,13 @@ exports.uploadBookingAct = async req => {
           if(csIndex >= 0 && ceIndex >= 0) {
             for (let i = csIndex + 2; i < ceIndex; i++) {
               let conStr = datas[i]
-              let conNs = conStr.match(/\d+/g)
-              size = conStr.substring(conStr.indexOf('\'') - 2, conStr.indexOf('\''))
-              quantity = conStr.substring(0, conStr.indexOf(size + '\''))
-              type = conStr.substring(conStr.indexOf('\'') + 1, conStr.indexOf(conNs[1])).trim()
-              weight = conNs[1]
+              if(conStr && conStr.indexOf('Kilograms') >= 0) {
+                let conNs = conStr.match(/\d+/g)
+                size = conStr.substring(conStr.indexOf('\'') - 2, conStr.indexOf('\''))
+                quantity = conStr.substring(0, conStr.indexOf(size + '\''))
+                type = conStr.substring(conStr.indexOf('\'') + 1, conStr.indexOf(conNs[1])).trim()
+                weight = conNs[1]
+              }
             }
           }
         }
