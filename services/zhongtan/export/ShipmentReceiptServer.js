@@ -249,6 +249,11 @@ exports.exportCollectAct = async (req, res) => {
     queryStr = queryStr + ` AND b.export_vessel_id = ? `
     replacements.push(doc.receipt_vessel)
   }
+  if(doc.collect_etd && doc.collect_etd.length > 1) {
+    queryStr += ' and STR_TO_DATE(v.export_vessel_etd, "%d/%m/%Y") >= ? and STR_TO_DATE(v.export_vessel_etd, "%d/%m/%Y") < ? '
+    replacements.push(moment(doc.collect_etd[0]).local().format('YYYY-MM-DD'))
+    replacements.push(moment(doc.collect_etd[1]).local().add(1, 'days').format('YYYY-MM-DD'))
+  }
   if(doc.carrier) {
     queryStr = queryStr + ` AND b.export_masterbl_bl_carrier = ? `
     replacements.push(doc.carrier)
