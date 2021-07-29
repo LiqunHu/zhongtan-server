@@ -231,25 +231,46 @@ exports.shipmentReceiptAct = async req => {
 
 exports.exportCollectAct = async (req, res) => {
   let doc = common.docValidate(req)
+  let receiptFlg = true
+  if(doc.collect_etd && doc.collect_etd.length > 1 && doc.collect_etd[0] && doc.collect_etd[1]) {
+    receiptFlg = false
+  }
   let queryStr = `SELECT b.*, v.export_vessel_name, v.export_vessel_voyage, v.export_vessel_etd 
                   FROM tbl_zhongtan_export_proforma_masterbl b LEFT JOIN tbl_zhongtan_export_proforma_vessel v ON b.export_vessel_id = v.export_vessel_id 
-                  WHERE export_masterbl_id IN(SELECT uploadfile_index1 FROM tbl_zhongtan_uploadfile WHERE state = ? AND api_name = 'SHIPMENT-RECEIPT' `
-  let replacements = [GLBConfig.ENABLE]
-  if(doc.collect_date && doc.collect_date.length > 1) {
-    queryStr = queryStr + ` AND created_at > ? AND created_at < ? `
-    replacements.push(moment(doc.collect_date[0]).local().format('YYYY-MM-DD'))
-    replacements.push(moment(doc.collect_date[1]).local().add(1, 'days').format('YYYY-MM-DD'))
+                  WHERE b.state = '1' AND v.state = '1' `
+  let replacements = []
+  if(receiptFlg) {
+    queryStr = queryStr + ` AND export_masterbl_id IN (SELECT uploadfile_index1 FROM tbl_zhongtan_uploadfile WHERE state = '1' AND api_name = 'SHIPMENT-RECEIPT' `
+    if(doc.collect_date && doc.collect_date.length > 1 && doc.collect_date[0] && doc.collect_date[1]) {
+      queryStr = queryStr + ` AND created_at > ? AND created_at < ? `
+      replacements.push(moment(doc.collect_date[0]).local().format('YYYY-MM-DD'))
+      replacements.push(moment(doc.collect_date[1]).local().add(1, 'days').format('YYYY-MM-DD'))
+    }
+    if(doc.receipt_party) {
+      queryStr = queryStr + ` AND uploadfile_customer_id = ? `
+      replacements.push(doc.receipt_party)
+    }
+    queryStr = queryStr + `) `
+  } else {
+    if((doc.collect_date && doc.collect_date.length > 1 && doc.collect_date[0] && doc.collect_date[1]) || doc.receipt_party) {
+      queryStr = queryStr + ` AND export_masterbl_id IN (SELECT uploadfile_index1 FROM tbl_zhongtan_uploadfile WHERE state = '1' `
+      if(doc.collect_date && doc.collect_date.length > 1) {
+        queryStr = queryStr + ` AND created_at > ? AND created_at < ? `
+        replacements.push(moment(doc.collect_date[0]).local().format('YYYY-MM-DD'))
+        replacements.push(moment(doc.collect_date[1]).local().add(1, 'days').format('YYYY-MM-DD'))
+      }
+      if(doc.receipt_party) {
+        queryStr = queryStr + ` AND uploadfile_customer_id = ? `
+        replacements.push(doc.receipt_party)
+      }
+      queryStr = queryStr + `) `
+    }
   }
-  if(doc.receipt_party) {
-    queryStr = queryStr + ` AND uploadfile_customer_id = ? `
-    replacements.push(doc.receipt_party)
-  }
-  queryStr = queryStr + `) `
   if(doc.receipt_vessel) {
     queryStr = queryStr + ` AND b.export_vessel_id = ? `
     replacements.push(doc.receipt_vessel)
   }
-  if(doc.collect_etd && doc.collect_etd.length > 1) {
+  if(doc.collect_etd && doc.collect_etd.length > 1 && doc.collect_etd[0] && doc.collect_etd[1]) {
     queryStr += ' and STR_TO_DATE(v.export_vessel_etd, "%d/%m/%Y") >= ? and STR_TO_DATE(v.export_vessel_etd, "%d/%m/%Y") < ? '
     replacements.push(moment(doc.collect_etd[0]).local().format('YYYY-MM-DD'))
     replacements.push(moment(doc.collect_etd[1]).local().add(1, 'days').format('YYYY-MM-DD'))
@@ -280,7 +301,7 @@ exports.exportCollectAct = async (req, res) => {
     let renderData = []
     for(let r of result) {
       queryStr = `SELECT u.*, c.user_name FROM tbl_zhongtan_uploadfile u LEFT JOIN tbl_common_user c ON u.uploadfile_customer_id = c.user_id 
-                  WHERE u.state = '1' AND api_name = 'SHIPMENT-RECEIPT' AND uploadfile_index1 = ? ORDER by u.uploadfile_id`
+                  WHERE u.state = '1' AND uploadfile_index1 = ? AND api_name = 'SHIPMENT-RECEIPT' ORDER by u.uploadfile_id`
       replacements = []
       replacements.push(r.export_masterbl_id)
       let files = await model.simpleSelect(queryStr, replacements)
@@ -374,6 +395,11 @@ exports.exportCollectAct = async (req, res) => {
           index++
           renderData.push(row)
         }
+      } else if(!receiptFlg) {
+        let row = {}
+        row.receipt_bl = r.export_masterbl_bl
+        row.vessel_voyage = r.export_vessel_name + '/' + r.export_vessel_voyage
+        renderData.push(row)
       }
     }
     let filepath = await common.ejs2xlsx('ShipmentReceiptTemplate.xlsx', renderData)

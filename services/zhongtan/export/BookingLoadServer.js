@@ -656,6 +656,7 @@ exports.searchVesselAct = async req => {
   let vessels =  await model.simpleSelect(queryStr, replacements)
   if(vessels) {
     for(let v of vessels) {
+      v.size_types = []
       let bcount = await tb_bl.count({
         where: {
           export_vessel_id: v.export_vessel_id,
@@ -670,6 +671,12 @@ exports.searchVesselAct = async req => {
       })
       v.bl_count = bcount
       v.container_count = ccount
+      queryStr = `SELECT export_container_size_type containers_size, COUNT(1) containers_size_count FROM tbl_zhongtan_export_container WHERE state = '1' AND export_vessel_id = ? GROUP BY export_container_size_type`
+      replacements = [v.export_vessel_id]
+      let sts = await model.simpleSelect(queryStr, replacements)
+      if(sts && sts.length > 0) {
+        v.size_types = JSON.parse(JSON.stringify(sts))
+      }
     }
   }
   return vessels
@@ -1210,9 +1217,25 @@ exports.bookingExportAct = async (req, res) => {
     if(firm_booking) {
       queryStr += ` AND export_masterbl_firm_booking = ?`
       replacements.push(firm_booking)
-    }      
+    }    
+    
+    if((etd_start_date && etd_end_date) || vessel_id) {
+      queryStr += ` AND mb.export_vessel_id IN ( SELECT export_vessel_id FROM tbl_zhongtan_export_vessel WHERE state = '1' `
+      if(etd_start_date && etd_end_date) {
+        queryStr = queryStr + ` AND STR_TO_DATE(export_vessel_etd, "%d/%m/%Y") >= ? AND STR_TO_DATE(export_vessel_etd, "%d/%m/%Y") <= ? `
+        replacements.push(moment(etd_start_date, 'YYYY-MM-DD').format('YYYY-MM-DD'))
+        replacements.push(moment(etd_end_date, 'YYYY-MM-DD').format('YYYY-MM-DD'))
+      }
+      if(vessel_id) {
+        queryStr = queryStr + ` AND export_vessel_id = ? `
+        replacements.push(vessel_id)
+      }
+      queryStr += `)`
+    }
+
     let bls = await model.simpleSelect(queryStr, replacements)
     if(bls && bls.length > 0) {
+      let ves = []
       for(let b of bls) {
         let numbers = []
         let types = []
@@ -1236,12 +1259,15 @@ exports.bookingExportAct = async (req, res) => {
         b.export_masterbl_container_type = types.join('\r\n')
         bl_sheet.push(b)
 
-        queryStr = `SELECT * FROM tbl_zhongtan_export_vessel WHERE state = '1' AND export_vessel_id = ?`
-        replacements = [b.export_vessel_id]
-        let vessels = await model.simpleSelect(queryStr, replacements)
-        if(vessels && vessels.length > 0) {
-          for(let v of vessels) {
-            vessel_sheet.push(v)
+        if(ves.indexOf(b.export_vessel_id) < 0) {
+          ves.push(b.export_vessel_id)
+          queryStr = `SELECT * FROM tbl_zhongtan_export_vessel WHERE state = '1' AND export_vessel_id = ?`
+          replacements = [b.export_vessel_id]
+          let vessels = await model.simpleSelect(queryStr, replacements)
+          if(vessels && vessels.length > 0) {
+            for(let v of vessels) {
+              vessel_sheet.push(v)
+            }
           }
         }
 

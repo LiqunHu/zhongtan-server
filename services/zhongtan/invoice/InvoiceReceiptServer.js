@@ -557,17 +557,18 @@ exports.downloadCollectAct = async (req, res) => {
       tbl_zhongtan_uploadfile b ,
       tbl_common_user c,
       tbl_zhongtan_invoice_vessel v
-    WHERE
-      b.uploadfile_acttype IN('deposit' , 'fee' , 'freight')
+    WHERE a.state = '1' AND b.state = '1' AND v.state = '1'
     AND a.invoice_masterbi_id = b.uploadfile_index1
     AND a.invoice_masterbi_customer_id = c.user_id
     AND a.invoice_vessel_id = v.invoice_vessel_id`
   let replacements = []
+  let receiptFlg = true
   if(doc.carrier) {
     queryStr = queryStr + ` AND a.invoice_masterbi_carrier = ? `
     replacements.push(doc.carrier)
   }
   if(doc.collect_date && doc.collect_date.length === 2 && doc.collect_date[0] && doc.collect_date[1]) {
+    receiptFlg = false
     queryStr = queryStr + ` AND STR_TO_DATE(v.invoice_vessel_ata, "%d/%m/%Y") >= ? AND STR_TO_DATE(v.invoice_vessel_ata, "%d/%m/%Y") < ? `
     replacements.push(doc.collect_date[0])
     replacements.push(moment(doc.collect_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
@@ -576,6 +577,9 @@ exports.downloadCollectAct = async (req, res) => {
     queryStr = queryStr + ` AND b.created_at >= ? AND b.created_at < ? `
     replacements.push(doc.receipt_date[0])
     replacements.push(moment(doc.receipt_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
+  }
+  if(receiptFlg) {
+    queryStr = queryStr + ` AND b.uploadfile_acttype IN('deposit' , 'fee' , 'freight') `
   }
   queryStr = queryStr + ` order by v.invoice_vessel_id desc, a.invoice_masterbi_bl`
   let result = await model.simpleSelect(queryStr, replacements)
