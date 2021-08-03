@@ -967,11 +967,25 @@ exports.searchVesselAct = async req => {
   let etd_end_date = doc.etd_end_date
   let vessel_name = doc.vessel_name
   let masterbi_bl = doc.masterbi_bl
+  let shipper_company = doc.shipper_company
+  let consignee_company = doc.consignee_company
   let queryStr =  `SELECT * FROM tbl_zhongtan_export_proforma_vessel v WHERE v.state = '1' AND EXISTS (SELECT 1 FROM tbl_zhongtan_export_proforma_masterbl b WHERE v.export_vessel_id = b.export_vessel_id AND b.state = 1 AND b.bk_cancellation_status <> 1)`
   let replacements = []
-  if(masterbi_bl) {
-    queryStr = queryStr + ` AND EXISTS (SELECT 1 FROM tbl_zhongtan_export_proforma_masterbl b WHERE v.export_vessel_id = b.export_vessel_id AND b.state = 1 AND export_masterbl_bl like ?) `
-    replacements.push('%' + masterbi_bl + '%')
+  if(masterbi_bl || shipper_company || consignee_company) {
+    queryStr = queryStr + ` AND EXISTS (SELECT 1 FROM tbl_zhongtan_export_proforma_masterbl b WHERE v.export_vessel_id = b.export_vessel_id AND b.state = 1 `
+    if(masterbi_bl) {
+      queryStr = queryStr + ` AND export_masterbl_bl like ? `
+      replacements.push('%' + masterbi_bl + '%')
+    }
+    if(shipper_company) {
+      queryStr = queryStr + ` AND export_masterbl_shipper_company like ? `
+      replacements.push('%' + shipper_company + '%')
+    }
+    if(consignee_company) {
+      queryStr = queryStr + ` AND export_masterbl_consignee_company like ? `
+      replacements.push('%' + consignee_company + '%')
+    }
+    queryStr = queryStr + `)`
   }
   if(etd_start_date && etd_end_date) {
     queryStr = queryStr + ` AND STR_TO_DATE(v.export_vessel_etd, "%d/%m/%Y") >= ? AND STR_TO_DATE(v.export_vessel_etd, "%d/%m/%Y") <= ? `
@@ -1010,11 +1024,21 @@ exports.searchBlAct = async req => {
   let returnData = {}
   let export_vessel_id = doc.export_vessel_id
   let masterbi_bl = doc.masterbi_bl
+  let shipper_company = doc.shipper_company
+  let consignee_company = doc.consignee_company
   let queryStr =  `select * from tbl_zhongtan_export_proforma_masterbl b WHERE b.export_vessel_id = ? AND b.state = ? AND b.bk_cancellation_status <> ? `
   let replacements = [export_vessel_id, GLBConfig.ENABLE, GLBConfig.ENABLE]
   if(masterbi_bl) {
     queryStr = queryStr + ` AND b.export_masterbl_bl LIKE ?`
     replacements.push('%' + masterbi_bl + '%')
+  }
+  if(shipper_company) {
+    queryStr = queryStr + ` AND export_masterbl_shipper_company like ? `
+    replacements.push('%' + shipper_company + '%')
+  }
+  if(consignee_company) {
+    queryStr = queryStr + ` AND export_masterbl_consignee_company like ? `
+    replacements.push('%' + consignee_company + '%')
   }
   let bls = await model.queryWithCount(doc, queryStr, replacements)
   returnData.total = bls.count

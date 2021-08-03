@@ -150,13 +150,16 @@
                         <td valign="middle" rowspan="1" colspan="2" align="center" class="b_right">
                             Container #
                         </td>
-                        <td valign="middle" rowspan="1" colspan="2"  align="center" class="b_right">
+                        <td valign="middle" rowspan="1" colspan="1"  align="center" class="b_right">
                             Type
+                        </td>
+                        <td valign="middle" rowspan="1" colspan="2"  align="center" class="b_right">
+                            Discharge
                         </td>
                         <td valign="middle" rowspan="1" colspan="2"  align="center"  class="b_right">
                             FND
                         </td>
-                        <td valign="middle" rowspan="1" colspan="2"  align="center">
+                        <td valign="middle" rowspan="1" colspan="1"  align="center">
                             Freight
                         </td>
                     </tr>
@@ -168,13 +171,16 @@
                             <td valign="middle" rowspan="1" colspan="2"  align="center" class="b_right">
                                 <%= ejsData.freight_list[i].container_no %>
                             </td>
-                            <td valign="middle" rowspan="1" colspan="2"  align="center" class="b_right">
+                            <td valign="middle" rowspan="1" colspan="1"  align="center" class="b_right">
                                 <%= ejsData.freight_list[i].size_type %>
+                            </td>
+                            <td valign="middle" rowspan="1" colspan="2"  align="center" class="b_right">
+                                <%= ejsData.freight_list[i].discharge_date %>
                             </td>
                             <td valign="middle" rowspan="1" colspan="2"  align="center" class="b_right">
                                 <%= ejsData.freight_list[i].fnd %>
                             </td>
-                            <td valign="middle" rowspan="1" colspan="2"  align="center">
+                            <td valign="middle" rowspan="1" colspan="1"  align="center">
                                 $<%= ejsData.freight_list[i].amount %>
                             </td>
                         </tr>

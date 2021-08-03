@@ -141,5 +141,15 @@ module.exports = db.defineModel('tbl_zhongtan_export_masterbl', {
     // 放箱堆场
     type: db.STRING(20),
     allowNull: true
+  },
+  export_masterbl_forwarder_company_input: {
+    // 货代录入
+    type: db.STRING(50),
+    allowNull: true
+  },
+  export_masterbl_traffic_mode_input: {
+    // 运输方式录入
+    type: db.STRING(50),
+    allowNull: true
   }
 })

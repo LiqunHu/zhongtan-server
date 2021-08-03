@@ -49,21 +49,25 @@ exports.searchAct = async req => {
       replacements.push(doc.search_data.loading_date[0])
       replacements.push(moment(doc.search_data.loading_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
     }
-    if (doc.search_data.storing_days_min) {
-      queryStr += ' and empty_stock_storing_days >= ? '
-      replacements.push( doc.search_data.storing_days_min)
-    }
-    if (doc.search_data.storing_days_max) {
-      queryStr += ' and empty_stock_storing_days <= ? '
-      replacements.push( doc.search_data.storing_days_max)
-    }
-    if (doc.search_data.detention_days_min) {
-      queryStr += ' and empty_stock_detention_days >= ? '
-      replacements.push( doc.search_data.detention_days_min)
-    }
-    if (doc.search_data.detention_days_max) {
-      queryStr += ' and empty_stock_detention_days <= ? '
-      replacements.push( doc.search_data.detention_days_max)
+    // if (doc.search_data.storing_days_min) {
+    //   queryStr += ' and empty_stock_storing_days >= ? '
+    //   replacements.push( doc.search_data.storing_days_min)
+    // }
+    // if (doc.search_data.storing_days_max) {
+    //   queryStr += ' and empty_stock_storing_days <= ? '
+    //   replacements.push( doc.search_data.storing_days_max)
+    // }
+    // if (doc.search_data.detention_days_min) {
+    //   queryStr += ' and empty_stock_detention_days >= ? '
+    //   replacements.push( doc.search_data.detention_days_min)
+    // }
+    // if (doc.search_data.detention_days_max) {
+    //   queryStr += ' and empty_stock_detention_days <= ? '
+    //   replacements.push( doc.search_data.detention_days_max)
+    // }
+    if (doc.search_data.contaienr_owner) {
+      queryStr += ' and empty_stock_container_owner = ? '
+      replacements.push(doc.search_data.contaienr_owner)
     }
     if (doc.search_data.containers_no) {
       queryStr += ' and empty_stock_container_no like ? '
@@ -132,25 +136,37 @@ exports.exportEmptyStockAct = async(req, res) => {
       replacements.push(doc.search_data.loading_date[0])
       replacements.push(moment(doc.search_data.loading_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
     }
-    if (doc.search_data.storing_days_min) {
-      queryStr += ' and empty_stock_storing_days >= ? '
-      replacements.push( doc.search_data.storing_days_min)
-    }
-    if (doc.search_data.storing_days_max) {
-      queryStr += ' and empty_stock_storing_days <= ? '
-      replacements.push( doc.search_data.storing_days_max)
-    }
-    if (doc.search_data.detention_days_min) {
-      queryStr += ' and empty_stock_detention_days >= ? '
-      replacements.push( doc.search_data.detention_days_min)
-    }
-    if (doc.search_data.detention_days_max) {
-      queryStr += ' and empty_stock_detention_days <= ? '
-      replacements.push( doc.search_data.detention_days_max)
+    // if (doc.search_data.storing_days_min) {
+    //   queryStr += ' and empty_stock_storing_days >= ? '
+    //   replacements.push( doc.search_data.storing_days_min)
+    // }
+    // if (doc.search_data.storing_days_max) {
+    //   queryStr += ' and empty_stock_storing_days <= ? '
+    //   replacements.push( doc.search_data.storing_days_max)
+    // }
+    // if (doc.search_data.detention_days_min) {
+    //   queryStr += ' and empty_stock_detention_days >= ? '
+    //   replacements.push( doc.search_data.detention_days_min)
+    // }
+    // if (doc.search_data.detention_days_max) {
+    //   queryStr += ' and empty_stock_detention_days <= ? '
+    //   replacements.push( doc.search_data.detention_days_max)
+    // }
+    if (doc.search_data.contaienr_owner) {
+      queryStr += ' and empty_stock_container_owner = ? '
+      replacements.push(doc.search_data.contaienr_owner)
     }
     if (doc.search_data.containers_no) {
       queryStr += ' and empty_stock_container_no like ? '
       replacements.push('%' + doc.search_data.containers_no + '%')
+    }
+    if (doc.search_data.size_type) {
+      queryStr += ' and empty_stock_size_type = ? '
+      replacements.push(doc.search_data.size_type)
+    }
+    if (doc.search_data.depot) {
+      queryStr += ' and empty_stock_in_depot_name = ? '
+      replacements.push(doc.search_data.depot)
     }
   }
   queryStr += ' ORDER BY empty_stock_id DESC'

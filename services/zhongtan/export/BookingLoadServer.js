@@ -144,107 +144,151 @@ exports.uploadBookingAct = async req => {
             }
           }
         }
-        let vessel = await tb_vessel.findOne({
-          where: {
-            export_vessel_name: ves,
-            export_vessel_voyage: voy,
-            state: GLBConfig.ENABLE
-          }
-        })
-        if(vessel) {
-          if(vessel.export_vessel_code) {
-            if(vessel.export_vessel_code.indexOf('OOCL') < 0) {
-              vessel.export_vessel_code = 'OOCL' + vessel.export_vessel_code
-            }
-          } else {
-            vessel.export_vessel_code = 'OOCL'
-          }
-          vessel.save()
-        } else {
-          vessel = await tb_vessel.create({
-            export_vessel_code: 'OOCL',
-            export_vessel_name: ves,
-            export_vessel_voyage: voy,
-            export_vessel_etd: etd
-          })
+        let vesJson = {
+          vesselName : ves,
+          vesselVoyage: voy,
+          vesselEtd: etd
         }
-        if(vessel) {
-          let ctnrType = ''
-          if(sizeConfig) {
-            let sizeType = common.fileterLN(size + type).toUpperCase()
-            for(let c of sizeConfig) {
-              let fullName = c.container_size_full_name
-              if(fullName) {
-                fullName = common.fileterLN(fullName).toUpperCase()
-              }
-              if(fullName === sizeType || fullName + 'CONTAINER' === sizeType || fullName === sizeType + 'CONTAINER') {
-                ctnrType = c.container_size_code
-                break
-              }
+        let blJson = {
+          bookingNumber : bookingNumber,
+          csoNumber : '',
+          shipperCompany : shipperCompany,
+          forwarderCompany : forwarderCompany,
+          consigneeCompany : consigneeCompany,
+          portOfLoad : 'TZDAR',
+          portOfDischarge : pod,
+          tracfficMode : tracfficMode,
+          quantity : quantity,
+          weight : quantity * weight,
+          cargoNature : cargoNature,
+          cargoDescriptions : cargoDescriptions
+        }
+        
+        let ctnrType = ''
+        if(sizeConfig) {
+          let sizeType = common.fileterLN(size + type).toUpperCase()
+          for(let c of sizeConfig) {
+            let fullName = c.container_size_full_name
+            if(fullName) {
+              fullName = common.fileterLN(fullName).toUpperCase()
             }
-          }
-          let bl = await tb_bl.findOne({
-            where: {
-              export_vessel_id: vessel.export_vessel_id,
-              export_masterbl_bl: bookingNumber,
-              state: GLBConfig.ENABLE
-            }
-          })
-          if (bl) {
-            bl.export_masterbl_shipper_company = shipperCompany
-            bl.export_masterbl_forwarder_company = forwarderCompany
-            bl.export_masterbl_consignee_company = consigneeCompany
-            bl.export_masterbl_port_of_load = 'TZDAR'
-            bl.export_masterbl_port_of_discharge = pod
-            bl.export_masterbl_traffic_mode = tracfficMode
-            bl.export_masterbl_container_quantity = quantity
-            bl.export_masterbl_container_weight = quantity * weight
-            bl.export_masterbl_cargo_nature = cargoNature
-            bl.export_masterbl_cargo_descriptions = cargoDescriptions
-            await bl.save()
-
-            await tb_container.destroy({
-              where: {
-                export_vessel_id: vessel.export_vessel_id,
-                export_container_bl: bookingNumber
-              }
-            })
-
-            for(let i = 0; i < quantity; i++) {
-              await tb_container.create({
-                export_vessel_id: vessel.export_vessel_id,
-                export_container_bl: bookingNumber,
-                export_container_size_type: ctnrType,
-                export_container_cargo_weight: weight
-              })
-            }
-          } else {
-            await tb_bl.create({
-              export_vessel_id: vessel.export_vessel_id,
-              export_masterbl_bl_carrier: 'OOCL',
-              export_masterbl_bl: bookingNumber,
-              export_masterbl_shipper_company: shipperCompany,
-              export_masterbl_forwarder_company: forwarderCompany,
-              export_masterbl_consignee_company: consigneeCompany,
-              export_masterbl_port_of_load: 'TZDAR',
-              export_masterbl_port_of_discharge: pod,
-              export_masterbl_traffic_mode: tracfficMode,
-              export_masterbl_container_quantity: quantity,
-              export_masterbl_container_weight: quantity * weight,
-              export_masterbl_cargo_nature: cargoNature,
-              export_masterbl_cargo_descriptions: cargoDescriptions,
-            })
-            for(let i = 0; i < quantity; i++) {
-              await tb_container.create({
-                export_vessel_id: vessel.export_vessel_id,
-                export_container_bl: bookingNumber,
-                export_container_soc_type: 'C',
-                export_container_size_type: ctnrType,
-                export_container_cargo_weight: weight
-              })
+            if(fullName === sizeType || fullName + 'CONTAINER' === sizeType || fullName === sizeType + 'CONTAINER') {
+              ctnrType = c.container_size_code
+              break
             }
           }
         }
+        let conJson = []
+        for(let i = 0; i < quantity; i++) {
+          conJson.push({
+            socType: 'C',
+            ctnrType: ctnrType,
+            weight: weight
+          })
+        }
+        await createBooking('OOCL', vesJson, blJson, conJson)
+        // let vessel = await tb_vessel.findOne({
+        //   where: {
+        //     export_vessel_name: ves,
+        //     export_vessel_voyage: voy,
+        //     state: GLBConfig.ENABLE
+        //   }
+        // })
+        // if(vessel) {
+        //   if(vessel.export_vessel_code) {
+        //     if(vessel.export_vessel_code.indexOf('OOCL') < 0) {
+        //       vessel.export_vessel_code = 'OOCL' + vessel.export_vessel_code
+        //     }
+        //   } else {
+        //     vessel.export_vessel_code = 'OOCL'
+        //   }
+        //   vessel.save()
+        // } else {
+        //   vessel = await tb_vessel.create({
+        //     export_vessel_code: 'OOCL',
+        //     export_vessel_name: ves,
+        //     export_vessel_voyage: voy,
+        //     export_vessel_etd: etd
+        //   })
+        // }
+        // if(vessel) {
+        //   let ctnrType = ''
+        //   if(sizeConfig) {
+        //     let sizeType = common.fileterLN(size + type).toUpperCase()
+        //     for(let c of sizeConfig) {
+        //       let fullName = c.container_size_full_name
+        //       if(fullName) {
+        //         fullName = common.fileterLN(fullName).toUpperCase()
+        //       }
+        //       if(fullName === sizeType || fullName + 'CONTAINER' === sizeType || fullName === sizeType + 'CONTAINER') {
+        //         ctnrType = c.container_size_code
+        //         break
+        //       }
+        //     }
+        //   }
+
+        //   let bl = await tb_bl.findOne({
+        //     where: {
+        //       export_vessel_id: vessel.export_vessel_id,
+        //       export_masterbl_bl: bookingNumber,
+        //       state: GLBConfig.ENABLE
+        //     }
+        //   })
+        //   if (bl) {
+        //     bl.export_masterbl_shipper_company = shipperCompany
+        //     bl.export_masterbl_forwarder_company = forwarderCompany
+        //     bl.export_masterbl_consignee_company = consigneeCompany
+        //     bl.export_masterbl_port_of_load = 'TZDAR'
+        //     bl.export_masterbl_port_of_discharge = pod
+        //     bl.export_masterbl_traffic_mode = tracfficMode
+        //     bl.export_masterbl_container_quantity = quantity
+        //     bl.export_masterbl_container_weight = quantity * weight
+        //     bl.export_masterbl_cargo_nature = cargoNature
+        //     bl.export_masterbl_cargo_descriptions = cargoDescriptions
+        //     await bl.save()
+
+        //     await tb_container.destroy({
+        //       where: {
+        //         export_vessel_id: vessel.export_vessel_id,
+        //         export_container_bl: bookingNumber
+        //       }
+        //     })
+
+        //     for(let i = 0; i < quantity; i++) {
+        //       await tb_container.create({
+        //         export_vessel_id: vessel.export_vessel_id,
+        //         export_container_bl: bookingNumber,
+        //         export_container_size_type: ctnrType,
+        //         export_container_cargo_weight: weight
+        //       })
+        //     }
+        //   } else {
+        //     await tb_bl.create({
+        //       export_vessel_id: vessel.export_vessel_id,
+        //       export_masterbl_bl_carrier: 'OOCL',
+        //       export_masterbl_bl: bookingNumber,
+        //       export_masterbl_shipper_company: shipperCompany,
+        //       export_masterbl_forwarder_company: forwarderCompany,
+        //       export_masterbl_consignee_company: consigneeCompany,
+        //       export_masterbl_port_of_load: 'TZDAR',
+        //       export_masterbl_port_of_discharge: pod,
+        //       export_masterbl_traffic_mode: tracfficMode,
+        //       export_masterbl_container_quantity: quantity,
+        //       export_masterbl_container_weight: quantity * weight,
+        //       export_masterbl_cargo_nature: cargoNature,
+        //       export_masterbl_cargo_descriptions: cargoDescriptions,
+        //     })
+        //     for(let i = 0; i < quantity; i++) {
+        //       await tb_container.create({
+        //         export_vessel_id: vessel.export_vessel_id,
+        //         export_container_bl: bookingNumber,
+        //         export_container_soc_type: 'C',
+        //         export_container_size_type: ctnrType,
+        //         export_container_cargo_weight: weight
+        //       })
+        //     }
+        //   }
+        // }
       } else {
         // COSCO
         let regex = ''
@@ -495,108 +539,145 @@ exports.uploadBookingAct = async req => {
           })
         }
         
-        let vessel = await tb_vessel.findOne({
-          where: {
-            export_vessel_name: ves,
-            export_vessel_voyage: voy,
-            state: GLBConfig.ENABLE
-          }
-        })
-        if(vessel) {
-          if(vessel.export_vessel_code) {
-            if(vessel.export_vessel_code.indexOf('COSCO') < 0) {
-              vessel.export_vessel_code = vessel.export_vessel_code + "+COSCO"
-            }
-          } else {
-            vessel.export_vessel_code = 'COSCO'
-          }
-          vessel.save()
-        } else {
-          vessel = await tb_vessel.create({
-            export_vessel_code: 'COSCO',
-            export_vessel_name: ves,
-            export_vessel_voyage: voy,
-            export_vessel_etd: etd
-          })
+
+        let vesJson = {
+          vesselName : ves,
+          vesselVoyage: voy,
+          vesselEtd: etd
         }
-        if(vessel) {
-          
-          let blQuantity = 0
-          let blWeight = 0
-          for(let bc of blCons) {
-            blQuantity = blQuantity + bc.quantity
-            blWeight = blWeight + bc.quantity * bc.cargoWeight
-          }
-
-          let bl = await tb_bl.findOne({
-            where: {
-              export_vessel_id: vessel.export_vessel_id,
-              export_masterbl_bl: bookingNumber,
-              state: GLBConfig.ENABLE
-            }
-          })
-          if (bl) {
-            bl.export_masterbl_cso_number = csoNumber
-            bl.export_masterbl_shipper_company = shipper
-            bl.export_masterbl_forwarder_company = bookingParty ? bookingParty : forwarder
-            bl.export_masterbl_consignee_company = consignee
-            bl.export_masterbl_port_of_load = 'TZDAR'
-            bl.export_masterbl_port_of_discharge = pod
-            bl.export_masterbl_traffic_mode = tracfficMode
-            bl.export_masterbl_container_quantity = blQuantity
-            bl.export_masterbl_container_weight = blWeight
-            bl.export_masterbl_cargo_nature = cargoNature
-            bl.export_masterbl_cargo_descriptions = cargoDescription
-            await bl.save()
-
-            await tb_container.destroy({
-              where: {
-                export_vessel_id: vessel.export_vessel_id,
-                export_container_bl: bookingNumber
-              }
+        let blQuantity = 0
+        let blWeight = 0
+        for(let bc of blCons) {
+          blQuantity = blQuantity + bc.quantity
+          blWeight = blWeight + bc.quantity * bc.cargoWeight
+        }
+        let blJson = {
+          bookingNumber : bookingNumber,
+          csoNumber : csoNumber,
+          shipperCompany : shipper,
+          forwarderCompany : bookingParty ? bookingParty : forwarder,
+          consigneeCompany : consignee,
+          portOfLoad : 'TZDAR',
+          portOfDischarge : pod,
+          tracfficMode : tracfficMode,
+          quantity : blQuantity,
+          weight : blWeight,
+          cargoNature : cargoNature,
+          cargoDescriptions : cargoDescription
+        }
+        let conJson = []
+        for(let bc of blCons) {
+          for(let i = 0; i < bc.quantity; i++) {
+            conJson.push({
+              socType: bc.soc === 'Y' ? 'S' : 'C',
+              ctnrType: bc.ctnrType,
+              weight: bc.cargoWeight
             })
-
-            for(let bc of blCons) {
-              for(let i = 0; i < bc.quantity; i++) {
-                await tb_container.create({
-                  export_vessel_id: vessel.export_vessel_id,
-                  export_container_bl: bookingNumber,
-                  export_container_soc_type: bc.soc === 'Y' ? 'S' : 'C',
-                  export_container_size_type: bc.ctnrType,
-                  export_container_cargo_weight: bc.cargoWeight
-                })
-              }
-            }
-          } else {
-            await tb_bl.create({
-              export_vessel_id: vessel.export_vessel_id,
-              export_masterbl_bl_carrier: 'COSCO',
-              export_masterbl_bl: bookingNumber,
-              export_masterbl_cso_number: csoNumber,
-              export_masterbl_shipper_company: shipper,
-              export_masterbl_forwarder_company: bookingParty ? bookingParty : forwarder,
-              export_masterbl_consignee_company: consignee,
-              export_masterbl_port_of_load: 'TZDAR',
-              export_masterbl_port_of_discharge: pod,
-              export_masterbl_traffic_mode: tracfficMode,
-              export_masterbl_container_quantity: blQuantity,
-              export_masterbl_container_weight: blWeight,
-              export_masterbl_cargo_nature: cargoNature,
-              export_masterbl_cargo_descriptions: cargoDescription,
-            })
-            for(let bc of blCons) {
-              for(let i = 0; i < bc.quantity; i++) {
-                await tb_container.create({
-                  export_vessel_id: vessel.export_vessel_id,
-                  export_container_bl: bookingNumber,
-                  export_container_soc_type: bc.soc === 'Y' ? 'S' : 'C',
-                  export_container_size_type: bc.ctnrType,
-                  export_container_cargo_weight: bc.cargoWeight
-                })
-              }
-            }
           }
         }
+        await createBooking('COSCO', vesJson, blJson, conJson)
+
+      //   let vessel = await tb_vessel.findOne({
+      //     where: {
+      //       export_vessel_name: ves,
+      //       export_vessel_voyage: voy,
+      //       state: GLBConfig.ENABLE
+      //     }
+      //   })
+      //   if(vessel) {
+      //     if(vessel.export_vessel_code) {
+      //       if(vessel.export_vessel_code.indexOf('COSCO') < 0) {
+      //         vessel.export_vessel_code = vessel.export_vessel_code + "+COSCO"
+      //       }
+      //     } else {
+      //       vessel.export_vessel_code = 'COSCO'
+      //     }
+      //     vessel.save()
+      //   } else {
+      //     vessel = await tb_vessel.create({
+      //       export_vessel_code: 'COSCO',
+      //       export_vessel_name: ves,
+      //       export_vessel_voyage: voy,
+      //       export_vessel_etd: etd
+      //     })
+      //   }
+      //   if(vessel) {
+      //     let blQuantity = 0
+      //     let blWeight = 0
+      //     for(let bc of blCons) {
+      //       blQuantity = blQuantity + bc.quantity
+      //       blWeight = blWeight + bc.quantity * bc.cargoWeight
+      //     }
+
+      //     let bl = await tb_bl.findOne({
+      //       where: {
+      //         export_vessel_id: vessel.export_vessel_id,
+      //         export_masterbl_bl: bookingNumber,
+      //         state: GLBConfig.ENABLE
+      //       }
+      //     })
+      //     if (bl) {
+      //       bl.export_masterbl_cso_number = csoNumber
+      //       bl.export_masterbl_shipper_company = shipper
+      //       bl.export_masterbl_forwarder_company = bookingParty ? bookingParty : forwarder
+      //       bl.export_masterbl_consignee_company = consignee
+      //       bl.export_masterbl_port_of_load = 'TZDAR'
+      //       bl.export_masterbl_port_of_discharge = pod
+      //       bl.export_masterbl_traffic_mode = tracfficMode
+      //       bl.export_masterbl_container_quantity = blQuantity
+      //       bl.export_masterbl_container_weight = blWeight
+      //       bl.export_masterbl_cargo_nature = cargoNature
+      //       bl.export_masterbl_cargo_descriptions = cargoDescription
+      //       await bl.save()
+
+      //       await tb_container.destroy({
+      //         where: {
+      //           export_vessel_id: vessel.export_vessel_id,
+      //           export_container_bl: bookingNumber
+      //         }
+      //       })
+
+      //       for(let bc of blCons) {
+      //         for(let i = 0; i < bc.quantity; i++) {
+      //           await tb_container.create({
+      //             export_vessel_id: vessel.export_vessel_id,
+      //             export_container_bl: bookingNumber,
+      //             export_container_soc_type: bc.soc === 'Y' ? 'S' : 'C',
+      //             export_container_size_type: bc.ctnrType,
+      //             export_container_cargo_weight: bc.cargoWeight
+      //           })
+      //         }
+      //       }
+      //     } else {
+      //       await tb_bl.create({
+      //         export_vessel_id: vessel.export_vessel_id,
+      //         export_masterbl_bl_carrier: 'COSCO',
+      //         export_masterbl_bl: bookingNumber,
+      //         export_masterbl_cso_number: csoNumber,
+      //         export_masterbl_shipper_company: shipper,
+      //         export_masterbl_forwarder_company: bookingParty ? bookingParty : forwarder,
+      //         export_masterbl_consignee_company: consignee,
+      //         export_masterbl_port_of_load: 'TZDAR',
+      //         export_masterbl_port_of_discharge: pod,
+      //         export_masterbl_traffic_mode: tracfficMode,
+      //         export_masterbl_container_quantity: blQuantity,
+      //         export_masterbl_container_weight: blWeight,
+      //         export_masterbl_cargo_nature: cargoNature,
+      //         export_masterbl_cargo_descriptions: cargoDescription,
+      //       })
+      //       for(let bc of blCons) {
+      //         for(let i = 0; i < bc.quantity; i++) {
+      //           await tb_container.create({
+      //             export_vessel_id: vessel.export_vessel_id,
+      //             export_container_bl: bookingNumber,
+      //             export_container_soc_type: bc.soc === 'Y' ? 'S' : 'C',
+      //             export_container_size_type: bc.ctnrType,
+      //             export_container_cargo_weight: bc.cargoWeight
+      //           })
+      //         }
+      //       }
+      //     }
+      //   }
       }
     }
   }
@@ -618,6 +699,177 @@ const pdf2jsonParser = async (path) => {
     parserData = data
   })
   return parserData
+}
+
+const createBooking = async (carrier, ves, bl, cons) => {
+  let vessel = await tb_vessel.findOne({
+    where: {
+      export_vessel_name: ves.vesselName,
+      export_vessel_voyage: ves.vesselVoyage,
+      state: GLBConfig.ENABLE
+    }
+  })
+  let newVes = false
+  if(vessel) {
+    if(vessel.export_vessel_code) {
+      if(vessel.export_vessel_code.indexOf(carrier) < 0) {
+        vessel.export_vessel_code = carrier + vessel.export_vessel_code
+      }
+    } else {
+      vessel.export_vessel_code = carrier
+    }
+    vessel.export_vessel_etd = ves.vesselEtd
+    vessel.save()
+  } else {
+    newVes = true
+    vessel = await tb_vessel.create({
+      export_vessel_code: 'OOCL',
+      export_vessel_name: ves.vesselName,
+      export_vessel_voyage: ves.vesselVoyage,
+      export_vessel_etd: ves.vesselEtd
+    })
+  }
+  if(newVes) {
+    // 新增船 只查提单号
+    let eb = await tb_bl.findOne({
+      where: {
+        export_masterbl_bl: bl.bookingNumber,
+        state: GLBConfig.ENABLE
+      }
+    })
+    if(eb) {
+      let queryStr = `SELECT * FROM tbl_zhongtan_export_masterbl WHERE state = '1' AND export_masterbl_bl LIKE ? AND export_masterbl_id <> ? ORDER BY export_masterbl_id DESC LIMIT 1`
+      let replacements = ['%' + eb.export_masterbl_bl, eb.export_masterbl_id]
+      let oldBls = await model.simpleSelect(queryStr, replacements)
+      if(oldBls && oldBls.length > 0) {
+        let count = oldBls[0].export_masterbl_bl.match(/\*/g)
+        if(count && count.length > 0) {
+          eb.export_masterbl_bl = '*' + Array(count.length).join('*') + eb.export_masterbl_bl
+        } else {
+          eb.export_masterbl_bl = '*' + eb.export_masterbl_bl
+        }
+      } else {
+        eb.export_masterbl_bl = '*' + eb.export_masterbl_bl
+      }
+      await eb.save()
+      queryStr = `SELECT * FROM tbl_zhongtan_export_container WHERE state = '1' AND export_vessel_id = ? AND export_container_bl = ? `
+      replacements = [eb.export_vessel_id, bl.bookingNumber]
+      let oldCons = await model.simpleSelect(queryStr, replacements)
+      let copyCons = []
+      if(oldCons && oldCons.length > 0) {
+        for(let c of oldCons) {
+          let oc = await tb_container.findOne({
+            where: {
+              export_container_id: c.export_container_id
+            }
+          })
+          if(oc) {
+            if(oc.export_container_no
+              || oc.export_container_edi_loading_date
+              || oc.export_container_edi_depot_gate_out_date
+              || oc.export_container_edi_wharf_gate_in_date
+              || oc.export_container_get_depot_name) {
+                let copyCon = JSON.parse(JSON.stringify(oc))
+                delete copyCon.export_container_id
+                delete copyCon.export_vessel_id
+                delete copyCon.export_container_bl
+                delete copyCon.export_container_soc_type
+                delete copyCon.export_container_size_type
+                delete copyCon.export_container_cargo_weight
+                copyCons.push(copyCon)
+            }
+            oc.export_container_bl = eb.export_masterbl_bl
+            await oc.save()
+          }
+        }
+      }
+      let copyeb = JSON.parse(JSON.stringify(eb))
+      delete copyeb.export_masterbl_id
+      delete copyeb.export_vessel_id
+      delete copyeb.export_masterbl_bl_carrier
+      delete copyeb.export_masterbl_bl
+      delete copyeb.export_masterbl_cso_number
+      delete copyeb.export_masterbl_shipper_company
+      delete copyeb.export_masterbl_forwarder_company
+      delete copyeb.export_masterbl_consignee_company
+      delete copyeb.export_masterbl_port_of_load
+      delete copyeb.export_masterbl_port_of_discharge
+      delete copyeb.export_masterbl_traffic_mode
+      delete copyeb.export_masterbl_container_quantity
+      delete copyeb.export_masterbl_container_weight
+      delete copyeb.export_masterbl_cargo_nature
+      delete copyeb.export_masterbl_cargo_descriptions
+      let newBl = {
+        export_vessel_id: vessel.export_vessel_id,
+        export_masterbl_bl_carrier: carrier,
+        export_masterbl_bl: bl.bookingNumber,
+        export_masterbl_cso_number: bl.csoNumber ? bl.csoNumber : '',
+        export_masterbl_shipper_company: bl.shipperCompany,
+        export_masterbl_forwarder_company: bl.forwarderCompany,
+        export_masterbl_consignee_company: bl.consigneeCompany,
+        export_masterbl_port_of_load: bl.portOfLoad,
+        export_masterbl_port_of_discharge: bl.portOfDischarge,
+        export_masterbl_traffic_mode: bl.tracfficMode,
+        export_masterbl_container_quantity: bl.quantity,
+        export_masterbl_container_weight: bl.weight,
+        export_masterbl_cargo_nature: bl.cargoNature,
+        export_masterbl_cargo_descriptions: bl.cargoDescriptions,
+      }
+      await tb_bl.create(Object.assign(newBl, copyeb))
+      if(copyCons && copyCons.length > 0) {
+        for(let i = 0; i < cons.length; i++) {
+          let newCon = {
+            export_vessel_id: vessel.export_vessel_id,
+            export_container_bl: bl.bookingNumber,
+            export_container_soc_type: cons[i].socType,
+            export_container_size_type: cons[i].ctnrType,
+            export_container_cargo_weight: cons[i].weight
+          }
+          if(copyCons.length > i) {
+            await tb_container.create(Object.assign(newCon, copyCons[i]))
+          } else {
+            await tb_container.create(newCon)
+          }
+        }
+      } else {
+        for(let i = 0; i < cons.length; i++) {
+          await tb_container.create({
+            export_vessel_id: vessel.export_vessel_id,
+            export_container_bl: bl.bookingNumber,
+            export_container_soc_type: cons[i].socType,
+            export_container_size_type: cons[i].ctnrType,
+            export_container_cargo_weight: cons[i].weight
+          })
+        }
+      }
+    } else {
+      await tb_bl.create({
+        export_vessel_id: vessel.export_vessel_id,
+        export_masterbl_bl_carrier: carrier,
+        export_masterbl_bl: bl.bookingNumber,
+        export_masterbl_cso_number: bl.csoNumber ? bl.csoNumber : '',
+        export_masterbl_shipper_company: bl.shipperCompany,
+        export_masterbl_forwarder_company: bl.forwarderCompany,
+        export_masterbl_consignee_company: bl.consigneeCompany,
+        export_masterbl_port_of_load: bl.portOfLoad,
+        export_masterbl_port_of_discharge: bl.portOfDischarge,
+        export_masterbl_traffic_mode: bl.tracfficMode,
+        export_masterbl_container_quantity: bl.quantity,
+        export_masterbl_container_weight: bl.weight,
+        export_masterbl_cargo_nature: bl.cargoNature,
+        export_masterbl_cargo_descriptions: bl.cargoDescriptions,
+      })
+      for(let i = 0; i < cons.length; i++) {
+        await tb_container.create({
+          export_vessel_id: vessel.export_vessel_id,
+          export_container_bl: bl.bookingNumber,
+          export_container_soc_type: cons[i].socType,
+          export_container_size_type: cons[i].ctnrType,
+          export_container_cargo_weight: cons[i].weight
+        })
+      }
+    }
+  }
 }
 
 exports.uploadAct = async req => {
@@ -986,12 +1238,14 @@ exports.bookingDataSaveAct = async req => {
           user_id: bl.export_masterbl_empty_release_agent
         }
       })
-      if(user) {
+      if(user && bl.export_masterbl_forwarder_company !== user.user_name) {
         bl.export_masterbl_forwarder_company = user.user_name
+        bl.export_masterbl_forwarder_company_input = user.user_name
       }
     }
-    if(doc.export_masterbl_cargo_type) {
+    if(doc.export_masterbl_cargo_type && doc.export_masterbl_cargo_type !== bl.export_masterbl_cargo_type) {
       bl.export_masterbl_cargo_type = doc.export_masterbl_cargo_type
+      bl.export_masterbl_cargo_type_input = doc.export_masterbl_cargo_type
     }
     await bl.save()
   }
@@ -1006,7 +1260,8 @@ exports.bkCancellationFeeSave = async req => {
     let pro_bl = await tb_proforma_bl.findOne({
       where: {
         state: GLBConfig.ENABLE,
-        relation_export_masterbl_id: doc.export_masterbl_id
+        relation_export_masterbl_id: doc.export_masterbl_id,
+        bk_cancellation_status: GLBConfig.ENABLE
       }
     })
     if(!pro_bl) {
@@ -1027,9 +1282,10 @@ exports.bkCancellationFeeSave = async req => {
         if(pro_ves) {
           pro_bl = await tb_proforma_bl.findOne({
             where: {
+              state: GLBConfig.ENABLE,
               export_vessel_id: pro_ves.export_vessel_id,
               export_masterbl_bl: doc.export_masterbl_bl,
-              state: GLBConfig.ENABLE
+              bk_cancellation_status: GLBConfig.ENABLE
             }
           })
         }

@@ -419,6 +419,7 @@ exports.approveAct = async req => {
             bl: p.shipment_list_bill_no,
             container_no: p.shipment_list_container_no,
             size_type: p.shipment_list_size_type,
+            discharge_date: p.shipment_list_discharge_date,
             fnd: p.shipment_list_business_type === 'I' ?  p.shipment_list_port_of_destination : p.shipment_list_port_of_loading,
             amount: p.shipment_list_receivable_freight
           })

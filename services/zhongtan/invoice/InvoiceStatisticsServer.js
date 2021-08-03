@@ -359,7 +359,6 @@ exports.exportAct = async (req, res) => {
         row.container_deposit_party = customer.user_name.trim()
       }
     }
-    row.do_date = r.invoice_masterbi_do_date
     if(r.invoice_masterbi_do_date) {
       let file = await tb_uploadfile.findOne({
         where: {
@@ -378,6 +377,7 @@ exports.exportAct = async (req, res) => {
         if(user) {
           row.do_user = user.user_name
         }
+        row.do_date = moment(file.created_at).format('YYYY-MM-DD HH:mm:ss')
       }
     }
     row.empty_return_depot = r.invoice_masterbi_do_return_depot
