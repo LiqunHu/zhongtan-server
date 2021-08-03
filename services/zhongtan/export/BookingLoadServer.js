@@ -709,7 +709,6 @@ const createBooking = async (carrier, ves, bl, cons) => {
       state: GLBConfig.ENABLE
     }
   })
-  let newVes = false
   if(vessel) {
     if(vessel.export_vessel_code) {
       if(vessel.export_vessel_code.indexOf(carrier) < 0) {
@@ -721,7 +720,6 @@ const createBooking = async (carrier, ves, bl, cons) => {
     vessel.export_vessel_etd = ves.vesselEtd
     vessel.save()
   } else {
-    newVes = true
     vessel = await tb_vessel.create({
       export_vessel_code: carrier,
       export_vessel_name: ves.vesselName,
@@ -729,136 +727,108 @@ const createBooking = async (carrier, ves, bl, cons) => {
       export_vessel_etd: ves.vesselEtd
     })
   }
-  if(newVes) {
-    // 新增船 只查提单号
-    let eb = await tb_bl.findOne({
-      where: {
-        export_masterbl_bl: bl.bookingNumber,
-        state: GLBConfig.ENABLE
-      }
-    })
-    if(eb) {
-      let queryStr = `SELECT * FROM tbl_zhongtan_export_masterbl WHERE state = '1' AND export_masterbl_bl LIKE ? AND export_masterbl_id <> ? ORDER BY export_masterbl_id DESC LIMIT 1`
-      let replacements = ['%' + eb.export_masterbl_bl, eb.export_masterbl_id]
-      let oldBls = await model.simpleSelect(queryStr, replacements)
-      if(oldBls && oldBls.length > 0) {
-        let count = oldBls[0].export_masterbl_bl.match(/\*/g)
-        if(count && count.length > 0) {
-          eb.export_masterbl_bl = '*' + Array(count.length).join('*') + eb.export_masterbl_bl
-        } else {
-          eb.export_masterbl_bl = '*' + eb.export_masterbl_bl
-        }
+  // 只查提单号
+  let eb = await tb_bl.findOne({
+    where: {
+      export_masterbl_bl: bl.bookingNumber,
+      state: GLBConfig.ENABLE
+    }
+  })
+  if(eb) {
+    let queryStr = `SELECT * FROM tbl_zhongtan_export_masterbl WHERE state = '1' AND export_masterbl_bl LIKE ? AND export_masterbl_id <> ? ORDER BY export_masterbl_id DESC LIMIT 1`
+    let replacements = ['%' + eb.export_masterbl_bl, eb.export_masterbl_id]
+    let oldBls = await model.simpleSelect(queryStr, replacements)
+    if(oldBls && oldBls.length > 0) {
+      let count = oldBls[0].export_masterbl_bl.match(/\*/g)
+      if(count && count.length > 0) {
+        eb.export_masterbl_bl = '*' + Array(count.length).join('*') + eb.export_masterbl_bl
       } else {
         eb.export_masterbl_bl = '*' + eb.export_masterbl_bl
       }
-      await eb.save()
-      queryStr = `SELECT * FROM tbl_zhongtan_export_container WHERE state = '1' AND export_vessel_id = ? AND export_container_bl = ? `
-      replacements = [eb.export_vessel_id, bl.bookingNumber]
-      let oldCons = await model.simpleSelect(queryStr, replacements)
-      let copyCons = []
-      if(oldCons && oldCons.length > 0) {
-        for(let c of oldCons) {
-          let oc = await tb_container.findOne({
-            where: {
-              export_container_id: c.export_container_id
-            }
-          })
-          if(oc) {
-            if(oc.export_container_no
-              || oc.export_container_edi_loading_date
-              || oc.export_container_edi_depot_gate_out_date
-              || oc.export_container_edi_wharf_gate_in_date
-              || oc.export_container_get_depot_name) {
-                let copyCon = JSON.parse(JSON.stringify(oc))
-                delete copyCon.export_container_id
-                delete copyCon.export_vessel_id
-                delete copyCon.export_container_bl
-                delete copyCon.export_container_soc_type
-                delete copyCon.export_container_size_type
-                delete copyCon.export_container_cargo_weight
-                copyCons.push(copyCon)
-            }
-            oc.export_container_bl = eb.export_masterbl_bl
-            await oc.save()
+    } else {
+      eb.export_masterbl_bl = '*' + eb.export_masterbl_bl
+    }
+    await eb.save()
+    queryStr = `SELECT * FROM tbl_zhongtan_export_container WHERE state = '1' AND export_vessel_id = ? AND export_container_bl = ? `
+    replacements = [eb.export_vessel_id, bl.bookingNumber]
+    let oldCons = await model.simpleSelect(queryStr, replacements)
+    let copyCons = []
+    if(oldCons && oldCons.length > 0) {
+      for(let c of oldCons) {
+        let oc = await tb_container.findOne({
+          where: {
+            export_container_id: c.export_container_id
           }
+        })
+        if(oc) {
+          if(oc.export_container_no
+            || oc.export_container_edi_loading_date
+            || oc.export_container_edi_depot_gate_out_date
+            || oc.export_container_edi_wharf_gate_in_date
+            || oc.export_container_get_depot_name) {
+              let copyCon = JSON.parse(JSON.stringify(oc))
+              delete copyCon.export_container_id
+              delete copyCon.export_vessel_id
+              delete copyCon.export_container_bl
+              delete copyCon.export_container_soc_type
+              delete copyCon.export_container_size_type
+              delete copyCon.export_container_cargo_weight
+              copyCons.push(copyCon)
+          }
+          oc.export_container_bl = eb.export_masterbl_bl
+          await oc.save()
         }
       }
-      let copyeb = JSON.parse(JSON.stringify(eb))
-      delete copyeb.export_masterbl_id
-      delete copyeb.export_vessel_id
-      delete copyeb.export_masterbl_bl_carrier
-      delete copyeb.export_masterbl_bl
-      delete copyeb.export_masterbl_cso_number
-      delete copyeb.export_masterbl_shipper_company
-      delete copyeb.export_masterbl_forwarder_company
-      delete copyeb.export_masterbl_consignee_company
-      delete copyeb.export_masterbl_port_of_load
-      delete copyeb.export_masterbl_port_of_discharge
-      delete copyeb.export_masterbl_traffic_mode
-      delete copyeb.export_masterbl_container_quantity
-      delete copyeb.export_masterbl_container_weight
-      delete copyeb.export_masterbl_cargo_nature
-      delete copyeb.export_masterbl_cargo_descriptions
-      let newBl = {
-        export_vessel_id: vessel.export_vessel_id,
-        export_masterbl_bl_carrier: carrier,
-        export_masterbl_bl: bl.bookingNumber,
-        export_masterbl_cso_number: bl.csoNumber ? bl.csoNumber : '',
-        export_masterbl_shipper_company: bl.shipperCompany,
-        export_masterbl_forwarder_company: bl.forwarderCompany,
-        export_masterbl_consignee_company: bl.consigneeCompany,
-        export_masterbl_port_of_load: bl.portOfLoad,
-        export_masterbl_port_of_discharge: bl.portOfDischarge,
-        export_masterbl_traffic_mode: bl.tracfficMode,
-        export_masterbl_container_quantity: bl.quantity,
-        export_masterbl_container_weight: bl.weight,
-        export_masterbl_cargo_nature: bl.cargoNature,
-        export_masterbl_cargo_descriptions: bl.cargoDescriptions,
-      }
-      await tb_bl.create(Object.assign(newBl, copyeb))
-      if(copyCons && copyCons.length > 0) {
-        for(let i = 0; i < cons.length; i++) {
-          let newCon = {
-            export_vessel_id: vessel.export_vessel_id,
-            export_container_bl: bl.bookingNumber,
-            export_container_soc_type: cons[i].socType,
-            export_container_size_type: cons[i].ctnrType,
-            export_container_cargo_weight: cons[i].weight
-          }
-          if(copyCons.length > i) {
-            await tb_container.create(Object.assign(newCon, copyCons[i]))
-          } else {
-            await tb_container.create(newCon)
-          }
+    }
+    let copyeb = JSON.parse(JSON.stringify(eb))
+    delete copyeb.export_masterbl_id
+    delete copyeb.export_vessel_id
+    delete copyeb.export_masterbl_bl_carrier
+    delete copyeb.export_masterbl_bl
+    delete copyeb.export_masterbl_cso_number
+    delete copyeb.export_masterbl_shipper_company
+    delete copyeb.export_masterbl_forwarder_company
+    delete copyeb.export_masterbl_consignee_company
+    delete copyeb.export_masterbl_port_of_load
+    delete copyeb.export_masterbl_port_of_discharge
+    delete copyeb.export_masterbl_traffic_mode
+    delete copyeb.export_masterbl_container_quantity
+    delete copyeb.export_masterbl_container_weight
+    delete copyeb.export_masterbl_cargo_nature
+    delete copyeb.export_masterbl_cargo_descriptions
+    let newBl = {
+      export_vessel_id: vessel.export_vessel_id,
+      export_masterbl_bl_carrier: carrier,
+      export_masterbl_bl: bl.bookingNumber,
+      export_masterbl_cso_number: bl.csoNumber ? bl.csoNumber : '',
+      export_masterbl_shipper_company: bl.shipperCompany,
+      export_masterbl_forwarder_company: bl.forwarderCompany,
+      export_masterbl_consignee_company: bl.consigneeCompany,
+      export_masterbl_port_of_load: bl.portOfLoad,
+      export_masterbl_port_of_discharge: bl.portOfDischarge,
+      export_masterbl_traffic_mode: bl.tracfficMode,
+      export_masterbl_container_quantity: bl.quantity,
+      export_masterbl_container_weight: bl.weight,
+      export_masterbl_cargo_nature: bl.cargoNature,
+      export_masterbl_cargo_descriptions: bl.cargoDescriptions,
+    }
+    await tb_bl.create(Object.assign(newBl, copyeb))
+    if(copyCons && copyCons.length > 0) {
+      for(let i = 0; i < cons.length; i++) {
+        let newCon = {
+          export_vessel_id: vessel.export_vessel_id,
+          export_container_bl: bl.bookingNumber,
+          export_container_soc_type: cons[i].socType,
+          export_container_size_type: cons[i].ctnrType,
+          export_container_cargo_weight: cons[i].weight
         }
-      } else {
-        for(let i = 0; i < cons.length; i++) {
-          await tb_container.create({
-            export_vessel_id: vessel.export_vessel_id,
-            export_container_bl: bl.bookingNumber,
-            export_container_soc_type: cons[i].socType,
-            export_container_size_type: cons[i].ctnrType,
-            export_container_cargo_weight: cons[i].weight
-          })
+        if(copyCons.length > i) {
+          await tb_container.create(Object.assign(newCon, copyCons[i]))
+        } else {
+          await tb_container.create(newCon)
         }
       }
     } else {
-      await tb_bl.create({
-        export_vessel_id: vessel.export_vessel_id,
-        export_masterbl_bl_carrier: carrier,
-        export_masterbl_bl: bl.bookingNumber,
-        export_masterbl_cso_number: bl.csoNumber ? bl.csoNumber : '',
-        export_masterbl_shipper_company: bl.shipperCompany,
-        export_masterbl_forwarder_company: bl.forwarderCompany,
-        export_masterbl_consignee_company: bl.consigneeCompany,
-        export_masterbl_port_of_load: bl.portOfLoad,
-        export_masterbl_port_of_discharge: bl.portOfDischarge,
-        export_masterbl_traffic_mode: bl.tracfficMode,
-        export_masterbl_container_quantity: bl.quantity,
-        export_masterbl_container_weight: bl.weight,
-        export_masterbl_cargo_nature: bl.cargoNature,
-        export_masterbl_cargo_descriptions: bl.cargoDescriptions,
-      })
       for(let i = 0; i < cons.length; i++) {
         await tb_container.create({
           export_vessel_id: vessel.export_vessel_id,
@@ -868,6 +838,32 @@ const createBooking = async (carrier, ves, bl, cons) => {
           export_container_cargo_weight: cons[i].weight
         })
       }
+    }
+  } else {
+    await tb_bl.create({
+      export_vessel_id: vessel.export_vessel_id,
+      export_masterbl_bl_carrier: carrier,
+      export_masterbl_bl: bl.bookingNumber,
+      export_masterbl_cso_number: bl.csoNumber ? bl.csoNumber : '',
+      export_masterbl_shipper_company: bl.shipperCompany,
+      export_masterbl_forwarder_company: bl.forwarderCompany,
+      export_masterbl_consignee_company: bl.consigneeCompany,
+      export_masterbl_port_of_load: bl.portOfLoad,
+      export_masterbl_port_of_discharge: bl.portOfDischarge,
+      export_masterbl_traffic_mode: bl.tracfficMode,
+      export_masterbl_container_quantity: bl.quantity,
+      export_masterbl_container_weight: bl.weight,
+      export_masterbl_cargo_nature: bl.cargoNature,
+      export_masterbl_cargo_descriptions: bl.cargoDescriptions,
+    })
+    for(let i = 0; i < cons.length; i++) {
+      await tb_container.create({
+        export_vessel_id: vessel.export_vessel_id,
+        export_container_bl: bl.bookingNumber,
+        export_container_soc_type: cons[i].socType,
+        export_container_size_type: cons[i].ctnrType,
+        export_container_cargo_weight: cons[i].weight
+      })
     }
   }
 }
