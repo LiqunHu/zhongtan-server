@@ -723,7 +723,7 @@ const createBooking = async (carrier, ves, bl, cons) => {
   } else {
     newVes = true
     vessel = await tb_vessel.create({
-      export_vessel_code: 'OOCL',
+      export_vessel_code: carrier,
       export_vessel_name: ves.vesselName,
       export_vessel_voyage: ves.vesselVoyage,
       export_vessel_etd: ves.vesselEtd
