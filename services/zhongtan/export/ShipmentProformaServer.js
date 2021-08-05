@@ -486,7 +486,7 @@ exports.uploadShipmentAct = async req => {
       vessel_etd = moment().format('DD/MM/YYYY')
     }
     let call_sign = vesslInfoJS[0]['CALL SIGN'] ? vesslInfoJS[0]['CALL SIGN'].trim() : ''
-    let total_prepaid = vesslInfoJS[0]['TOTAL PREPAID'] ? vesslInfoJS[0]['TOTAL PREPAID'].trim() : ''
+    let total_prepaid = vesslInfoJS[0]['TOTAL PREPAID'] ? String(vesslInfoJS[0]['TOTAL PREPAID']).trim() : ''
     let ves = await tb_proforma_vessel.findOne({
       where: {
         export_vessel_name: vessel_name,
@@ -558,9 +558,9 @@ exports.uploadShipmentAct = async req => {
         }
         let consignee_name = m['Consignee Name'] ? m['Consignee Name'].toString().trim() : ''
         // let notify_name = m['Notify Name'] ? m['Notify Name'].toString().trim() : ''
-        let oft = m['OFT'] ? m['OFT'].toString().trim() : ''
-        let blf = m['BLF'] ? m['BLF'].toString().trim() : ''
-        let faf = m['FAF'] ? m['FAF'].toString().trim() : ''
+        let oft = m['OFT'] ? String(m['OFT']).trim() : ''
+        let blf = m['BLF'] ? String(m['BLF']).trim() : ''
+        let faf = m['FAF'] ? String(m['FAF']).trim() : ''
         let create_bl = true
         let create_con = true
         if(!new_import) {
