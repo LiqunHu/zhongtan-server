@@ -26,15 +26,12 @@ const tb_shipment_list = model.zhongtan_logistics_shipment_list
 
 exports.initAct = async () => {
   let DELIVER = []
-  let queryStr = `SELECT user_name FROM tbl_common_user WHERE state = '1' AND user_type = ? ORDER BY user_name`
+  let queryStr = `SELECT DISTINCT(TRIM(user_name)) AS user_name FROM tbl_common_user WHERE state = '1' AND user_type = ? ORDER BY user_name`
   let replacements = [GLBConfig.TYPE_CUSTOMER]
   let deliverys = await model.simpleSelect(queryStr, replacements)
   if(deliverys) {
     for(let d of deliverys) {
-      let dt = d.user_name.trim()
-      if(DELIVER.indexOf(dt) < 0) {
-        DELIVER.push(dt)
-      }
+      DELIVER.push(d)
     }
   }
 
@@ -1189,7 +1186,8 @@ exports.searchCustomerAct = async req => {
         id: s.user_id,
         text: s.user_name,
         fixed: s.fixed_deposit_id,
-        balcklist: s.user_blacklist
+        balcklist: s.user_blacklist,
+        type: s.user_customer_type
       })
     }
     return common.success(returnData)

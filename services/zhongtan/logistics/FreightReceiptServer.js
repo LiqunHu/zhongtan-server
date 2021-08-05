@@ -72,6 +72,7 @@ exports.searchAct = async req => {
             url: pf.uploadfile_url,
             file_id : pf.uploadfile_id,
             relation_id: pf.uploadfile_index1,
+            invoice_no: pf.uploadfile_invoice_no,
             receipt_no: pf.uploadfile_receipt_no,
             customer_id: pf.uploadfile_customer_id
           })
@@ -194,6 +195,7 @@ exports.exportAct = async (req, res) => {
   let queryWhere = await queryWhereJoin(doc)
   let queryStr = queryWhere.queryStr + ' ORDER BY ss.sort_date DESC, ss.shipment_list_bill_no, s.shipment_list_container_no'
   let result = await model.simpleSelect(queryStr, queryWhere.replacements)
+
   let jsData = []
   let transits = []
   let imports = []
@@ -207,6 +209,28 @@ exports.exportAct = async (req, res) => {
     }
     if(r.shipment_list_cargo_type === 'LOCAL') {
       r.shipment_list_cargo_type = 'IMPORT'
+    }
+
+    queryStr = `SELECT u.* FROM tbl_zhongtan_uploadfile u WHERE u.state = ? AND uploadfile_index1 IN (
+      SELECT logistics_verification_id FROM tbl_zhongtan_logistics_verification_freight WHERE state = ? AND shipment_list_id = ? AND logistics_freight_state = 'AP') 
+      AND api_name IN ('FREIGHT INVOICE') ORDER BY uploadfile_id DESC`
+    let replacements = [GLBConfig.ENABLE, GLBConfig.ENABLE, r.shipment_list_id]
+    let paymentFiles = await model.simpleSelect(queryStr, replacements)
+    if(paymentFiles && paymentFiles.length > 0) {
+      if(paymentFiles[0].uploadfile_invoice_no) {
+        r.shipment_list_freight_invoice_no = paymentFiles[0].uploadfile_invoice_no
+      }
+      if(paymentFiles[0].uploadfile_receipt_no) {
+        r.shipment_list_freight_receipt_no = paymentFiles[0].uploadfile_receipt_no
+      }
+    }
+    if(r.shipment_list_payment_status === '3' || r.shipment_list_payment_status === '4') {
+      r.shipment_list_freight_payable_usd = r.shipment_list_advance_payment
+    } else if(r.shipment_list_payment_status === '5' || r.shipment_list_payment_status === '6' || r.shipment_list_payment_status === '7' || r.shipment_list_payment_status === '8') {
+      r.shipment_list_freight_payable_usd = r.shipment_list_total_freight
+    }
+    if(r.shipment_list_total_freight_tzs) {
+      r.shipment_list_freight_payable_tzs = r.shipment_list_total_freight_tzs
     }
     if(r.shipment_list_business_type === 'I') {
       imports.push(r)

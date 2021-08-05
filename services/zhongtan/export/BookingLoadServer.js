@@ -741,7 +741,7 @@ const createBooking = async (carrier, ves, bl, cons) => {
     if(oldBls && oldBls.length > 0) {
       let count = oldBls[0].export_masterbl_bl.match(/\*/g)
       if(count && count.length > 0) {
-        eb.export_masterbl_bl = '*' + Array(count.length).join('*') + eb.export_masterbl_bl
+        eb.export_masterbl_bl = Array(count.length + 2).join('*') + eb.export_masterbl_bl
       } else {
         eb.export_masterbl_bl = '*' + eb.export_masterbl_bl
       }
@@ -787,11 +787,15 @@ const createBooking = async (carrier, ves, bl, cons) => {
     delete copyeb.export_masterbl_bl
     delete copyeb.export_masterbl_cso_number
     delete copyeb.export_masterbl_shipper_company
-    delete copyeb.export_masterbl_forwarder_company
+    if(!copyeb.export_masterbl_forwarder_company_input) {
+      delete copyeb.export_masterbl_forwarder_company
+    }
     delete copyeb.export_masterbl_consignee_company
     delete copyeb.export_masterbl_port_of_load
     delete copyeb.export_masterbl_port_of_discharge
-    delete copyeb.export_masterbl_traffic_mode
+    if(!copyeb.export_masterbl_traffic_mode_input) {
+      delete copyeb.export_masterbl_traffic_mode
+    }
     delete copyeb.export_masterbl_container_quantity
     delete copyeb.export_masterbl_container_weight
     delete copyeb.export_masterbl_cargo_nature

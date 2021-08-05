@@ -45,7 +45,7 @@ exports.searchAct = async req => {
                   from tbl_zhongtan_export_proforma_masterbl b 
                   LEFT JOIN tbl_zhongtan_export_proforma_vessel v ON b.export_vessel_id = v.export_vessel_id 
                   LEFT JOIN tbl_common_user u ON b.shipment_list_bl_print_user = u.user_id
-                  LEFT JOIN (SELECT export_masterbl_id, COUNT(1) AS total_count, COUNT(if(shipment_fee_status = 'RE', 1, null)) AS receipt_count, SUM(shipment_fee_amount) AS total_amount FROM tbl_zhongtan_export_shipment_fee WHERE state = '1' AND shipment_fee_type = 'R' AND shipment_fee_amount != 0 GROUP BY export_masterbl_id) f ON f.export_masterbl_id = b.export_masterbl_id 
+                  LEFT JOIN (SELECT export_masterbl_id, COUNT(1) AS total_count, COUNT(if(shipment_fee_status = 'RE', 1, null)) AS receipt_count, SUM(shipment_fee_amount) AS total_amount FROM tbl_zhongtan_export_shipment_fee WHERE state = '1' AND shipment_fee_type = 'R' AND shipment_fee_amount != 0 AND shipment_fee_status <> 'BA' GROUP BY export_masterbl_id) f ON f.export_masterbl_id = b.export_masterbl_id 
                   WHERE b.state = 1 `
   let replacements = []
   if(doc.search_data) {

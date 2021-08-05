@@ -24,7 +24,7 @@ module.exports = async (req, res) => {
     } else if(method === 'exportFixedDeposit') {
       return await srv.exportFixedDepositAct(req, res)
     } else if(method === 'checkPassword') {
-      return await srv.checkPasswordAct(req, res)
+      ret = await srv.checkPasswordAct(req, res)
     }
     common.sendData(res, ret)
   } catch (error) {
