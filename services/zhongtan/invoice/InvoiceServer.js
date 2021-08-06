@@ -31,7 +31,7 @@ exports.initAct = async () => {
   let deliverys = await model.simpleSelect(queryStr, replacements)
   if(deliverys) {
     for(let d of deliverys) {
-      DELIVER.push(d)
+      DELIVER.push(d.user_name)
     }
   }
 
