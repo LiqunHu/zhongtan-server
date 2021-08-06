@@ -242,7 +242,8 @@ exports.modifyAct = async req => {
       modifyRow.shipment_list_border_release_date = modifyData.shipment_list_border_release_date
       await modifyRow.save()
       if((oldData.shipment_list_vendor && oldData.shipment_list_vendor !== modifyData.shipment_list_vendor) 
-          || modifyData.shipment_list_vendor && oldData.shipment_list_vendor !== modifyData.shipment_list_vendor) {
+          || (modifyData.shipment_list_vendor && oldData.shipment_list_vendor !== modifyData.shipment_list_vendor)
+          || modifyData.shipment_list_remark) {
         // 更新同提单号
         let sameRows = await tb_shipment_list.findAll({
           where: {
@@ -254,6 +255,9 @@ exports.modifyAct = async req => {
           for(let s of sameRows) {
             if(s.shipment_list_id !== modifyData.shipment_list_id) {
               s.shipment_list_vendor = modifyData.shipment_list_vendor ? modifyData.shipment_list_vendor : null
+              if(!s.shipment_list_remark) {
+                s.shipment_list_remark = modifyData.shipment_list_remark
+              }
               await s.save()
             }
             if(modifyData.shipment_list_vendor) {

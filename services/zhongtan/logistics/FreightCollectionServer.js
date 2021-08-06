@@ -130,9 +130,9 @@ const queryWhereJoin = async (param) => {
       queryStr = queryStr + ' and s.shipment_list_cargo_type = ? '
       replacements.push(searchPara.shipment_list_cargo_type)
     }
-    if(searchPara.shipment_list_payment_status) {
-      queryStr = queryStr + ' and s.shipment_list_payment_status = ? '
-      replacements.push(searchPara.shipment_list_payment_status)
+    if(searchPara.shipment_list_receivable_status) {
+      queryStr = queryStr + ' and s.shipment_list_receivable_status = ? '
+      replacements.push(searchPara.shipment_list_receivable_status)
     }
     if(searchPara.shipment_list_business_type) {
       queryStr = queryStr + ' and s.shipment_list_business_type = ? '

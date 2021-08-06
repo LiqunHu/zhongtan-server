@@ -27,7 +27,7 @@ exports.initAct = async () => {
 exports.searchAct = async req => {
   let doc = common.docValidate(req)
   let returnData = {}
-  let queryStr = `select a.*, b.export_masterbl_bl, b.export_masterbl_cargo_type, c.user_name as apply_user, d.user_name as empty_release_party, v.export_vessel_name, v.export_vessel_voyage 
+  let queryStr = `select a.*, b.export_masterbl_bl, b.export_masterbl_cargo_type, b.export_masterbl_empty_release_valid_to, c.user_name as apply_user, d.user_name as empty_release_party, v.export_vessel_name, v.export_vessel_voyage , v.export_vessel_etd
                 from tbl_zhongtan_export_verification a 
                 LEFT JOIN tbl_zhongtan_export_masterbl b ON a.export_masterbl_id = b.export_masterbl_id 
                 LEFT JOIN tbl_zhongtan_export_vessel v ON v.export_vessel_id = b.export_vessel_id 

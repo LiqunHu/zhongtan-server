@@ -240,7 +240,7 @@ exports.exportAct = async (req, res) => {
   }
   jsData.push(transits)
   jsData.push(imports)
-  let filepath = await common.ejs2xlsx('LogisticsFreightInvoice.xlsx', jsData)
+  let filepath = await common.ejs2xlsx('LogisticsFreightReceipt.xlsx', jsData)
   res.sendFile(filepath)
 }
 
