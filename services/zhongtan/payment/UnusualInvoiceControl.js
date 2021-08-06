@@ -21,6 +21,8 @@ module.exports = async (req, res) => {
       ret = await srv.checkPasswordAct(req)
     } else if(method === 'export') {
       return await srv.exportAct(req, res)
+    } else if (method === 'deleteInvoice') {
+      ret = await srv.deleteInvoiceAct(req)
     }
     common.sendData(res, ret)
   } catch (error) {

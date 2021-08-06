@@ -77,6 +77,7 @@ exports.searchAct = async req => {
     }
   }
 
+  queryStr = queryStr + ` ORDER BY unusual_invoice_id DESC`
   let result = await model.queryWithCount(doc, queryStr, replacements)
 
   returnData.total = result.count
@@ -193,6 +194,37 @@ exports.deleteAct = async req => {
       for(let v of vers) {
         v.state = GLBConfig.DISABLE
         await v.save()
+      }
+    }
+  } else {
+    return common.error('unusual_02')
+  }
+}
+
+exports.deleteInvoiceAct = async req => {
+  let doc = common.docValidate(req)
+  let obj = await tb_unusual_invoice.findOne({
+    where: {
+      unusual_invoice_id: doc.unusual_invoice_id,
+      state: GLBConfig.ENABLE
+    }
+  })
+  if (obj) {
+    if(obj.unusual_invoice_status === '2') {
+      obj.unusual_invoice_status = '1'
+      obj.unusual_invoice_no = null
+      obj.unusual_invoice_date = null
+      await obj.save()
+      let invoice = await tb_uploadfile.findOne({
+        where: {
+          uploadfile_index1: obj.unusual_invoice_id,
+          api_name: 'UNUSUAL INVOICE',
+          state: GLBConfig.ENABLE
+        }
+      })
+      if(invoice) {
+        invoice.state = GLBConfig.DISABLE
+        await invoice.save()
       }
     }
   } else {

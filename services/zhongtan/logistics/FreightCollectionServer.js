@@ -137,7 +137,7 @@ const queryWhereJoin = async (param) => {
     if(searchPara.shipment_list_business_type) {
       queryStr = queryStr + ' and s.shipment_list_business_type = ? '
       replacements.push(searchPara.shipment_list_business_type)
-      if(searchPara.shipment_list_in_date && searchPara.shipment_list_in_date.length > 1) {
+      if(searchPara.shipment_list_in_date && searchPara.shipment_list_in_date.length > 1 && searchPara.shipment_list_in_date[0] && searchPara.shipment_list_in_date[1]) {
         if(searchPara.shipment_list_business_type === 'I') {
           queryStr = queryStr + ' and s.shipment_list_discharge_date >= ? and s.shipment_list_discharge_date <= ? '
         } else {
@@ -146,7 +146,7 @@ const queryWhereJoin = async (param) => {
         replacements.push(searchPara.shipment_list_in_date[0])
         replacements.push(searchPara.shipment_list_in_date[1])
       }
-      if(searchPara.shipment_list_out_date && searchPara.shipment_list_out_date.length > 1) {
+      if(searchPara.shipment_list_out_date && searchPara.shipment_list_out_date.length > 1 && searchPara.shipment_list_out_date[0] && searchPara.shipment_list_out_date[1]) {
         if(searchPara.shipment_list_business_type === 'I') {
           queryStr = queryStr + ' and s.shipment_list_empty_return_date >= ? and s.shipment_list_empty_return_date <= ? '
         } else {
@@ -156,14 +156,14 @@ const queryWhereJoin = async (param) => {
         replacements.push(searchPara.shipment_list_out_date[1])
       }
     } else {
-      if(searchPara.shipment_list_in_date && searchPara.shipment_list_in_date.length > 1) {
+      if(searchPara.shipment_list_in_date && searchPara.shipment_list_in_date.length > 1 && searchPara.shipment_list_in_date[0] && searchPara.shipment_list_in_date[1]) {
         queryStr = queryStr + ' and ((s.shipment_list_discharge_date >= ? and s.shipment_list_discharge_date <= ?) OR (s.shipment_list_depot_gate_out_date >= ? and s.shipment_list_depot_gate_out_date <= ?)) '
         replacements.push(searchPara.shipment_list_in_date[0])
         replacements.push(searchPara.shipment_list_in_date[1])
         replacements.push(searchPara.shipment_list_in_date[0])
         replacements.push(searchPara.shipment_list_in_date[1])
       }
-      if(searchPara.shipment_list_out_date && searchPara.shipment_list_out_date.length > 1) {
+      if(searchPara.shipment_list_out_date && searchPara.shipment_list_out_date.length > 1 && searchPara.shipment_list_out_date[0] && searchPara.shipment_list_out_date[1]) {
         queryStr = queryStr + ' and ((s.shipment_list_empty_return_date >= ? and s.shipment_list_empty_return_date <= ?) or (s.shipment_list_loading_date >= ? and s.shipment_list_loading_date <= ?)) '
         replacements.push(searchPara.shipment_list_out_date[0])
         replacements.push(searchPara.shipment_list_out_date[1])
@@ -179,6 +179,11 @@ const queryWhereJoin = async (param) => {
       queryStr = queryStr + ' and (s.shipment_list_customer = ? or s.shipment_list_extra_customer = ?) '
       replacements.push(searchPara.shipment_list_customer)
       replacements.push(searchPara.shipment_list_customer)
+    }
+    if(searchPara.shipment_list_invoice_date && searchPara.shipment_list_invoice_date.length > 1 && searchPara.shipment_list_invoice_date[0] && searchPara.shipment_list_invoice_date[1]) {
+      queryStr = queryStr + ' and s.shipment_list_receivable_freight_invoice >= ? and s.shipment_list_receivable_freight_invoice <= ? '
+      replacements.push(searchPara.shipment_list_invoice_date[0])
+      replacements.push(searchPara.shipment_list_invoice_date[1])
     }
   }
   return {
