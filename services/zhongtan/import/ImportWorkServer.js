@@ -473,14 +473,16 @@ exports.uploadImportAct = async req => {
           import_ship_srv_main: xmldata.DATA_DS.P_SVC_MAIN._text,
           import_ship_vessel_main: xmldata.DATA_DS.P_VSL_MAIN._text,
           import_ship_voyage_main: xmldata.DATA_DS.P_VOY_MAIN._text,
-          import_business_type: business_type
+          import_business_type: business_type,
+          state : GLBConfig.ENABLE
         }
       })
   
       let shipinfo = await tb_shipinfo.findOne({
         where: {
           import_shipinfo_vessel_code: xmldata.DATA_DS.P_VSL_MAIN._text,
-          import_business_type: business_type
+          import_business_type: business_type,
+          state : GLBConfig.ENABLE
         }
       })
   
