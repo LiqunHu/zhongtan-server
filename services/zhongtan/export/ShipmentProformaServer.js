@@ -521,7 +521,8 @@ exports.uploadShipmentAct = async req => {
           where: {
             export_vessel_id: ves.export_vessel_id,
             export_masterbl_bl: masterbi_bl,
-            state: GLBConfig.ENABLE
+            state: GLBConfig.ENABLE,
+            bk_cancellation_status: GLBConfig.DISABLE
           }
         })
         let load_bl = await tb_bl.findOne({
@@ -1026,8 +1027,8 @@ exports.searchBlAct = async req => {
   let masterbi_bl = doc.masterbi_bl
   let shipper_company = doc.shipper_company
   let consignee_company = doc.consignee_company
-  let queryStr =  `select * from tbl_zhongtan_export_proforma_masterbl b WHERE b.export_vessel_id = ? AND b.state = ? `
-  let replacements = [export_vessel_id, GLBConfig.ENABLE]
+  let queryStr =  `select * from tbl_zhongtan_export_proforma_masterbl b WHERE b.export_vessel_id = ? AND b.state = ? AND b.bk_cancellation_status <> ? `
+  let replacements = [export_vessel_id, GLBConfig.ENABLE, GLBConfig.ENABLE]
   if(masterbi_bl) {
     queryStr = queryStr + ` AND b.export_masterbl_bl LIKE ?`
     replacements.push('%' + masterbi_bl + '%')
