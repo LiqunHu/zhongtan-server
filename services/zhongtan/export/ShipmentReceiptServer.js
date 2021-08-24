@@ -35,13 +35,11 @@ exports.searchVesselAct = async req => {
   let vessel_name = doc.vessel_name
   let invoice_no = doc.invoice_no
   let masterbi_bl = doc.masterbi_bl
-  let queryStr =  `SELECT * FROM tbl_zhongtan_export_proforma_vessel v `
+  let queryStr =  `SELECT * FROM tbl_zhongtan_export_proforma_vessel v WHERE v.state = '1'`
   let replacements = []
   if(masterbi_bl) {
-    queryStr = queryStr + ` LEFT JOIN tbl_zhongtan_export_proforma_masterbl b ON v.export_vessel_id = b.export_vessel_id WHERE v.state = '1' AND b.state = '1' AND b.export_masterbl_bl like ? `
+    queryStr = queryStr + ` AND v.export_vessel_id IN (SELECT export_vessel_id FROM tbl_zhongtan_export_proforma_masterbl b WHERE b.state = '1' AND b.export_masterbl_bl like ?) `
     replacements.push('%' + masterbi_bl + '%')
-  } else {
-    queryStr = queryStr + ` WHERE v.state = '1' `
   }
   if(invoice_no) {
     queryStr = queryStr + ` AND v.export_vessel_id IN (SELECT export_vessel_id FROM tbl_zhongtan_export_proforma_masterbl WHERE export_masterbl_id IN (SELECT DISTINCT(export_masterbl_id) FROM tbl_zhongtan_export_shipment_fee WHERE state = '1' AND shipment_fee_invoice_no LIKE ?))`
