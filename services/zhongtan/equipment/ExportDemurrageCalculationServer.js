@@ -45,7 +45,7 @@ exports.searchAct = async req => {
   let queryStr = `SELECT a.*, b.export_vessel_name, b.export_vessel_voyage, b.export_vessel_etd, c.export_masterbl_id, c.export_masterbl_bl_carrier, c.export_masterbl_cargo_type
                   from tbl_zhongtan_export_proforma_container a 
                   LEFT JOIN tbl_zhongtan_export_proforma_vessel b ON a.export_vessel_id = b.export_vessel_id AND b.state = '1' 
-                  LEFT JOIN tbl_zhongtan_export_proforma_masterbl c ON a.export_container_bl = c.export_masterbl_bl AND c.state = '1' AND c.export_vessel_id = a.export_vessel_id AND AND c.bk_cancellation_status = '0'
+                  LEFT JOIN tbl_zhongtan_export_proforma_masterbl c ON a.export_container_bl = c.export_masterbl_bl AND c.state = '1' AND c.export_vessel_id = a.export_vessel_id AND c.bk_cancellation_status = '0'
                   WHERE a.state = '1'`
   let replacements = []
 
