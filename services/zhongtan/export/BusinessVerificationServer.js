@@ -13,6 +13,7 @@ const tb_bl = model.zhongtan_export_masterbl
 const tb_vessel = model.zhongtan_export_vessel
 const tb_shipment_fee = model.zhongtan_export_shipment_fee
 const tb_shipment_fee_log = model.zhongtan_export_shipment_fee_log
+const tb_uploadfile = model.zhongtan_uploadfile
 
 exports.initAct = async () => {
   let returnData = {
@@ -62,6 +63,13 @@ exports.searchAct = async req => {
   if(result.data) {
     for(let d of result.data) {
       d.created_at = moment(d.created_at).format('YYYY-MM-DD HH:mm:ss')
+      d.attachments = await tb_uploadfile.findAll({
+        where: {
+          api_name: 'EMPTY RELEASE',
+          uploadfile_index1: d.export_masterbl_id,
+          state: GLBConfig.ENABLE
+        }
+      })
       rows.push(d)
     }
   }
