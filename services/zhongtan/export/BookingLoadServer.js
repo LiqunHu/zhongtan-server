@@ -909,20 +909,14 @@ exports.searchVesselAct = async req => {
   if(vessels) {
     for(let v of vessels) {
       v.size_types = []
-      let bcount = await tb_bl.count({
-        where: {
-          export_vessel_id: v.export_vessel_id,
-          state: GLBConfig.ENABLE
-        }
-      })
-      let ccount = await tb_container.count({
-        where: {
-          export_vessel_id: v.export_vessel_id,
-          state: GLBConfig.ENABLE
-        }
-      })
-      v.bl_count = bcount
-      v.container_count = ccount
+      let bcountStr = `SELECT COUNT(1) AS count FROM tbl_zhongtan_export_masterbl WHERE export_vessel_id = ? AND state = ? AND INSTR(export_masterbl_bl, '*') = 0`
+      let bcountReplacements = [v.export_vessel_id, GLBConfig.ENABLE]
+      let bcount = await model.simpleSelect(bcountStr, bcountReplacements)
+      let ccountStr = `SELECT COUNT(1) AS count FROM tbl_zhongtan_export_container WHERE export_vessel_id = ? AND state = ? AND INSTR(export_container_bl, '*') = 0`
+      let ccountReplacements = [v.export_vessel_id, GLBConfig.ENABLE]
+      let ccount = await model.simpleSelect(ccountStr, ccountReplacements)
+      v.bl_count = bcount[0].count
+      v.container_count = ccount[0].count
       queryStr = `SELECT export_container_size_type containers_size, COUNT(1) containers_size_count FROM tbl_zhongtan_export_container WHERE state = '1' AND export_vessel_id = ? GROUP BY export_container_size_type`
       replacements = [v.export_vessel_id]
       let sts = await model.simpleSelect(queryStr, replacements)
