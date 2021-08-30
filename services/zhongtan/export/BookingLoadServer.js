@@ -1219,16 +1219,18 @@ exports.emptyReleaseAct = async req => {
     bl.export_masterbl_empty_release_valid_to = doc.export_masterbl_empty_release_valid_to
     bl.export_masterbl_agent_staff = doc.agentStaff
 
-    for(let letter of doc.export_masterbl_empty_release_guarantee_letter_list) {
-      let fileInfo = await common.fileSaveMongo(letter.response.info.path, 'zhongtan')
-      await tb_uploadfile.create({
-        api_name: 'EMPTY RELEASE',
-        user_id: user.user_id,
-        uploadfile_index1: bl.export_masterbl_id,
-        uploadfile_name: fileInfo.name,
-        uploadfile_url: fileInfo.url,
-        uploadfile_state: 'PM'
-      })
+    if(doc.export_masterbl_empty_release_guarantee_letter_list) {
+      for(let letter of doc.export_masterbl_empty_release_guarantee_letter_list) {
+        let fileInfo = await common.fileSaveMongo(letter.response.info.path, 'zhongtan')
+        await tb_uploadfile.create({
+          api_name: 'EMPTY RELEASE',
+          user_id: user.user_id,
+          uploadfile_index1: bl.export_masterbl_id,
+          uploadfile_name: fileInfo.name,
+          uploadfile_url: fileInfo.url,
+          uploadfile_state: 'PM'
+        })
+      }
     }
     await bl.save()
   }
