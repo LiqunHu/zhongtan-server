@@ -60,4 +60,10 @@ module.exports = db.defineModel('tbl_zhongtan_export_proforma_vessel', {
     defaultValue: '',
     allowNull: false
   },
+  export_total_units: {
+    // 
+    type: db.STRING(10),
+    defaultValue: '',
+    allowNull: true
+  },
 })

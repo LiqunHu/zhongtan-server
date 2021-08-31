@@ -1083,9 +1083,14 @@ exports.modifyVesselAct = async req => {
     }
   })
   if(vessel) {
-    vessel.export_vessel_name = doc.export_vessel_name
-    vessel.export_vessel_voyage = doc.export_vessel_voyage
-    vessel.export_vessel_etd = doc.export_vessel_etd
+    if(doc.modify_type && doc.modify_type === 'line') {
+      vessel.export_total_units = doc.export_total_units
+    } else {
+      vessel.export_vessel_name = doc.export_vessel_name
+      vessel.export_vessel_voyage = doc.export_vessel_voyage
+      vessel.export_vessel_etd = doc.export_vessel_etd
+      vessel.export_total_units = doc.export_total_units
+    }
     await vessel.save()
   }
   return common.success()
