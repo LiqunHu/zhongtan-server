@@ -1099,21 +1099,21 @@ exports.resetShipmentAct = async req =>{
             await f.save()
           }
         } else if(f.shipment_fee_type === 'P' && f.shipment_fee_status != 'AP') {
-          f.shipment_fee_submit_by = null
-          f.shipment_fee_submit_at = null
-          f.shipment_fee_approve_by = null
-          f.shipment_fee_approve_at = null
-          f.shipment_fee_invoice_by = null
-          f.shipment_fee_invoice_at = null
-          f.shipment_fee_invoice_no = null
-          f.shipment_fee_receipt_by = null
-          f.shipment_fee_receipt_at = null
-          f.shipment_fee_receipt_no = null
-          f.shipment_fee_invoice_id = null
-          f.shipment_fee_receipt_id = null
-          f.shipment_fee_status = 'SA'
-          f.updated_at = curDate
-          await f.save()
+          // f.shipment_fee_submit_by = null
+          // f.shipment_fee_submit_at = null
+          // f.shipment_fee_approve_by = null
+          // f.shipment_fee_approve_at = null
+          // f.shipment_fee_invoice_by = null
+          // f.shipment_fee_invoice_at = null
+          // f.shipment_fee_invoice_no = null
+          // f.shipment_fee_receipt_by = null
+          // f.shipment_fee_receipt_at = null
+          // f.shipment_fee_receipt_no = null
+          // f.shipment_fee_invoice_id = null
+          // f.shipment_fee_receipt_id = null
+          // f.shipment_fee_status = 'SA'
+          // f.updated_at = curDate
+          // await f.save()
         }
       }
     }

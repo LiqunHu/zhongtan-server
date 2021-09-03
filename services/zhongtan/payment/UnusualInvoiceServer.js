@@ -108,6 +108,19 @@ exports.addAct = async req => {
     unusual_invoice_vessel = doc.unusual_invoice_vessel_voyage.split('/')[0]
     unusual_invoice_voyaga = doc.unusual_invoice_vessel_voyage.split('/')[1]
   }
+  let coscoBl = doc.unusual_invoice_bl
+  let ooclBl = doc.unusual_invoice_bl
+  if(common.isNumber(doc.unusual_invoice_bl)) {
+    coscoBl = 'COSU' + doc.unusual_invoice_bl
+    ooclBl = 'OOLU' + doc.unusual_invoice_bl
+  }
+  let numberBl = common.fileterN(doc.unusual_invoice_bl)
+  let queryStr = `SELECT * FROM tbl_zhongtan_unusual_invoice WHERE state = ? AND unusual_invoice_items = ? AND (unusual_invoice_bl = ? OR unusual_invoice_bl = ?  OR unusual_invoice_bl = ?)`
+  let replacements = [GLBConfig.ENABLE, doc.unusual_invoice_items, coscoBl, ooclBl, numberBl]
+  let sameUnusuals = await model.simpleSelect(queryStr, replacements)
+  if(sameUnusuals && sameUnusuals.length > 0) {
+    return common.error('unusual_03')
+  }
   let obj = await tb_unusual_invoice.create({
     unusual_invoice_party: doc.unusual_invoice_party,
     unusual_invoice_items: doc.unusual_invoice_items,
@@ -144,6 +157,21 @@ exports.modifyAct = async req => {
     if(ver && ver.unusual_verification_state === 'AP') {
       return common.error('unusual_01')
     }
+
+    let coscoBl = doc.new.unusual_invoice_bl
+    let ooclBl = doc.new.unusual_invoice_bl
+    if(common.isNumber(doc.new.unusual_invoice_bl)) {
+      coscoBl = 'COSU' + doc.new.unusual_invoice_bl
+      ooclBl = 'OOLU' + doc.new.unusual_invoice_bl
+    }
+    let numberBl = common.fileterN(doc.new.unusual_invoice_bl)
+    let queryStr = `SELECT * FROM tbl_zhongtan_unusual_invoice WHERE state = ? AND unusual_invoice_id <> ? AND unusual_invoice_items = ? AND (unusual_invoice_bl = ? OR unusual_invoice_bl = ?  OR unusual_invoice_bl = ?)`
+    let replacements = [GLBConfig.ENABLE, obj.unusual_invoice_id, doc.new.unusual_invoice_items, coscoBl, ooclBl, numberBl]
+    let sameUnusuals = await model.simpleSelect(queryStr, replacements)
+    if(sameUnusuals && sameUnusuals.length > 0) {
+      return common.error('unusual_03')
+    }
+
     let unusual_invoice_vessel = null
     let unusual_invoice_voyaga = null
     if(doc.new.unusual_invoice_vessel_voyage) {

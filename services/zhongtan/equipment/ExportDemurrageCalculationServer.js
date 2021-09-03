@@ -76,7 +76,6 @@ exports.searchAct = async req => {
   }
   queryStr += ' ORDER BY b.export_vessel_id DESC, a.export_container_bl, a.export_container_no'
   let result = await model.queryWithCount(doc, queryStr, replacements)
-
   returnData.total = result.count
   if(result.data) {
     let last_masterbl_id = ''
@@ -314,6 +313,7 @@ exports.mergeDemurrage2Shipment = async (export_vessel_id, export_container_bl, 
       where: {
         export_vessel_id: export_vessel_id,
         export_masterbl_bl: export_container_bl,
+        bk_cancellation_status: GLBConfig.DISABLE,
         state: GLBConfig.ENABLE
       }
     })
@@ -421,23 +421,91 @@ exports.mergeDemurrage2Shipment = async (export_vessel_id, export_container_bl, 
               shipment_fee_save_by: user_id,
               shipment_fee_save_at: new Date()
             })
+            queryStr = `SELECT * FROM tbl_zhongtan_export_fee_data WHERE state = ? AND fee_data_code = ? AND fee_data_payable = ? LIMIT 1`
+            replacements = [GLBConfig.ENABLE, 'DND', GLBConfig.ENABLE]
+            let payable_fee_data = await model.simpleSelect(queryStr, replacements)
+            let shipment_fee_party = ''
+            if(payable_fee_data && payable_fee_data.length > 0) {
+              if(bl.export_masterbl_bl.indexOf('COSU') >= 0){
+                shipment_fee_party = payable_fee_data[0].fee_data_payable_cosco_party
+              } else if(bl.export_masterbl_bl.indexOf('OOLU') >= 0){
+                shipment_fee_party = payable_fee_data[0].fee_data_payable_oocl_party
+              }
+            }
+            // 新建超期费应付项目
+            await tb_shipment_fee.create({
+              export_masterbl_id: bl.export_masterbl_id,
+              fee_data_code: 'DND',
+              fee_data_fixed: GLBConfig.ENABLE,
+              shipment_fee_supplement: GLBConfig.DISABLE,
+              shipment_fee_type: 'P',
+              shipment_fee_fixed_amount: GLBConfig.ENABLE,
+              shipment_fee_amount: Decimal.isDecimal(bill_demurrage) ? bill_demurrage.toNumber() : bill_demurrage,
+              shipment_fee_currency: 'USD',
+              shipment_fee_status: 'SA',
+              shipment_fee_save_by: user_id,
+              shipment_fee_save_at: new Date(),
+              shipment_fee_party: shipment_fee_party
+            })
           }
         }
       } else {
-        let fol = await tb_shipment_fee.findOne({
+        let rfol = await tb_shipment_fee.findOne({
           where: {
             fee_data_code: 'DND',
             shipment_fee_status: 'SA',
             export_masterbl_id: bl.export_masterbl_id,
-            state: GLBConfig.ENABLE
+            state: GLBConfig.ENABLE,
+            shipment_fee_type: 'R'
           }
         })
-        fol.shipment_fee_amount = Decimal.isDecimal(bill_demurrage) ? bill_demurrage.toNumber() : bill_demurrage
-        await fol.save()
+        rfol.shipment_fee_amount = Decimal.isDecimal(bill_demurrage) ? bill_demurrage.toNumber() : bill_demurrage
+        await rfol.save()
+
+        let pfol = await tb_shipment_fee.findOne({
+          where: {
+            fee_data_code: 'DND',
+            shipment_fee_status: 'SA',
+            export_masterbl_id: bl.export_masterbl_id,
+            state: GLBConfig.ENABLE,
+            shipment_fee_type: 'P'
+          }
+        })
+        if(pfol) {
+          pfol.shipment_fee_amount = Decimal.isDecimal(bill_demurrage) ? bill_demurrage.toNumber() : bill_demurrage
+          await pfol.save()
+        } else {
+          queryStr = `SELECT * FROM tbl_zhongtan_export_fee_data WHERE state = ? AND fee_data_code = ? AND fee_data_payable = ? LIMIT 1`
+          replacements = [GLBConfig.ENABLE, 'DND', GLBConfig.ENABLE]
+          let payable_fee_data = await model.simpleSelect(queryStr, replacements)
+          let shipment_fee_party = ''
+          if(payable_fee_data && payable_fee_data.length > 0) {
+            if(bl.export_masterbl_bl.indexOf('COSU') >= 0){
+              shipment_fee_party = payable_fee_data[0].fee_data_payable_cosco_party
+            } else if(bl.export_masterbl_bl.indexOf('OOLU') >= 0){
+              shipment_fee_party = payable_fee_data[0].fee_data_payable_oocl_party
+            }
+          }
+          // 新建超期费应付项目
+          await tb_shipment_fee.create({
+            export_masterbl_id: bl.export_masterbl_id,
+            fee_data_code: 'DND',
+            fee_data_fixed: GLBConfig.ENABLE,
+            shipment_fee_supplement: GLBConfig.DISABLE,
+            shipment_fee_type: 'P',
+            shipment_fee_fixed_amount: GLBConfig.ENABLE,
+            shipment_fee_amount: Decimal.isDecimal(bill_demurrage) ? bill_demurrage.toNumber() : bill_demurrage,
+            shipment_fee_currency: 'USD',
+            shipment_fee_status: 'SA',
+            shipment_fee_save_by: user_id,
+            shipment_fee_save_at: new Date(),
+            shipment_fee_party: shipment_fee_party
+          })
+        }
       }
     } else {
       if(new Decimal(bill_demurrage) > 0) {
-        // 新建超期费项目
+        // 新建超期费应收项目
         await tb_shipment_fee.create({
           export_masterbl_id: bl.export_masterbl_id,
           fee_data_code: 'DND',
@@ -450,6 +518,32 @@ exports.mergeDemurrage2Shipment = async (export_vessel_id, export_container_bl, 
           shipment_fee_status: 'SA',
           shipment_fee_save_by: user_id,
           shipment_fee_save_at: new Date()
+        })
+        queryStr = `SELECT * FROM tbl_zhongtan_export_fee_data WHERE state = ? AND fee_data_code = ? AND fee_data_payable = ? LIMIT 1`
+        replacements = [GLBConfig.ENABLE, 'DND', GLBConfig.ENABLE]
+        let payable_fee_data = await model.simpleSelect(queryStr, replacements)
+        let shipment_fee_party = ''
+        if(payable_fee_data && payable_fee_data.length > 0) {
+          if(bl.export_masterbl_bl.indexOf('COSU') >= 0){
+            shipment_fee_party = payable_fee_data[0].fee_data_payable_cosco_party
+          } else if(bl.export_masterbl_bl.indexOf('OOLU') >= 0){
+            shipment_fee_party = payable_fee_data[0].fee_data_payable_oocl_party
+          }
+        }
+        // 新建超期费应付项目
+        await tb_shipment_fee.create({
+          export_masterbl_id: bl.export_masterbl_id,
+          fee_data_code: 'DND',
+          fee_data_fixed: GLBConfig.ENABLE,
+          shipment_fee_supplement: GLBConfig.DISABLE,
+          shipment_fee_type: 'P',
+          shipment_fee_fixed_amount: GLBConfig.ENABLE,
+          shipment_fee_amount: Decimal.isDecimal(bill_demurrage) ? bill_demurrage.toNumber() : bill_demurrage,
+          shipment_fee_currency: 'USD',
+          shipment_fee_status: 'SA',
+          shipment_fee_save_by: user_id,
+          shipment_fee_save_at: new Date(),
+          shipment_fee_party: shipment_fee_party
         })
       }
     }
