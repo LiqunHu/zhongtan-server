@@ -1153,7 +1153,7 @@ exports.getEmptyReleaseDataAct = async req => {
     let replacements = []
     retData.masterbl_bl = JSON.parse(JSON.stringify(bl))
     queryStr = `SELECT COUNT(1) AS quantity, COUNT(1) AS release_quantity, s.container_size_name AS container_type FROM tbl_zhongtan_export_container c 
-                      LEFT JOIN tbl_zhongtan_container_size s ON (c.export_container_size_type = s.container_size_code OR c.export_container_size_type = s.container_size_name) 
+                      LEFT JOIN tbl_zhongtan_container_size s ON (c.export_container_size_type = s.container_size_code OR c.export_container_size_type = s.container_size_name) AND s.container_size_name != '40RQ'
                       WHERE c.export_vessel_id = ? AND c.export_container_bl = ? AND c.state = '1' GROUP BY s.container_size_name`
     replacements = [bl.export_vessel_id, bl.export_masterbl_bl]
     retData.quantitys = await model.simpleSelect(queryStr, replacements)
