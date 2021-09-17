@@ -498,7 +498,9 @@ exports.uploadShipmentAct = async req => {
     if(ves) {
       new_import = false
       ves.shipment_list_import = GLBConfig.ENABLE
-      ves.export_vessel_etd = vessel_etd
+      if(!ves.export_vessel_etd && vessel_etd) {
+        ves.export_vessel_etd = vessel_etd
+      }
       ves.export_vessel_total_prepaid = total_prepaid
       ves.export_vessel_call_sign = call_sign
       await ves.save()
@@ -628,7 +630,9 @@ exports.uploadShipmentAct = async req => {
             bl.export_masterbl_container_weight = gross_weight
             // bl.export_masterbl_cargo_nature = cso_no
             bl.export_masterbl_cargo_descriptions = description_of_goods
-            bl.export_masterbl_cargo_type = cargo_classification
+            if(!bl.export_masterbl_cargo_type) {
+              bl.export_masterbl_cargo_type = cargo_classification
+            }
             bl.export_masterbl_container_package = number_of_package
             bl.export_masterbl_container_volumn = gross_volume
             if(!bl.relation_export_masterbl_id) {

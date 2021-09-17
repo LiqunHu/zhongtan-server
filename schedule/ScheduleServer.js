@@ -3,6 +3,8 @@ const moment = require('moment')
 
 const tb_container = model.zhongtan_invoice_containers
 const tb_fixed_deposit = model.zhongtan_customer_fixed_deposit
+const tb_fee_data = model.zhongtan_export_fee_data
+const tb_shipment_fee = model.zhongtan_export_shipment_fee
 const cal_config_srv = require('../services/zhongtan/equipment/OverdueCalculationConfigServer')
 const empty_stock_srv = require('../services/zhongtan/equipment/EmptyStockManagementServer')
 const GLBConfig = require('../util/GLBConfig')
@@ -159,10 +161,68 @@ const resetPaymentAdviceNo = async () => {
   }
 }
 
+const calculationExportShipmentFee = async () => {
+  // 查询ETD超过14天的单子
+  let etd_deadline = moment().subtract(14, 'days').format('YYYY-MM-DD')
+  let queryStr = `SELECT * FROM tbl_zhongtan_export_proforma_masterbl m WHERE state = '1' AND bk_cancellation_status = '0' AND EXISTS (
+    SELECT export_masterbl_id FROM tbl_zhongtan_export_shipment_fee WHERE state = '1' AND shipment_fee_type = 'R' AND export_masterbl_id = m.export_masterbl_id GROUP BY export_masterbl_id HAVING COUNT(if(shipment_fee_status = 'RE', 1, null)) = 0) 
+    AND export_vessel_id IN (SELECT export_vessel_id FROM tbl_zhongtan_export_proforma_vessel WHERE state = '1' AND export_vessel_etd IS NOT NULL AND STR_TO_DATE(export_vessel_etd, "%d/%m/%Y") < ?)`
+  let replacements = [etd_deadline]
+  let unreceipt_rows = await model.simpleSelect(queryStr, replacements)
+  let cal_rows = []
+  if(unreceipt_rows) {
+    for(let ur of unreceipt_rows) {
+      cal_rows.push(ur)
+    }
+  }
+  queryStr = `SELECT * FROM tbl_zhongtan_export_proforma_masterbl m WHERE state = '1' AND bk_cancellation_status = '0' 
+    AND NOT EXISTS (SELECT export_masterbl_id FROM tbl_zhongtan_export_shipment_fee f WHERE f.state = '1' AND f.shipment_fee_type = 'R' AND f.export_masterbl_id = export_masterbl_id) AND export_vessel_id IN (SELECT export_vessel_id FROM tbl_zhongtan_export_proforma_vessel WHERE state = '1' 
+    AND export_vessel_etd IS NOT NULL AND STR_TO_DATE(export_vessel_etd, "%d/%m/%Y") < ?)`
+  replacements = [etd_deadline]
+  let nofee_rows = await model.simpleSelect(queryStr, replacements)
+  if(nofee_rows) {
+    for(let nf of nofee_rows) {
+      cal_rows.push(nf)
+    }
+  }
+  if(cal_rows && cal_rows.length > 0) {
+    let lf = await tb_fee_data.findOne({
+      where: {
+        fee_data_code: 'LPF',
+        fee_data_type: 'BL',
+        fee_data_receivable: GLBConfig.ENABLE,
+        state: GLBConfig.ENABLE
+      }
+    })
+    if(lf && lf.fee_data_receivable_amount) {
+      for(let cr of cal_rows) {
+        queryStr = `SELECT shipment_fee_id FROM tbl_zhongtan_export_shipment_fee WHERE state = '1' AND shipment_fee_type = 'R' AND fee_data_code = 'LPF' AND export_masterbl_id = ?`
+        replacements = [cr.export_masterbl_id]
+        let lpf_rows = await model.simpleSelect(queryStr, replacements)
+        if(!lpf_rows || lpf_rows.length <= 0) {
+          await tb_shipment_fee.create({
+            export_masterbl_id: cr.export_masterbl_id,
+            fee_data_code: lf.fee_data_code,
+            fee_data_fixed: lf.fee_data_receivable_fixed,
+            shipment_fee_supplement: '0',
+            shipment_fee_type: 'R',
+            shipment_fee_amount: lf.fee_data_receivable_amount,
+            shipment_fee_fixed_amount: lf.fee_data_receivable_fixed && lf.fee_data_receivable_fixed === '1' ? lf.fee_data_receivable_amount: '',
+            shipment_fee_currency: lf.shipment_fee_currency ? lf.shipment_fee_currency : 'USD',
+            shipment_fee_status: 'SA',
+            shipment_fee_save_at: new Date()
+          })
+        }
+      }
+    }
+  }
+}
+
 module.exports = {
   resetDemurrageReceiptSeq: resetDemurrageReceiptSeq,
   calculationCurrentOverdueDays: calculationCurrentOverdueDays,
   expireFixedDepositCheck: expireFixedDepositCheck,
   importEmptyStockContainer: importEmptyStockContainer,
-  resetPaymentAdviceNo: resetPaymentAdviceNo
+  resetPaymentAdviceNo: resetPaymentAdviceNo,
+  calculationExportShipmentFee: calculationExportShipmentFee
 }

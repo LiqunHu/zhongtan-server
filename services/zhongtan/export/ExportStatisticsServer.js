@@ -37,7 +37,7 @@ exports.searchAct = async req => {
   let replacements = []
   if(doc.search_data) {
     if (doc.search_data.masterbl_bl) {
-      queryStr += ' and c.export_container_bl like ? '
+      queryStr += ' and b.export_masterbl_bl like ? '
       replacements.push('%' + doc.search_data.masterbl_bl + '%')
     }
     if (doc.search_data.vessel_id) {
@@ -48,6 +48,14 @@ exports.searchAct = async req => {
       queryStr += ' and STR_TO_DATE(v.export_vessel_etd, "%d/%m/%Y") >= ? and STR_TO_DATE(v.export_vessel_etd, "%d/%m/%Y") < ? '
       replacements.push(doc.search_data.etd_date[0])
       replacements.push(moment(doc.search_data.etd_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
+    }
+    if (doc.search_data.forwarder) {
+      queryStr += ` and  b.export_masterbl_forwarder_company = ?`
+      replacements.push(doc.search_data.forwarder)
+    }
+    if (doc.search_data.shipper) {
+      queryStr += ` and  b.export_masterbl_shipper_company like ?`
+      replacements.push('%' + doc.search_data.shipper + '%')
     }
     if (doc.search_data.consignee) {
       queryStr += ` and  b.export_masterbl_consignee_company like ?`
@@ -120,7 +128,14 @@ exports.exportStatisticsAct = async (req, res) => {
       replacements.push(doc.search_data.etd_date[0])
       replacements.push(moment(doc.search_data.etd_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
     }
-    
+    if (doc.search_data.forwarder) {
+      queryStr += ` and  b.export_masterbl_forwarder_company = ?`
+      replacements.push(doc.search_data.forwarder)
+    }
+    if (doc.search_data.shipper) {
+      queryStr += ` and  b.export_masterbl_shipper_company like ?`
+      replacements.push('%' + doc.search_data.shipper + '%')
+    }
     if (doc.search_data.consignee) {
       queryStr += ` and  b.export_masterbl_consignee_company like ?`
       replacements.push('%' + doc.search_data.consignee + '%')
@@ -149,4 +164,16 @@ exports.exportStatisticsAct = async (req, res) => {
   }
   let filepath = await common.ejs2xlsx('ExportStatisticsTemplate.xlsx', renderData)
   res.sendFile(filepath)
+}
+
+exports.searchForwarderAct = async req => {
+  let doc = common.docValidate(req)
+  let retData = {}
+  if(doc.query) {
+    let queryStr = `select a.user_id, a.user_name, a.user_blacklist, a.user_customer_type from tbl_common_user a where a.state = '1' and a.user_type = '${GLBConfig.TYPE_CUSTOMER}' and a.user_name LIKE ? ORDER BY user_name LIMIT 10`
+    let replacements = ['%' + doc.query + '%']
+    let agents = await model.simpleSelect(queryStr, replacements)
+    retData.agents = JSON.parse(JSON.stringify(agents))
+  }
+  return common.success(retData)
 }

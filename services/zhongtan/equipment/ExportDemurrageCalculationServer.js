@@ -41,7 +41,6 @@ exports.initAct = async () => {
 exports.searchAct = async req => {
   let doc = common.docValidate(req)
   let returnData = {}
-
   let queryStr = `SELECT a.*, b.export_vessel_name, b.export_vessel_voyage, b.export_vessel_etd, c.export_masterbl_id, c.export_masterbl_bl_carrier, c.export_masterbl_cargo_type
                   from tbl_zhongtan_export_proforma_container a 
                   LEFT JOIN tbl_zhongtan_export_proforma_vessel b ON a.export_vessel_id = b.export_vessel_id AND b.state = '1' 
@@ -609,4 +608,55 @@ exports.calculationDemurrage2Shipment = async (export_vessel_id, export_containe
       }
     }
   }
+}
+
+exports.demurrageExporttAct = async (req, res) => {
+  let doc = common.docValidate(req)
+  let queryStr = `SELECT a.*, b.export_vessel_name, b.export_vessel_voyage, b.export_vessel_etd, c.export_masterbl_id, c.export_masterbl_bl_carrier, c.export_masterbl_cargo_type
+                  from tbl_zhongtan_export_proforma_container a 
+                  LEFT JOIN tbl_zhongtan_export_proforma_vessel b ON a.export_vessel_id = b.export_vessel_id AND b.state = '1' 
+                  LEFT JOIN tbl_zhongtan_export_proforma_masterbl c ON a.export_container_bl = c.export_masterbl_bl AND c.state = '1' AND c.export_vessel_id = a.export_vessel_id AND c.bk_cancellation_status = '0'
+                  WHERE a.state = '1'`
+  let replacements = []
+  if(doc.search_data) {
+    if (doc.search_data.export_vessel_id) {
+      queryStr += ' and a.export_vessel_id = ? '
+      replacements.push(doc.search_data.export_vessel_id)
+    }
+    if (doc.search_data.export_container_bl) {
+      queryStr += ' and a.export_container_bl like ? '
+      replacements.push('%' + doc.search_data.export_container_bl + '%')
+    }
+    if (doc.search_data.export_container_no) {
+      queryStr += ' and a.export_container_no like ? '
+      replacements.push('%' + doc.search_data.export_container_no + '%')
+    }
+    if (doc.search_data.export_vessel_id) {
+      queryStr += ' and a.export_vessel_id = ? '
+      replacements.push(doc.search_data.export_vessel_id)
+    }
+    if (doc.search_data.loading_date && doc.search_data.loading_date.length > 1 && doc.search_data.loading_date[0] && doc.search_data.loading_date[1]) {
+      let start_date = doc.search_data.loading_date[0]
+      let end_date = doc.search_data.loading_date[1]
+      queryStr += ` AND a.export_container_edi_loading_date >= ? and a.export_container_edi_loading_date < ? `
+      replacements.push(start_date)
+      replacements.push(moment(end_date, 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
+    }
+  }
+  queryStr += ' ORDER BY b.export_vessel_id DESC, a.export_container_bl, a.export_container_no'
+
+  let sqlData = await model.simpleSelect(queryStr, replacements)
+  let renderData = []
+  if(sqlData) {
+    for(let d of sqlData) {
+      if(d.export_masterbl_bl_carrier === 'OOCL') {
+        d.export_container_loading_date_gate_in_data = d.export_container_edi_loading_date
+      } else if(d.export_masterbl_bl_carrier === 'COSCO') {
+        d.export_container_loading_date_gate_in_data = d.export_container_edi_wharf_gate_in_date
+      }
+      renderData.push(d)
+    }
+  }
+  let filepath = await common.ejs2xlsx('ExportDemurrageCalculationTemplate.xlsx', renderData)
+  res.sendFile(filepath)
 }

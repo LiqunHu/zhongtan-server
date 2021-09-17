@@ -8,6 +8,7 @@ const config = require('../app/config')
 const model = require('../app/model')
 const GLBConfig = require('../util/GLBConfig')
 const common = require('../util/CommonUtil')
+const logger = require('../app/logger').createLogger(__filename)
 const cal_config_srv = require('../services/zhongtan/equipment/OverdueCalculationConfigServer')
 const empty_stock_srv = require('../services/zhongtan/equipment/EmptyStockManagementServer')
 const cal_demurrage_srv = require('../services/zhongtan/equipment/ExportDemurrageCalculationServer')
@@ -338,6 +339,7 @@ const parserMailAttachment = async (ediDepots, parserData) => {
               }
               await updateContainerEdi(ediData)
               await updateContainerEmptyStock(ediData)
+              await updateShipmentList(ediData)
               // 记录解析内容
               await tb_email.create({
                 mail_depot_name: edi.edi_depot_name,
@@ -686,6 +688,8 @@ const updateContainerEmptyStock = async (ediData) => {
 }
 
 const updateShipmentList = async (ediData) => {
+  logger.debug('updateShipmentList开始啦啦啦啦啦啦')
+  logger.debug(ediData)
   let sl
   if(ediData.billNo) {
     sl = await tb_shipment_list.findOne({
@@ -705,6 +709,7 @@ const updateShipmentList = async (ediData) => {
     })
   }
   if(sl) {
+    logger.debug('updateShipmentList有查询到')
     // COSCO 进场日期， OOLU 装船日期
     let isWharf = ediData.isWharf
     let ediType = ediData.ediType
@@ -737,7 +742,10 @@ const updateShipmentList = async (ediData) => {
     }
     await sl.save()
     await freight_srv.updateShipmentFreight(sl.shipment_list_id)
+  } else {
+    logger.debug('updateShipmentList没有查询到')
   }
+  logger.debug('updateShipmentList结束啦啦啦啦啦啦')
 }
 
 module.exports = {

@@ -403,7 +403,6 @@ exports.exportCollectAct = async (req, res) => {
     let filepath = await common.ejs2xlsx('ShipmentReceiptTemplate.xlsx', renderData)
     res.sendFile(filepath)
   } else {
-    // console.log('EE')
     return common.error('export_01')
   }
 }

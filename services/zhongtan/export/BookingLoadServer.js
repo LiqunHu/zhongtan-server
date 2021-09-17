@@ -884,6 +884,9 @@ exports.searchVesselAct = async req => {
   let vessel_id = doc.vessel_id
   let masterbi_bl = doc.masterbi_bl
   let firm_booking = doc.firm_booking
+  let forwarder = doc.forwarder
+  let shipper = doc.shipper
+  let consignee = doc.consignee
   let queryStr =  `SELECT * FROM tbl_zhongtan_export_vessel v WHERE v.state = '1'`
   let replacements = []
   if(masterbi_bl) {
@@ -894,6 +897,18 @@ exports.searchVesselAct = async req => {
   if(firm_booking) {
     queryStr = queryStr + ` AND v.export_vessel_id IN (SELECT export_vessel_id from tbl_zhongtan_export_masterbl WHERE state = '1' AND export_masterbl_firm_booking = ? )`
     replacements.push(firm_booking)
+  }
+  if(forwarder) {
+    queryStr = queryStr + ` AND v.export_vessel_id IN (SELECT export_vessel_id from tbl_zhongtan_export_masterbl WHERE state = '1' AND export_masterbl_forwarder_company = ? )`
+    replacements.push(forwarder)
+  }
+  if(shipper) {
+    queryStr = queryStr + ` AND v.export_vessel_id IN (SELECT export_vessel_id from tbl_zhongtan_export_masterbl WHERE state = '1' AND export_masterbl_shipper_company LIKE ? )`
+    replacements.push('%' + shipper + '%')
+  }
+  if(consignee) {
+    queryStr = queryStr + ` AND v.export_vessel_id IN (SELECT export_vessel_id from tbl_zhongtan_export_masterbl WHERE state = '1' AND export_masterbl_consignee_company LIKE ? )`
+    replacements.push('%' + consignee + '%')
   }
   if(etd_start_date && etd_end_date) {
     queryStr = queryStr + ` AND STR_TO_DATE(v.export_vessel_etd, "%d/%m/%Y") >= ? AND STR_TO_DATE(v.export_vessel_etd, "%d/%m/%Y") <= ? `
@@ -915,8 +930,12 @@ exports.searchVesselAct = async req => {
       let ccountStr = `SELECT COUNT(1) AS count FROM tbl_zhongtan_export_container WHERE export_vessel_id = ? AND state = ? AND INSTR(export_container_bl, '*') = 0`
       let ccountReplacements = [v.export_vessel_id, GLBConfig.ENABLE]
       let ccount = await model.simpleSelect(ccountStr, ccountReplacements)
+      let gweightStr = `SELECT SUM(export_container_cargo_weight) AS weight FROM tbl_zhongtan_export_container WHERE export_vessel_id = ? AND state = ? AND INSTR(export_container_bl, '*') = 0`
+      let gweightReplacements = [v.export_vessel_id, GLBConfig.ENABLE]
+      let gweight = await model.simpleSelect(gweightStr, gweightReplacements)
       v.bl_count = bcount[0].count
       v.container_count = ccount[0].count
+      v.gross_weight = gweight[0].weight
       queryStr = `SELECT export_container_size_type containers_size, COUNT(1) containers_size_count FROM tbl_zhongtan_export_container WHERE state = '1' AND export_vessel_id = ? GROUP BY export_container_size_type`
       replacements = [v.export_vessel_id]
       let sts = await model.simpleSelect(queryStr, replacements)
@@ -934,6 +953,9 @@ exports.searchBlAct = async req => {
   let export_vessel_id = doc.export_vessel_id
   let masterbi_bl = doc.masterbi_bl
   let firm_booking = doc.firm_booking
+  let forwarder = doc.forwarder
+  let shipper = doc.shipper
+  let consignee = doc.consignee
   let queryStr =  `select * from tbl_zhongtan_export_masterbl b WHERE b.export_vessel_id = ? AND b.state = ?`
   let replacements = [export_vessel_id, GLBConfig.ENABLE]
   if(masterbi_bl) {
@@ -941,8 +963,20 @@ exports.searchBlAct = async req => {
     replacements.push('%' + masterbi_bl + '%')
   }
   if(firm_booking) {
-    queryStr = queryStr + ` AND export_masterbl_firm_booking = ?`
+    queryStr = queryStr + ` AND b.export_masterbl_firm_booking = ?`
     replacements.push(firm_booking)
+  }
+  if(forwarder) {
+    queryStr = queryStr + ` AND b.export_masterbl_forwarder_company = ?`
+    replacements.push(forwarder)
+  }
+  if(shipper) {
+    queryStr = queryStr + ` AND b.export_masterbl_shipper_company LIKE ?`
+    replacements.push('%' + shipper + '%')
+  }
+  if(consignee) {
+    queryStr = queryStr + ` AND b.export_masterbl_consignee_company LIKE ?`
+    replacements.push('%' + consignee + '%')
   }
   let bls = await model.queryWithCount(doc, queryStr, replacements)
   returnData.total = bls.count
@@ -1471,13 +1505,16 @@ exports.bookingExportAct = async (req, res) => {
   let masterbi_bl = doc.masterbi_bl
   let vessel_id = doc.vessel_id
   let firm_booking = doc.firm_booking
+  let forwarder = doc.forwarder
+  let shipper = doc.shipper
+  let consignee = doc.consignee
   let renderData = []
   let vessel_sheet = []
   let bl_sheet = []
   let container_sheet = []
   let queryStr = ``
   let replacements = []
-  if(masterbi_bl || firm_booking) {
+  if(masterbi_bl || firm_booking || forwarder || shipper || consignee) {
     queryStr = `SELECT mb.*, sc.count_size_type FROM tbl_zhongtan_export_masterbl mb 
               LEFT JOIN (SELECT a.export_container_bl, a.export_vessel_id, GROUP_CONCAT(group_size_type) count_size_type FROM ((SELECT export_container_bl, export_vessel_id, CONCAT(COUNT(export_container_size_type), 'x', export_container_size_type) group_size_type FROM tbl_zhongtan_export_container WHERE state = 1 GROUP BY export_container_bl, export_vessel_id, export_container_size_type)) a GROUP BY a.export_container_bl, a.export_vessel_id) sc ON mb.export_masterbl_bl = sc.export_container_bl AND mb.export_vessel_id = sc.export_vessel_id 
               WHERE state = 1 `
@@ -1488,8 +1525,19 @@ exports.bookingExportAct = async (req, res) => {
     if(firm_booking) {
       queryStr += ` AND export_masterbl_firm_booking = ?`
       replacements.push(firm_booking)
-    }    
-    
+    }
+    if(forwarder) {
+      queryStr += ` AND export_masterbl_forwarder_company = ?`
+      replacements.push(forwarder)
+    } 
+    if(shipper) {
+      queryStr += ` AND export_masterbl_shipper_company LIKE ?`
+      replacements.push('%'+ shipper + '%')
+    }
+    if(consignee) {
+      queryStr += ` AND export_masterbl_consignee_company LIKE ?`
+      replacements.push('%'+ consignee + '%')
+    }
     if((etd_start_date && etd_end_date) || vessel_id) {
       queryStr += ` AND mb.export_vessel_id IN ( SELECT export_vessel_id FROM tbl_zhongtan_export_vessel WHERE state = '1' `
       if(etd_start_date && etd_end_date) {
@@ -1599,7 +1647,7 @@ exports.bookingExportAct = async (req, res) => {
         vessel_sheet.push(v)
         if(bls) {
           for(let b of bls) {
-            if(b.export_vessel_id === v.export_vessel_id) {
+            if(b.export_vessel_id === v.export_vessel_id && b.export_masterbl_bl.indexOf('*') < 0) {
               let numbers = []
               let types = []
               if(b.count_size_type) {
@@ -1624,7 +1672,7 @@ exports.bookingExportAct = async (req, res) => {
 
               if(containers) {
                 for(let c of containers) {
-                  if(c.export_vessel_id === v.export_vessel_id && c.export_container_bl === b.export_masterbl_bl) {
+                  if(c.export_vessel_id === v.export_vessel_id && c.export_container_bl === b.export_masterbl_bl && b.export_masterbl_bl.indexOf('*') < 0) {
                     container_sheet.push(c)
                   }
                 }
