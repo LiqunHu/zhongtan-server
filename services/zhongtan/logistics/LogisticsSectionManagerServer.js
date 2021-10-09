@@ -55,6 +55,39 @@ exports.searchAct = async req => {
     for(let d of result.data) {
       let dd = JSON.parse(JSON.stringify(d))
       dd.created_at = moment(d.created_at).format('YYYY-MM-DD HH:mm:ss')
+      if(dd.logistics_verification_api_name === 'PAYMENT BALANCE') {
+        let ra = await tb_uploadfile.findAll({
+          where: {
+            api_name: 'PAYMENT BALANCE ATTACHMENT',
+            uploadfile_index1: dd.logistics_verification_id,
+            state: GLBConfig.ENABLE
+          }
+        })
+        if(ra) {
+          dd.files = []
+          for(let a of ra) {
+            dd.files.push({
+              url: a.uploadfile_url
+            })
+          }
+        }
+      } else if(dd.logistics_verification_api_name === 'PAYMENT FULL') {
+        let ra = await tb_uploadfile.findAll({
+          where: {
+            api_name: 'PAYMENT FULL ATTACHMENT',
+            uploadfile_index1: dd.logistics_verification_id,
+            state: GLBConfig.ENABLE
+          }
+        })
+        if(ra) {
+          dd.files = []
+          for(let a of ra) {
+            dd.files.push({
+              url: a.uploadfile_url
+            })
+          }
+        }
+      }
       rows.push(dd)
     }
   }
@@ -249,7 +282,7 @@ exports.verificationDetailAct = async req => {
   if(ver) {
     // 托单审核
     if(ver.logistics_verification_api_name === 'PAYMENT ADVANCE' || ver.logistics_verification_api_name === 'PAYMENT BALANCE' || ver.logistics_verification_api_name === 'PAYMENT FULL') {
-      let queryStr = `SELECT sl.*, CONCAT(cv.vendor_code, '/', cv.vendor_name) AS vendor FROM tbl_zhongtan_logistics_verification_freight vf 
+      let queryStr = `SELECT sl.*, CONCAT(cv.vendor_code, '/', cv.vendor_name) AS vendor, vf.logistics_verification_id FROM tbl_zhongtan_logistics_verification_freight vf 
                       LEFT JOIN tbl_zhongtan_logistics_shipment_list sl ON vf.shipment_list_id = sl.shipment_list_id 
                       LEFT JOIN tbl_common_vendor cv ON sl.shipment_list_vendor = cv.vendor_id WHERE vf.state = 1 AND vf.logistics_verification_id = ?`
       let replacements = [doc.logistics_verification_id]

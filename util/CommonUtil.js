@@ -436,9 +436,7 @@ const fs2Edi = async (renderData) => {
   ediTxt += 'UNT+' + ediLines + '+' + data.messageID + '\'\r\n'
   // line ..
   ediTxt += 'UNZ+1+' + data.interchangeID + '\'\r\n'
-  logger.error(ediTxt)
   let filePath = path.join(process.cwd(), config.fileSys.filesDir, data.ediName)
-  logger.error(filePath)
   fs.writeFile(filePath, ediTxt, function(err) {
     if (err) {
         throw err

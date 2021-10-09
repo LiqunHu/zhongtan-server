@@ -133,4 +133,9 @@ module.exports = db.defineModel('tbl_common_user', {
     type: db.JSON,
     allowNull: true
   },
+  user_rate: {
+    type: db.INTEGER(10),
+    defaultValue: 5,
+    allowNull: false
+  },
 })

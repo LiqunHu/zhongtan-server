@@ -440,6 +440,12 @@ exports.applyPaymentSearchAct = async req => {
 exports.applyPaymentAct = async req => {
   let doc = common.docValidate(req), user = req.user
   let applyData = doc.applyData
+  let balanceFiles = doc.payment_balance_files
+  if(doc.applyAction === 'BALANCE') {
+    if(!balanceFiles || balanceFiles.length <= 0) {
+      return common.error('logistics_13')
+    }
+  }
   let vgs = await common.groupingJson(applyData, 'shipment_list_vendor')
   if(vgs.length > 1) {
     return common.error('logistics_04')
@@ -447,7 +453,7 @@ exports.applyPaymentAct = async req => {
   for(let a of applyData) {
     a.grouping_type = a.shipment_list_business_type + '_' + a.shipment_list_cntr_owner + '_' + a.shipment_list_cargo_type
   }
-  let gts = await common.groupingJson(doc.applyData, 'grouping_type')
+  let gts = await common.groupingJson(applyData, 'grouping_type')
   let api_name = 'PAYMENT ADVANCE'
   // 支付状态 0：未添加，1：已添加，2：申请预付，3预付支付，4申请余款，5余款支付，6申请额外费用，7额外费用支付
   let payment_status = '2'
@@ -476,6 +482,21 @@ exports.applyPaymentAct = async req => {
       logistics_verification_amount: applyAmount.toNumber(),
       logistics_verification_create_user: user.user_id,
     })
+    if(doc.applyAction === 'BALANCE'){
+      for(let f of balanceFiles) {
+        let fileInfo = await common.fileSaveMongo(f.response.info.path, 'zhongtan')
+        await tb_uploadfile.create({
+          api_name: 'PAYMENT BALANCE ATTACHMENT',
+          user_id: user.user_id,
+          uploadfile_index1: ver.logistics_verification_id,
+          uploadfile_name: fileInfo.name,
+          uploadfile_url: fileInfo.url,
+          uploadfile_state: 'AP',
+          uploadfile_amount: applyAmount.toNumber(),
+          uploadfile_currency: 'USD'
+        })
+      }
+    }
     for(let d of data) {
       await tb_verification_freight.create({
         logistics_verification_id: ver.logistics_verification_id,
@@ -500,6 +521,10 @@ exports.applyPaymentAct = async req => {
 exports.applyFullPaymentAct = async req => {
   let doc = common.docValidate(req), user = req.user
   let applyData = doc.applyData
+  let fullFiles = doc.payment_full_files
+  if(!fullFiles || fullFiles.length <= 0) {
+    return common.error('logistics_13')
+  }
   let vgs = await common.groupingJson(applyData, 'shipment_list_vendor')
   if(vgs.length > 1) {
     return common.error('logistics_04')
@@ -507,7 +532,7 @@ exports.applyFullPaymentAct = async req => {
   for(let a of applyData) {
     a.grouping_type = a.shipment_list_business_type + '_' + a.shipment_list_cntr_owner + '_' + a.shipment_list_cargo_type
   }
-  let gts = await common.groupingJson(doc.applyData, 'grouping_type')
+  let gts = await common.groupingJson(applyData, 'grouping_type')
   let api_name = 'PAYMENT FULL'
   // 支付状态 0：未添加，1：已添加，2：申请预付，3预付支付，4申请余款，5余款支付，6申请额外费用，7额外费用支付，8全款支付
   let payment_status = '8'
@@ -528,6 +553,19 @@ exports.applyFullPaymentAct = async req => {
       logistics_verification_amount: applyAmount.toNumber(),
       logistics_verification_create_user: user.user_id,
     })
+    for(let f of fullFiles) {
+      let fileInfo = await common.fileSaveMongo(f.response.info.path, 'zhongtan')
+      await tb_uploadfile.create({
+        api_name: 'PAYMENT FULL ATTACHMENT',
+        user_id: user.user_id,
+        uploadfile_index1: ver.logistics_verification_id,
+        uploadfile_name: fileInfo.name,
+        uploadfile_url: fileInfo.url,
+        uploadfile_state: 'AP',
+        uploadfile_amount: applyAmount.toNumber(),
+        uploadfile_currency: 'USD'
+      })
+    }
     for(let d of data) {
       await tb_verification_freight.create({
         logistics_verification_id: ver.logistics_verification_id,
@@ -536,6 +574,7 @@ exports.applyFullPaymentAct = async req => {
         logistics_freight_state: 'PS',
         logistics_freight_amount: d.shipment_list_total_freight
       })
+
       let sl = await tb_shipment_list.findOne({
         where: {
           shipment_list_id: d.shipment_list_id,

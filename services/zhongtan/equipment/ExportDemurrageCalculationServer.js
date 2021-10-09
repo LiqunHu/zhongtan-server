@@ -116,7 +116,11 @@ exports.searchAct = async req => {
         })
       }
       if(last_demurrage_receipt > 0) {
-        d.export_container_cal_receipt = GLBConfig.ENABLE
+        if(d.export_container_cal_demurrage_amount && (d.export_container_edi_loading_date || d.export_container_edi_wharf_gate_in_date) && d.export_container_edi_depot_gate_out_date) {
+          d.export_container_cal_receipt = GLBConfig.ENABLE
+        } else {
+          d.export_container_cal_receipt = GLBConfig.DISABLE
+        }
       } else {
         d.export_container_cal_receipt = GLBConfig.DISABLE
       }
@@ -654,6 +658,11 @@ exports.demurrageExporttAct = async (req, res) => {
         d.export_container_loading_date_gate_in_data = d.export_container_edi_loading_date
       } else if(d.export_masterbl_bl_carrier === 'COSCO') {
         d.export_container_loading_date_gate_in_data = d.export_container_edi_wharf_gate_in_date
+      }
+      if(d.export_container_cal_demurrage_amount && d.export_container_loading_date_gate_in_data && d.export_container_edi_depot_gate_out_date) {
+        //
+      } else {
+        d.shipment_fee_receipt_no = ''
       }
       renderData.push(d)
     }

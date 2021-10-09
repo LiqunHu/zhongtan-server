@@ -86,7 +86,8 @@ exports.addAct = async req => {
       user_vrn: doc.user_vrn ? doc.user_vrn.trim() : '',
       user_bank_account_usd: doc.user_bank_account_usd ? doc.user_bank_account_usd.trim() : '',
       user_bank_account_tzs: doc.user_bank_account_tzs ? doc.user_bank_account_tzs.trim() : '',
-      export_split_shipment: doc.export_split_shipment ? doc.export_split_shipment : []
+      export_split_shipment: doc.export_split_shipment ? doc.export_split_shipment : [],
+      user_rate: doc.user_rate
     })
 
     await tb_user_groups.create({
@@ -129,6 +130,7 @@ exports.modifyAct = async req => {
     modiuser.user_bank_account_usd = doc.new.user_bank_account_usd ? doc.new.user_bank_account_usd.trim() : ''
     modiuser.user_bank_account_tzs = doc.new.user_bank_account_tzs ? doc.new.user_bank_account_tzs.trim() : ''
     modiuser.export_split_shipment = doc.new.export_split_shipment ? doc.new.export_split_shipment : []
+    modiuser.user_rate = doc.new.user_rate
     await modiuser.save()
 
     let returnData = JSON.parse(JSON.stringify(modiuser))
@@ -210,4 +212,21 @@ exports.exportCustomerAct = async(req, res) => {
   let filepath = await common.ejs2xlsx('CustomerTemplate.xlsx', renderData)
 
   res.sendFile(filepath)
+}
+
+exports.changeRateAct = async req => {
+  let doc = common.docValidate(req)
+  let modiuser = await tb_user.findOne({
+    where: {
+      user_id: doc.user_id,
+      state: GLBConfig.ENABLE
+    }
+  })
+  if (modiuser) {
+    modiuser.user_rate = doc.user_rate
+    await modiuser.save()
+    return common.success()
+  } else {
+    return common.error('operator_03')
+  }
 }

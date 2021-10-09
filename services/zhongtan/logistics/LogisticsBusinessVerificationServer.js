@@ -55,6 +55,39 @@ exports.searchAct = async req => {
     for(let d of result.data) {
       let dd = JSON.parse(JSON.stringify(d))
       dd.created_at = moment(d.created_at).format('YYYY-MM-DD HH:mm:ss')
+      if(dd.logistics_verification_api_name === 'PAYMENT BALANCE') {
+        let ra = await tb_uploadfile.findAll({
+          where: {
+            api_name: 'PAYMENT BALANCE ATTACHMENT',
+            uploadfile_index1: dd.logistics_verification_id,
+            state: GLBConfig.ENABLE
+          }
+        })
+        if(ra) {
+          dd.files = []
+          for(let a of ra) {
+            dd.files.push({
+              url: a.uploadfile_url
+            })
+          }
+        }
+      } else if(dd.logistics_verification_api_name === 'PAYMENT FULL') {
+        let ra = await tb_uploadfile.findAll({
+          where: {
+            api_name: 'PAYMENT FULL ATTACHMENT',
+            uploadfile_index1: dd.logistics_verification_id,
+            state: GLBConfig.ENABLE
+          }
+        })
+        if(ra) {
+          dd.files = []
+          for(let a of ra) {
+            dd.files.push({
+              url: a.uploadfile_url
+            })
+          }
+        }
+      }
       rows.push(dd)
     }
   }
