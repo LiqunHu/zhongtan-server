@@ -92,15 +92,15 @@ exports.searchAct = async req => {
         d.export_container_edi_loading_date_disabled = false
       }
       d.export_container_edi_loading_date_edit_enable = false
-      if(d.export_masterbl_bl_carrier === 'OOCL') {
-        if(d.export_container_edi_loading_date && d.export_vessel_etd && moment(d.export_vessel_etd, 'DD/MM/YYYY').diff(moment(d.export_container_edi_loading_date, 'DD/MM/YYYY'), 'days') > 5) {
-          d.export_container_edi_loading_date_edit_enable = true
-        }
-      } else if(d.export_masterbl_bl_carrier === 'COSCO'){
-        if(d.export_container_edi_loading_date && d.export_vessel_etd && moment(d.export_vessel_etd, 'DD/MM/YYYY').diff(moment(d.export_container_edi_wharf_gate_in_date, 'DD/MM/YYYY'), 'days') > 5) {
-          d.export_container_edi_loading_date_edit_enable = true
-        }
-      }
+      // if(d.export_masterbl_bl_carrier === 'OOCL') {
+      //   if(d.export_container_edi_loading_date && d.export_vessel_etd && moment(d.export_vessel_etd, 'DD/MM/YYYY').diff(moment(d.export_container_edi_loading_date, 'DD/MM/YYYY'), 'days') > 5) {
+      //     d.export_container_edi_loading_date_edit_enable = true
+      //   }
+      // } else if(d.export_masterbl_bl_carrier === 'COSCO'){
+      //   if(d.export_container_edi_loading_date && d.export_vessel_etd && moment(d.export_vessel_etd, 'DD/MM/YYYY').diff(moment(d.export_container_edi_wharf_gate_in_date, 'DD/MM/YYYY'), 'days') > 5) {
+      //     d.export_container_edi_loading_date_edit_enable = true
+      //   }
+      // }
       
       // cargo_type, discharge_port, carrier, container_type, enabled_date
       d.export_container_cal_static_free_days = await cal_config_srv.queryContainerFreeDays(d.export_masterbl_cargo_type, null, d.export_masterbl_bl_carrier, d.export_container_size_type, d.export_vessel_etd, 'E')
