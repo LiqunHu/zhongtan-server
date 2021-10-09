@@ -93,11 +93,11 @@ exports.searchAct = async req => {
       }
       d.export_container_edi_loading_date_edit_enable = false
       if(d.export_masterbl_bl_carrier === 'OOCL') {
-        if(d.export_container_edi_loading_date && d.export_vessel_etd && Math.abs(moment(d.export_container_edi_loading_date, 'DD/MM/YYYY').diff(moment(d.export_vessel_etd, 'DD/MM/YYYY'), 'days')) > 5) {
+        if(d.export_container_edi_loading_date && d.export_vessel_etd && moment(d.export_vessel_etd, 'DD/MM/YYYY').diff(moment(d.export_container_edi_loading_date, 'DD/MM/YYYY'), 'days') > 5) {
           d.export_container_edi_loading_date_edit_enable = true
         }
       } else if(d.export_masterbl_bl_carrier === 'COSCO'){
-        if(d.export_container_edi_loading_date && d.export_vessel_etd && Math.abs(moment(d.export_container_edi_wharf_gate_in_date, 'DD/MM/YYYY').diff(moment(d.export_vessel_etd, 'DD/MM/YYYY'), 'days')) > 5) {
+        if(d.export_container_edi_loading_date && d.export_vessel_etd && moment(d.export_vessel_etd, 'DD/MM/YYYY').diff(moment(d.export_container_edi_wharf_gate_in_date, 'DD/MM/YYYY'), 'days') > 5) {
           d.export_container_edi_loading_date_edit_enable = true
         }
       }
