@@ -936,7 +936,7 @@ exports.searchVesselAct = async req => {
       v.bl_count = bcount[0].count
       v.container_count = ccount[0].count
       v.gross_weight = gweight[0].weight
-      queryStr = `SELECT export_container_size_type containers_size, COUNT(1) containers_size_count FROM tbl_zhongtan_export_container WHERE state = '1' AND export_vessel_id = ? AND INSTR(export_masterbl_bl, '*') = 0 GROUP BY export_container_size_type`
+      queryStr = `SELECT export_container_size_type containers_size, COUNT(1) containers_size_count FROM tbl_zhongtan_export_container WHERE state = '1' AND export_vessel_id = ? AND INSTR(export_container_bl, '*') = 0 GROUP BY export_container_size_type`
       replacements = [v.export_vessel_id]
       let sts = await model.simpleSelect(queryStr, replacements)
       if(sts && sts.length > 0) {
