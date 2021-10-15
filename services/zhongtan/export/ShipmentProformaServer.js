@@ -612,8 +612,10 @@ exports.uploadShipmentAct = async req => {
                 })
                 if(fees && fees.length > 0) {
                   for(let f of fees) {
-                    f.state = GLBConfig.DISABLE
-                    await f.save()
+                    if(f.shipment_fee_status !== 'RE') {
+                      f.state = GLBConfig.DISABLE
+                      await f.save()
+                    }
                   }
                 }
               }
