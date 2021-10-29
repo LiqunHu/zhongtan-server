@@ -46,16 +46,6 @@ exports.searchAct = async req => {
       replacements.push(doc.search_data.ata_date[0])
       replacements.push(moment(doc.search_data.ata_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
     }
-    if (doc.search_data.invoice_date && doc.search_data.invoice_date.length > 1 && doc.search_data.invoice_date[0] && doc.search_data.invoice_date[1]) {
-      queryStr += ' and a.invoice_containers_empty_return_invoice_date >= ? and a.invoice_containers_empty_return_invoice_date < ? '
-      replacements.push(doc.search_data.invoice_date[0])
-      replacements.push(moment(doc.search_data.invoice_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
-    }
-    if (doc.search_data.receipt_date && doc.search_data.receipt_date.length > 1 && doc.search_data.receipt_date[0] && doc.search_data.receipt_date[1]) {
-      queryStr += ' and a.invoice_containers_empty_return_receipt_date >= ? and a.invoice_containers_empty_return_receipt_date < ? '
-      replacements.push(doc.search_data.receipt_date[0])
-      replacements.push(moment(doc.search_data.receipt_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
-    }
     if (doc.search_data.invoice_containers_bl) {
       queryStr += ' and a.invoice_containers_bl like ? '
       replacements.push('%' + doc.search_data.invoice_containers_bl + '%')
@@ -71,6 +61,17 @@ exports.searchAct = async req => {
     if (doc.search_data.customer_id) {
       queryStr += ' and a.invoice_containers_customer_id = ? '
       replacements.push(doc.search_data.customer_id)
+    }
+
+    if (doc.search_data.invoice_date && doc.search_data.invoice_date.length > 1 && doc.search_data.invoice_date[0] && doc.search_data.invoice_date[1]) {
+      queryStr += ' and a.invoice_containers_id IN (SELECT oic.overdue_invoice_containers_invoice_containers_id FROM tbl_zhongtan_overdue_invoice_containers oic LEFT JOIN tbl_zhongtan_uploadfile iu ON oic.overdue_invoice_containers_invoice_uploadfile_id = iu.uploadfile_id WHERE iu.state = "1" AND oic.state = "1" AND iu.created_at >= ? AND iu.created_at < ?)'
+      replacements.push(doc.search_data.invoice_date[0] + ' 00:00:00')
+      replacements.push(moment(doc.search_data.invoice_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD') + ' 00:00:00')
+    }
+    if (doc.search_data.receipt_date && doc.search_data.receipt_date.length > 1 && doc.search_data.receipt_date[0] && doc.search_data.receipt_date[1]) {
+      queryStr += ' and a.invoice_containers_id IN (SELECT overdue_invoice_containers_invoice_containers_id FROM tbl_zhongtan_overdue_invoice_containers WHERE state = "1" AND overdue_invoice_containers_receipt_date >= ? AND overdue_invoice_containers_receipt_date < ?) '
+      replacements.push(doc.search_data.receipt_date[0] + ' 00:00:00')
+      replacements.push(moment(doc.search_data.receipt_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD') + ' 00:00:00')
     }
   }
   queryStr += ' ORDER BY b.invoice_vessel_id DESC, a.invoice_containers_bl, a.invoice_containers_no'
@@ -175,16 +176,6 @@ exports.exportDemurrageReportAct = async(req, res) => {
       replacements.push(doc.search_data.ata_date[0])
       replacements.push(moment(doc.search_data.ata_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
     }
-    if (doc.search_data.invoice_date && doc.search_data.invoice_date.length > 1) {
-      queryStr += ' and a.invoice_containers_empty_return_invoice_date >= ? and a.invoice_containers_empty_return_invoice_date < ? '
-      replacements.push(doc.search_data.invoice_date[0])
-      replacements.push(moment(doc.search_data.invoice_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
-    }
-    if (doc.search_data.receipt_date && doc.search_data.receipt_date.length > 1) {
-      queryStr += ' and a.invoice_containers_empty_return_receipt_date >= ? and a.invoice_containers_empty_return_receipt_date < ? '
-      replacements.push(doc.search_data.receipt_date[0])
-      replacements.push(moment(doc.search_data.receipt_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
-    }
     if (doc.search_data.invoice_containers_bl) {
       queryStr += ' and a.invoice_containers_bl like ? '
       replacements.push('%' + doc.search_data.invoice_containers_bl + '%')
@@ -200,6 +191,17 @@ exports.exportDemurrageReportAct = async(req, res) => {
     if (doc.search_data.customer_id) {
       queryStr += ' and a.invoice_containers_customer_id = ? '
       replacements.push(doc.search_data.customer_id)
+    }
+
+    if (doc.search_data.invoice_date && doc.search_data.invoice_date.length > 1 && doc.search_data.invoice_date[0] && doc.search_data.invoice_date[1]) {
+      queryStr += ' and a.invoice_containers_id IN (SELECT oic.overdue_invoice_containers_invoice_containers_id FROM tbl_zhongtan_overdue_invoice_containers oic LEFT JOIN tbl_zhongtan_uploadfile iu ON oic.overdue_invoice_containers_invoice_uploadfile_id = iu.uploadfile_id WHERE iu.state = "1" AND oic.state = "1" AND iu.created_at >= ? AND iu.created_at < ?)'
+      replacements.push(doc.search_data.invoice_date[0] + ' 00:00:00')
+      replacements.push(moment(doc.search_data.invoice_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD') + ' 00:00:00')
+    }
+    if (doc.search_data.receipt_date && doc.search_data.receipt_date.length > 1 && doc.search_data.receipt_date[0] && doc.search_data.receipt_date[1]) {
+      queryStr += ' and a.invoice_containers_id IN (SELECT overdue_invoice_containers_invoice_containers_id FROM tbl_zhongtan_overdue_invoice_containers WHERE state = "1" AND overdue_invoice_containers_receipt_date >= ? AND overdue_invoice_containers_receipt_date < ?) '
+      replacements.push(doc.search_data.receipt_date[0] + ' 00:00:00')
+      replacements.push(moment(doc.search_data.receipt_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD') + ' 00:00:00')
     }
   }
   queryStr += ' ORDER BY b.invoice_vessel_id DESC, a.invoice_containers_bl, a.invoice_containers_no'
@@ -307,16 +309,6 @@ exports.exportDemurrageAdminReportAct = async(req, res) => {
       replacements.push(doc.search_data.ata_date[0])
       replacements.push(moment(doc.search_data.ata_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
     }
-    if (doc.search_data.invoice_date && doc.search_data.invoice_date.length > 1 && doc.search_data.invoice_date[0] && doc.search_data.invoice_date[1]) {
-      queryStr += ' and a.invoice_containers_empty_return_invoice_date >= ? and a.invoice_containers_empty_return_invoice_date < ? '
-      replacements.push(doc.search_data.invoice_date[0])
-      replacements.push(moment(doc.search_data.invoice_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
-    }
-    if (doc.search_data.receipt_date && doc.search_data.receipt_date.length > 1 && doc.search_data.receipt_date[0] && doc.search_data.receipt_date[1]) {
-      queryStr += ' and a.invoice_containers_empty_return_receipt_date >= ? and a.invoice_containers_empty_return_receipt_date < ? '
-      replacements.push(doc.search_data.receipt_date[0])
-      replacements.push(moment(doc.search_data.receipt_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
-    }
     if (doc.search_data.invoice_containers_bl) {
       queryStr += ' and a.invoice_containers_bl like ? '
       replacements.push('%' + doc.search_data.invoice_containers_bl + '%')
@@ -332,6 +324,16 @@ exports.exportDemurrageAdminReportAct = async(req, res) => {
     if (doc.search_data.customer_id) {
       queryStr += ' and a.invoice_containers_customer_id = ? '
       replacements.push(doc.search_data.customer_id)
+    }
+    if (doc.search_data.invoice_date && doc.search_data.invoice_date.length > 1 && doc.search_data.invoice_date[0] && doc.search_data.invoice_date[1]) {
+      queryStr += ' and a.invoice_containers_id IN (SELECT oic.overdue_invoice_containers_invoice_containers_id FROM tbl_zhongtan_overdue_invoice_containers oic LEFT JOIN tbl_zhongtan_uploadfile iu ON oic.overdue_invoice_containers_invoice_uploadfile_id = iu.uploadfile_id WHERE iu.state = "1" AND oic.state = "1" AND iu.created_at >= ? AND iu.created_at < ?)'
+      replacements.push(doc.search_data.invoice_date[0] + ' 00:00:00')
+      replacements.push(moment(doc.search_data.invoice_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD') + ' 00:00:00')
+    }
+    if (doc.search_data.receipt_date && doc.search_data.receipt_date.length > 1 && doc.search_data.receipt_date[0] && doc.search_data.receipt_date[1]) {
+      queryStr += ' and a.invoice_containers_id IN (SELECT overdue_invoice_containers_invoice_containers_id FROM tbl_zhongtan_overdue_invoice_containers WHERE state = "1" AND overdue_invoice_containers_receipt_date >= ? AND overdue_invoice_containers_receipt_date < ?) '
+      replacements.push(doc.search_data.receipt_date[0] + ' 00:00:00')
+      replacements.push(moment(doc.search_data.receipt_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD') + ' 00:00:00')
     }
   }
   queryStr += ' ORDER BY b.invoice_vessel_id DESC, a.invoice_containers_bl, a.invoice_containers_no'
@@ -349,12 +351,6 @@ exports.exportDemurrageAdminReportAct = async(req, res) => {
     if (doc.search_data.ata_date && doc.search_data.ata_date.length > 1 && doc.search_data.ata_date[0] && doc.search_data.ata_date[1]) {
       queryStr += ' and STR_TO_DATE(b.invoice_vessel_ata, "%d/%m/%Y") >= ? and STR_TO_DATE(b.invoice_vessel_ata, "%d/%m/%Y") < ? '
     }
-    if (doc.search_data.invoice_date && doc.search_data.invoice_date.length > 1 && doc.search_data.invoice_date[0] && doc.search_data.invoice_date[1]) {
-      queryStr += ' and a.invoice_containers_empty_return_invoice_date >= ? and a.invoice_containers_empty_return_invoice_date < ? '
-    }
-    if (doc.search_data.receipt_date && doc.search_data.receipt_date.length > 1 && doc.search_data.receipt_date[0] && doc.search_data.receipt_date[1]) {
-      queryStr += ' and a.invoice_containers_empty_return_receipt_date >= ? and a.invoice_containers_empty_return_receipt_date < ? '
-    }
     if (doc.search_data.invoice_containers_bl) {
       queryStr += ' and a.invoice_containers_bl like ? '
     }
@@ -367,8 +363,21 @@ exports.exportDemurrageAdminReportAct = async(req, res) => {
     if (doc.search_data.customer_id) {
       queryStr += ' and a.invoice_containers_customer_id = ? '
     }
+    queryStr += ') '
+    if (doc.search_data.receipt_date && doc.search_data.receipt_date.length > 1 && doc.search_data.receipt_date[0] && doc.search_data.receipt_date[1]) {
+      queryStr += ' AND overdue_invoice_containers_receipt_date >= ? AND overdue_invoice_containers_receipt_date < ? '
+      replacements.push(doc.search_data.receipt_date[0] + ' 00:00:00')
+      replacements.push(moment(doc.search_data.receipt_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD') + ' 00:00:00')
+    }
+    if (doc.search_data.invoice_date && doc.search_data.invoice_date.length > 1 && doc.search_data.invoice_date[0] && doc.search_data.invoice_date[1]) {
+      queryStr += ' and overdue_invoice_containers_id IN (SELECT oic.overdue_invoice_containers_id FROM tbl_zhongtan_overdue_invoice_containers oic LEFT JOIN tbl_zhongtan_uploadfile iu ON oic.overdue_invoice_containers_invoice_uploadfile_id = iu.uploadfile_id WHERE iu.state = "1" AND oic.state = "1" AND iu.created_at >= ? AND iu.created_at < ?)'
+      replacements.push(doc.search_data.invoice_date[0] + ' 00:00:00')
+      replacements.push(moment(doc.search_data.invoice_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD') + ' 00:00:00')
+    }
+  } else {
+    queryStr += ') '
   }
-  queryStr += ') ORDER BY overdue_invoice_containers_overdue_days DESC, overdue_invoice_containers_receipt_date DESC'
+  queryStr += ' ORDER BY overdue_invoice_containers_overdue_days DESC, overdue_invoice_containers_receipt_date DESC'
   let rec_cons = await model.simpleSelect(queryStr, replacements)
 
   // 查询所有发票文件
@@ -384,12 +393,6 @@ exports.exportDemurrageAdminReportAct = async(req, res) => {
     if (doc.search_data.ata_date && doc.search_data.ata_date.length > 1 && doc.search_data.ata_date[0] && doc.search_data.ata_date[1]) {
       queryStr += ' and STR_TO_DATE(b.invoice_vessel_ata, "%d/%m/%Y") >= ? and STR_TO_DATE(b.invoice_vessel_ata, "%d/%m/%Y") < ? '
     }
-    if (doc.search_data.invoice_date && doc.search_data.invoice_date.length > 1 && doc.search_data.invoice_date[0] && doc.search_data.invoice_date[1]) {
-      queryStr += ' and a.invoice_containers_empty_return_invoice_date >= ? and a.invoice_containers_empty_return_invoice_date < ? '
-    }
-    if (doc.search_data.receipt_date && doc.search_data.receipt_date.length > 1 && doc.search_data.receipt_date[0] && doc.search_data.receipt_date[1]) {
-      queryStr += ' and a.invoice_containers_empty_return_receipt_date >= ? and a.invoice_containers_empty_return_receipt_date < ? '
-    }
     if (doc.search_data.invoice_containers_bl) {
       queryStr += ' and a.invoice_containers_bl like ? '
     }
@@ -402,8 +405,21 @@ exports.exportDemurrageAdminReportAct = async(req, res) => {
     if (doc.search_data.customer_id) {
       queryStr += ' and a.invoice_containers_customer_id = ? '
     }
+    queryStr += ')'
+    if (doc.search_data.receipt_date && doc.search_data.receipt_date.length > 1 && doc.search_data.receipt_date[0] && doc.search_data.receipt_date[1]) {
+      queryStr += ' AND overdue_invoice_containers_receipt_date >= ? AND overdue_invoice_containers_receipt_date < ? '
+      replacements.push(doc.search_data.receipt_date[0] + ' 00:00:00')
+      replacements.push(moment(doc.search_data.receipt_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD') + ' 00:00:00')
+    }
+    queryStr += ')'
+    if (doc.search_data.invoice_date && doc.search_data.invoice_date.length > 1 && doc.search_data.invoice_date[0] && doc.search_data.invoice_date[1]) {
+      queryStr += ' AND created_at >= ? AND created_at < ?'
+      replacements.push(doc.search_data.invoice_date[0] + ' 00:00:00')
+      replacements.push(moment(doc.search_data.invoice_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD') + ' 00:00:00')
+    }
+  } else {
+    queryStr += '))'
   }
-  queryStr += '))'
   let inv_files = await model.simpleSelect(queryStr, replacements)
 
   // 查询所有收据
@@ -419,12 +435,6 @@ exports.exportDemurrageAdminReportAct = async(req, res) => {
     if (doc.search_data.ata_date && doc.search_data.ata_date.length > 1 && doc.search_data.ata_date[0] && doc.search_data.ata_date[1]) {
       queryStr += ' and STR_TO_DATE(b.invoice_vessel_ata, "%d/%m/%Y") >= ? and STR_TO_DATE(b.invoice_vessel_ata, "%d/%m/%Y") < ? '
     }
-    if (doc.search_data.invoice_date && doc.search_data.invoice_date.length > 1 && doc.search_data.invoice_date[0] && doc.search_data.invoice_date[1]) {
-      queryStr += ' and a.invoice_containers_empty_return_invoice_date >= ? and a.invoice_containers_empty_return_invoice_date < ? '
-    }
-    if (doc.search_data.receipt_date && doc.search_data.receipt_date.length > 1 && doc.search_data.receipt_date[0] && doc.search_data.receipt_date[1]) {
-      queryStr += ' and a.invoice_containers_empty_return_receipt_date >= ? and a.invoice_containers_empty_return_receipt_date < ? '
-    }
     if (doc.search_data.invoice_containers_bl) {
       queryStr += ' and a.invoice_containers_bl like ? '
     }
@@ -437,8 +447,22 @@ exports.exportDemurrageAdminReportAct = async(req, res) => {
     if (doc.search_data.customer_id) {
       queryStr += ' and a.invoice_containers_customer_id = ? '
     }
+    queryStr += ')'
+    if (doc.search_data.receipt_date && doc.search_data.receipt_date.length > 1 && doc.search_data.receipt_date[0] && doc.search_data.receipt_date[1]) {
+      queryStr += ' AND overdue_invoice_containers_receipt_date >= ? AND overdue_invoice_containers_receipt_date < ? '
+      replacements.push(doc.search_data.receipt_date[0] + ' 00:00:00')
+      replacements.push(moment(doc.search_data.receipt_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD') + ' 00:00:00')
+    }
+    queryStr += ')'
+    if (doc.search_data.invoice_date && doc.search_data.invoice_date.length > 1 && doc.search_data.invoice_date[0] && doc.search_data.invoice_date[1]) {
+      queryStr += ' AND created_at >= ? AND created_at < ?'
+      replacements.push(doc.search_data.invoice_date[0] + ' 00:00:00')
+      replacements.push(moment(doc.search_data.invoice_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD') + ' 00:00:00')
+    }
+  } else {
+    queryStr += '))'
   }
-  queryStr += '))'
+  
   let rec_files = await model.simpleSelect(queryStr, replacements)
   let rec_cons_grop = await common.groupingJson(rec_cons, 'overdue_invoice_containers_invoice_containers_id')
   let renderData = []
@@ -471,15 +495,6 @@ exports.exportDemurrageAdminReportAct = async(req, res) => {
     }
     row.invoice_masterbi_demurrage_party = r.invoice_masterbi_demurrage_party
     row.invoice_masterbi_deposit_party = r.invoice_masterbi_deposit_party
-    // let rcons = await tb_invoice_container.findAll({
-    //   where: {
-    //     overdue_invoice_containers_invoice_containers_id: r.invoice_containers_id,
-    //     overdue_invoice_containers_receipt_date: {
-    //       [Op.ne]: null
-    //     }
-    //   },
-    //   order: [['overdue_invoice_containers_overdue_days', 'DESC'], ['overdue_invoice_containers_receipt_date', 'DESC']]
-    // })
     let id_cons = await common.jsonFindOne(rec_cons_grop, 'id', r.invoice_containers_id)
     if(id_cons && id_cons.data.length > 0) {
       let rcons =  id_cons.data
@@ -490,20 +505,10 @@ exports.exportDemurrageAdminReportAct = async(req, res) => {
         retRow.staring_date = rcons[i].overdue_invoice_containers_overdue_staring_date
         retRow.return_date = rcons[i].overdue_invoice_containers_return_date
         retRow.invoice_amount = rcons[i].overdue_invoice_containers_overdue_invoice_amount
-        // let ifile = await tb_uploadfile.findOne({
-        //   where: {
-        //     uploadfile_id: rcons[i].overdue_invoice_containers_invoice_uploadfile_id
-        //   }
-        // })
         let ifile = await common.jsonFindOne(inv_files, 'uploadfile_id', rcons[i].overdue_invoice_containers_invoice_uploadfile_id)
         if(ifile) {
           retRow.invoice_date = moment(ifile.created_at).format('YYYY-MM-DD HH:mm')
           retRow.invoice_no = ifile.uploadfile_invoice_no
-          // let rfile = await tb_uploadfile.findOne({
-          //   where: {
-          //     uploadfile_index3: ifile.uploadfile_id
-          //   }
-          // })
           let rfile = await common.jsonFindOne(rec_files, 'uploadfile_index3', rcons[i].overdue_invoice_containers_invoice_uploadfile_id)
           if(rfile) {
             if (doc.search_data.receipt_date && doc.search_data.receipt_date.length > 1) {

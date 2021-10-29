@@ -183,6 +183,24 @@ const queryWhereJoin = async (param) => {
       replacements.push(searchPara.shipment_list_customer)
       replacements.push(searchPara.shipment_list_customer)
     }
+
+    if(searchPara.shipment_list_invoice_no) {
+      // 发票编号
+      let like_invoice_no = '%' + searchPara.shipment_list_invoice_no + '%'
+      queryStr = queryStr + ` and (s.shipment_list_id IN (SELECT lv.shipment_list_id FROM tbl_zhongtan_logistics_verification_freight lv LEFT JOIN tbl_zhongtan_uploadfile u ON lv.logistics_verification_id = u.uploadfile_index1 WHERE lv.state = 1 AND lv.logistics_freight_state = 'AP' AND u.api_name = 'FREIGHT INVOICE' AND u.state = 1 AND u.uploadfile_invoice_no LIKE ?) 
+                OR s.shipment_list_id IN (SELECT lpe.payment_extra_shipment_id FROM tbl_zhongtan_logistics_payment_extra lpe LEFT JOIN tbl_zhongtan_logistics_verification_freight vf ON lpe.payment_extra_id = vf.shipment_list_id WHERE lpe.state = 1 AND lpe.payment_extra_type = 'R' AND lpe.payment_extra_status = '6' AND vf.state = 1 AND vf.logistics_freight_state = 'AP' AND vf.logistics_verification_id IN (SELECT uploadfile_index1 FROM tbl_zhongtan_uploadfile WHERE state = 1 AND api_name = 'EXTRA INVOICE' AND uploadfile_invoice_no LIKE ?))) `
+      replacements.push(like_invoice_no)
+      replacements.push(like_invoice_no)
+    }
+
+    if(searchPara.shipment_list_receipt_no) {
+      // 收据编号
+      let like_receipt_no = '%' + searchPara.shipment_list_receipt_no + '%'
+      queryStr = queryStr + ` and (s.shipment_list_id IN (SELECT lv.shipment_list_id FROM tbl_zhongtan_logistics_verification_freight lv LEFT JOIN tbl_zhongtan_uploadfile u ON lv.logistics_verification_id = u.uploadfile_index1 WHERE lv.state = 1 AND lv.logistics_freight_state = 'AP' AND u.api_name = 'FREIGHT RECEIPT' AND u.state = 1 AND u.uploadfile_receipt_no LIKE ?) 
+                OR s.shipment_list_id IN (SELECT lpe.payment_extra_shipment_id FROM tbl_zhongtan_logistics_payment_extra lpe LEFT JOIN tbl_zhongtan_logistics_verification_freight vf ON lpe.payment_extra_id = vf.shipment_list_id WHERE lpe.state = 1 AND lpe.payment_extra_type = 'R' AND lpe.payment_extra_status = '6' AND vf.state = 1 AND vf.logistics_freight_state = 'AP' AND vf.logistics_verification_id IN (SELECT uploadfile_index1 FROM tbl_zhongtan_uploadfile WHERE state = 1 AND api_name = 'EXTRA RECEIPT' AND uploadfile_receipt_no LIKE ?))) `
+      replacements.push(like_receipt_no)
+      replacements.push(like_receipt_no)
+    }
   }
   return {
     queryStr: queryStr,
