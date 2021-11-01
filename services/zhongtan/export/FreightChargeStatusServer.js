@@ -182,7 +182,7 @@ exports.exportFreightAct = async (req, res) => {
     for(let r of result) {
       queryStr = `SELECT GROUP_CONCAT(b.container_size_name, '*', a.container_count) AS group_size, SUM(a.container_count) AS total_count FROM (
         SELECT export_container_size_type, COUNT(export_container_size_type) AS container_count FROM tbl_zhongtan_export_proforma_container 
-        WHERE export_container_bl = ? AND export_vessel_id = ? GROUP BY export_container_size_type) a 
+        WHERE export_container_bl = ? AND export_vessel_id = ? AND state = 1 GROUP BY export_container_size_type) a 
         LEFT JOIN tbl_zhongtan_container_size b ON (a.export_container_size_type = b.container_size_code OR a.export_container_size_type = b.container_size_name) AND b.state = '1'`
       replacements = [r.export_masterbl_bl, r.export_vessel_id]
       let con_info = await model.simpleSelect(queryStr, replacements)
