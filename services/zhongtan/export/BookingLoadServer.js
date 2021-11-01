@@ -58,7 +58,7 @@ exports.uploadBookingAct = async req => {
         // let finalDestination = ''
         let cargoNature = ''
         let cargoDescription = ''
-        let soc = ''
+        // let soc = ''
         let cargoWeight = ''
         let datas = pdfData.replace(/[\r]/ig, '').split(/[\n]+/ig)
         regex = '/BOOKING\\s*NUMBER\\s*:\\s*([0-9]+)/i'
@@ -1864,7 +1864,7 @@ exports.bookingExportAct = async (req, res) => {
 }
 
 exports.deleteBookingAct = async req => {
-  let doc = common.docValidate(req), user = req.user
+  let doc = common.docValidate(req)
   let bl = await tb_bl.findOne({
     where: {
       state: GLBConfig.ENABLE,
