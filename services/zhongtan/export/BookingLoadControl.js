@@ -39,7 +39,9 @@ module.exports = async (req, res) => {
       ret = await srv.frimBookingAct(req)
     } else if (method === 'bookingExport') {
       return await srv.bookingExportAct(req, res)
-    }
+    } else if (method === 'deleteBooking') {
+      ret = await srv.deleteBookingAct(req)
+    } 
     
     common.sendData(res, ret)
   } catch (error) {

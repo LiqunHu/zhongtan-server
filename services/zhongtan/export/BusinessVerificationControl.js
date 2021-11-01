@@ -21,7 +21,9 @@ module.exports = async (req, res) => {
       ret = await srv.checkPasswordAct(req)
     } else if (method === 'export') {
       return await srv.exportAct(req, res)
-    }
+    } else if (method === 'getEmptyReleaseParty') {
+      ret = await srv.getEmptyReleasePartyAct(req)
+    } 
     
     common.sendData(res, ret)
   } catch (error) {

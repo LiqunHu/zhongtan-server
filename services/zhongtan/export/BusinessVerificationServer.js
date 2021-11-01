@@ -49,6 +49,10 @@ exports.searchAct = async req => {
     queryStr += ' AND b.export_masterbl_bl = ?'
     replacements.push(doc.bl)
   }
+  if (doc.release_party) {
+    queryStr += ' AND a.export_verification_agent = ?'
+    replacements.push(doc.release_party)
+  }
 
   if (doc.start_date && doc.end_date) {
     queryStr += ' and a.created_at >= ? and a.created_at < ? '
@@ -383,7 +387,10 @@ exports.exportAct = async (req, res) => {
     queryStr += ' AND b.export_masterbl_bl = ?'
     replacements.push(doc.bl)
   }
-
+  if (doc.release_party) {
+    queryStr += ' AND a.export_verification_agent = ?'
+    replacements.push(doc.release_party)
+  }
   if (doc.start_date && doc.end_date) {
     queryStr += ' and a.created_at >= ? and a.created_at < ? '
     replacements.push(doc.start_date)
@@ -419,4 +426,16 @@ exports.exportAct = async (req, res) => {
   }
   let filepath = await common.ejs2xlsx('ExportBusinessVerification.xlsx', renderData)
   res.sendFile(filepath)
+}
+
+exports.getEmptyReleasePartyAct = async req => {
+  let doc = common.docValidate(req)
+  let retData = {}
+  if(doc.query) {
+    let queryStr = `select a.user_id, a.user_name, a.user_blacklist, a.user_customer_type from tbl_common_user a where a.state = '1' and a.user_type = '${GLBConfig.TYPE_CUSTOMER}' and a.user_name LIKE ? ORDER BY user_name LIMIT 10`
+    let replacements = ['%' + doc.query + '%']
+    let agents = await model.simpleSelect(queryStr, replacements)
+    retData.agents = JSON.parse(JSON.stringify(agents))
+  }
+  return common.success(retData)
 }

@@ -38,7 +38,180 @@ exports.uploadBookingAct = async req => {
   for (let f of doc.upload_files) {
     let pdfData = await pdf2jsonParser(f.response.info.path)
     if(pdfData) {
-      if(pdfData.indexOf('OOCL - Booking') >= 0) {
+      if(pdfData.indexOf('OOCL BOOKING ACKNOWLEDGEMENT') >= 0){
+        let regex = ''
+        let bookingNumber = '' //提单号，自动加前缀
+        let tracfficMode = '' // FCL/FCL
+        let csoNumber = '' // CSO号
+        let bookingParty = '' // 
+        let forwarder = '' // 
+        let shipper = '' // 
+        let consignee = '' // 
+        let quantity = '' // 
+        let size = '' // 
+        let type = '' // 
+        let pol = ''
+        let pod = ''
+        let ves = ''
+        let voy = ''
+        let etd = ''
+        // let finalDestination = ''
+        let cargoNature = ''
+        let cargoDescription = ''
+        let soc = ''
+        let cargoWeight = ''
+        let datas = pdfData.replace(/[\r]/ig, '').split(/[\n]+/ig)
+        regex = '/BOOKING\\s*NUMBER\\s*:\\s*([0-9]+)/i'
+        for(let d of datas) {
+          bookingNumber = common.valueFilter(d, regex).trim()
+          if(bookingNumber) {
+            bookingNumber = 'OOLU' + bookingNumber
+            break
+          }
+        }
+        regex = '/CS\\s*Reference\\s*Number\\s*:\\s*([a-zA-Z0-9]+)/i'
+        for(let d of datas) {
+          csoNumber = common.valueFilter(d, regex).trim()
+          if(csoNumber) {
+            break
+          }
+        }
+        regex = '/BOOKING\\s*PARTY\\s*:\\s*(.*)/i'
+        for(let d of datas) {
+          bookingParty = common.valueFilter(d, regex).trim()
+          if(bookingParty) {
+            break
+          }
+        }
+        regex = '/FORWARDER\\s*:\\s*(.*)/i'
+        for(let d of datas) {
+          forwarder = common.valueFilter(d, regex).trim()
+          if(forwarder) {
+            break
+          }
+        }
+        regex = '/SHIPPER\\s*:\\s*(.*)/i'
+        for(let d of datas) {
+          shipper = common.valueFilter(d, regex).trim()
+          if(shipper) {
+            break
+          }
+        }
+        regex = '/PORT\\s*OF\\s*LOADING\\s*:\\s*(.*)/i'
+        for(let d of datas) {
+          let polStr = common.valueFilter(d, regex).trim()
+          if(polStr) {
+            pol = polStr.substring(0, polStr.indexOf('/')).trim()
+            break
+          }
+        }
+        regex = '/INTENDED\\s*VESSEL\\/VOYAGE\\s*:\\s*(.*)ETA/i'
+        for(let d of datas) {
+          let vesVoy = common.valueFilter(d, regex).trim()
+          if(vesVoy) {
+            ves = vesVoy.substring(0, vesVoy.lastIndexOf(' ')).trim()
+            voy = vesVoy.substring(vesVoy.lastIndexOf(' ')).trim()
+            break
+          }
+        }
+        regex = '/ETD\\s*:\\s*(.*)/i'
+        for(let d of datas) {
+          let etdStr = common.valueFilter(d, regex).trim()
+          if(etdStr) {
+            etd = moment(etdStr, 'DD MMM YYYY').format('DD/MM/YYYY')
+            break
+          }
+        }
+        regex = '/BOOKING\\s*QTY\\s*SIZE\\/TYPE\\s*:\\s*(.*)/i'
+        for(let d of datas) {
+          let sizeType = common.valueFilter(d, regex).trim()
+          if(sizeType) {
+            quantity = sizeType.substring(0, sizeType.indexOf('X')).trim()
+            size = sizeType.substring(sizeType.indexOf('X') + 1, sizeType.indexOf('\'')).trim()
+            type = sizeType.substring(sizeType.indexOf('\'') + 1).trim()
+            break
+          }
+        }
+        regex = '/PORT\\s*OF\\s*DISCHARGE\\s*:\\s*(.*)/i'
+        for(let d of datas) {
+          let podStr = common.valueFilter(d, regex).trim()
+          if(podStr) {
+            pod = podStr.substring(0, podStr.indexOf('/')).trim()
+            break
+          }
+        }
+        regex = '/CARGO\\s*NATURE\\s*:\\s*(.*)/i'
+        for(let d of datas) {
+          cargoNature = common.valueFilter(d, regex).trim()
+          if(cargoNature) {
+            break
+          }
+        }
+        regex = '/CARGO\\s*DESCRIPTION\\s*:\\s*(.*)/i'
+        for(let d of datas) {
+          cargoDescription = common.valueFilter(d, regex).trim()
+          if(cargoDescription) {
+            break
+          }
+        }
+        regex = '/CARGO\\s*WEIGHT\\s*\\(MT\\)\\s*:\\s*([0-9]+)/i'
+        for(let d of datas) {
+          cargoWeight = common.valueFilter(d, regex).trim()
+          if(cargoWeight) {
+            break
+          }
+        }
+        regex = '/TRAFFIC\\s*MODE\\s*:\\s*(.*)/i'
+        for(let d of datas) {
+          tracfficMode = common.valueFilter(d, regex).trim()
+          if(tracfficMode) {
+            break
+          }
+        }
+        let vesJson = {
+          vesselName : ves,
+          vesselVoyage: voy,
+          vesselEtd: etd
+        }
+        let blJson = {
+          bookingNumber : bookingNumber,
+          csoNumber : csoNumber,
+          shipperCompany : shipper,
+          forwarderCompany : bookingParty ? bookingParty : forwarder,
+          consigneeCompany : consignee,
+          portOfLoad : pol,
+          portOfDischarge : pod,
+          tracfficMode : tracfficMode,
+          quantity : quantity,
+          weight : quantity * cargoWeight,
+          cargoNature : cargoNature,
+          cargoDescriptions : cargoDescription
+        }
+        
+        let ctnrType = ''
+        if(sizeConfig) {
+          let sizeType = common.fileterLN(size + type).toUpperCase()
+          for(let c of sizeConfig) {
+            let fullName = c.container_size_full_name
+            if(fullName) {
+              fullName = common.fileterLN(fullName).toUpperCase()
+            }
+            if(fullName === sizeType || fullName + 'CONTAINER' === sizeType || fullName === sizeType + 'CONTAINER') {
+              ctnrType = c.container_size_code
+              break
+            }
+          }
+        }
+        let conJson = []
+        for(let i = 0; i < quantity; i++) {
+          conJson.push({
+            socType: 'C',
+            ctnrType: ctnrType,
+            weight: cargoWeight
+          })
+        }
+        await createBooking('OOCL', vesJson, blJson, conJson)
+      } else if(pdfData.indexOf('OOCL - Booking') >= 0) {
         // OOCL
         let regex = ''
         let bookingNumber = '' //提单号，自动加前缀
@@ -1688,4 +1861,30 @@ exports.bookingExportAct = async (req, res) => {
   renderData.push(container_sheet)
   let filepath = await common.ejs2xlsx('BOOKINGSTATISTICS.xlsx', renderData)
   res.sendFile(filepath)
+}
+
+exports.deleteBookingAct = async req => {
+  let doc = common.docValidate(req), user = req.user
+  let bl = await tb_bl.findOne({
+    where: {
+      state: GLBConfig.ENABLE,
+      export_masterbl_id: doc.export_masterbl_id
+    }
+  })
+  if(bl) {
+    bl.state = GLBConfig.DISABLE
+    await bl.save()
+    let cons = await tb_container.findAll({
+      where: {
+        state: GLBConfig.ENABLE,
+        export_vessel_id: bl.export_vessel_id,
+        export_container_bl: bl.export_masterbl_bl
+      }
+    })
+    for(let c of cons) {
+      c.state = GLBConfig.DISABLE
+      await c.save()
+    }
+  }
+  return common.success()
 }
