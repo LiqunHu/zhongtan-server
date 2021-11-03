@@ -1,7 +1,7 @@
 const X = require('xlsx')
 const moment = require('moment')
-const PDFParser = require('pdf2json')
 const Decimal = require('decimal.js')
+const PDFParser = require('pdf2json')
 const GLBConfig = require('../../../util/GLBConfig')
 const common = require('../../../util/CommonUtil')
 const model = require('../../../app/model')
@@ -17,6 +17,7 @@ const tb_proforma_bl = model.zhongtan_export_proforma_masterbl
 const tb_proforma_container = model.zhongtan_export_proforma_container
 const tb_container_size = model.zhongtan_container_size
 const tb_shipment_fee = model.zhongtan_export_shipment_fee
+const tb_fee_data = model.zhongtan_export_fee_data
 
 exports.uploadBookingAct = async req => {
   let doc = common.docValidate(req), user = req.user
@@ -603,7 +604,7 @@ exports.uploadShipmentAct = async req => {
                   {'state': GLBConfig.DISABLE}, 
                   {'where': {'export_vessel_id': ves.export_vessel_id, 'export_container_bl': masterbi_bl}}
                 )
-                // 删除相关费用
+                // 删除未开票费用
                 let fees = await tb_shipment_fee.findAll({
                   where: {
                     state: GLBConfig.ENABLE,
@@ -753,22 +754,46 @@ exports.uploadShipmentAct = async req => {
             }
           }
           if(bl) {
+            let queryStrReFee = `SELECT SUM(shipment_fee_amount) as sumReFee FROM tbl_zhongtan_export_shipment_fee WHERE export_masterbl_id = ? AND fee_data_code = ? AND shipment_fee_type = ? AND shipment_fee_status = 'RE' AND state = '1'`
             if(oft && parseFloat(oft) > 0) {
-              await tb_shipment_fee.create({
-                export_masterbl_id: bl.export_masterbl_id,
-                fee_data_code: 'OFT',
-                fee_data_fixed: GLBConfig.ENABLE,
-                shipment_fee_supplement: GLBConfig.DISABLE,
-                shipment_fee_type: 'R',
-                shipment_fee_party: bl.export_masterbl_empty_release_agent,
-                shipment_fee_fixed_amount: GLBConfig.ENABLE,
-                shipment_fee_amount: oft,
-                shipment_fee_currency: 'USD',
-                shipment_fee_status: 'SA',
-                shipment_fee_save_by: user.user_id,
-                shipment_fee_save_at: new Date(),
-                shipment_list_import: GLBConfig.ENABLE
-              })
+              let replacementsReFee = [bl.export_masterbl_id, 'OFT', 'R']
+              let reFee = await model.simpleSelect(queryStrReFee, replacementsReFee)
+              if(reFee && reFee[0].sumReFee) {
+                let diffFee = new Decimal(oft).sub(new Decimal(reFee[0].sumReFee)).toNumber()
+                if(diffFee !== 0) {
+                  await tb_shipment_fee.create({
+                    export_masterbl_id: bl.export_masterbl_id,
+                    fee_data_code: 'OFT',
+                    fee_data_fixed: GLBConfig.ENABLE,
+                    shipment_fee_supplement: GLBConfig.DISABLE,
+                    shipment_fee_type: 'R',
+                    shipment_fee_party: bl.export_masterbl_empty_release_agent,
+                    shipment_fee_fixed_amount: GLBConfig.ENABLE,
+                    shipment_fee_amount: diffFee,
+                    shipment_fee_currency: 'USD',
+                    shipment_fee_status: 'SA',
+                    shipment_fee_save_by: user.user_id,
+                    shipment_fee_save_at: new Date(),
+                    shipment_list_import: GLBConfig.ENABLE
+                  })
+                }
+              } else {
+                await tb_shipment_fee.create({
+                  export_masterbl_id: bl.export_masterbl_id,
+                  fee_data_code: 'OFT',
+                  fee_data_fixed: GLBConfig.ENABLE,
+                  shipment_fee_supplement: GLBConfig.DISABLE,
+                  shipment_fee_type: 'R',
+                  shipment_fee_party: bl.export_masterbl_empty_release_agent,
+                  shipment_fee_fixed_amount: GLBConfig.ENABLE,
+                  shipment_fee_amount: oft,
+                  shipment_fee_currency: 'USD',
+                  shipment_fee_status: 'SA',
+                  shipment_fee_save_by: user.user_id,
+                  shipment_fee_save_at: new Date(),
+                  shipment_list_import: GLBConfig.ENABLE
+                })
+              }
 
               let queryStrOFT = `SELECT * FROM tbl_zhongtan_export_fee_data WHERE state = 1 AND fee_data_code = ? LIMIT 1`
               let replacementsOFT = ['OFT'] 
@@ -800,38 +825,84 @@ exports.uploadShipmentAct = async req => {
               })
             }
             if(blf && parseFloat(blf) > 0) {
-              await tb_shipment_fee.create({
-                export_masterbl_id: bl.export_masterbl_id,
-                fee_data_code: 'BLF',
-                fee_data_fixed: GLBConfig.ENABLE,
-                shipment_fee_supplement: GLBConfig.DISABLE,
-                shipment_fee_type: 'R',
-                shipment_fee_party: bl.export_masterbl_empty_release_agent,
-                shipment_fee_fixed_amount: GLBConfig.ENABLE,
-                shipment_fee_amount: blf,
-                shipment_fee_currency: 'USD',
-                shipment_fee_status: 'SA',
-                shipment_fee_save_by: user.user_id,
-                shipment_fee_save_at: new Date(),
-                shipment_list_import: GLBConfig.ENABLE
-              })
+              let replacementsReFee = [bl.export_masterbl_id, 'BLF', 'R']
+              let reFee = await model.simpleSelect(queryStrReFee, replacementsReFee)
+              if(reFee && reFee[0].sumReFee) {
+                let diffFee = new Decimal(blf).sub(new Decimal(reFee[0].sumReFee)).toNumber()
+                if(diffFee !== 0) {
+                  await tb_shipment_fee.create({
+                    export_masterbl_id: bl.export_masterbl_id,
+                    fee_data_code: 'BLF',
+                    fee_data_fixed: GLBConfig.ENABLE,
+                    shipment_fee_supplement: GLBConfig.DISABLE,
+                    shipment_fee_type: 'R',
+                    shipment_fee_party: bl.export_masterbl_empty_release_agent,
+                    shipment_fee_fixed_amount: GLBConfig.ENABLE,
+                    shipment_fee_amount: diffFee,
+                    shipment_fee_currency: 'USD',
+                    shipment_fee_status: 'SA',
+                    shipment_fee_save_by: user.user_id,
+                    shipment_fee_save_at: new Date(),
+                    shipment_list_import: GLBConfig.ENABLE
+                  })
+                }
+              } else {
+                await tb_shipment_fee.create({
+                  export_masterbl_id: bl.export_masterbl_id,
+                  fee_data_code: 'BLF',
+                  fee_data_fixed: GLBConfig.ENABLE,
+                  shipment_fee_supplement: GLBConfig.DISABLE,
+                  shipment_fee_type: 'R',
+                  shipment_fee_party: bl.export_masterbl_empty_release_agent,
+                  shipment_fee_fixed_amount: GLBConfig.ENABLE,
+                  shipment_fee_amount: blf,
+                  shipment_fee_currency: 'USD',
+                  shipment_fee_status: 'SA',
+                  shipment_fee_save_by: user.user_id,
+                  shipment_fee_save_at: new Date(),
+                  shipment_list_import: GLBConfig.ENABLE
+                })
+              }
             }
             if(faf && parseFloat(faf) > 0) {
-              await tb_shipment_fee.create({
-                export_masterbl_id: bl.export_masterbl_id,
-                fee_data_code: 'FAF',
-                fee_data_fixed: GLBConfig.ENABLE,
-                shipment_fee_supplement: GLBConfig.DISABLE,
-                shipment_fee_type: 'R',
-                shipment_fee_party: bl.export_masterbl_empty_release_agent,
-                shipment_fee_fixed_amount: GLBConfig.ENABLE,
-                shipment_fee_amount: faf,
-                shipment_fee_currency: 'USD',
-                shipment_fee_status: 'SA',
-                shipment_fee_save_by: user.user_id,
-                shipment_fee_save_at: new Date(),
-                shipment_list_import: GLBConfig.ENABLE
-              })
+              let replacementsReFee = [bl.export_masterbl_id, 'FAF', 'R']
+              let reFee = await model.simpleSelect(queryStrReFee, replacementsReFee)
+              if(reFee && reFee[0].sumReFee) {
+                let diffFee = new Decimal(faf).sub(new Decimal(reFee[0].sumReFee)).toNumber()
+                if(diffFee !== 0) {
+                  await tb_shipment_fee.create({
+                    export_masterbl_id: bl.export_masterbl_id,
+                    fee_data_code: 'FAF',
+                    fee_data_fixed: GLBConfig.ENABLE,
+                    shipment_fee_supplement: GLBConfig.DISABLE,
+                    shipment_fee_type: 'R',
+                    shipment_fee_party: bl.export_masterbl_empty_release_agent,
+                    shipment_fee_fixed_amount: GLBConfig.ENABLE,
+                    shipment_fee_amount: diffFee,
+                    shipment_fee_currency: 'USD',
+                    shipment_fee_status: 'SA',
+                    shipment_fee_save_by: user.user_id,
+                    shipment_fee_save_at: new Date(),
+                    shipment_list_import: GLBConfig.ENABLE
+                  })
+                }
+              } else {
+                await tb_shipment_fee.create({
+                  export_masterbl_id: bl.export_masterbl_id,
+                  fee_data_code: 'FAF',
+                  fee_data_fixed: GLBConfig.ENABLE,
+                  shipment_fee_supplement: GLBConfig.DISABLE,
+                  shipment_fee_type: 'R',
+                  shipment_fee_party: bl.export_masterbl_empty_release_agent,
+                  shipment_fee_fixed_amount: GLBConfig.ENABLE,
+                  shipment_fee_amount: faf,
+                  shipment_fee_currency: 'USD',
+                  shipment_fee_status: 'SA',
+                  shipment_fee_save_by: user.user_id,
+                  shipment_fee_save_at: new Date(),
+                  shipment_list_import: GLBConfig.ENABLE
+                })
+              }
 
               let queryStrFAF = `SELECT * FROM tbl_zhongtan_export_fee_data WHERE state = 1 AND fee_data_code = ? LIMIT 1`
               let replacementsFAF = ['FAF'] 
@@ -1021,6 +1092,12 @@ exports.searchVesselAct = async req => {
       })
       v.bl_count = bcount
       v.container_count = ccount
+      queryStr = `SELECT export_container_size_type containers_size, COUNT(1) containers_size_count FROM tbl_zhongtan_export_proforma_container WHERE state = '1' AND export_vessel_id = ? GROUP BY export_container_size_type`
+      replacements = [v.export_vessel_id]
+      let sts = await model.simpleSelect(queryStr, replacements)
+      if(sts && sts.length > 0) {
+        v.size_types = JSON.parse(JSON.stringify(sts))
+      }
     }
   }
   return vessels
@@ -1092,6 +1169,68 @@ exports.modifyVesselAct = async req => {
     if(doc.modify_type && doc.modify_type === 'line') {
       vessel.export_total_units = doc.export_total_units
     } else {
+      if(vessel.export_vessel_etd !== doc.export_vessel_etd) {
+        // ETD修改，重新计算LPF
+        let bls = await tb_proforma_bl.findAll({
+          where: {
+            export_vessel_id: vessel.export_vessel_id,
+            state: GLBConfig.ENABLE
+          }
+        })
+        if(moment().diff(moment(doc.export_vessel_etd, 'DD/MM/YYYY'), 'days') > 14) {
+          if(bls && bls.length > 0) {
+            let lf = await tb_fee_data.findOne({
+              where: {
+                fee_data_code: 'LPF',
+                fee_data_type: 'BL',
+                fee_data_receivable: GLBConfig.ENABLE,
+                state: GLBConfig.ENABLE
+              }
+            })
+            for(let b of bls) {
+              let queryStr = `SELECT shipment_fee_id FROM tbl_zhongtan_export_shipment_fee WHERE state = '1' AND shipment_fee_type = 'R' AND fee_data_code = 'LPF' AND export_masterbl_id = ?`
+              let replacements = [b.export_masterbl_id]
+              let lpf_rows = await model.simpleSelect(queryStr, replacements)
+              if(!lpf_rows || lpf_rows.length <= 0) {
+                await tb_shipment_fee.create({
+                  export_masterbl_id: b.export_masterbl_id,
+                  fee_data_code: lf.fee_data_code,
+                  fee_data_fixed: lf.fee_data_receivable_fixed,
+                  shipment_fee_supplement: '0',
+                  shipment_fee_type: 'R',
+                  shipment_fee_amount: lf.fee_data_receivable_amount,
+                  shipment_fee_fixed_amount: lf.fee_data_receivable_fixed && lf.fee_data_receivable_fixed === '1' ? lf.fee_data_receivable_amount: '',
+                  shipment_fee_currency: lf.shipment_fee_currency ? lf.shipment_fee_currency : 'USD',
+                  shipment_fee_status: 'SA',
+                  shipment_fee_save_at: new Date()
+                })
+              }
+            }
+          }
+        } else {
+          // 删除没有开收据的LPF
+          if(bls && bls.length > 0) {
+            for(let b of bls) {
+              let lpfs = await tb_shipment_fee.findAll({
+                where: {
+                  export_masterbl_id: b.export_masterbl_id,
+                  shipment_fee_type: 'R',
+                  fee_data_code: 'LPF',
+                  state: GLBConfig.ENABLE
+                }
+              })
+              if(lpfs && lpfs.length > 0) {
+                for(let l of lpfs) {
+                  if(l.shipment_fee_status !== 'RE') {
+                    l.state = GLBConfig.DISABLE
+                    await l.save()
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
       vessel.export_vessel_name = doc.export_vessel_name
       vessel.export_vessel_voyage = doc.export_vessel_voyage
       vessel.export_vessel_etd = doc.export_vessel_etd

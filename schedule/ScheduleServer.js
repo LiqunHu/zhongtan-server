@@ -1,13 +1,18 @@
 const model = require('../app/model')
 const moment = require('moment')
+const GLBConfig = require('../util/GLBConfig')
+const ediMail = require('../util/EdiMail')
+const bookingMail = require('../util/BookingMail')
+
+const cal_config_srv = require('../services/zhongtan/equipment/OverdueCalculationConfigServer')
+const empty_stock_srv = require('../services/zhongtan/equipment/EmptyStockManagementServer')
 
 const tb_container = model.zhongtan_invoice_containers
 const tb_fixed_deposit = model.zhongtan_customer_fixed_deposit
 const tb_fee_data = model.zhongtan_export_fee_data
 const tb_shipment_fee = model.zhongtan_export_shipment_fee
-const cal_config_srv = require('../services/zhongtan/equipment/OverdueCalculationConfigServer')
-const empty_stock_srv = require('../services/zhongtan/equipment/EmptyStockManagementServer')
-const GLBConfig = require('../util/GLBConfig')
+const tb_edi_depot = model.zhongtan_edi_depot
+
 
 const resetDemurrageReceiptSeq = async () => {
   try{
@@ -218,11 +223,36 @@ const calculationExportShipmentFee = async () => {
   }
 }
 
+const readEdiMailSchedule = async () => {
+  try{
+    let ediDepots = await tb_edi_depot.findAll({
+      where: {
+        state : GLBConfig.ENABLE,
+      }
+    })
+    if(ediDepots && ediDepots.length > 0) {
+      await ediMail.readEdiMail(ediDepots)
+    }
+  } finally {
+    // continue regardless of error
+  }
+}
+
+const readBookingMailSchedule = async () => {
+  try{
+    await bookingMail.readBookingMail()
+  } finally {
+    // continue regardless of error
+  }
+}
+
 module.exports = {
   resetDemurrageReceiptSeq: resetDemurrageReceiptSeq,
   calculationCurrentOverdueDays: calculationCurrentOverdueDays,
   expireFixedDepositCheck: expireFixedDepositCheck,
   importEmptyStockContainer: importEmptyStockContainer,
   resetPaymentAdviceNo: resetPaymentAdviceNo,
-  calculationExportShipmentFee: calculationExportShipmentFee
+  calculationExportShipmentFee: calculationExportShipmentFee,
+  readEdiMailSchedule: readEdiMailSchedule,
+  readBookingMailSchedule: readBookingMailSchedule
 }

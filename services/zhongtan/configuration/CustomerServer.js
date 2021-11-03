@@ -4,6 +4,8 @@ const common = require('../../../util/CommonUtil')
 const GLBConfig = require('../../../util/GLBConfig')
 const logger = require('../../../app/logger').createLogger(__filename)
 const model = require('../../../app/model')
+const opSrv = require('../../common/system/OperationPasswordServer')
+
 const Op = model.Op
 
 const tb_usergroup = model.common_usergroup
@@ -228,5 +230,15 @@ exports.changeRateAct = async req => {
     return common.success()
   } else {
     return common.error('operator_03')
+  }
+}
+
+exports.checkPasswordAct = async req => {
+  let doc = common.docValidate(req)
+  let check = await opSrv.checkPassword(doc.action, doc.checkPassword)
+  if(check) {
+    return common.success()
+  } else {
+    return common.error('auth_24')
   }
 }
