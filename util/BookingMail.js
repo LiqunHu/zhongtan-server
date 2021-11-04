@@ -93,11 +93,13 @@ const readNewMail = async () => {
       logger.error(imap.state)
       imap.openBox('INBOX', false, function(err) {
         if (err) {
+          logger.error(err)
           logger.error("44444444444444444444444444444444")
           imap.end()
         }
         imap.search(['NEW'], function(err, results) {
           if (err) {
+            logger.error(err)
             logger.error("555555555555555555555555555555")
             imap.end()
           }
@@ -116,7 +118,8 @@ const readNewMail = async () => {
         })
       })
     })
-    imap.on('error', function() {
+    imap.on('error', function(err) {
+      logger.error(err)
       logger.error("22222222222222222222222222222222")
       imap.end()
     })
