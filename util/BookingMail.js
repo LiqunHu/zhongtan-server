@@ -13,7 +13,7 @@ const tb_container_size = model.zhongtan_container_size
 const imap = new Imap({
   user: config.mailConfig.auth.user,
   password: config.mailConfig.auth.pass,
-  host: config.mailConfig.host,
+  host: config.mailConfig.auth.host,
   port: 993,
   tls: true
 })
