@@ -22,23 +22,34 @@ const readBookingMail = async () => {
   logger.error("开始读取Booking邮件吧")
   let mailData = await readNewMail()
   if(mailData && mailData.length > 0) {
+    logger.error("我读到邮件了")
     let f = imap.fetch(mailData, { bodies: ''})
     if(f) {
+      logger.error("我读到邮件了111111")
       f.on('message', function(msg) {
+        logger.error("我读到邮件了2222222")
         let mailparser = new MailParser()
         msg.on('body', function(stream) {
+          logger.error("我读到邮件了33333333333")
           stream.pipe(mailparser)
           mailparser.on("headers", function(headers){
+            logger.error("我读到邮件了4444444444444")
             let from = headers.get('from').text
             let subject = headers.get('subject')
+            logger.error("我读到邮件了5555555555555")
+            logger.error(from)
+            logger.error(subject)
             if(from === 'PLEASE-No-Reply-IRIS-4@COSCON.com' || from === 'PLEASE-No-Reply-IRIS-4@OOCL.COM') {
               mailparser.on("data", function(data) {
+                logger.error("我读到邮件了666666666666666")
                 if (data.type === 'attachment') {
+                  logger.error("我读到邮件了7777777777777777")
                   let filePath = path.join(process.cwd(), config.fileSys.filesDir, data.filename)
                   let writeStream = fs.createWriteStream(filePath)
                   data.content.pipe(writeStream)
                   data.release()
                   writeStream.on('finish', async () => {
+                    logger.error("我读到邮件了888888888888888888888")
                     if(fs.existsSync(filePath)) {
                       let sizeConfig = await tb_container_size.findAll({
                         where: {
@@ -56,6 +67,8 @@ const readBookingMail = async () => {
         })
       })
     }
+  } else{
+    logger.error("我没有读到邮件")
   }
 }
 
