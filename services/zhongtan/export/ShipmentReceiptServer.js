@@ -292,6 +292,7 @@ exports.exportCollectAct = async (req, res) => {
     receivable_map.set('FAF', 'receivable_faf')
     receivable_map.set('DESTINATION CHANGE', 'receivable_cod')
     receivable_map.set('ROLLOVER CHARGE/SPACE LOSS', 'receivable_rlc')
+    receivable_map.set('LATE PAYMENT FEE', 'receivable_lpf')
     let payable_map = new Map()
     payable_map.set('B/L FEE', 'payable_bl')
     payable_map.set('OCEAN FREIGHT', 'payable_ocean')
@@ -337,7 +338,7 @@ exports.exportCollectAct = async (req, res) => {
           row.vessel_voyage = r.export_vessel_name + '/' + r.export_vessel_voyage
           // 添加对应收据的应付
           queryStr = `SELECT f.*, d.fee_data_name FROM tbl_zhongtan_export_shipment_fee f 
-                      LEFT JOIN (SELECT fee_data_code, fee_data_name FROM tbl_zhongtan_export_fee_data GROUP BY fee_data_code) d ON f.fee_data_code = d.fee_data_code 
+                      LEFT JOIN (SELECT fee_data_code, fee_data_name FROM tbl_zhongtan_export_fee_data WHERE state = 1 GROUP BY fee_data_code) d ON f.fee_data_code = d.fee_data_code 
                       WHERE f.state = '1' AND f.shipment_fee_type = 'R' AND f.shipment_fee_receipt_id = ?`
           replacements = []
           replacements.push(f.uploadfile_id)
