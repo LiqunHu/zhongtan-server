@@ -19,6 +19,7 @@ const imap = new Imap({
 })
 
 const readBookingMail = async () => {
+  logger.error("开始读取Booking邮件吧")
   let mailData = await readNewMail()
   if(mailData && mailData.length > 0) {
     let f = imap.fetch(mailData, { bodies: ''})

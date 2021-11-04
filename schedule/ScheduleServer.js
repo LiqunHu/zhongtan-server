@@ -226,6 +226,7 @@ const calculationExportShipmentFee = async () => {
 
 const readEdiMailSchedule = async () => {
   try{
+    logger.error('颤抖吧，要开始读取EDI文件了')
     let ediDepots = await tb_edi_depot.findAll({
       where: {
         state : GLBConfig.ENABLE,
@@ -234,6 +235,7 @@ const readEdiMailSchedule = async () => {
     if(ediDepots && ediDepots.length > 0) {
       await ediMail.readEdiMail(ediDepots)
     }
+    logger.error('停止颤抖吧，要结束读取EDI文件了')
   } catch (error) {
     logger.error(error)
   } finally {
