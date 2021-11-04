@@ -20,6 +20,13 @@ const imap = new Imap({
 
 const readBookingMail = async () => {
   logger.error("开始读取Booking邮件吧")
+  logger.error({
+    user: config.mailConfig.auth.user,
+    password: config.mailConfig.auth.pass,
+    host: config.mailConfig.host,
+    port: 993,
+    tls: true
+  })
   let mailData = await readNewMail()
   if(mailData && mailData.length > 0) {
     logger.error("我读到邮件了")
