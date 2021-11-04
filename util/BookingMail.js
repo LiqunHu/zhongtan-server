@@ -32,31 +32,21 @@ const readBookingMail = async () => {
     logger.error("我读到邮件了")
     let f = imap.fetch(mailData, { bodies: ''})
     if(f) {
-      logger.error("我读到邮件了111111")
       f.on('message', function(msg) {
-        logger.error("我读到邮件了2222222")
         let mailparser = new MailParser()
         msg.on('body', function(stream) {
-          logger.error("我读到邮件了33333333333")
           stream.pipe(mailparser)
           mailparser.on("headers", function(headers){
-            logger.error("我读到邮件了4444444444444")
             let from = headers.get('from').text
             let subject = headers.get('subject')
-            logger.error("我读到邮件了5555555555555")
-            logger.error(from)
-            logger.error(subject)
             if(from === 'PLEASE-No-Reply-IRIS-4@COSCON.com' || from === 'PLEASE-No-Reply-IRIS-4@OOCL.COM') {
               mailparser.on("data", function(data) {
-                logger.error("我读到邮件了666666666666666")
                 if (data.type === 'attachment') {
-                  logger.error("我读到邮件了7777777777777777")
                   let filePath = path.join(process.cwd(), config.fileSys.filesDir, data.filename)
                   let writeStream = fs.createWriteStream(filePath)
                   data.content.pipe(writeStream)
                   data.release()
                   writeStream.on('finish', async () => {
-                    logger.error("我读到邮件了888888888888888888888")
                     if(fs.existsSync(filePath)) {
                       let sizeConfig = await tb_container_size.findAll({
                         where: {
@@ -80,38 +70,29 @@ const readBookingMail = async () => {
 }
 
 const readNewMail = async () => {
-  logger.error("1111111111111111111111111111111111111")
   let mailData = []
   let promise = new Promise(resolve => {
     imap.once('ready', function() {
       if(imap.state != 'authenticated') {
-        logger.error("8888888888888888888888888888888")
         imap.connect()
-      } else {
-        logger.error("8888888888888888888888888888888888")
       }
-      logger.error(imap.state)
       imap.openBox('INBOX', false, function(err) {
         if (err) {
           logger.error(err)
-          logger.error("44444444444444444444444444444444")
           imap.end()
         }
         imap.search(['NEW'], function(err, results) {
           if (err) {
             logger.error(err)
-            logger.error("555555555555555555555555555555")
             imap.end()
           }
           if(results && results.length > 0) {
             imap.setFlags(results, ['\\Seen'], function(err) {
               if (err) {
-                logger.error("66666666666666666666666666666")
                 imap.end()
               }
             })
           }else {
-            logger.error("77777777777777777777777777777777777777")
             imap.end()
           }
           resolve(results)
@@ -120,11 +101,9 @@ const readNewMail = async () => {
     })
     imap.on('error', function(err) {
       logger.error(err)
-      logger.error("22222222222222222222222222222222")
       imap.end()
     })
     imap.once('end', function() {
-      logger.error("33333333333333333333333333333333")
     })
     imap.connect()
   })
