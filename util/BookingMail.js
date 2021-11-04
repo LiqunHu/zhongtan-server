@@ -80,27 +80,36 @@ const readBookingMail = async () => {
 }
 
 const readNewMail = async () => {
+  logger.error("1111111111111111111111111111111111111")
   let mailData = []
   let promise = new Promise(resolve => {
     imap.once('ready', function() {
       if(imap.state != 'authenticated') {
+        logger.error("8888888888888888888888888888888")
         imap.connect()
+      } else {
+        logger.error("8888888888888888888888888888888888")
       }
+      logger.error(imap.state)
       imap.openBox('INBOX', false, function(err) {
         if (err) {
+          logger.error("44444444444444444444444444444444")
           imap.end()
         }
         imap.search(['NEW'], function(err, results) {
           if (err) {
+            logger.error("555555555555555555555555555555")
             imap.end()
           }
           if(results && results.length > 0) {
             imap.setFlags(results, ['\\Seen'], function(err) {
               if (err) {
+                logger.error("66666666666666666666666666666")
                 imap.end()
               }
             })
           }else {
+            logger.error("77777777777777777777777777777777777777")
             imap.end()
           }
           resolve(results)
@@ -108,9 +117,11 @@ const readNewMail = async () => {
       })
     })
     imap.on('error', function() {
+      logger.error("22222222222222222222222222222222")
       imap.end()
     })
     imap.once('end', function() {
+      logger.error("33333333333333333333333333333333")
     })
     imap.connect()
   })
