@@ -6,6 +6,7 @@ const config = require('../app/config')
 const model = require('../app/model')
 const GLBConfig = require('../util/GLBConfig')
 const bookingLoad = require('../services/zhongtan/export/BookingLoadServer')
+const logger = require('../app/logger').createLogger(__filename)
 
 const tb_container_size = model.zhongtan_container_size
 
@@ -28,6 +29,7 @@ const readBookingMail = async () => {
           stream.pipe(mailparser)
           mailparser.on("headers", function(headers){
             let from = headers.get('from').text
+            let subject = headers.get('subject')
             if(from === 'PLEASE-No-Reply-IRIS-4@COSCON.com' || from === 'PLEASE-No-Reply-IRIS-4@OOCL.COM') {
               mailparser.on("data", function(data) {
                 if (data.type === 'attachment') {
@@ -42,6 +44,7 @@ const readBookingMail = async () => {
                           state: GLBConfig.ENABLE
                         }
                       })
+                      logger.error("读取到邮件了" + from + ', ' + subject + ',' + data.filename)
                       await bookingLoad.importBookingPdf(filePath, sizeConfig)
                     }
                   })

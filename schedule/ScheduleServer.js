@@ -3,6 +3,7 @@ const moment = require('moment')
 const GLBConfig = require('../util/GLBConfig')
 const ediMail = require('../util/EdiMail')
 const bookingMail = require('../util/BookingMail')
+const logger = require('../app/logger').createLogger(__filename)
 
 const cal_config_srv = require('../services/zhongtan/equipment/OverdueCalculationConfigServer')
 const empty_stock_srv = require('../services/zhongtan/equipment/EmptyStockManagementServer')
@@ -233,6 +234,8 @@ const readEdiMailSchedule = async () => {
     if(ediDepots && ediDepots.length > 0) {
       await ediMail.readEdiMail(ediDepots)
     }
+  } catch (error) {
+    logger.error(error)
   } finally {
     // continue regardless of error
   }
@@ -240,7 +243,11 @@ const readEdiMailSchedule = async () => {
 
 const readBookingMailSchedule = async () => {
   try{
+    logger.error('颤抖吧，要开始读取Booking文件了')
     await bookingMail.readBookingMail()
+    logger.error('停止颤抖吧，要结束读取Booking文件了')
+  } catch (error) {
+    logger.error(error)
   } finally {
     // continue regardless of error
   }
