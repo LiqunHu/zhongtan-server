@@ -36,7 +36,7 @@ exports.uploadBookingAct = async req => {
     }
   })
   for (let f of doc.upload_files) {
-    this.importBookingPdf(f.response.info.path, sizeConfig)
+    await this.importBookingPdf(f.response.info.path, sizeConfig)
   }
   return common.success()
 }
@@ -178,6 +178,9 @@ exports.importBookingPdf = async (path, sizeConfig) => {
         vesselName : ves,
         vesselVoyage: voy,
         vesselEtd: etd
+      }
+      if(quantity) {
+        quantity = Number(quantity)
       }
       let blJson = {
         bookingNumber : bookingNumber,
@@ -327,6 +330,9 @@ exports.importBookingPdf = async (path, sizeConfig) => {
         vesselName : ves,
         vesselVoyage: voy,
         vesselEtd: etd
+      }
+      if(quantity) {
+        quantity = Number(quantity)
       }
       let blJson = {
         bookingNumber : bookingNumber,
@@ -548,6 +554,9 @@ exports.importBookingPdf = async (path, sizeConfig) => {
                 }
               }
             }
+            if(quantity) {
+              quantity = Number(quantity)
+            }
             blCons.push({
               ctnrType: ctnrType,
               quantity: quantity,
@@ -607,6 +616,9 @@ exports.importBookingPdf = async (path, sizeConfig) => {
               break
             }
           }
+        }
+        if(quantity) {
+          quantity = Number(quantity)
         }
         blCons.push({
           ctnrType: ctnrType,
@@ -902,12 +914,13 @@ exports.searchVesselAct = async req => {
       let ccountStr = `SELECT COUNT(1) AS count FROM tbl_zhongtan_export_container WHERE export_vessel_id = ? AND state = ? AND INSTR(export_container_bl, '*') = 0`
       let ccountReplacements = [v.export_vessel_id, GLBConfig.ENABLE]
       let ccount = await model.simpleSelect(ccountStr, ccountReplacements)
-      let gweightStr = `SELECT SUM(export_container_cargo_weight) AS weight FROM tbl_zhongtan_export_container WHERE export_vessel_id = ? AND state = ? AND INSTR(export_container_bl, '*') = 0`
+      let gweightStr = `SELECT SUM(export_container_cargo_weight) AS weight, (COUNT(IF(SUBSTR(export_container_size_type, 1, 1) = '2', TRUE, NULL)) * 2200 + COUNT(IF(SUBSTR(export_container_size_type, 1, 1) != '2', TRUE, NULL)) * 4400) tareWeight FROM tbl_zhongtan_export_container WHERE export_vessel_id = ? AND state = ? AND INSTR(export_container_bl, '*') = 0`
       let gweightReplacements = [v.export_vessel_id, GLBConfig.ENABLE]
       let gweight = await model.simpleSelect(gweightStr, gweightReplacements)
       v.bl_count = bcount[0].count
       v.container_count = ccount[0].count
       v.gross_weight = gweight[0].weight
+      v.tare_weight = gweight[0].tareWeight
       queryStr = `SELECT export_container_size_type containers_size, COUNT(1) containers_size_count FROM tbl_zhongtan_export_container WHERE state = '1' AND export_vessel_id = ? AND INSTR(export_container_bl, '*') = 0 GROUP BY export_container_size_type`
       replacements = [v.export_vessel_id]
       let sts = await model.simpleSelect(queryStr, replacements)
