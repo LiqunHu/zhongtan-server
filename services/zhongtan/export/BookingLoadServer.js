@@ -1640,6 +1640,11 @@ exports.bookingExportAct = async (req, res) => {
               }
               b.export_masterbl_container_number = numbers.join('\r\n')
               b.export_masterbl_container_type = types.join('\r\n')
+              if(b.export_masterbl_empty_release_approve_date) {
+                b.export_masterbl_empty_release = 'YES'
+              } else {
+                b.export_masterbl_empty_release = 'NO'
+              }
               bl_sheet.push(b)
 
               if(containers) {
