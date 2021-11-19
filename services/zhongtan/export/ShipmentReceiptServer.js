@@ -380,13 +380,17 @@ exports.exportCollectAct = async (req, res) => {
             if(payables) {
               let payable_others = 0
               for(let pa of payables) {
+                if(pa.fee_data_name === 'DEMURRAGE FEE') {
+                  delete row[payable_map.get(pa.fee_data_name)]
+                }
+
                 if(payable_map.get(pa.fee_data_name)) {
                   if(row[payable_map.get(pa.fee_data_name)]) {
                     row[payable_map.get(pa.fee_data_name)] = new Decimal(row[payable_map.get(pa.fee_data_name)]).plus(new Decimal(pa.shipment_fee_amount))
                   } else {
                     row[payable_map.get(pa.fee_data_name)] = pa.shipment_fee_amount
                   }
-                }else {
+                } else {
                   if(pa.shipment_fee_amount) {
                     payable_others = new Decimal(payable_others).plus(new Decimal(pa.shipment_fee_amount))
                   }
