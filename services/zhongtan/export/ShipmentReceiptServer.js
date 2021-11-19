@@ -383,7 +383,6 @@ exports.exportCollectAct = async (req, res) => {
                 if(pa.fee_data_name === 'DEMURRAGE FEE') {
                   delete row[payable_map.get(pa.fee_data_name)]
                 }
-
                 if(payable_map.get(pa.fee_data_name)) {
                   if(row[payable_map.get(pa.fee_data_name)]) {
                     row[payable_map.get(pa.fee_data_name)] = new Decimal(row[payable_map.get(pa.fee_data_name)]).plus(new Decimal(pa.shipment_fee_amount))
