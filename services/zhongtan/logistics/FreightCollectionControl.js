@@ -29,7 +29,9 @@ module.exports = async (req, res) => {
       ret = await srv.getExtraDataAct(req)
     } else if(method === 'freightExtra') {
       ret = await srv.freightExtraAct(req)
-    }
+    } else if(method === 'editFreight') {
+      ret = await srv.editFreightAct(req)
+    } 
 
     common.sendData(res, ret)
   } catch (error) {

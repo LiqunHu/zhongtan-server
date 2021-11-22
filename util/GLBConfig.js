@@ -448,6 +448,7 @@ module.exports = {
   ],
   FREIGHT_RECEIVABLE_STATUS: [
     // 应收状态 0：未添加，1：已添加，2：申请发票，3已开发票，4已开收据，5申请额外发票，6已开额外发票，7已开额外收据
+    { id: '0', text: 'NOT APPLY' },  // 申请发票
     { id: '2', text: 'APPLY FREIGHT' },  // 申请发票
     { id: '3', text: 'FREIGHT INVOICE' },  // 已开发票
     { id: '4', text: 'FREIGHT RECEIPT' },  // 已开收据

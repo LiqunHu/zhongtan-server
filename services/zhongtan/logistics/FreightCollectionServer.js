@@ -272,7 +272,15 @@ exports.getInvoiceDataAct = async req => {
     if(ogs && ogs.length > 1) {
       return common.error('logistics_10')
     }
+    let cgs = await common.groupingJson(collectionList, 'shipment_list_customer')
+    if(cgs && cgs.length > 1) {
+      return common.error('logistics_15')
+    }
+    let invoice_customer = ''
     for(let c of collectionList) {
+      if(!c.shipment_list_customer) {
+        return common.error('logistics_14')
+      }
       if(c.shipment_list_business_type === 'I') {
         if(!c.shipment_list_discharge_date || !c.shipment_list_empty_return_date) {
           return common.error('logistics_07')
@@ -282,29 +290,32 @@ exports.getInvoiceDataAct = async req => {
           return common.error('logistics_07')
         }
       }
+      invoice_customer = c.shipment_list_customer
     }
-    let invoice_customer = ''
+    
     let invoice_amount = 0
     let invoice_disabled = false
-    if(collectionList[0].shipment_list_cntr_owner.indexOf('COS') >= 0) {
-      let defaultCOSCO = await tb_user.findOne({
-        where: {
-          user_username: 'COSCO',
-          state: GLBConfig.ENABLE
+    if(!invoice_customer) {
+      if(collectionList[0].shipment_list_cntr_owner.indexOf('COS') >= 0) {
+        let defaultCOSCO = await tb_user.findOne({
+          where: {
+            user_username: 'COSCO',
+            state: GLBConfig.ENABLE
+          }
+        })
+        if(defaultCOSCO) {
+          invoice_customer = defaultCOSCO.user_id
         }
-      })
-      if(defaultCOSCO) {
-        invoice_customer = defaultCOSCO.user_id
-      }
-    } else {
-      let defaultOOCL = await tb_user.findOne({
-        where: {
-          user_username: 'OOCL',
-          state: GLBConfig.ENABLE
+      } else {
+        let defaultOOCL = await tb_user.findOne({
+          where: {
+            user_username: 'OOCL',
+            state: GLBConfig.ENABLE
+          }
+        })
+        if(defaultOOCL) {
+          invoice_customer = defaultOOCL.user_id
         }
-      })
-      if(defaultOOCL) {
-        invoice_customer = defaultOOCL.user_id
       }
     }
     for(let c of collectionList) {
@@ -702,4 +713,24 @@ exports.freightExtraAct = async req => {
     }
   }
   return common.success()
+}
+
+exports.editFreightAct = async req => {
+  let doc = common.docValidate(req)
+  let shipment_list_customer = doc.shipment_list_customer
+  let queryStr = `SELECT * FROM tbl_zhongtan_logistics_shipment_list WHERE state = ? AND shipment_list_bill_no = ? `
+  let replacements = [GLBConfig.ENABLE, doc.shipment_list_bill_no]
+  let shipment_list = await model.simpleSelect(queryStr, replacements)
+  if(shipment_list) {
+    for(let sl of shipment_list) {
+      let s = await tb_shipment_list.findOne({
+        where: {
+          shipment_list_id: sl.shipment_list_id,
+          state: GLBConfig.ENABLE
+        }
+      })
+      s.shipment_list_customer = shipment_list_customer
+      await s.save()
+    }
+  }
 }

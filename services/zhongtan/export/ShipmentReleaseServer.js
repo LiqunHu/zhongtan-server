@@ -578,7 +578,7 @@ exports.submitShipmentAct = async req => {
         export_masterbl_id: bl.export_masterbl_id
       }
     })
-    let submitStatus = ['SA', 'DE', 'UN']
+    let submitStatus = ['SA', 'SU', 'DE', 'UN']
     let submitReceivable = [], submitPayable = [], submitSplit = []
     let totalReceivable = 0, totalPayable = 0, totalSplit = 0
     if(shipment_receivable && shipment_receivable.length > 0) {
@@ -625,7 +625,20 @@ exports.submitShipmentAct = async req => {
         }
       }
     }
-
+    // 删除未处理的审核
+    let evs = await tb_export_verification.findAll({
+      where: {
+        export_masterbl_id: export_masterbl_id,
+        export_verification_api_name: 'SHIPMENT RELEASE',
+        export_verification_state: 'PM'
+      }
+    })
+    if(evs && evs.length > 0) {
+      for(let e of evs) {
+        e.state = GLBConfig.DISABLE
+        await e.save()
+      }
+    }
     if((submitReceivable && submitReceivable.length > 0) || (submitPayable && submitPayable.length > 0)) {
       // 有可提交的应收应付费用
       let verification = await tb_export_verification.create({
@@ -1005,6 +1018,17 @@ exports.invoiceShipmentAct = async req => {
                 }
               })
               if(sf) {
+                if(sf.shipment_fee_invoice_id) {
+                  let old_if = await tb_uploadfile.findOne({
+                    where: {
+                      uploadfile_id: sf.shipment_fee_invoice_id
+                    }
+                  })
+                  if(old_if) {
+                    old_if.state = GLBConfig.DISABLE
+                    await old_if.save()
+                  }
+                }
                 sf.shipment_fee_status = 'IN'
                 sf.shipment_fee_invoice_by = user.user_id
                 sf.shipment_fee_invoice_at = curDate
