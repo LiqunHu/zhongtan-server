@@ -18,6 +18,8 @@ const tb_proforma_container = model.zhongtan_export_proforma_container
 const tb_container_size = model.zhongtan_container_size
 const tb_shipment_fee = model.zhongtan_export_shipment_fee
 const tb_fee_data = model.zhongtan_export_fee_data
+const tb_uploadfile = model.zhongtan_uploadfile
+const tb_export_verification = model.zhongtan_export_verification
 
 exports.uploadBookingAct = async req => {
   let doc = common.docValidate(req), user = req.user
@@ -616,6 +618,33 @@ exports.uploadShipmentAct = async req => {
                     if(f.shipment_fee_status !== 'RE') {
                       f.state = GLBConfig.DISABLE
                       await f.save()
+                      if(f.shipment_fee_invoice_id) {
+                        let iu = await tb_uploadfile.findOne({
+                          where: {
+                            uploadfile_id: f.shipment_fee_invoice_id,
+                            state: GLBConfig.ENABLE,
+                          }
+                        })
+                        if(iu) {
+                          iu.state = GLBConfig.DISABLE
+                          await iu.save()
+                        }
+                      }
+
+                      let evs = await tb_export_verification.findAll({
+                        where: {
+                          export_masterbl_id: bl.export_masterbl_id,
+                          export_verification_api_name: 'SHIPMENT RELEASE',
+                          export_verification_state: 'PM',
+                          state: GLBConfig.ENABLE
+                        }
+                      })
+                      if(evs && evs.length > 0) {
+                        for(let e of evs) {
+                          e.state = GLBConfig.DISABLE
+                          await e.save()
+                        }
+                      }
                     }
                   }
                 }

@@ -630,7 +630,8 @@ exports.submitShipmentAct = async req => {
       where: {
         export_masterbl_id: export_masterbl_id,
         export_verification_api_name: 'SHIPMENT RELEASE',
-        export_verification_state: 'PM'
+        export_verification_state: 'PM',
+        state : GLBConfig.ENABLE
       }
     })
     if(evs && evs.length > 0) {
