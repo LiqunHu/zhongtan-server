@@ -562,24 +562,19 @@ exports.downloadCollectAct = async (req, res) => {
     AND a.invoice_masterbi_customer_id = c.user_id
     AND a.invoice_vessel_id = v.invoice_vessel_id`
   let replacements = []
-  let receiptFlg = true
   if(doc.carrier) {
     queryStr = queryStr + ` AND a.invoice_masterbi_carrier = ? `
     replacements.push(doc.carrier)
   }
   if(doc.collect_date && doc.collect_date.length === 2 && doc.collect_date[0] && doc.collect_date[1]) {
-    receiptFlg = false
     queryStr = queryStr + ` AND STR_TO_DATE(v.invoice_vessel_ata, "%d/%m/%Y") >= ? AND STR_TO_DATE(v.invoice_vessel_ata, "%d/%m/%Y") < ? `
     replacements.push(doc.collect_date[0])
     replacements.push(moment(doc.collect_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
   }
   if(doc.receipt_date && doc.receipt_date.length === 2 && doc.receipt_date[0] && doc.receipt_date[1]) {
-    queryStr = queryStr + ` AND b.created_at >= ? AND b.created_at < ? `
+    queryStr = queryStr + ` AND b.created_at >= ? AND b.created_at < ?  AND b.api_name = 'RECEIPT-RECEIPT'`
     replacements.push(doc.receipt_date[0])
     replacements.push(moment(doc.receipt_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
-  }
-  if(receiptFlg) {
-    queryStr = queryStr + ` AND b.uploadfile_acttype IN('deposit' , 'fee' , 'freight') `
   }
   queryStr = queryStr + ` order by v.invoice_vessel_id desc, a.invoice_masterbi_bl`
   let result = await model.simpleSelect(queryStr, replacements)

@@ -229,53 +229,31 @@ exports.shipmentReceiptAct = async req => {
 
 exports.exportCollectAct = async (req, res) => {
   let doc = common.docValidate(req)
-  let receiptFlg = true
-  if(doc.collect_etd && doc.collect_etd.length > 1 && doc.collect_etd[0] && doc.collect_etd[1]) {
-    receiptFlg = false
-  }
   let queryStr = `SELECT b.*, v.export_vessel_name, v.export_vessel_voyage, v.export_vessel_etd 
                   FROM tbl_zhongtan_export_proforma_masterbl b LEFT JOIN tbl_zhongtan_export_proforma_vessel v ON b.export_vessel_id = v.export_vessel_id 
                   WHERE b.state = '1' AND v.state = '1' `
   let replacements = []
-  if(receiptFlg) {
-    queryStr = queryStr + ` AND export_masterbl_id IN (SELECT uploadfile_index1 FROM tbl_zhongtan_uploadfile WHERE state = '1' AND api_name = 'SHIPMENT-RECEIPT' `
-    if(doc.collect_date && doc.collect_date.length > 1 && doc.collect_date[0] && doc.collect_date[1]) {
-      queryStr = queryStr + ` AND created_at > ? AND created_at < ? `
-      replacements.push(moment(doc.collect_date[0]).local().format('YYYY-MM-DD'))
-      replacements.push(moment(doc.collect_date[1]).local().add(1, 'days').format('YYYY-MM-DD'))
-    }
-    if(doc.receipt_party) {
-      queryStr = queryStr + ` AND uploadfile_customer_id = ? `
-      replacements.push(doc.receipt_party)
-    }
-    queryStr = queryStr + `) `
-  } else {
-    if((doc.collect_date && doc.collect_date.length > 1 && doc.collect_date[0] && doc.collect_date[1]) || doc.receipt_party) {
-      queryStr = queryStr + ` AND export_masterbl_id IN (SELECT uploadfile_index1 FROM tbl_zhongtan_uploadfile WHERE state = '1' `
-      if(doc.collect_date && doc.collect_date.length > 1) {
-        queryStr = queryStr + ` AND created_at > ? AND created_at < ? `
-        replacements.push(moment(doc.collect_date[0]).local().format('YYYY-MM-DD'))
-        replacements.push(moment(doc.collect_date[1]).local().add(1, 'days').format('YYYY-MM-DD'))
-      }
-      if(doc.receipt_party) {
-        queryStr = queryStr + ` AND uploadfile_customer_id = ? `
-        replacements.push(doc.receipt_party)
-      }
-      queryStr = queryStr + `) `
-    }
-  }
   if(doc.receipt_vessel) {
     queryStr = queryStr + ` AND b.export_vessel_id = ? `
     replacements.push(doc.receipt_vessel)
+  }
+  if(doc.receipt_party) {
+    queryStr = queryStr + ` AND export_masterbl_id IN (SELECT uploadfile_index1 FROM tbl_zhongtan_uploadfile WHERE state = '1' AND uploadfile_customer_id = ? )`
+    replacements.push(doc.receipt_party)
+  }
+  if(doc.carrier) {
+    queryStr = queryStr + ` AND b.export_masterbl_bl_carrier = ? `
+    replacements.push(doc.carrier)
   }
   if(doc.collect_etd && doc.collect_etd.length > 1 && doc.collect_etd[0] && doc.collect_etd[1]) {
     queryStr += ' and STR_TO_DATE(v.export_vessel_etd, "%d/%m/%Y") >= ? and STR_TO_DATE(v.export_vessel_etd, "%d/%m/%Y") < ? '
     replacements.push(moment(doc.collect_etd[0]).local().format('YYYY-MM-DD'))
     replacements.push(moment(doc.collect_etd[1]).local().add(1, 'days').format('YYYY-MM-DD'))
   }
-  if(doc.carrier) {
-    queryStr = queryStr + ` AND b.export_masterbl_bl_carrier = ? `
-    replacements.push(doc.carrier)
+  if(doc.collect_date && doc.collect_date.length > 1 && doc.collect_date[0] && doc.collect_date[1]) {
+    queryStr = queryStr + ` AND export_masterbl_id IN (SELECT uploadfile_index1 FROM tbl_zhongtan_uploadfile WHERE state = '1' AND created_at > ? AND created_at < ? AND api_name = 'SHIPMENT-RECEIPT')`
+    replacements.push(moment(doc.collect_date[0]).local().format('YYYY-MM-DD'))
+    replacements.push(moment(doc.collect_date[1]).local().add(1, 'days').format('YYYY-MM-DD'))
   }
   queryStr = queryStr + ` ORDER BY STR_TO_DATE(v.export_vessel_etd, "%d/%m/%Y") ASC, b.export_masterbl_bl ASC `
   let result = await model.simpleSelect(queryStr, replacements)
@@ -403,7 +381,7 @@ exports.exportCollectAct = async (req, res) => {
           index++
           renderData.push(row)
         }
-      } else if(!receiptFlg) {
+      } else {
         let row = {}
         row.receipt_bl = r.export_masterbl_bl
         row.vessel_voyage = r.export_vessel_name + '/' + r.export_vessel_voyage
