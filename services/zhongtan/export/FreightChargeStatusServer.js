@@ -86,6 +86,37 @@ exports.searchAct = async req => {
       replacements = [d.export_masterbl_id]
       let fees = await model.simpleSelect(queryStr, replacements)
       d.receivable_detail = fees
+      if(d.receivable_detail && d.receivable_detail.length > 0) {
+        for(let rd of d.receivable_detail) {
+          if(rd.shipment_fee_status === 'IN') {
+            let queryRe = await tb_shipment_fee.findAll({
+              attributes: ['fee_data_code', 'shipment_fee_amount', 'shipment_fee_invoice_no'],
+              where: {
+                shipment_fee_party: rd.shipment_fee_party,
+                shipment_fee_status: 'IN',
+                shipment_fee_type: 'R',
+                state: GLBConfig.ENABLE
+              }
+            })
+            if(queryRe && queryRe.length > 0) {
+              rd.invoice_detail = queryRe
+            }
+          } else if(rd.shipment_fee_status === 'RE') {
+            let queryRe = await tb_shipment_fee.findAll({
+              attributes: ['fee_data_code', 'shipment_fee_amount', 'shipment_fee_invoice_no'],
+              where: {
+                shipment_fee_receipt_no: rd.shipment_fee_receipt_no,
+                shipment_fee_status: 'RE',
+                shipment_fee_type: 'R',
+                state: GLBConfig.ENABLE
+              }
+            })
+            if(queryRe && queryRe.length > 0) {
+              rd.invoice_detail = queryRe
+            }
+          }
+        }
+      }
       queryStr = `SELECT * FROM tbl_zhongtan_export_proforma_masterbl b WHERE state = '1' AND bk_cancellation_status = '1' AND export_masterbl_bl = ? AND EXISTS (SELECT 1 FROM tbl_zhongtan_export_shipment_fee f WHERE f.export_masterbl_id = b.export_masterbl_id AND f.state = '1' AND f.shipment_fee_status <> 'RE')`
       replacements = [d.export_masterbl_bl]
       let cancelBls = await model.simpleSelect(queryStr, replacements)
