@@ -41,6 +41,10 @@ module.exports = async (req, res) => {
       return await srv.bookingExportAct(req, res)
     } else if (method === 'deleteBooking') {
       ret = await srv.deleteBookingAct(req)
+    } else if (method === 'countRolloverCharge') {
+      ret = await srv.countRolloverChargeAct(req)
+    } else if (method === 'deleteRolloverCharge') {
+      ret = await srv.deleteRolloverChargeAct(req)
     } 
     
     common.sendData(res, ret)

@@ -14,8 +14,11 @@ const tb_container_size = model.zhongtan_container_size
 const tb_verification = model.zhongtan_export_verification
 const tb_proforma_vessel = model.zhongtan_export_proforma_vessel
 const tb_proforma_bl = model.zhongtan_export_proforma_masterbl
+const tb_proforma_container = model.zhongtan_export_proforma_container
 const tb_shipment_fee = model.zhongtan_export_shipment_fee
 const tb_uploadfile = model.zhongtan_uploadfile
+const tb_export_fee_data = model.zhongtan_export_fee_data
+const tb_shipment_fee_log = model.zhongtan_export_shipment_fee_log
 
 exports.initAct = async () => {
   let returnData = {}
@@ -1704,4 +1707,319 @@ exports.deleteBookingAct = async req => {
     }
   }
   return common.success()
+}
+
+exports.countRolloverChargeAct = async req => {
+  let doc = common.docValidate(req), user = req.user, curDate = new Date()
+  let bl = await tb_bl.findOne({
+    where: {
+      state: GLBConfig.ENABLE,
+      export_masterbl_id: doc.export_masterbl_id
+    }
+  })
+  if(bl) {
+    let pbs = await tb_proforma_bl.findAll({
+      where: {
+        export_masterbl_bl : bl.export_masterbl_bl,
+        bk_cancellation_status: GLBConfig.DISABLE,
+        state: GLBConfig.ENABLE
+      },
+      order: [['export_masterbl_id', 'DESC']]
+    })
+    if(pbs && pbs.length > 0) {
+      let rlcs = await tb_export_fee_data.findAll({
+        where: {
+          fee_data_code: 'RLC',
+          fee_data_receivable: GLBConfig.ENABLE,
+          state: GLBConfig.ENABLE
+        }
+      })
+      if(rlcs && rlcs.length > 0) {
+        for(let pb of pbs) {
+          let rlc_fee = await tb_shipment_fee.findOne({
+            where: {
+              fee_data_code: 'RLC',
+              shipment_fee_type: 'R',
+              export_masterbl_id: pb.export_masterbl_id,
+              state: GLBConfig.ENABLE
+            }
+          })
+          let pro_containers = await tb_proforma_container.findAll({
+            where: {
+              export_vessel_id: pb.export_vessel_id,
+              export_container_bl: pb.export_masterbl_bl,
+              state: GLBConfig.ENABLE
+            }
+          })
+          let rlc_amount = 0
+          if(pro_containers && pro_containers.length > 0) {
+            for(let pc of pro_containers) {
+              for(let rlc of rlcs) {
+                if(rlc.fee_data_receivable_amount && pc.export_container_size_type === rlc.fee_data_container_size) {
+                  rlc_amount = new Decimal(rlc_amount).plus(new Decimal(rlc.fee_data_receivable_amount))
+                }
+              }
+            }
+          }
+          if(rlc_fee) {
+            if(rlc_fee.shipment_fee_status !== 'RE') {
+              // 未开收据，删除重新添加
+              rlc_fee.state = GLBConfig.DISABLE
+              await rlc_fee.save()
+              if(rlc_fee.shipment_fee_status === 'IN') {
+                // 已开发票，删除对应发票
+                let inf = await tb_uploadfile.findOne({
+                  where: {
+                    uploadfile_id: rlc_fee.shipment_fee_invoice_id,
+                    state: GLBConfig.ENABLE
+                  }
+                })
+                if(inf) {
+                  inf.state = GLBConfig.DISABLE
+                  inf.updated_at = curDate
+                  await inf.save()
+                }
+                let in_other_fees = await tb_shipment_fee.findAll({
+                  where: {
+                    shipment_fee_invoice_id: rlc_fee.shipment_fee_invoice_id,
+                    shipment_fee_type: 'R',
+                    state: GLBConfig.ENABLE
+                  }
+                })
+                if(in_other_fees && in_other_fees.length > 0) {
+                  for(let iof of in_other_fees) {
+                    iof.shipment_fee_save_by = user.user_id
+                    iof.shipment_fee_save_at = new Date()
+                    iof.shipment_fee_submit_by = null
+                    iof.shipment_fee_submit_at = null
+                    iof.shipment_fee_approve_by = null
+                    iof.shipment_fee_approve_at = null
+                    iof.shipment_fee_invoice_by = null
+                    iof.shipment_fee_invoice_at = null
+                    iof.shipment_fee_invoice_no = null
+                    iof.shipment_fee_receipt_by = null
+                    iof.shipment_fee_receipt_at = null
+                    iof.shipment_fee_receipt_no = null
+                    iof.shipment_fee_invoice_id = null
+                    iof.shipment_fee_receipt_id = null
+                    iof.shipment_fee_status = 'SA'
+                    iof.updated_at = curDate
+                    await iof.save()
+                  }
+                }
+              } else if(rlc_fee.shipment_fee_status === 'SU') {
+                // 删除未处理的审核
+                let evs = await tb_verification.findAll({
+                  where: {
+                    export_masterbl_id: pb.export_masterbl_id,
+                    export_verification_api_name: 'SHIPMENT RELEASE',
+                    export_verification_state: 'PM',
+                    state : GLBConfig.ENABLE
+                  }
+                })
+                if(evs && evs.length > 0) {
+                  for(let e of evs) {
+                    e.state = GLBConfig.DISABLE
+                    await e.save()
+
+                    let fee_logs = tb_shipment_fee_log.findAll({
+                      where: {
+                        shipment_relation_id: e.export_verification_id,
+                        state: GLBConfig.ENABLE
+                      }
+                    })
+
+                    if(fee_logs && fee_logs.length > 0) {
+                      for(let fl of fee_logs) {
+                        let sf = await tb_shipment_fee.findOne({
+                          where: {
+                            shipment_fee_id: fl.shipment_fee_id,
+                            shipment_fee_status: 'SU',
+                            state: GLBConfig.ENABLE
+                          }
+                        })
+                        if(sf) {
+                          sf.shipment_fee_save_by = user.user_id
+                          sf.shipment_fee_save_at = new Date()
+                          sf.shipment_fee_submit_by = null
+                          sf.shipment_fee_submit_at = null
+                          sf.shipment_fee_approve_by = null
+                          sf.shipment_fee_approve_at = null
+                          sf.shipment_fee_invoice_by = null
+                          sf.shipment_fee_invoice_at = null
+                          sf.shipment_fee_invoice_no = null
+                          sf.shipment_fee_receipt_by = null
+                          sf.shipment_fee_receipt_at = null
+                          sf.shipment_fee_receipt_no = null
+                          sf.shipment_fee_invoice_id = null
+                          sf.shipment_fee_receipt_id = null
+                          sf.shipment_fee_status = 'SA'
+                          sf.updated_at = curDate
+                          await sf.save()
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          await tb_shipment_fee.create({
+            export_masterbl_id: pb.export_masterbl_id,
+            fee_data_code: 'RLC',
+            fee_data_fixed: '1',
+            shipment_fee_supplement: '0',
+            shipment_fee_type: 'R',
+            shipment_fee_fixed_amount: '1',
+            shipment_fee_amount: Decimal.isDecimal(rlc_amount) ? rlc_amount.toNumber() : rlc_amount,
+            shipment_fee_currency: 'USD',
+            shipment_fee_status: 'SA',
+            shipment_fee_save_by: user.user_id,
+            shipment_fee_save_at: curDate,
+            shipment_fee_submit_by: user.user_id,
+            shipment_fee_submit_at: curDate
+          })
+          bl.export_masterbl_rollover_charge = GLBConfig.ENABLE
+          await bl.save()
+        }
+      }
+    } 
+  }
+}
+
+exports.deleteRolloverChargeAct = async req => {
+  let doc = common.docValidate(req), user = req.user, curDate = new Date()
+  let bl = await tb_bl.findOne({
+    where: {
+      state: GLBConfig.ENABLE,
+      export_masterbl_id: doc.export_masterbl_id
+    }
+  })
+  if(bl) {
+    let pbs = await tb_proforma_bl.findAll({
+      where: {
+        export_masterbl_bl : bl.export_masterbl_bl,
+        bk_cancellation_status: GLBConfig.DISABLE,
+        state: GLBConfig.ENABLE
+      },
+      order: [['export_masterbl_id', 'DESC']]
+    })
+    if(pbs && pbs.length > 0) {
+      for(let pb of pbs) {
+        let rlc_fee = await tb_shipment_fee.findOne({
+          where: {
+            fee_data_code: 'RLC',
+            shipment_fee_type: 'R',
+            export_masterbl_id: pb.export_masterbl_id,
+            state: GLBConfig.ENABLE
+          }
+        })
+        if(rlc_fee) {
+          if(rlc_fee.shipment_fee_status !== 'RE') {
+            // 未开收据，删除重新添加
+            rlc_fee.state = GLBConfig.DISABLE
+            await rlc_fee.save()
+            if(rlc_fee.shipment_fee_status === 'IN') {
+              // 已开发票，删除对应发票
+              let inf = await tb_uploadfile.findOne({
+                where: {
+                  uploadfile_id: rlc_fee.shipment_fee_invoice_id,
+                  state: GLBConfig.ENABLE
+                }
+              })
+              if(inf) {
+                inf.state = GLBConfig.DISABLE
+                inf.updated_at = curDate
+                await inf.save()
+              }
+              let in_other_fees = await tb_shipment_fee.findAll({
+                where: {
+                  shipment_fee_invoice_id: rlc_fee.shipment_fee_invoice_id,
+                  shipment_fee_type: 'R',
+                  state: GLBConfig.ENABLE
+                }
+              })
+              if(in_other_fees && in_other_fees.length > 0) {
+                for(let iof of in_other_fees) {
+                  iof.shipment_fee_save_by = user.user_id
+                  iof.shipment_fee_save_at = new Date()
+                  iof.shipment_fee_submit_by = null
+                  iof.shipment_fee_submit_at = null
+                  iof.shipment_fee_approve_by = null
+                  iof.shipment_fee_approve_at = null
+                  iof.shipment_fee_invoice_by = null
+                  iof.shipment_fee_invoice_at = null
+                  iof.shipment_fee_invoice_no = null
+                  iof.shipment_fee_receipt_by = null
+                  iof.shipment_fee_receipt_at = null
+                  iof.shipment_fee_receipt_no = null
+                  iof.shipment_fee_invoice_id = null
+                  iof.shipment_fee_receipt_id = null
+                  iof.shipment_fee_status = 'SA'
+                  iof.updated_at = curDate
+                  await iof.save()
+                }
+              }
+            } else if(rlc_fee.shipment_fee_status === 'SU') {
+              // 删除未处理的审核
+              let evs = await tb_verification.findAll({
+                where: {
+                  export_masterbl_id: pb.export_masterbl_id,
+                  export_verification_api_name: 'SHIPMENT RELEASE',
+                  export_verification_state: 'PM',
+                  state : GLBConfig.ENABLE
+                }
+              })
+              if(evs && evs.length > 0) {
+                for(let e of evs) {
+                  e.state = GLBConfig.DISABLE
+                  await e.save()
+
+                  let fee_logs = tb_shipment_fee_log.findAll({
+                    where: {
+                      shipment_relation_id: e.export_verification_id,
+                      state: GLBConfig.ENABLE
+                    }
+                  })
+
+                  if(fee_logs && fee_logs.length > 0) {
+                    for(let fl of fee_logs) {
+                      let sf = await tb_shipment_fee.findOne({
+                        where: {
+                          shipment_fee_id: fl.shipment_fee_id,
+                          shipment_fee_status: 'SU',
+                          state: GLBConfig.ENABLE
+                        }
+                      })
+                      if(sf) {
+                        sf.shipment_fee_save_by = user.user_id
+                        sf.shipment_fee_save_at = new Date()
+                        sf.shipment_fee_submit_by = null
+                        sf.shipment_fee_submit_at = null
+                        sf.shipment_fee_approve_by = null
+                        sf.shipment_fee_approve_at = null
+                        sf.shipment_fee_invoice_by = null
+                        sf.shipment_fee_invoice_at = null
+                        sf.shipment_fee_invoice_no = null
+                        sf.shipment_fee_receipt_by = null
+                        sf.shipment_fee_receipt_at = null
+                        sf.shipment_fee_receipt_no = null
+                        sf.shipment_fee_invoice_id = null
+                        sf.shipment_fee_receipt_id = null
+                        sf.shipment_fee_status = 'SA'
+                        sf.updated_at = curDate
+                        await sf.save()
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        bl.export_masterbl_rollover_charge = GLBConfig.DISABLE
+        await bl.save()
+      }
+    } 
+  }
 }

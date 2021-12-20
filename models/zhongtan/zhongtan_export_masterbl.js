@@ -1,4 +1,5 @@
 const db = require('../../app/db')
+const GLBConfig = require('../../util/GLBConfig')
 // 提单表
 
 module.exports = db.defineModel('tbl_zhongtan_export_masterbl', {
@@ -151,5 +152,11 @@ module.exports = db.defineModel('tbl_zhongtan_export_masterbl', {
     // 运输方式录入
     type: db.STRING(50),
     allowNull: true
+  },
+  export_masterbl_rollover_charge: {
+    // ROLLOVER CHARGE/SPACE LOSS
+    type: db.STRING(5),
+    defaultValue: GLBConfig.DISABLE,
+    allowNull: false
   }
 })
