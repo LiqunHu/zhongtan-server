@@ -7,6 +7,7 @@ const common = require('../../../util/CommonUtil')
 const model = require('../../../app/model')
 const opSrv = require('../../common/system/OperationPasswordServer')
 const cal_demurrage_srv = require('../equipment/ExportDemurrageCalculationServer')
+const booking_load = require('./BookingLoadServer')
 
 const tb_user = model.common_user
 const tb_vessel = model.zhongtan_export_vessel
@@ -964,6 +965,7 @@ exports.uploadShipmentAct = async req => {
             }
           }
         }
+        await booking_load.createRolloverCharge(masterbi_bl, user.user_id)
       }
     }
   }

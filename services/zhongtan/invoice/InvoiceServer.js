@@ -1249,6 +1249,16 @@ exports.depositDoAct = async req => {
     bl.invoice_masterbi_carrier = doc.invoice_masterbi_carrier
     bl.invoice_masterbi_deposit = doc.invoice_masterbi_deposit
     bl.invoice_masterbi_deposit_date = curDate
+    if(doc.invoice_masterbi_deposit_file && doc.invoice_masterbi_deposit_file.response 
+      && doc.invoice_masterbi_deposit_file.response.info && doc.invoice_masterbi_deposit_file.response.info.path) {
+        let fileInfo = await common.fileSaveMongo(doc.invoice_masterbi_deposit_file.response.info.path, 'zhongtan')
+        if(fileInfo) {
+          bl.invoice_masterbi_deposit_file = fileInfo.url
+        }
+    }
+    if(!bl.invoice_masterbi_deposit_file) {
+      return common.error('import_13')
+    }
     let fd = null
     if(doc.invoice_masterbi_deposit_fixed && doc.invoice_masterbi_deposit_fixed === '1' && doc.invoice_masterbi_deposit_fixed_id && !doc.depositEdit) {
       if(bl.invoice_masterbi_deposit_release_date) {

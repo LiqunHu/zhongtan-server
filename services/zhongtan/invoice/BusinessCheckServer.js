@@ -86,6 +86,7 @@ exports.searchAct = async req => {
     if (r.api_name === 'RECEIPT-DEPOSIT') {
       row.receipt_type = 'Deposit Amount'
       row.deposit = r.invoice_masterbi_deposit
+      row.deposit_attachment = r.invoice_masterbi_deposit_file
     } else if (r.api_name === 'RECEIPT-FEE') {
       row.receipt_type = 'Invoice Fee'
       row.of = r.invoice_masterbi_of

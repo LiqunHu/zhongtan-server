@@ -61,6 +61,7 @@ module.exports = {
   import_10: 'Collect no freight charge',
   import_11: 'Freight charge is not number',
   import_12: 'BULKSHIPMENT do not exist',
+  import_13: 'Please upload deposit attachment',
   fee_01: 'Fee already exists, Please edit',
   fee_02: 'Fixed container deposit exists, Please invalid',
   fee_03: 'Fixed container deposit already approved, Please invalid',

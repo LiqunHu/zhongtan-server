@@ -488,4 +488,8 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_masterbl', {
     defaultValue: '0',
     allowNull: false
   },
+  invoice_masterbi_deposit_file: {
+    type: db.STRING(200),
+    allowNull: true
+  }
 })
