@@ -1049,6 +1049,8 @@ exports.searchContainerAct = async req => {
   let export_vessel_id = doc.export_vessel_id
   let masterbi_bl = doc.masterbi_bl
   let firm_booking = doc.firm_booking
+  let forwarder = doc.forwarder
+  let consignee = doc.consignee
   let queryStr =  `select * from tbl_zhongtan_export_container c WHERE c.export_vessel_id = ? AND c.state = ?`
   let replacements = [export_vessel_id, GLBConfig.ENABLE]
   if(masterbi_bl) {
@@ -1058,6 +1060,16 @@ exports.searchContainerAct = async req => {
   if(firm_booking) {
     queryStr = queryStr + ` AND c.export_container_bl IN (SELECT export_masterbl_bl FROM tbl_zhongtan_export_masterbl WHERE state = 1 AND export_vessel_id = ? AND export_masterbl_firm_booking = ?)`
     replacements.push(export_vessel_id, firm_booking)
+  }
+
+  if(forwarder) {
+    queryStr = queryStr + ` AND c.export_vessel_id IN (SELECT export_vessel_id from tbl_zhongtan_export_masterbl WHERE state = '1' AND export_masterbl_forwarder_company = ? )`
+    replacements.push(forwarder)
+  }
+
+  if(consignee) {
+    queryStr = queryStr + ` AND c.export_vessel_id IN (SELECT export_vessel_id from tbl_zhongtan_export_masterbl WHERE state = '1' AND export_masterbl_consignee_company LIKE ? )`
+    replacements.push('%' + consignee + '%')
   }
   let cons = await model.queryWithCount(doc, queryStr, replacements)
   returnData.total = cons.count

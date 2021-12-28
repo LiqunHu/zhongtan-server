@@ -120,5 +120,6 @@ module.exports = {
   payment_04: 'Edit payment advice already approved',
   unusual_01: 'already invoice, can not delete',
   unusual_02: 'Edit unusual invoice do not exist',
-  unusual_03: 'same items and B/L# unusual invoice already exist'
+  unusual_03: 'same items and B/L# unusual invoice already exist',
+  mail_01: 'Failed to send mail. Please try again later.'
 }
