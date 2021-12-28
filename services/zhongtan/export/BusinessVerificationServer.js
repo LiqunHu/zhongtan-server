@@ -4,7 +4,6 @@ const common = require('../../../util/CommonUtil')
 const model = require('../../../app/model')
 const mailer = require('../../../util/Mail')
 const opSrv = require('../../common/system/OperationPasswordServer')
-const userSrv = require('../configuration/CustomerServer')
 
 const tb_verification = model.zhongtan_export_verification
 const tb_verification_log = model.zhongtan_export_verification_log
@@ -93,10 +92,6 @@ exports.approveAct = async req => {
     }
   })
   if(verificatione) {
-    let checkBlacklist = await userSrv.checkBlacklistAct(doc.export_masterbl_empty_release_agent)
-    if(checkBlacklist) {
-      return common.error('export_03')
-    }
     await tb_verification_log.create({
       export_masterbi_id: verificatione.export_masterbl_id,
       export_verification_id: verificatione.export_verification_id,
