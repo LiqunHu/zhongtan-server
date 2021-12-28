@@ -93,7 +93,8 @@ exports.approveAct = async req => {
     }
   })
   if(verificatione) {
-    if(userSrv.checkBlacklistAct(verificatione.export_verification_agent)) {
+    let checkBlacklist = await userSrv.checkBlacklistAct(doc.export_masterbl_empty_release_agent)
+    if(checkBlacklist) {
       return common.error('export_03')
     }
     await tb_verification_log.create({
