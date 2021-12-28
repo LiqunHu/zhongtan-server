@@ -1063,12 +1063,12 @@ exports.searchContainerAct = async req => {
   }
 
   if(forwarder) {
-    queryStr = queryStr + ` AND c.export_vessel_id IN (SELECT export_vessel_id from tbl_zhongtan_export_masterbl WHERE state = '1' AND export_masterbl_forwarder_company = ? )`
+    queryStr = queryStr + ` AND c.export_container_bl IN (SELECT export_masterbl_bl from tbl_zhongtan_export_masterbl WHERE state = '1' AND export_masterbl_forwarder_company = ? )`
     replacements.push(forwarder)
   }
 
   if(consignee) {
-    queryStr = queryStr + ` AND c.export_vessel_id IN (SELECT export_vessel_id from tbl_zhongtan_export_masterbl WHERE state = '1' AND export_masterbl_consignee_company LIKE ? )`
+    queryStr = queryStr + ` AND c.export_container_bl IN (SELECT export_masterbl_bl from tbl_zhongtan_export_masterbl WHERE state = '1' AND export_masterbl_consignee_company LIKE ? )`
     replacements.push('%' + consignee + '%')
   }
   let cons = await model.queryWithCount(doc, queryStr, replacements)
