@@ -1211,7 +1211,7 @@ exports.getEmptyReleaseAgentsAct = async req => {
 
 exports.emptyReleaseAct = async req => {
   let doc = common.docValidate(req), user = req.user
-  if(userSrv.changeBlacklistAct(doc.export_masterbl_empty_release_agent)) {
+  if(userSrv.checkBlacklistAct(doc.export_masterbl_empty_release_agent)) {
     return common.error('export_03')
   }
   let bl = await tb_bl.findOne({
