@@ -5,6 +5,7 @@ const GLBConfig = require('../../../util/GLBConfig')
 const common = require('../../../util/CommonUtil')
 const model = require('../../../app/model')
 const opSrv = require('../../common/system/OperationPasswordServer')
+const userSrv = require('../configuration/CustomerServer')
 
 const tb_user = model.common_user
 const tb_vessel = model.zhongtan_export_vessel
@@ -1210,6 +1211,9 @@ exports.getEmptyReleaseAgentsAct = async req => {
 
 exports.emptyReleaseAct = async req => {
   let doc = common.docValidate(req), user = req.user
+  if(userSrv.changeBlacklistAct(doc.export_masterbl_empty_release_agent)) {
+    return common.error('export_03')
+  }
   let bl = await tb_bl.findOne({
     where: {
       state: GLBConfig.ENABLE,

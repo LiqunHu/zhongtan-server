@@ -242,3 +242,18 @@ exports.checkPasswordAct = async req => {
     return common.error('auth_24')
   }
 }
+
+exports.checkBlacklistAct = async user_id => {
+  if(user_id) {
+    let user = await tb_user.findOne({
+      where: {
+        user_id: user_id,
+        state: GLBConfig.ENABLE
+      }
+    })
+    if(user && user.user_blacklist && user.user_blacklist === '0') {
+      return false
+    }
+  } 
+  return true
+}
