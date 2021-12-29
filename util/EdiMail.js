@@ -532,10 +532,12 @@ const updateContainerEdi = async (ediData) => {
             }
           }
           if(excon) {
-            excon.export_container_get_depot_name = ediData.depot
-            excon.export_container_no = ediData.containerNo
-            excon.export_container_edi_depot_gate_out_date = moment(ediData.ediDate.substring(0, 8), 'YYYYMMDD').format('DD/MM/YYYY')
-            await excon.save()
+            if(!excon.export_container_edi_depot_gate_out_date) {
+              excon.export_container_get_depot_name = ediData.depot
+              excon.export_container_no = ediData.containerNo
+              excon.export_container_edi_depot_gate_out_date = moment(ediData.ediDate.substring(0, 8), 'YYYYMMDD').format('DD/MM/YYYY')
+              await excon.save()
+            }
           } else {
             // 根据提单号没有查到对应的出口舱单，不处理
           }
@@ -549,11 +551,13 @@ const updateContainerEdi = async (ediData) => {
             order: [['export_container_id', 'DESC']]
           }) 
           if(proexcon) {
-            proexcon.export_container_get_depot_name = ediData.depot
-            proexcon.export_container_no = ediData.containerNo
-            proexcon.export_container_edi_depot_gate_out_date = moment(ediData.ediDate.substring(0, 8), 'YYYYMMDD').format('DD/MM/YYYY')
-            await proexcon.save()
-            await cal_demurrage_srv.calculationDemurrage2Shipment(proexcon.export_vessel_id, proexcon.export_container_bl, proexcon.export_container_no, '')
+            if(!proexcon.export_container_edi_depot_gate_out_date) {
+              proexcon.export_container_get_depot_name = ediData.depot
+              proexcon.export_container_no = ediData.containerNo
+              proexcon.export_container_edi_depot_gate_out_date = moment(ediData.ediDate.substring(0, 8), 'YYYYMMDD').format('DD/MM/YYYY')
+              await proexcon.save()
+              await cal_demurrage_srv.calculationDemurrage2Shipment(proexcon.export_vessel_id, proexcon.export_container_bl, proexcon.export_container_no, '')
+            }
           } else {
             // 根据提单号没有查到对应的出口舱单，不处理
           }
@@ -569,9 +573,11 @@ const updateContainerEdi = async (ediData) => {
                 export_container_id: outCon[0].export_container_id
               }
             })  
-            excon.export_container_get_depot_name = ediData.depot
-            excon.export_container_edi_depot_gate_out_date = moment(ediData.ediDate.substring(0, 8), 'YYYYMMDD').format('DD/MM/YYYY')
-            await excon.save()
+            if(!excon.export_container_edi_depot_gate_out_date) {
+              excon.export_container_get_depot_name = ediData.depot
+              excon.export_container_edi_depot_gate_out_date = moment(ediData.ediDate.substring(0, 8), 'YYYYMMDD').format('DD/MM/YYYY')
+              await excon.save()
+            }
           }
 
           queryStr = `select * from tbl_zhongtan_export_proforma_container where state = '1' and export_container_no = ? and created_at > ? order by export_container_id DESC limit 1`
@@ -584,10 +590,12 @@ const updateContainerEdi = async (ediData) => {
                 export_container_id: outCon2[0].export_container_id
               }
             })  
-            proexcon.export_container_get_depot_name = ediData.depot
-            proexcon.export_container_edi_depot_gate_out_date = moment(ediData.ediDate.substring(0, 8), 'YYYYMMDD').format('DD/MM/YYYY')
-            await proexcon.save()
-            await cal_demurrage_srv.calculationDemurrage2Shipment(proexcon.export_vessel_id, proexcon.export_container_bl, proexcon.export_container_no, '')
+            if(!proexcon.export_container_edi_depot_gate_out_date) {
+              proexcon.export_container_get_depot_name = ediData.depot
+              proexcon.export_container_edi_depot_gate_out_date = moment(ediData.ediDate.substring(0, 8), 'YYYYMMDD').format('DD/MM/YYYY')
+              await proexcon.save()
+              await cal_demurrage_srv.calculationDemurrage2Shipment(proexcon.export_vessel_id, proexcon.export_container_bl, proexcon.export_container_no, '')
+            }
           }
         }
       }
