@@ -2470,7 +2470,11 @@ exports.searchFixedDepositAct = async req => {
       }
     }
   }
-  
+  if(doc.depositType === 'Invoice Fee' && bl.invoice_masterbi_freight_charge && common.isNumber(bl.invoice_masterbi_freight_charge) && !bl.invoice_masterbi_of) {
+    // 海运费
+    renderData.invoice_masterbi_of = bl.invoice_masterbi_freight_charge
+  }
+
   if(doc.invoice_masterbi_customer_id) {
     queryStr = `select * from tbl_zhongtan_customer_fixed_deposit where state = '1' 
                     AND fixed_deposit_customer_id = ? AND deposit_work_state = ? AND ((deposit_begin_date <= ? AND deposit_long_term = ?) 
