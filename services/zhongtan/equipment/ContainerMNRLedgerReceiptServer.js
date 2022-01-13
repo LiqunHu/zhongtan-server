@@ -90,7 +90,7 @@ exports.searchAct = async req => {
     }
 
     queryStr = `SELECT * FROM tbl_zhongtan_uploadfile WHERE state = '1' and uploadfile_index1 = ? AND api_name = 'MNR-INVOICE' AND uploadfile_state = 'AP' 
-      AND uploadfile_id > IFNULL((SELECT MAX(uploadfile_id) FROM tbl_zhongtan_uploadfile WHERE uploadfile_index1 = ? AND api_name = 'MNR-RECEIPT'), 0) ORDER BY uploadfile_id DESC LIMIT 1`
+      AND uploadfile_id > IFNULL((SELECT MAX(uploadfile_id) FROM tbl_zhongtan_uploadfile WHERE state = '1' and uploadfile_index1 = ? AND api_name = 'MNR-RECEIPT'), 0) ORDER BY uploadfile_id DESC LIMIT 1`
     replacements = [r.container_mnr_ledger_id, r.container_mnr_ledger_id]
     let apFiles = await model.simpleSelect(queryStr, replacements)
     if(apFiles && apFiles.length > 0) {
