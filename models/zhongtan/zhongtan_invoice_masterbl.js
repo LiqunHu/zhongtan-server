@@ -491,5 +491,10 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_masterbl', {
   invoice_masterbi_deposit_file: {
     type: db.STRING(200),
     allowNull: true
+  },
+  invoice_masterbi_edit_info: {
+    // 编辑信息
+    type: db.JSON,
+    allowNull: true
   }
 })

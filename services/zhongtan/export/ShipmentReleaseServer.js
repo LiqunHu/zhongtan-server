@@ -37,6 +37,14 @@ exports.initAct = async () => {
     fee_data_code: 'RLC',
     fee_data_name: 'ROLLOVER CHARGE/SPACE LOSS'
   })
+  returnData.FIXED_RECEIVABLE_FEE.push({
+    fee_data_code: 'BGF',
+    fee_data_name: 'BOOKING GUARANTEE FEE'
+  })
+  returnData.FIXED_RECEIVABLE_FEE.push({
+    fee_data_code: 'EDF',
+    fee_data_name: 'EXPORT DEPOSIT FEE'
+  })
   
   queryStr = `SELECT fee_data_code, fee_data_name FROM tbl_zhongtan_export_fee_data WHERE state = ? AND fee_data_receivable = ? AND (fee_data_receivable_fixed = ? OR (fee_data_receivable_fixed = ? AND (fee_data_receivable_amount IS NULL OR fee_data_receivable_amount = ''))) GROUP BY fee_data_code ORDER BY fee_data_id`
   replacements = [GLBConfig.ENABLE, GLBConfig.ENABLE, GLBConfig.DISABLE, GLBConfig.ENABLE]

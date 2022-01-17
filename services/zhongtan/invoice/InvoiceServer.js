@@ -1905,6 +1905,178 @@ exports.changeblAct = async req => {
         invoice_masterbi_id: b.invoice_masterbi_id
       }
     })
+
+    // 修改字段记录
+    let edit_json = bl.invoice_masterbi_edit_info
+    if(!edit_json) {
+      edit_json = {}
+    }
+    let edit_flg = false
+    if(b.invoice_masterbi_delivery && bl.invoice_masterbi_delivery !== b.invoice_masterbi_delivery) {
+      edit_json['invoice_masterbi_delivery'] = edit_json['invoice_masterbi_delivery'] ? edit_json['invoice_masterbi_delivery'] + 1 : 1
+      edit_flg = true
+    }
+    if(b.invoice_masterbi_destination && bl.invoice_masterbi_destination !== b.invoice_masterbi_destination) {
+      edit_json['invoice_masterbi_destination'] = edit_json['invoice_masterbi_destination'] ? edit_json['invoice_masterbi_destination'] + 1 : 1
+      edit_flg = true
+    }
+    if(b.invoice_masterbi_loading && bl.invoice_masterbi_loading !== b.invoice_masterbi_loading) {
+      edit_json['invoice_masterbi_loading'] = edit_json['invoice_masterbi_loading'] ? edit_json['invoice_masterbi_loading'] + 1 : 1
+      edit_flg = true
+    }
+    if(b.invoice_masterbi_cargo_type && bl.invoice_masterbi_cargo_type !== b.invoice_masterbi_cargo_type) {
+      edit_json['invoice_masterbi_cargo_type'] = edit_json['invoice_masterbi_cargo_type'] ? edit_json['invoice_masterbi_cargo_type'] + 1 : 1
+      edit_flg = true
+    }
+    if(b.invoice_masterbi_bl_type && bl.invoice_masterbi_bl_type !== b.invoice_masterbi_bl_type) {
+      edit_json['invoice_masterbi_bl_type'] = edit_json['invoice_masterbi_delivery'] ? edit_json['invoice_masterbi_delivery'] + 1 : 1
+      edit_flg = true
+    }
+    if(b.invoice_masterbi_destination && bl.invoice_masterbi_destination !== b.invoice_masterbi_destination) {
+      edit_json['invoice_masterbi_destination'] = edit_json['invoice_masterbi_destination'] ? edit_json['invoice_masterbi_destination'] + 1 : 1
+      edit_flg = true
+    }
+    if(b.invoice_masterbi_container_no && bl.invoice_masterbi_container_no !== b.invoice_masterbi_container_no) {
+      edit_json['invoice_masterbi_container_no'] = edit_json['invoice_masterbi_container_no'] ? edit_json['invoice_masterbi_container_no'] + 1 : 1
+      edit_flg = true
+    }
+    if(b.invoice_masterbi_goods_description && bl.invoice_masterbi_goods_description !== b.invoice_masterbi_goods_description) {
+      edit_json['invoice_masterbi_goods_description'] = edit_json['invoice_masterbi_goods_description'] ? edit_json['invoice_masterbi_goods_description'] + 1 : 1
+      edit_flg = true
+    }
+    if(b.invoice_masterbi_package_no && bl.invoice_masterbi_package_no !== b.invoice_masterbi_package_no) {
+      edit_json['invoice_masterbi_package_no'] = edit_json['invoice_masterbi_package_no'] ? edit_json['invoice_masterbi_package_no'] + 1 : 1
+      edit_flg = true
+    }
+    if(b.invoice_masterbi_package_unit && bl.invoice_masterbi_package_unit !== b.invoice_masterbi_package_unit) {
+      edit_json['invoice_masterbi_package_unit'] = edit_json['invoice_masterbi_package_unit'] ? edit_json['invoice_masterbi_package_unit'] + 1 : 1
+      edit_flg = true
+    }
+    if(b.invoice_masterbi_gross_weight && bl.invoice_masterbi_gross_weight !== b.invoice_masterbi_gross_weight) {
+      edit_json['invoice_masterbi_gross_weight'] = edit_json['invoice_masterbi_gross_weight'] ? edit_json['invoice_masterbi_gross_weight'] + 1 : 1
+      edit_flg = true
+    }
+    if(b.invoice_masterbi_gross_weight_unit && bl.invoice_masterbi_gross_weight_unit !== b.invoice_masterbi_gross_weight_unit) {
+      edit_json['invoice_masterbi_gross_weight_unit'] = edit_json['invoice_masterbi_gross_weight_unit'] ? edit_json['invoice_masterbi_gross_weight_unit'] + 1 : 1
+      edit_flg = true
+    }
+    if(b.invoice_masterbi_gross_volume && bl.invoice_masterbi_gross_volume !== b.invoice_masterbi_gross_volume) {
+      edit_json['invoice_masterbi_gross_volume'] = edit_json['invoice_masterbi_gross_volume'] ? edit_json['invoice_masterbi_gross_volume'] + 1 : 1
+      edit_flg = true
+    }
+    if(b.invoice_masterbi_gross_volume_unit && bl.invoice_masterbi_gross_volume_unit !== b.invoice_masterbi_gross_volume_unit) {
+      edit_json['invoice_masterbi_gross_volume_unit'] = edit_json['invoice_masterbi_gross_volume_unit'] ? edit_json['invoice_masterbi_gross_volume_unit'] + 1 : 1
+      edit_flg = true
+    }
+    if(b.invoice_masterbi_invoice_value && bl.invoice_masterbi_invoice_value !== b.invoice_masterbi_invoice_value) {
+      edit_json['invoice_masterbi_invoice_value'] = edit_json['invoice_masterbi_invoice_value'] ? edit_json['invoice_masterbi_invoice_value'] + 1 : 1
+      edit_flg = true
+    }
+    if(b.invoice_masterbi_invoice_currency && bl.invoice_masterbi_invoice_currency !== b.invoice_masterbi_invoice_currency) {
+      edit_json['invoice_masterbi_invoice_currency'] = edit_json['invoice_masterbi_invoice_currency'] ? edit_json['invoice_masterbi_invoice_currency'] + 1 : 1
+      edit_flg = true
+    }
+    if(b.invoice_masterbi_freight_charge && bl.invoice_masterbi_freight_charge !== b.invoice_masterbi_freight_charge) {
+      edit_json['invoice_masterbi_freight_charge'] = edit_json['invoice_masterbi_freight_charge'] ? edit_json['invoice_masterbi_freight_charge'] + 1 : 1
+      edit_flg = true
+    }
+    if(b.invoice_masterbi_freight_currency && bl.invoice_masterbi_freight_currency !== b.invoice_masterbi_freight_currency) {
+      edit_json['invoice_masterbi_freight_currency'] = edit_json['invoice_masterbi_freight_currency'] ? edit_json['invoice_masterbi_freight_currency'] + 1 : 1
+      edit_flg = true
+    }
+    if(b.invoice_masterbi_imdg && bl.invoice_masterbi_imdg !== b.invoice_masterbi_imdg) {
+      edit_json['invoice_masterbi_imdg'] = edit_json['invoice_masterbi_imdg'] ? edit_json['invoice_masterbi_imdg'] + 1 : 1
+      edit_flg = true
+    }
+    if(b.invoice_masterbi_packing_type && bl.invoice_masterbi_packing_type !== b.invoice_masterbi_packing_type) {
+      edit_json['invoice_masterbi_packing_type'] = edit_json['invoice_masterbi_packing_type'] ? edit_json['invoice_masterbi_packing_type'] + 1 : 1
+      edit_flg = true
+    }
+    if(b.invoice_masterbi_forwarder_code && bl.invoice_masterbi_forwarder_code !== b.invoice_masterbi_forwarder_code) {
+      edit_json['invoice_masterbi_forwarder_code'] = edit_json['invoice_masterbi_forwarder_code'] ? edit_json['invoice_masterbi_forwarder_code'] + 1 : 1
+      edit_flg = true
+    }
+    if(b.invoice_masterbi_forwarder_name && bl.invoice_masterbi_forwarder_name !== b.invoice_masterbi_forwarder_name) {
+      edit_json['invoice_masterbi_forwarder_name'] = edit_json['invoice_masterbi_forwarder_name'] ? edit_json['invoice_masterbi_forwarder_name'] + 1 : 1
+      edit_flg = true
+    }
+    if(b.invoice_masterbi_forwarder_tel && bl.invoice_masterbi_forwarder_tel !== b.invoice_masterbi_forwarder_tel) {
+      edit_json['invoice_masterbi_forwarder_tel'] = edit_json['invoice_masterbi_forwarder_tel'] ? edit_json['invoice_masterbi_forwarder_tel'] + 1 : 1
+      edit_flg = true
+    }
+    if(b.invoice_masterbi_exporter_name && bl.invoice_masterbi_exporter_name !== b.invoice_masterbi_exporter_name) {
+      edit_json['invoice_masterbi_exporter_name'] = edit_json['invoice_masterbi_exporter_name'] ? edit_json['invoice_masterbi_exporter_name'] + 1 : 1
+      edit_flg = true
+    }
+    if(b.invoice_masterbi_exporter_tel && bl.invoice_masterbi_exporter_tel !== b.invoice_masterbi_exporter_tel) {
+      edit_json['invoice_masterbi_exporter_tel'] = edit_json['invoice_masterbi_exporter_tel'] ? edit_json['invoice_masterbi_exporter_tel'] + 1 : 1
+      edit_flg = true
+    }
+    if(b.invoice_masterbi_exporter_address && bl.invoice_masterbi_exporter_address !== b.invoice_masterbi_exporter_address) {
+      edit_json['invoice_masterbi_exporter_address'] = edit_json['invoice_masterbi_exporter_address'] ? edit_json['invoice_masterbi_exporter_address'] + 1 : 1
+      edit_flg = true
+    }
+    if(b.invoice_masterbi_exporter_tin && bl.invoice_masterbi_exporter_tin !== b.invoice_masterbi_exporter_tin) {
+      edit_json['invoice_masterbi_exporter_tin'] = edit_json['invoice_masterbi_exporter_tin'] ? edit_json['invoice_masterbi_exporter_tin'] + 1 : 1
+      edit_flg = true
+    }
+    if(b.invoice_masterbi_consignee_name && bl.invoice_masterbi_consignee_name !== b.invoice_masterbi_consignee_name) {
+      edit_json['invoice_masterbi_consignee_name'] = edit_json['invoice_masterbi_consignee_name'] ? edit_json['invoice_masterbi_consignee_name'] + 1 : 1
+      edit_flg = true
+    }
+    if(b.invoice_masterbi_consignee_tel && bl.invoice_masterbi_consignee_tel !== b.invoice_masterbi_consignee_tel) {
+      edit_json['invoice_masterbi_consignee_tel'] = edit_json['invoice_masterbi_consignee_tel'] ? edit_json['invoice_masterbi_consignee_tel'] + 1 : 1
+      edit_flg = true
+    }
+    if(b.invoice_masterbi_consignee_address && bl.invoice_masterbi_consignee_address !== b.invoice_masterbi_consignee_address) {
+      edit_json['invoice_masterbi_consignee_address'] = edit_json['invoice_masterbi_consignee_address'] ? edit_json['invoice_masterbi_consignee_address'] + 1 : 1
+      edit_flg = true
+    }
+    if(b.invoice_masterbi_consignee_tin && bl.invoice_masterbi_consignee_tin !== b.invoice_masterbi_consignee_tin) {
+      edit_json['invoice_masterbi_consignee_tin'] = edit_json['invoice_masterbi_consignee_tin'] ? edit_json['invoice_masterbi_consignee_tin'] + 1 : 1
+      edit_flg = true
+    }
+    if(b.invoice_masterbi_notify_name && bl.invoice_masterbi_notify_name !== b.invoice_masterbi_notify_name) {
+      edit_json['invoice_masterbi_notify_name'] = edit_json['invoice_masterbi_notify_name'] ? edit_json['invoice_masterbi_notify_name'] + 1 : 1
+      edit_flg = true
+    }
+    if(b.invoice_masterbi_notify_tel && bl.invoice_masterbi_notify_tel !== b.invoice_masterbi_notify_tel) {
+      edit_json['invoice_masterbi_notify_tel'] = edit_json['invoice_masterbi_notify_tel'] ? edit_json['invoice_masterbi_notify_tel'] + 1 : 1
+      edit_flg = true
+    }
+    if(b.invoice_masterbi_notify_address && bl.invoice_masterbi_notify_address !== b.invoice_masterbi_notify_address) {
+      edit_json['invoice_masterbi_notify_address'] = edit_json['invoice_masterbi_notify_address'] ? edit_json['invoice_masterbi_notify_address'] + 1 : 1
+      edit_flg = true
+    }
+    if(b.invoice_masterbi_notify_tin && bl.invoice_masterbi_forwarder_code !== b.invoice_masterbi_notify_tin) {
+      edit_json['invoice_masterbi_notify_tin'] = edit_json['invoice_masterbi_notify_tin'] ? edit_json['invoice_masterbi_notify_tin'] + 1 : 1
+      edit_flg = true
+    }
+    if(b.invoice_masterbi_shipping_mark && bl.invoice_masterbi_shipping_mark !== b.invoice_masterbi_shipping_mark) {
+      edit_json['invoice_masterbi_shipping_mark'] = edit_json['invoice_masterbi_shipping_mark'] ? edit_json['invoice_masterbi_shipping_mark'] + 1 : 1
+      edit_flg = true
+    }
+    if(b.invoice_masterbi_net_weight && bl.invoice_masterbi_net_weight !== b.invoice_masterbi_net_weight) {
+      edit_json['invoice_masterbi_net_weight'] = edit_json['invoice_masterbi_net_weight'] ? edit_json['invoice_masterbi_net_weight'] + 1 : 1
+      edit_flg = true
+    }
+    if(b.invoice_masterbi_net_weight_unit && bl.invoice_masterbi_net_weight_unit !== b.invoice_masterbi_net_weight_unit) {
+      edit_json['invoice_masterbi_net_weight_unit'] = edit_json['invoice_masterbi_net_weight_unit'] ? edit_json['invoice_masterbi_net_weight_unit'] + 1 : 1
+      edit_flg = true
+    }
+    if(b.invoice_masterbi_line_code && bl.invoice_masterbi_line_code !== b.invoice_masterbi_line_code) {
+      edit_json['invoice_masterbi_line_code'] = edit_json['invoice_masterbi_line_code'] ? edit_json['invoice_masterbi_line_code'] + 1 : 1
+      edit_flg = true
+    }
+    if(b.invoice_masterbi_terminal_code && bl.invoice_masterbi_terminal_code !== b.invoice_masterbi_terminal_code) {
+      edit_json['invoice_masterbi_terminal_code'] = edit_json['invoice_masterbi_terminal_code'] ? edit_json['invoice_masterbi_terminal_code'] + 1 : 1
+      edit_flg = true
+    }
+    if(edit_flg) {
+      edit_json['invoice_masterbi_bl'] = edit_json['invoice_masterbi_bl'] ? edit_json['invoice_masterbi_bl'] + 1 : 1
+    }
+    bl.invoice_masterbi_edit_info = edit_json
+
     if(b.invoice_masterbi_delivery && bl.invoice_masterbi_delivery !== b.invoice_masterbi_delivery) {
       let icd = await tb_icd.findOne({
         where: {
@@ -2574,9 +2746,101 @@ exports.changeCnAct = async req => {
   for (let c of doc.changeCn) {
     let cn = await tb_container.findOne({
       where: {
-        invoice_containers_id: c.invoice_containers_id
+        invoice_containers_id: c.invoice_containers_id,
+        state: GLBConfig.ENABLE
       }
     })
+
+    // 修改字段记录
+    let edit_json = cn.invoice_containers_edit_info
+    if(!edit_json) {
+      edit_json = {}
+    }
+    let edit_flg = false
+    if(c.invoice_containers_type && cn.invoice_containers_type !== c.invoice_containers_type) {
+      edit_json['invoice_masterbi_delivery'] = edit_json['invoice_masterbi_delivery'] ? edit_json['invoice_masterbi_delivery'] + 1 : 1
+      edit_flg = true
+    }
+    if(c.invoice_containers_no && cn.invoice_containers_no !== c.invoice_containers_no) {
+      edit_json['invoice_containers_no'] = edit_json['invoice_containers_no'] ? edit_json['invoice_containers_no'] + 1 : 1
+      edit_flg = true
+    }
+    if(c.invoice_containers_size && cn.invoice_containers_size !== c.invoice_containers_size) {
+      edit_json['invoice_containers_size'] = edit_json['invoice_containers_size'] ? edit_json['invoice_containers_size'] + 1 : 1
+      edit_flg = true
+    }
+    if(c.invoice_containers_seal1 && cn.invoice_containers_seal1 !== c.invoice_containers_seal1) {
+      edit_json['invoice_containers_seal1'] = edit_json['invoice_containers_seal1'] ? edit_json['invoice_containers_seal1'] + 1 : 1
+      edit_flg = true
+    }
+    if(c.invoice_containers_seal2 && cn.invoice_containers_seal2 !== c.invoice_containers_seal2) {
+      edit_json['invoice_containers_seal2'] = edit_json['invoice_containers_seal2'] ? edit_json['invoice_containers_seal2'] + 1 : 1
+      edit_flg = true
+    }
+    if(c.invoice_containers_seal3 && cn.invoice_containers_seal3 !== c.invoice_containers_seal3) {
+      edit_json['invoice_containers_seal3'] = edit_json['invoice_containers_seal3'] ? edit_json['invoice_containers_seal3'] + 1 : 1
+      edit_flg = true
+    }
+    if(c.invoice_containers_freight_indicator && cn.invoice_containers_freight_indicator !== c.invoice_containers_freight_indicator) {
+      edit_json['invoice_containers_freight_indicator'] = edit_json['invoice_containers_freight_indicator'] ? edit_json['invoice_containers_freight_indicator'] + 1 : 1
+      edit_flg = true
+    }
+    if(c.invoice_containers_package_no && cn.invoice_containers_package_no !== c.invoice_containers_package_no) {
+      edit_json['invoice_containers_package_no'] = edit_json['invoice_containers_package_no'] ? edit_json['invoice_containers_package_no'] + 1 : 1
+      edit_flg = true
+    }
+    if(c.invoice_containers_package_unit && cn.invoice_containers_package_unit !== c.invoice_containers_package_unit) {
+      edit_json['invoice_containers_package_unit'] = edit_json['invoice_containers_package_unit'] ? edit_json['invoice_containers_package_unit'] + 1 : 1
+      edit_flg = true
+    }
+    if(c.invoice_containers_volumn && cn.invoice_containers_volumn !== c.invoice_containers_volumn) {
+      edit_json['invoice_containers_volumn'] = edit_json['invoice_containers_volumn'] ? edit_json['invoice_containers_volumn'] + 1 : 1
+      edit_flg = true
+    }
+    if(c.invoice_containers_volumn_unit && cn.invoice_containers_volumn_unit !== c.invoice_containers_volumn_unit) {
+      edit_json['invoice_containers_volumn_unit'] = edit_json['invoice_containers_volumn_unit'] ? edit_json['invoice_containers_volumn_unit'] + 1 : 1
+      edit_flg = true
+    }
+    if(c.invoice_containers_weight && cn.invoice_containers_weight !== c.invoice_containers_weight) {
+      edit_json['invoice_containers_weight'] = edit_json['invoice_containers_weight'] ? edit_json['invoice_containers_weight'] + 1 : 1
+      edit_flg = true
+    }
+    if(c.invoice_containers_weight_unit && cn.invoice_containers_weight_unit !== c.invoice_containers_weight_unit) {
+      edit_json['invoice_containers_weight_unit'] = edit_json['invoice_containers_weight_unit'] ? edit_json['invoice_containers_weight_unit'] + 1 : 1
+      edit_flg = true
+    }
+    if(c.invoice_containers_plug_reefer && cn.invoice_containers_plug_reefer !== c.invoice_containers_plug_reefer) {
+      edit_json['invoice_containers_plug_reefer'] = edit_json['invoice_containers_plug_reefer'] ? edit_json['invoice_containers_plug_reefer'] + 1 : 1
+      edit_flg = true
+    }
+    if(c.invoice_containers_min_temperature && cn.invoice_containers_min_temperature !== c.invoice_containers_min_temperature) {
+      edit_json['invoice_containers_min_temperature'] = edit_json['invoice_containers_min_temperature'] ? edit_json['invoice_containers_min_temperature'] + 1 : 1
+      edit_flg = true
+    }
+    if(c.invoice_containers_max_temperature && cn.invoice_containers_max_temperature !== c.invoice_containers_max_temperature) {
+      edit_json['invoice_containers_max_temperature'] = edit_json['invoice_containers_max_temperature'] ? edit_json['invoice_containers_max_temperature'] + 1 : 1
+      edit_flg = true
+    }
+    
+    if(edit_flg) {
+      edit_json['invoice_containers_bl'] = edit_json['invoice_containers_bl'] ? edit_json['invoice_containers_bl'] + 1 : 1
+      let bl = await tb_bl.findOne({
+        where: {
+          invoice_vessel_id: cn.invoice_vessel_id,
+          invoice_masterbi_bl: cn.invoice_containers_bl,
+          state: GLBConfig.ENABLE
+        }
+      })
+      if(bl) {
+        if(bl.invoice_masterbi_edit_info) {
+          bl.invoice_masterbi_edit_info['invoice_masterbi_bl'] = bl.invoice_masterbi_edit_info['invoice_masterbi_bl'] ? bl.invoice_masterbi_edit_info['invoice_masterbi_bl'] + 1 : 1
+        } else {
+          bl.invoice_masterbi_edit_info = {'invoice_masterbi_bl' : 1}
+        }
+        await bl.save()
+      }
+    }
+    cn.invoice_containers_edit_info = edit_json
     cn.invoice_containers_type = c.invoice_containers_type
     cn.invoice_containers_no = c.invoice_containers_no
     cn.invoice_containers_size = c.invoice_containers_size

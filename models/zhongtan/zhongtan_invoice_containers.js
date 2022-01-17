@@ -280,5 +280,10 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_containers', {
     type: db.STRING(5),
     defaultValue: '0',
     allowNull: true
+  },
+  invoice_containers_edit_info: {
+    // 编辑信息
+    type: db.JSON,
+    allowNull: true
   }
 })

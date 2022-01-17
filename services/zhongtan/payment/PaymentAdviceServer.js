@@ -102,15 +102,19 @@ exports.searchAct = async req => {
         })
       } else {
         d.payment_advice_check = false
-        let count = await tb_payment_verification.count({
+        d.payment_verification_status = 'PE'
+        let pv = await tb_payment_verification.findOne({
           where: {
             payment_advice_id: d.payment_advice_id,
-            [Op.or]: [{ payment_verification_state: 'PB' }, { payment_verification_state: 'PM' }],
+            [Op.or]: [{ payment_verification_state: 'PS' },{ payment_verification_state: 'PB' }, { payment_verification_state: 'PM' }],
             state: GLBConfig.ENABLE
           }
         })
-        if(count > 0) {
-          d.payment_advice_check = true
+        if(pv) {
+          d.payment_verification_status = pv.payment_verification_state
+          if(pv.payment_verification_state === 'PB' || pv.payment_verification_state === 'PB') {
+            d.payment_advice_check = true
+          }
         }
       }
       d.atta_files = await tb_uploadfile.findAll({

@@ -6,6 +6,7 @@ const common = require('../../../util/CommonUtil')
 const model = require('../../../app/model')
 const opSrv = require('../../common/system/OperationPasswordServer')
 const userSrv = require('../configuration/CustomerServer')
+const Op = model.Op
 
 const tb_user = model.common_user
 const tb_vessel = model.zhongtan_export_vessel
@@ -22,7 +23,7 @@ const tb_shipment_fee_log = model.zhongtan_export_shipment_fee_log
 
 exports.initAct = async () => {
   let returnData = {}
-  let queryStr = `SELECT fee_data_code, fee_data_name FROM tbl_zhongtan_export_fee_data WHERE state = 1 AND fee_data_code IN ('LOO', 'DND') GROUP BY fee_data_code ORDER BY fee_data_code DESC`
+  let queryStr = `SELECT fee_data_code, fee_data_name, fee_data_receivable_amount FROM tbl_zhongtan_export_fee_data WHERE state = 1 AND fee_data_code IN ('BGF', 'EDF') GROUP BY fee_data_code ORDER BY fee_data_code;`
   let replacements = []
   returnData['BK_CANCELLATION_FEE'] = await model.simpleSelect(queryStr, replacements)
   queryStr = `SELECT export_vessel_id, CONCAT(export_vessel_name, '/', export_vessel_voyage) export_vessel_voyage FROM tbl_zhongtan_export_vessel WHERE state = 1 GROUP BY export_vessel_name, export_vessel_voyage ORDER BY export_vessel_name, export_vessel_voyage DESC`
@@ -1016,16 +1017,20 @@ exports.searchBlAct = async req => {
               state: GLBConfig.ENABLE
             }
           })
-          if(fees) {
+          if(fees && fees.length > 0) {
+            let reCount = 0
             for (let f of fees) {
               cancellationFees.push({
                 fee_data_code: f.fee_data_code,
                 fee_data_amount: f.shipment_fee_amount
               })
               if(f.shipment_fee_receipt_no) {
-                d.bk_cancellation_disabled = true
+                reCount++
               }
               d.bk_cancellation_input = true
+            }
+            if(reCount === fees.length) {
+              d.bk_cancellation_disabled =  true
             }
           }
         }
@@ -1215,6 +1220,14 @@ exports.emptyReleaseAct = async req => {
   if(checkBlacklist) {
     return common.error('export_03')
   }
+
+  let queryStr = `SELECT * FROM tbl_zhongtan_export_shipment_fee WHERE state = 1 AND shipment_fee_status != 'RE' AND fee_data_code IN ('BGF', 'EDF') AND export_masterbl_id = (SELECT export_masterbl_id FROM tbl_zhongtan_export_proforma_masterbl WHERE state = '1' AND relation_export_masterbl_id = ? AND bk_cancellation_status = '1')`
+  let replacements = [doc.export_masterbl_id]
+  let exportFees = await model.simpleSelect(queryStr, replacements)
+  if(exportFees && exportFees.length > 0) {
+    return common.error('export_05')
+  }
+
   let bl = await tb_bl.findOne({
     where: {
       state: GLBConfig.ENABLE,
@@ -1256,6 +1269,15 @@ exports.emptyReleaseAct = async req => {
     bl.export_masterbl_empty_release_date = moment()
     bl.export_masterbl_empty_release_valid_to = doc.export_masterbl_empty_release_valid_to
     bl.export_masterbl_agent_staff = doc.agentStaff
+
+    let agent = await tb_user.findOne({
+      where: {
+        user_id: bl.export_masterbl_empty_release_agent
+      }
+    })
+    if(agent && agent.user_name !== bl.export_masterbl_forwarder_company) {
+      bl.export_masterbl_forwarder_company = agent.user_name
+    }
 
     if(doc.export_masterbl_empty_release_guarantee_letter_list) {
       for(let letter of doc.export_masterbl_empty_release_guarantee_letter_list) {
@@ -1344,6 +1366,7 @@ exports.bkCancellationFeeSave = async req => {
         }
       }
     }
+    let create_new = false
     if(!pro_bl) {
       let bl = await tb_bl.findOne({
         where: {
@@ -1381,85 +1404,32 @@ exports.bkCancellationFeeSave = async req => {
         export_masterbl_cargo_descriptions: bl.export_masterbl_cargo_descriptions,
         proforma_import: GLBConfig.ENABLE
       })
+      create_new = true
     }
     if(pro_bl) {
+      let agent_id = ''
+      if(pro_bl.export_masterbl_forwarder_company) {
+        let agent = await tb_user.findOne({
+          where: {
+            user_name: pro_bl.export_masterbl_forwarder_company,
+            state: GLBConfig.ENABLE
+          }
+        })
+        if(agent) {
+          agent_id = agent.user_id
+        }
+        if(!agent_id) {
+          return common.error('export_04')
+        }
+      } else {
+        return common.error('export_04')
+      }
       pro_bl.bk_cancellation_status = GLBConfig.ENABLE
-      let fees = await tb_shipment_fee.findAll({
-        where: {
-          export_masterbl_id: pro_bl.export_masterbl_id,
-          state: GLBConfig.ENABLE
-        }
-      })
-      for(let f of fees) {
-        if(f.shipment_fee_status === 'RE') {
-          return common.error('bk_cancellation_fee_01')
-        }
-      }
-      let bkCancellationFees = ['LOO', 'DND']
-      let suFees = []
-      let totalCancellationFee = 0
-      for(let f of fees) {
-        if(bkCancellationFees.indexOf(f.fee_data_code) >= 0) {
-          let existFlg = false
-          for(let cf of cancellationFee) {
-            if(f.fee_data_code === cf.fee_data_code) {
-              f.shipment_fee_amount = cf.fee_data_amount
-              if(f.shipment_fee_status === 'IN') {
-                let inf = await tb_uploadfile.findOne({
-                  where: {
-                    uploadfile_id: f.shipment_fee_invoice_id,
-                    state: GLBConfig.ENABLE
-                  }
-                })
-                if(inf) {
-                  inf.state = GLBConfig.DISABLE
-                  inf.updated_at = curDate
-                  await inf.save()
-                }
-              }
-              existFlg = true
-              break
-            }
-          }
-          if(!existFlg) {
-            f.state = GLBConfig.DISABLE
-          } else {
-            f.shipment_fee_save_by = user.user_id
-            f.shipment_fee_save_at = new Date()
-            f.shipment_fee_submit_by = null
-            f.shipment_fee_submit_at = null
-            f.shipment_fee_approve_by = null
-            f.shipment_fee_approve_at = null
-            f.shipment_fee_invoice_by = null
-            f.shipment_fee_invoice_at = null
-            f.shipment_fee_invoice_no = null
-            f.shipment_fee_receipt_by = null
-            f.shipment_fee_receipt_at = null
-            f.shipment_fee_receipt_no = null
-            f.shipment_fee_invoice_id = null
-            f.shipment_fee_receipt_id = null
-            f.shipment_fee_status = 'SA'
-            f.updated_at = curDate
-            suFees.push(f)
-            totalCancellationFee = new Decimal(totalCancellationFee).plus(new Decimal(f.shipment_fee_amount))
-          }
-        } else {
-          f.state = GLBConfig.DISABLE
-        }
-        await f.save()
-      }
-
-      for(let cf of cancellationFee) {
-        let exist = false
-        for(let f of fees) {
-          if(f.fee_data_code === cf.fee_data_code) {
-            exist = true
-            break
-          }
-        }
-        if(!exist) {
+      if(create_new) {
+        for(let cf of cancellationFee) {
           await tb_shipment_fee.create({
             export_masterbl_id: pro_bl.export_masterbl_id,
+            shipment_fee_party: agent_id,
             fee_data_code: cf.fee_data_code,
             fee_data_fixed: '1',
             shipment_fee_supplement: '0',
@@ -1467,12 +1437,140 @@ exports.bkCancellationFeeSave = async req => {
             shipment_fee_fixed_amount: '1',
             shipment_fee_amount: cf.fee_data_amount,
             shipment_fee_currency: 'USD',
-            shipment_fee_status: 'SA',
+            shipment_fee_status: 'AP',
             shipment_fee_save_by: user.user_id,
             shipment_fee_save_at: new Date(),
             shipment_fee_submit_by: user.user_id,
             shipment_fee_submit_at: curDate
           })
+        }
+      } else {
+        let fees = await tb_shipment_fee.findAll({
+          where: {
+            export_masterbl_id: pro_bl.export_masterbl_id,
+            [Op.or]: [{ fee_data_code: 'BGF' }, { fee_data_code: 'EDF' }],
+            state: GLBConfig.ENABLE
+          }
+        })
+        if(fees && fees.length > 0) {
+          let bgfRE = false
+          let edfRE = false
+          let edfREAmount = 0
+          for(let f of fees) {
+            if(f.shipment_fee_status === 'RE') {
+              if(f.fee_data_code === 'BGF') {
+                bgfRE =  true
+              } else if(f.fee_data_code === 'EDF') {
+                edfRE =  true
+                edfREAmount = new Decimal(edfREAmount).plus(new Decimal(f.fee_data_amount))
+              }
+            }
+          }
+          edfREAmount = Decimal.isDecimal(edfREAmount) ? edfREAmount.toNumber() : edfREAmount
+          for(let cf of cancellationFee) {
+            if(cf.fee_data_code === 'BGF') {
+              if(!bgfRE) {
+                for(let f of fees) {
+                  if(f.fee_data_code === 'BGF' && f.shipment_fee_status === 'IN') {
+                    let inf = await tb_uploadfile.findOne({
+                      where: {
+                        uploadfile_id: f.shipment_fee_invoice_id,
+                        state: GLBConfig.ENABLE
+                      }
+                    })
+                    if(inf) {
+                      inf.state = GLBConfig.DISABLE
+                      inf.updated_at = curDate
+                      await inf.save()
+                    }
+                    f.shipment_fee_status = 'AP'
+                    await f.save()
+                  }
+                }
+              }
+            } else if(cf.fee_data_code === 'EDF') {
+              if(edfRE) {
+                if(edfREAmount) {
+                  await tb_shipment_fee.create({
+                    export_masterbl_id: pro_bl.export_masterbl_id,
+                    shipment_fee_party: agent_id,
+                    fee_data_code: cf.fee_data_code,
+                    fee_data_fixed: '1',
+                    shipment_fee_supplement: '0',
+                    shipment_fee_type: 'R',
+                    shipment_fee_fixed_amount: '1',
+                    shipment_fee_amount: edfREAmount,
+                    shipment_fee_currency: 'USD',
+                    shipment_fee_status: 'AP',
+                    shipment_fee_save_by: user.user_id,
+                    shipment_fee_save_at: new Date(),
+                    shipment_fee_submit_by: user.user_id,
+                    shipment_fee_submit_at: curDate
+                  })
+                }
+              } else {
+                let existEDF = false
+                for(let f of fees) {
+                  if(f.fee_data_code === 'EDF') {
+                    if(f.shipment_fee_status === 'IN') {
+                      let inf = await tb_uploadfile.findOne({
+                        where: {
+                          uploadfile_id: f.shipment_fee_invoice_id,
+                          state: GLBConfig.ENABLE
+                        }
+                      })
+                      if(inf) {
+                        inf.state = GLBConfig.DISABLE
+                        inf.updated_at = curDate
+                        await inf.save()
+                      }
+                    }
+                    f.shipment_fee_status = 'AP'
+                    f.shipment_fee_amount = cf.fee_data_amount
+                    await f.save()
+                    existEDF = true
+                  }
+                }
+                if(!existEDF) {
+                  await tb_shipment_fee.create({
+                    export_masterbl_id: pro_bl.export_masterbl_id,
+                    shipment_fee_party: agent_id,
+                    fee_data_code: cf.fee_data_code,
+                    fee_data_fixed: '1',
+                    shipment_fee_supplement: '0',
+                    shipment_fee_type: 'R',
+                    shipment_fee_fixed_amount: '1',
+                    shipment_fee_amount: cf.fee_data_amount,
+                    shipment_fee_currency: 'USD',
+                    shipment_fee_status: 'AP',
+                    shipment_fee_save_by: user.user_id,
+                    shipment_fee_save_at: new Date(),
+                    shipment_fee_submit_by: user.user_id,
+                    shipment_fee_submit_at: curDate
+                  })
+                }
+              }
+            }
+          }
+        } else {
+          for(let cf of cancellationFee) {
+            await tb_shipment_fee.create({
+              export_masterbl_id: pro_bl.export_masterbl_id,
+              shipment_fee_party: agent_id,
+              fee_data_code: cf.fee_data_code,
+              fee_data_fixed: '1',
+              shipment_fee_supplement: '0',
+              shipment_fee_type: 'R',
+              shipment_fee_fixed_amount: '1',
+              shipment_fee_amount: cf.fee_data_amount,
+              shipment_fee_currency: 'USD',
+              shipment_fee_status: 'AP',
+              shipment_fee_save_by: user.user_id,
+              shipment_fee_save_at: new Date(),
+              shipment_fee_submit_by: user.user_id,
+              shipment_fee_submit_at: curDate
+            })
+          }
         }
       }
       await pro_bl.save()
