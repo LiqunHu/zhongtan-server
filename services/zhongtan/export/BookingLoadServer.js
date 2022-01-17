@@ -2133,6 +2133,8 @@ exports.createRolloverCharge = async (masterbl_bl, user_id) => {
                   }
                 }
               }
+            } else {
+              return
             }
           }
           await tb_shipment_fee.create({
