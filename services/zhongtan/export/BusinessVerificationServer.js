@@ -366,7 +366,7 @@ exports.checkPasswordAct = async req => {
 
 exports.exportAct = async (req, res) => {
   let doc = common.docValidate(req)
-  let queryStr = `select a.*, b.export_masterbl_bl, b.export_masterbl_cargo_type, c.user_name as apply_user, d.user_name as empty_release_party, v.export_vessel_name, v.export_vessel_voyage 
+  let queryStr = `select a.*, b.export_masterbl_bl, b.export_masterbl_cargo_type, b.export_masterbl_empty_release_valid_to, b.export_masterbl_cargo_descriptions, c.user_name as apply_user, d.user_name as empty_release_party, v.export_vessel_name, v.export_vessel_voyage 
                 from tbl_zhongtan_export_verification a 
                 LEFT JOIN tbl_zhongtan_export_masterbl b ON a.export_masterbl_id = b.export_masterbl_id 
                 LEFT JOIN tbl_zhongtan_export_vessel v ON v.export_vessel_id = b.export_vessel_id 
