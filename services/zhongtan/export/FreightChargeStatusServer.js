@@ -81,7 +81,7 @@ exports.searchAct = async req => {
   if(result.data) {
     for(let d of result.data) {
       // 查询是否有退仓费的相同提单
-      queryStr = `SELECT shipment_fee_status, shipment_fee_party, u.user_name, shipment_fee_receipt_no, SUM(shipment_fee_amount) AS total_amount FROM tbl_zhongtan_export_shipment_fee f LEFT JOIN tbl_common_user u ON f.shipment_fee_party = u.user_id WHERE f.state = '1' AND shipment_fee_type = 'R' AND export_masterbl_id = ? GROUP BY shipment_fee_status, shipment_fee_party, shipment_fee_receipt_no
+      queryStr = `SELECT shipment_fee_status, shipment_fee_party, u.user_name, shipment_fee_invoice_no, shipment_fee_receipt_no, SUM(shipment_fee_amount) AS total_amount FROM tbl_zhongtan_export_shipment_fee f LEFT JOIN tbl_common_user u ON f.shipment_fee_party = u.user_id WHERE f.state = '1' AND shipment_fee_type = 'R' AND export_masterbl_id = ? GROUP BY shipment_fee_status, shipment_fee_party, shipment_fee_receipt_no
           `
       replacements = [d.export_masterbl_id]
       let fees = await model.simpleSelect(queryStr, replacements)
@@ -92,6 +92,7 @@ exports.searchAct = async req => {
             let queryRe = await tb_shipment_fee.findAll({
               attributes: ['fee_data_code', 'shipment_fee_amount', 'shipment_fee_invoice_no'],
               where: {
+                shipment_fee_invoice_no: rd.shipment_fee_invoice_no,
                 shipment_fee_party: rd.shipment_fee_party,
                 shipment_fee_status: 'IN',
                 shipment_fee_type: 'R',
