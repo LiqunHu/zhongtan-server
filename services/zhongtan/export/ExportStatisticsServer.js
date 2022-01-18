@@ -69,6 +69,7 @@ exports.searchAct = async req => {
   let rows = []
   if(result.data) {
     for(let d of result.data) {
+      let bl = JSON.parse(JSON.stringify(d))
       let cons = await tb_proforma_container.findAll({
         where: {
           export_vessel_id: d.export_vessel_id,
@@ -84,7 +85,6 @@ exports.searchAct = async req => {
         let fees = await model.simpleSelect(queryStr, replacements)
         d.receivable_detail = fees
         for(let c of cons) {
-          let bl = JSON.parse(JSON.stringify(d))
           bl.container_id = c.export_container_id
           bl.container_no = c.export_container_no
           bl.container_size_type = c.export_container_size_type
@@ -94,9 +94,10 @@ exports.searchAct = async req => {
           } else {
             bl.charge_status = 'HOLD'
           }
-          rows.push(bl)
+          
         }
       }
+      rows.push(bl)
     }
   }
   returnData.rows = rows
