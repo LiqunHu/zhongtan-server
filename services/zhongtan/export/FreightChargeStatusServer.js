@@ -123,7 +123,7 @@ exports.searchAct = async req => {
       if(d.bk_cancellation_status === GLBConfig.ENABLE) {
         let bl = JSON.parse(JSON.stringify(d))
         bl.container_id = ''
-        bl.container_no = 'CANCELLATION FEE'
+        bl.container_no = 'BOOKING GUARANTEE FEE'
         bl.container_size_type = ''
         bl.container_volume = 1
         bl.container_loading_list_import = '0'
@@ -225,7 +225,7 @@ exports.exportFreightAct = async (req, res) => {
       }
       if(r.bk_cancellation_status === GLBConfig.ENABLE) {
         container_volume = 1
-        container_size = 'CANCELLATION FEE'
+        container_size = 'BOOKING GUARANTEE FEE'
       }
       queryStr = `SELECT shipment_fee_status, shipment_fee_party, u.user_name, shipment_fee_receipt_no, SUM(shipment_fee_amount) AS total_amount FROM tbl_zhongtan_export_shipment_fee f LEFT JOIN tbl_common_user u ON f.shipment_fee_party = u.user_id WHERE f.state = '1' AND shipment_fee_type = 'R' AND export_masterbl_id = ? GROUP BY shipment_fee_status, shipment_fee_party, shipment_fee_receipt_no
         `
