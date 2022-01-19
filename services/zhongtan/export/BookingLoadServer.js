@@ -1402,7 +1402,7 @@ exports.bkCancellationFeeSave = async req => {
         export_masterbl_forwarder_company: bl.export_masterbl_forwarder_company,
         export_masterbl_cargo_nature: bl.export_masterbl_cargo_nature,
         export_masterbl_cargo_descriptions: bl.export_masterbl_cargo_descriptions,
-        proforma_import: GLBConfig.ENABLE
+        bk_cancellation_status: GLBConfig.ENABLE
       })
       create_new = true
     }
@@ -1424,7 +1424,6 @@ exports.bkCancellationFeeSave = async req => {
       } else {
         return common.error('export_04')
       }
-      pro_bl.bk_cancellation_status = GLBConfig.ENABLE
       if(create_new) {
         for(let cf of cancellationFee) {
           await tb_shipment_fee.create({
@@ -1573,7 +1572,6 @@ exports.bkCancellationFeeSave = async req => {
           }
         }
       }
-      await pro_bl.save()
     }
   }
   return common.success()
