@@ -106,15 +106,13 @@ exports.searchAct = async req => {
         let pv = await tb_payment_verification.findOne({
           where: {
             payment_advice_id: d.payment_advice_id,
-            [Op.or]: [{ payment_verification_state: 'PS' },{ payment_verification_state: 'PB' }, { payment_verification_state: 'PM' }],
+            [Op.or]: [{ payment_verification_state: 'PS' },{ payment_verification_state: 'PB' }, { payment_verification_state: 'PSM' }, { payment_verification_state: 'PM' }],
             state: GLBConfig.ENABLE
           }
         })
         if(pv) {
           d.payment_verification_status = pv.payment_verification_state
-          if(pv.payment_verification_state === 'PB' || pv.payment_verification_state === 'PB') {
-            d.payment_advice_check = true
-          }
+          d.payment_advice_check = true
         }
       }
       d.atta_files = await tb_uploadfile.findAll({
