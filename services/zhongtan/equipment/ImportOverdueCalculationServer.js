@@ -320,6 +320,9 @@ exports.ediCalculationSaveAct = async req => {
       con.invoice_containers_actually_return_overdue_days = doc.invoice_containers_actually_return_overdue_days
       con.invoice_containers_actually_return_overdue_amount = doc.invoice_containers_actually_return_overdue_amount
     }
+    if(doc.invoice_containers_actually_return_edi_depot_name) {
+      con.invoice_containers_depot_name = doc.invoice_containers_actually_return_edi_depot_name
+    }
     await con.save()
     if(doc.invoice_containers_edi_discharge_date || doc.invoice_containers_actually_return_date) {
       await freight_srv.updateShipmentEDI('I', con.invoice_containers_bl, con.invoice_containers_no, doc.invoice_containers_edi_discharge_date, doc.invoice_containers_actually_return_date)

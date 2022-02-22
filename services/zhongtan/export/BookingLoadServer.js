@@ -1331,7 +1331,57 @@ exports.bkCancellationFeeSave = async req => {
   let doc = common.docValidate(req),
   user = req.user, curDate = new Date()
   let cancellationFee = doc.cancellationFee
+  let bl = await tb_bl.findOne({
+    where: {
+      state: GLBConfig.ENABLE,
+      export_masterbl_id: doc.export_masterbl_id
+    }
+  })
   if(cancellationFee && cancellationFee.length > 0) {
+    // 查询是否已开过同提单号费用
+    let sameQueryStr =  `SELECT * FROM tbl_zhongtan_export_shipment_fee WHERE state = 1 AND fee_data_code IN ('BGF', 'EDF') 
+                            AND export_masterbl_id IN (SELECT export_masterbl_id FROM tbl_zhongtan_export_proforma_masterbl WHERE state = 1 AND bk_cancellation_status = '1' AND export_masterbl_bl = ?)`
+    let sameReplacements = [bl.export_masterbl_bl]
+    let same_bl_fees = await model.simpleSelect(sameQueryStr, sameReplacements)
+    if(same_bl_fees && same_bl_fees.length > 0) {
+      for(let sf of same_bl_fees) {
+        if(sf.shipment_fee_status === 'RE') {
+          // 已添加过相同提单号并已开收据，不能重复提交
+          return common.error('export_06')
+        }
+      }
+      for(let sf of same_bl_fees) {
+        let fee = await tb_shipment_fee.findOne({
+          where: {
+            shipment_fee_id: sf.shipment_fee_id,
+            state: GLBConfig.ENABLE
+          }
+        })
+        if(fee) {
+          fee.state = GLBConfig.DISABLE
+          await fee.save()
+        }
+        let fees = await tb_shipment_fee.findAll({
+          where: {
+            export_masterbl_id: sf.export_masterbl_id,
+            state: GLBConfig.ENABLE
+          }
+        })
+        if(!fees || fees.length <= 0) {
+          let pb = await tb_proforma_bl.findOne({
+            where: {
+              state: GLBConfig.ENABLE,
+              export_masterbl_id: sf.export_masterbl_id,
+            }
+          })
+          if(pb) {
+            pb.state = GLBConfig.DISABLE
+            await pb.save()
+          }
+        }
+      }
+    }
+
     let pro_bl = await tb_proforma_bl.findOne({
       where: {
         state: GLBConfig.ENABLE,
@@ -1359,7 +1409,7 @@ exports.bkCancellationFeeSave = async req => {
             where: {
               state: GLBConfig.ENABLE,
               export_vessel_id: pro_ves.export_vessel_id,
-              export_masterbl_bl: doc.export_masterbl_bl,
+              export_masterbl_bl: bl.export_masterbl_bl,
               bk_cancellation_status: GLBConfig.ENABLE
             }
           })
@@ -1368,12 +1418,7 @@ exports.bkCancellationFeeSave = async req => {
     }
     let create_new = false
     if(!pro_bl) {
-      let bl = await tb_bl.findOne({
-        where: {
-          state: GLBConfig.ENABLE,
-          export_masterbl_id: doc.export_masterbl_id
-        }
-      })
+      
       let ves = await tb_vessel.findOne({
         where: {
           export_vessel_id: bl.export_vessel_id

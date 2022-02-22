@@ -1,3 +1,4 @@
+const moment = require('moment')
 const common = require('../../../util/CommonUtil')
 const GLBConfig = require('../../../util/GLBConfig')
 const model = require('../../../app/model')
@@ -42,15 +43,15 @@ exports.initAct = async () => {
 }
 
 exports.searchAct = async req => {
-  let doc = common.docValidate(req)
+  let doc = common.docValidate(req), user = req.user
   let returnData = {}
 
   let queryStr = `select pa.*, CONCAT(pa.payment_advice_vessel, '/', pa.payment_advice_voyage) AS payment_advice_vessel_voyage, cb.user_name as payment_advice_beneficiary_name, cr.user_name as payment_advice_remarks_name, pi.payment_items_name as payment_advice_items_name
                   from tbl_zhongtan_payment_advice pa left join tbl_common_user cb on pa.payment_advice_beneficiary = cb.user_id 
                   left join tbl_common_user cr on pa.payment_advice_remarks = cr.user_id
                   left join tbl_zhongtan_payment_items pi on pa.payment_advice_items = pi.payment_items_code
-                  where pa.state = '1' `
-  let replacements = []
+                  where pa.state = '1' and (create_by is null or create_by = ?) `
+  let replacements = [user.user_id]
 
   let search_data = doc.search_data
   if(search_data) {
@@ -130,6 +131,96 @@ exports.searchAct = async req => {
   return common.success(returnData)
 }
 
+exports.searchAdminAct = async req => {
+  let doc = common.docValidate(req)
+  let returnData = {}
+
+  let queryStr = `select pa.*, CONCAT(pa.payment_advice_vessel, '/', pa.payment_advice_voyage) AS payment_advice_vessel_voyage, cb.user_name as payment_advice_beneficiary_name, cr.user_name as payment_advice_remarks_name, pi.payment_items_name as payment_advice_items_name, cu.user_name as payment_advice_create_by_name
+                  from tbl_zhongtan_payment_advice pa 
+                  left join tbl_common_user cb on pa.payment_advice_beneficiary = cb.user_id 
+                  left join tbl_common_user cr on pa.payment_advice_remarks = cr.user_id
+                  left join tbl_zhongtan_payment_items pi on pa.payment_advice_items = pi.payment_items_code
+                  left join tbl_common_user cu on pa.create_by = cu.user_id
+                  where pa.state = '1' `
+  let replacements = []
+
+  let search_data = doc.search_data
+  if(search_data) {
+    if (search_data.payment_advice_no) {
+      queryStr += ' and payment_advice_no like ?'
+      replacements.push('%' + search_data.payment_advice_no + '%')
+    }
+  
+    if (search_data.payment_advice_method) {
+      queryStr += ' and payment_advice_method = ?'
+      replacements.push(search_data.payment_advice_method)
+    }
+  
+    if (search_data.payment_advice_items) {
+      queryStr += ' and payment_advice_items = ?'
+      replacements.push(search_data.payment_advice_items)
+    }
+  
+    if (search_data.payment_advice_inv_cntrl) {
+      queryStr += ' and payment_advice_inv_cntrl like ? '
+      replacements.push('%' +search_data.payment_advice_inv_cntrl + '%')
+    }
+  
+    if (search_data.payment_advice_beneficiary) {
+      queryStr += ' and payment_advice_beneficiary = ?'
+      replacements.push(search_data.payment_advice_beneficiary)
+    }
+  
+    if (search_data.payment_advice_remarks) {
+      queryStr += ' and payment_advice_remarks = ?'
+      replacements.push(search_data.payment_advice_remarks)
+    }
+  }
+
+  queryStr += ' order by payment_advice_id desc'
+  let result = await model.queryWithCount(doc, queryStr, replacements)
+
+  returnData.total = result.count
+  let rows = []
+  if(result.data) {
+    for(let d of result.data) {
+      if(d.payment_advice_status === '2') {
+        d.advice_files = await tb_uploadfile.findOne({
+          where: {
+            uploadfile_index1: d.payment_advice_id,
+            api_name: 'PAYMENT ADVICE',
+            state: GLBConfig.ENABLE
+          }
+        })
+      } else {
+        d.payment_advice_check = false
+        let count = await tb_payment_verification.count({
+          where: {
+            payment_advice_id: d.payment_advice_id,
+            [Op.or]: [{ payment_verification_state: 'PB' }, { payment_verification_state: 'PM' }],
+            state: GLBConfig.ENABLE
+          }
+        })
+        if(count > 0) {
+          d.payment_advice_check = true
+        }
+      }
+      d.atta_files = await tb_uploadfile.findAll({
+        where: {
+          uploadfile_index1: d.payment_advice_id,
+          api_name: 'PAYMENT ADVICE ATTACHMENT',
+          state: GLBConfig.ENABLE
+        }
+      })
+      d.payment_advice_create_at = moment(d.created_at).format('YYYY-MM-DD HH:mm')
+      rows.push(d)
+    }
+  }
+  returnData.rows = rows
+
+  return common.success(returnData)
+}
+
 exports.addAct = async req => {
   let doc = common.docValidate(req), user = req.user
 
@@ -160,6 +251,7 @@ exports.addAct = async req => {
     payment_advice_status: '1',
     payment_advice_vessel: payment_advice_vessel,
     payment_advice_voyage: payment_advice_voyage,
+    create_by: user.user_id
   })
 
   if(doc.payment_atta_files && doc.payment_atta_files.length > 0) {

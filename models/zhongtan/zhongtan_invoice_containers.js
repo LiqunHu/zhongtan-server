@@ -285,5 +285,10 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_containers', {
     // 编辑信息
     type: db.JSON,
     allowNull: true
+  },
+  invoice_containers_actually_return_edi_depot_name: {
+    // EDI读取标志
+    type: db.STRING(20),
+    allowNull: true
   }
 })

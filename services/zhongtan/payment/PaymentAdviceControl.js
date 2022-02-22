@@ -11,6 +11,8 @@ module.exports = async (req, res) => {
       ret = await srv.initAct(req)
     } else if (method === 'search') {
       ret = await srv.searchAct(req)
+    } else if (method === 'searchAdmin') {
+      ret = await srv.searchAdminAct(req)
     } else if (method === 'add') {
       ret = await srv.addAct(req)
     } else if (method === 'modify') {

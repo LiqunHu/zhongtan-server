@@ -440,6 +440,12 @@ exports.applyPaymentSearchAct = async req => {
 exports.applyPaymentAct = async req => {
   let doc = common.docValidate(req), user = req.user
   let applyData = doc.applyData
+  let advanceiles = doc.payment_advance_files
+  if(doc.applyAction === 'ADVANCE') {
+    if(!advanceiles || advanceiles.length <= 0) {
+      return common.error('logistics_13')
+    }
+  }
   let balanceFiles = doc.payment_balance_files
   if(doc.applyAction === 'BALANCE') {
     if(!balanceFiles || balanceFiles.length <= 0) {
@@ -482,6 +488,21 @@ exports.applyPaymentAct = async req => {
       logistics_verification_amount: applyAmount.toNumber(),
       logistics_verification_create_user: user.user_id,
     })
+    if(doc.applyAction === 'ADVANCE'){
+      for(let f of advanceiles) {
+        let fileInfo = await common.fileSaveMongo(f.response.info.path, 'zhongtan')
+        await tb_uploadfile.create({
+          api_name: 'PAYMENT ADVANCE ATTACHMENT',
+          user_id: user.user_id,
+          uploadfile_index1: ver.logistics_verification_id,
+          uploadfile_name: fileInfo.name,
+          uploadfile_url: fileInfo.url,
+          uploadfile_state: 'AP',
+          uploadfile_amount: applyAmount.toNumber(),
+          uploadfile_currency: 'USD'
+        })
+      }
+    }
     if(doc.applyAction === 'BALANCE'){
       for(let f of balanceFiles) {
         let fileInfo = await common.fileSaveMongo(f.response.info.path, 'zhongtan')

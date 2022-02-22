@@ -66,5 +66,10 @@ module.exports = db.defineModel('tbl_zhongtan_payment_advice', {
     // 航次
     type: db.STRING(20),
     allowNull: true
+  },
+  create_by: {
+    // 创建人
+    type: db.STRING(50),
+    allowNull: true
   }
 })

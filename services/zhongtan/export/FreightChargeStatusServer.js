@@ -72,6 +72,9 @@ exports.searchAct = async req => {
       queryStr += ` and EXISTS (SELECT 1 FROM tbl_zhongtan_export_shipment_fee f WHERE f.export_masterbl_id = b.export_masterbl_id AND f.state = '1' AND f.shipment_fee_type = 'R' AND f.shipment_fee_party = ? GROUP BY f.export_masterbl_id) `
       replacements.push(doc.search_data.receivable_agent)
     }
+    if(doc.search_data.bgf_flg) {
+      queryStr += ` and EXISTS (SELECT 1 FROM tbl_zhongtan_export_shipment_fee f WHERE f.export_masterbl_id = b.export_masterbl_id AND f.state = '1' AND f.shipment_fee_type = 'R' AND fee_data_code IN ('BGF')  GROUP BY f.export_masterbl_id) `
+    }
   }
   queryStr += ' ORDER BY STR_TO_DATE(v.export_vessel_etd, "%d/%m/%Y") DESC, b.export_masterbl_bl'
   let result = await model.queryWithCount(doc, queryStr, replacements)
@@ -81,11 +84,12 @@ exports.searchAct = async req => {
   if(result.data) {
     for(let d of result.data) {
       // 查询是否有退仓费的相同提单
-      queryStr = `SELECT shipment_fee_status, shipment_fee_party, u.user_name, shipment_fee_invoice_no, shipment_fee_receipt_no, SUM(shipment_fee_amount) AS total_amount FROM tbl_zhongtan_export_shipment_fee f LEFT JOIN tbl_common_user u ON f.shipment_fee_party = u.user_id WHERE f.state = '1' AND shipment_fee_type = 'R' AND export_masterbl_id = ? GROUP BY shipment_fee_status, shipment_fee_party, shipment_fee_receipt_no
+      queryStr = `SELECT shipment_fee_status, shipment_fee_party, u.user_name, u.user_blacklist, shipment_fee_invoice_no, shipment_fee_receipt_no, SUM(shipment_fee_amount) AS total_amount FROM tbl_zhongtan_export_shipment_fee f LEFT JOIN tbl_common_user u ON f.shipment_fee_party = u.user_id WHERE f.state = '1' AND shipment_fee_type = 'R' AND export_masterbl_id = ? GROUP BY shipment_fee_status, shipment_fee_party, shipment_fee_receipt_no
           `
       replacements = [d.export_masterbl_id]
       let fees = await model.simpleSelect(queryStr, replacements)
       d.receivable_detail = fees
+      let blacklist = GLBConfig.DISABLE
       if(d.receivable_detail && d.receivable_detail.length > 0) {
         for(let rd of d.receivable_detail) {
           if(rd.shipment_fee_status === 'IN') {
@@ -116,8 +120,12 @@ exports.searchAct = async req => {
               rd.invoice_detail = queryRe
             }
           }
+          if(rd.user_blacklist && rd.user_blacklist === '1') {
+            blacklist = GLBConfig.ENABLE
+          }
         }
       }
+      d.blacklist = blacklist
       queryStr = `SELECT * FROM tbl_zhongtan_export_proforma_masterbl b WHERE state = '1' AND bk_cancellation_status = '1' AND export_masterbl_bl = ? AND EXISTS (SELECT 1 FROM tbl_zhongtan_export_shipment_fee f WHERE f.export_masterbl_id = b.export_masterbl_id AND f.state = '1' AND f.shipment_fee_status <> 'RE')`
       replacements = [d.export_masterbl_bl]
       let cancelBls = await model.simpleSelect(queryStr, replacements)

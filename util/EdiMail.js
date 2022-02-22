@@ -441,6 +441,7 @@ const updateContainerEdi = async (ediData) => {
           incon.invoice_containers_edi_read = (parseInt(incon.invoice_containers_edi_read) + 1) + ''
         } else {
           incon.invoice_containers_depot_name = ediData.depot
+          incon.invoice_containers_actually_return_edi_depot_name = ediData.depot
           incon.invoice_containers_actually_return_edi_date = ediData.ediDate
           incon.invoice_containers_actually_return_date = moment(ediData.ediDate.substring(0, 8), 'YYYYMMDD').format('DD/MM/YYYY')
           incon.invoice_containers_edi_read = '1'

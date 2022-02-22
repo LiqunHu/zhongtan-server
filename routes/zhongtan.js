@@ -77,6 +77,7 @@ router.post('/logistics/SectionManager/:method', services.LogisticsSectionManage
 
 router.post('/payment/PaymentItems/:method', services.PaymentItemsControl)
 router.post('/payment/PaymentAdvice/:method', services.PaymentAdviceControl)
+router.post('/payment/PaymentAdviceAdmin/:method', services.PaymentAdviceControl)
 router.post('/payment/SectionManager/:method', services.PaymentSectionManagerControl)
 router.post('/payment/BusinessVerification/:method', services.PaymentBusinessVerificationControl)
 router.post('/payment/ShippingManager/:method', services.PaymentShippingVerificationControl)
