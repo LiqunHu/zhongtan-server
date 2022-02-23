@@ -23,7 +23,7 @@ module.exports = db.defineModel('tbl_common_user', {
     allowNull: false
   },
   user_email: {
-    type: db.STRING(100),
+    type: db.STRING(200),
     defaultValue: '',
     allowNull: false
   },
