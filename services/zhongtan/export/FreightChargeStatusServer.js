@@ -73,7 +73,13 @@ exports.searchAct = async req => {
       replacements.push(doc.search_data.receivable_agent)
     }
     if(doc.search_data.bgf_flg) {
-      queryStr += ` and EXISTS (SELECT 1 FROM tbl_zhongtan_export_shipment_fee f WHERE f.export_masterbl_id = b.export_masterbl_id AND f.state = '1' AND f.shipment_fee_type = 'R' AND fee_data_code IN ('BGF')  GROUP BY f.export_masterbl_id) `
+      if(doc.search_data.bgf_flg === '1') {
+        // BGF
+        queryStr += ` and EXISTS (SELECT 1 FROM tbl_zhongtan_export_shipment_fee f WHERE f.export_masterbl_id = b.export_masterbl_id AND f.state = '1' AND f.shipment_fee_type = 'R' AND fee_data_code IN ('BGF')  GROUP BY f.export_masterbl_id) `
+      } else if(doc.search_data.bgf_flg === '2') {
+        // NON BGF
+        queryStr += ` and NOT EXISTS (SELECT 1 FROM tbl_zhongtan_export_shipment_fee f WHERE f.export_masterbl_id = b.export_masterbl_id AND f.state = '1' AND f.shipment_fee_type = 'R' AND fee_data_code IN ('BGF')  GROUP BY f.export_masterbl_id) `
+      }
     }
   }
   queryStr += ' ORDER BY STR_TO_DATE(v.export_vessel_etd, "%d/%m/%Y") DESC, b.export_masterbl_bl'
