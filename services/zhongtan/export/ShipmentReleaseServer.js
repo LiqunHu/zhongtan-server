@@ -560,6 +560,28 @@ exports.removeShipmentAct = async req => {
         rm.state = GLBConfig.DISABLE
         rm.updated_at = new Date()
         await rm.save()
+
+        if(rm.fee_data_code === 'BGF') {
+          // booking guarantee 删除是，删除对应单子
+          let pro_bl = await tb_bl.findOne({
+            where: {
+              export_masterbl_id: rm.export_masterbl_id,
+              state: GLBConfig.ENABLE,
+            }
+          })
+          if(pro_bl) {
+            let fees = await tb_shipment_fee.findAll({
+              where: {
+                export_masterbl_id: rm.export_masterbl_id,
+                state: GLBConfig.ENABLE
+              }
+            })
+            if(!fees || fees.length <= 0) {
+              pro_bl.state = GLBConfig.DISABLE
+              await pro_bl.save()
+            }
+          }
+        }
       }
     }
   }
@@ -572,7 +594,8 @@ exports.submitShipmentAct = async req => {
   let export_masterbl_id = doc.export_masterbl_id
   let bl = await tb_bl.findOne({
     where: {
-      export_masterbl_id: doc.export_masterbl_id
+      export_masterbl_id: doc.export_masterbl_id,
+      state: GLBConfig.ENABLE,
     }
   })
   if (bl) {

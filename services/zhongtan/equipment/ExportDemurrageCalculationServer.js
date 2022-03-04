@@ -211,7 +211,7 @@ exports.demurrageCalculationSaveAct = async req => {
             if(oc) {
               let oc_loading_date = doc.export_vessel_etd
               if(oc.export_container_edi_loading_date) {
-                oc_loading_date = oc.invoice_containers_edi_discharge_date
+                oc_loading_date = oc.export_container_edi_loading_date
               }
               oc.export_container_cal_free_days = doc.export_container_cal_free_days
               let cal_result = await cal_config_srv.demurrageCalculation(oc.export_container_cal_free_days, oc.export_container_edi_depot_gate_out_date, oc_loading_date, 
@@ -220,7 +220,7 @@ exports.demurrageCalculationSaveAct = async req => {
                 oc.export_container_cal_demurrage_days = cal_result.overdue_days
                 oc.export_container_cal_demurrage_amount = cal_result.overdue_amount
               }
-              oc.save()
+              await oc.save()
             }
           } else {
             await tb_container.update(
