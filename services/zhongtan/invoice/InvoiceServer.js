@@ -2982,6 +2982,7 @@ const checkConditionDoState = async (bl, ves) => {
     if(continers) {
       let free_days = 0
       let return_date = ''
+      let min_invoice_containers_edi_discharge_date = ''
       for(let c of continers) {
         if(c.invoice_containers_empty_return_overdue_free_days) {
           let temp_free_days = parseInt(c.invoice_containers_empty_return_overdue_free_days)
@@ -2991,6 +2992,11 @@ const checkConditionDoState = async (bl, ves) => {
         }
         if(c.invoice_containers_type === 'S') {
           hasSOC = true
+        }
+        if(c.invoice_containers_edi_discharge_date) {
+          if(!min_invoice_containers_edi_discharge_date || moment(c.invoice_containers_edi_discharge_date, 'DD/MM/YYYY').isBefore(moment(min_invoice_containers_edi_discharge_date, 'DD/MM/YYYY'))) {
+            min_invoice_containers_edi_discharge_date = c.invoice_containers_edi_discharge_date
+          }
         }
       }
       for(let c of continers) {
@@ -3013,15 +3019,19 @@ const checkConditionDoState = async (bl, ves) => {
           break
         }
       }
+      let base_valid_to = ves.invoice_vessel_ata
+      if(min_invoice_containers_edi_discharge_date) {
+        base_valid_to = min_invoice_containers_edi_discharge_date
+      }
       if(hasSOC) {
         overdueCheck = true
-        bl.invoice_masterbi_valid_to = moment(ves.invoice_vessel_ata, 'DD/MM/YYYY').add(60, 'days').local().format('YYYY-MM-DD')
+        bl.invoice_masterbi_valid_to = moment(base_valid_to, 'DD/MM/YYYY').add(60, 'days').local().format('YYYY-MM-DD')
       } else {
         // 没有D/O并且滞期收据还箱日期为空
         if(return_date) {
           bl.invoice_masterbi_valid_to = moment(return_date, 'DD/MM/YYYY').local().format('YYYY-MM-DD')
         } else if(free_days > 0) {
-          bl.invoice_masterbi_valid_to = moment(ves.invoice_vessel_ata, 'DD/MM/YYYY').add(free_days - 1, 'days').local().format('YYYY-MM-DD')
+          bl.invoice_masterbi_valid_to = moment(base_valid_to, 'DD/MM/YYYY').add(free_days - 1, 'days').local().format('YYYY-MM-DD')
         }
       }
     }
