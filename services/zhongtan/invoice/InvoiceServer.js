@@ -162,7 +162,7 @@ exports.uploadImportAct = async req => {
           let weight_unit = ''
           let measurement = ''
           let measurement_unit = ''
-          let freight = m['Freight Terms'] || ''
+          let freight = ''
           if(m['PCS/QTY']) {
             let pcsExec = /(\d+(\.\d+)?)/i.exec(m['PCS/QTY'])
             if(pcsExec && pcsExec.length > 0) {
@@ -186,17 +186,34 @@ exports.uploadImportAct = async req => {
           }
           if(m['Freight Terms']) {
             freight = m['Freight Terms']
-          }
-          if(freight) {
-            if(freight.toUpperCase().indexOf('PREPAID') != -1) {
-              freight = 'PREPAID'
-            } else if(freight.toUpperCase().indexOf('COLLECT') != -1) {
-              freight = 'COLLECT'
+            if(freight) {
+              if(freight.toUpperCase().indexOf('PREPAID') != -1) {
+                freight = 'PREPAID'
+              } else if(freight.toUpperCase().indexOf('COLLECT') != -1) {
+                freight = 'COLLECT'
+              } else {
+                freight = ''
+              }
             }
-          } else {
-            freight = 'PREPAID'
+          }
+          if(!freight) {
+            if(m['Oil Type']) {
+              freight = m['Oil Type']
+              if(freight) {
+                if(freight.toUpperCase().indexOf('PREPAID') != -1) {
+                  freight = 'PREPAID'
+                } else if(freight.toUpperCase().indexOf('COLLECT') != -1) {
+                  freight = 'COLLECT'
+                } else {
+                  freight = ''
+                }
+              }
+            }
           }
 
+          if(!freight) {
+            freight = 'PREPAID'
+          }
           await tb_bl.create({
             invoice_vessel_id: vessel.invoice_vessel_id,
             invoice_masterbi_bl: m['B/L Nr.'],
