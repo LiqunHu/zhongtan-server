@@ -1,6 +1,6 @@
 const moment = require('moment')
 const numberToText = require('number2text')
-// const logger = require('../../../app/logger').createLogger(__filename)
+const logger = require('../../../app/logger').createLogger(__filename)
 const GLBConfig = require('../../../util/GLBConfig')
 const common = require('../../../util/CommonUtil')
 const model = require('../../../app/model')
@@ -520,6 +520,7 @@ exports.downloadReceiptAct = async req => {
     await bl.save()
     return common.success({ url: fileInfo.url })
   } catch(e) {
+    logger.error(e)
     return common.error('generate_file_01')
   }
 }
