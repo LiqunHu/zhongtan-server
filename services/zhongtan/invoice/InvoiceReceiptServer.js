@@ -520,6 +520,7 @@ exports.downloadReceiptAct = async req => {
     await bl.save()
     return common.success({ url: fileInfo.url })
   } catch(e) {
+    logger.error('error occur in downloadReceiptAct: ', e)
     logger.error(e)
     return common.error('generate_file_01')
   }
