@@ -15,7 +15,7 @@ module.exports = async (req, res) => {
       ret = await srv.saveContainerAct(req)
     } else if (method === 'exportEmptyStock') {
       return await srv.exportEmptyStockAct(req, res)
-    } else if (method === 'refreshEmptyStockSizeType') {
+    } else if (method === 'refreshSizeType') {
       return await srv.refreshEmptyStockSizeTypeAct(req, res)
     }
     common.sendData(res, ret)
