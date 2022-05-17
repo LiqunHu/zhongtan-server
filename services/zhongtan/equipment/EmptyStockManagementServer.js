@@ -4,6 +4,8 @@ const GLBConfig = require('../../../util/GLBConfig')
 const model = require('../../../app/model')
 
 const tb_container = model.zhongtan_invoice_containers
+const tb_export_container = model.zhongtan_export_container
+const tb_proforma_container = model.zhongtan_export_proforma_container
 const tb_empty_stock = model.zhongtan_empty_stock
 const tb_depot = model.zhongtan_edi_depot
 
@@ -357,3 +359,53 @@ exports.importEmptyStockContainer = async(business_type, esc) => {
     }
   }
 }
+
+exports.refreshEmptyStockSizeTypeAct = async req => {
+  let queryStr = `select * from tbl_zhongtan_empty_stock where state = ? and (empty_stock_size_type IS NULL or empty_stock_size_type = '')`
+  let replacements = [GLBConfig.ENABLE]
+  let existEsc = await model.simpleSelect(queryStr, replacements)
+  if(existEsc && existEsc.length > 0) {
+    for(let esc of existEsc) {
+      let sizeType = ''
+      let ic = await tb_container.findOne({
+        where: {
+          invoice_containers_no: esc.empty_stock_container_no
+        }
+      })
+      if(ic && ic.invoice_containers_size)  {
+        sizeType = ic.invoice_containers_size
+      } else {
+        let ec = await tb_export_container.findOne({
+          where: {
+            export_container_no: esc.empty_stock_container_no
+          }
+        })
+        if(ec && ec.export_container_size_type)  {
+          sizeType = ec.export_container_size_type
+        } else {
+          let pc = await tb_proforma_container.findOne({
+            where: {
+              export_container_no: esc.empty_stock_container_no
+            }
+          })
+          if(pc && pc.export_container_size_type)  {
+            sizeType = pc.export_container_size_type
+          }
+        }
+      }
+      if(sizeType) {
+        let upload_es = await tb_empty_stock.findOne({
+          where: {
+            empty_stock_id: esc.empty_stock_id
+          }
+        })
+        if(upload_es) {
+          upload_es.empty_stock_size_type = sizeType
+          await upload_es.save()
+        }
+      }
+    }
+  }
+  return common.success()
+}
+

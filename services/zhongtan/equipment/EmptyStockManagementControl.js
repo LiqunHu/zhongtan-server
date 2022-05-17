@@ -13,8 +13,10 @@ module.exports = async (req, res) => {
       ret = await srv.searchAct(req)
     } else if (method === 'saveContainer') {
       ret = await srv.saveContainerAct(req)
-    }  else if (method === 'exportEmptyStock') {
+    } else if (method === 'exportEmptyStock') {
       return await srv.exportEmptyStockAct(req, res)
+    } else if (method === 'refreshEmptyStockSizeType') {
+      return await srv.refreshEmptyStockSizeTypeAct(req, res)
     }
     common.sendData(res, ret)
   } catch (error) {
