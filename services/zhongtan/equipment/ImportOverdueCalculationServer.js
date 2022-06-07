@@ -828,7 +828,7 @@ exports.containerInvoiceDetailAct = async req => {
   let doc = common.docValidate(req)
   let queryStr = `SELECT a.*, b.user_id, b.uploadfile_state, c.user_name FROM tbl_zhongtan_overdue_invoice_containers a 
                   LEFT JOIN tbl_zhongtan_uploadfile b ON a.overdue_invoice_containers_invoice_uploadfile_id = b.uploadfile_id 
-                  LEFT JOIN tbl_common_user c ON b.user_id = c.user_id WHERE overdue_invoice_containers_invoice_containers_id = ? 
+                  LEFT JOIN tbl_common_user c ON b.user_id = c.user_id WHERE a.state = '1' AND overdue_invoice_containers_invoice_containers_id = ? 
                   ORDER BY a.overdue_invoice_containers_id DESC`
   let replacements = []
   replacements.push(doc.invoice_containers_id)

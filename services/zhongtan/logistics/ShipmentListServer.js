@@ -361,8 +361,6 @@ exports.exportAct = async (req, res) => {
     }
     if(r.shipment_list_cargo_type === 'LOCAL') {
       r.shipment_list_cargo_type = 'IMPORT'
-    }
-    if(r.shipment_list_business_type === 'I') {
       imports.push(r)
     } else {
       transits.push(r)
