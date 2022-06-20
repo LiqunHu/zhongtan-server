@@ -979,13 +979,19 @@ exports.searchBlAct = async req => {
           relation_export_masterbl_id: d.export_masterbl_id
         }
       })
+      let ves = await tb_vessel.findOne({
+        where: {
+          export_vessel_id: d.export_vessel_id,
+          state: GLBConfig.ENABLE
+        }
+      })
+      d.disabled_empty_release = false
+      if(ves && ves.export_vessel_etd) {
+        if(moment(ves.export_vessel_etd, 'DD/MM/YYYY').isBefore(moment())) {
+          d.disabled_empty_release = true
+        }
+      }
       if(!pro_bl) {
-        let ves = await tb_vessel.findOne({
-          where: {
-            export_vessel_id: d.export_vessel_id,
-            state: GLBConfig.ENABLE
-          }
-        })
         if(ves) {
           let pro_ves = await tb_proforma_vessel.findOne({
             where: {
@@ -1235,6 +1241,19 @@ exports.emptyReleaseAct = async req => {
     }
   })
   if(bl) {
+    let vessel = await tb_vessel.findOne({
+      where: {
+        export_vessel_id: bl.export_vessel_id,
+        state: GLBConfig.ENABLE
+      }
+    })
+
+    if(vessel && vessel.export_vessel_etd) {
+      if(moment(vessel.export_vessel_etd, 'DD/MM/YYYY').isBefore(moment(doc.export_masterbl_empty_release_valid_to))){
+        return common.error('export_07')
+      }
+    }
+
     let unRelease = await tb_verification.findAll({
       where: {
         state: GLBConfig.ENABLE,

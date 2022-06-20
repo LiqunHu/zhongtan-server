@@ -99,6 +99,7 @@ module.exports = {
   export_04: 'Please select forwarder.',
   export_05: 'Please first receipt Export Guarantee Fee or Export Deposit Fee.',
   export_06: 'Already receipted the same B/L#',
+  export_07: 'RELEASE Date must be before ETD',
   allot_depot_01: 'allot rule do not exist',
   allot_depot_02: 'allot rule can not be same enabled date',
   bk_cancellation_fee_01: 'Bk cancellation Fee has receipt',

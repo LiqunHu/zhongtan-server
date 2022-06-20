@@ -29,7 +29,7 @@ exports.initAct = async () => {
   let customers = await model.simpleSelect(queryStr, replacements)
   returnData.CUSTOMER = customers
 
-  queryStr = `SELECT fee_data_code, fee_data_name FROM tbl_zhongtan_export_fee_data WHERE state = ? AND fee_data_receivable = ? AND fee_data_receivable_fixed = ? GROUP BY fee_data_code ORDER BY fee_data_id`
+  queryStr = `SELECT fee_data_code, fee_data_name FROM tbl_zhongtan_export_fee_data WHERE state = ? AND fee_data_receivable = ? AND (fee_data_receivable_fixed = ? OR fee_data_enabled_start_date IS NOT NULL OR fee_data_enabled_end_date IS NOT NULL) GROUP BY fee_data_code ORDER BY fee_data_id`
   replacements = [GLBConfig.ENABLE, GLBConfig.ENABLE, GLBConfig.ENABLE]
   let fixed_receivable_fee = await model.simpleSelect(queryStr, replacements)
   returnData.FIXED_RECEIVABLE_FEE = fixed_receivable_fee
@@ -52,7 +52,7 @@ exports.initAct = async () => {
   returnData.OTHER_RECEIVABLE_FEE = other_receivable_fee
   returnData.ALL_RECEIVABLE_FEE = fixed_receivable_fee.concat(other_receivable_fee)
 
-  queryStr = `SELECT fee_data_code, fee_data_name FROM tbl_zhongtan_export_fee_data WHERE state = ? AND fee_data_payable = ? AND fee_data_payable_fixed = ? GROUP BY fee_data_code ORDER BY fee_data_id`
+  queryStr = `SELECT fee_data_code, fee_data_name FROM tbl_zhongtan_export_fee_data WHERE state = ? AND fee_data_payable = ? AND (fee_data_payable_fixed = ? OR fee_data_enabled_start_date IS NOT NULL OR fee_data_enabled_end_date IS NOT NULL) GROUP BY fee_data_code ORDER BY fee_data_id`
   replacements = [GLBConfig.ENABLE, GLBConfig.ENABLE, GLBConfig.ENABLE]
   let fixed_payable_fee = await model.simpleSelect(queryStr, replacements)
   returnData.FIXED_PAYABLE_FEE = fixed_payable_fee
@@ -221,10 +221,94 @@ exports.getBookingShipmentAct = async req => {
     queryStr = `SELECT fee_data_code, fee_data_name FROM tbl_zhongtan_export_fee_data WHERE state = ? AND fee_data_receivable = ? AND fee_data_receivable_fixed = ? GROUP BY fee_data_code ORDER BY fee_data_id`
     replacements = [GLBConfig.ENABLE, GLBConfig.ENABLE, GLBConfig.ENABLE]
     let fixed_receivable_fee = await model.simpleSelect(queryStr, replacements)
-    
+
     queryStr = `SELECT fee_data_code, fee_data_name FROM tbl_zhongtan_export_fee_data WHERE state = ? AND fee_data_payable = ? AND fee_data_payable_fixed = ? GROUP BY fee_data_code ORDER BY fee_data_id`
     replacements = [GLBConfig.ENABLE, GLBConfig.ENABLE, GLBConfig.ENABLE]
     let fixed_payable_fee = await model.simpleSelect(queryStr, replacements)
+
+    if(ves.export_vessel_etd) {
+      queryStr = `SELECT fee_data_code, fee_data_name, fee_data_enabled_start_date, fee_data_enabled_end_date FROM tbl_zhongtan_export_fee_data WHERE state = ? AND fee_data_receivable = ? AND (fee_data_enabled_start_date IS NOT NULL OR fee_data_enabled_end_date IS NOT NULL) GROUP BY fee_data_code ORDER BY fee_data_id `
+      replacements = [GLBConfig.ENABLE, GLBConfig.ENABLE]
+      let etd_receivable_fee = await model.simpleSelect(queryStr, replacements)
+      if(etd_receivable_fee) {
+        for(let fee of etd_receivable_fee) {
+          if(fee.fee_data_enabled_start_date && fee.fee_data_enabled_end_date) {
+            if(moment(ves.export_vessel_etd, 'DD/MM/YYYY').isBetween(fee.fee_data_enabled_start_date, fee.fee_data_enabled_end_date)) {
+              let exist = false
+              for(let ef of fixed_receivable_fee) {
+                if(fee.fee_data_code === ef.fee_data_code) {
+                  exist = true
+                  break
+                }
+              }
+              if(!exist) {
+                fixed_receivable_fee.push({
+                  fee_data_code: fee.fee_data_code,
+                  fee_data_name: fee.fee_data_name
+                })
+              }
+            }
+          } else if(fee.fee_data_enabled_start_date) {
+            if(moment(ves.export_vessel_etd, 'DD/MM/YYYY').isSameOrAfter(fee.fee_data_enabled_start_date)) {
+              let exist = false
+              for(let ef of fixed_receivable_fee) {
+                if(fee.fee_data_code === ef.fee_data_code) {
+                  exist = true
+                  break
+                }
+              }
+              if(!exist) {
+                fixed_receivable_fee.push({
+                  fee_data_code: fee.fee_data_code,
+                  fee_data_name: fee.fee_data_name
+                })
+              }
+            }
+          }
+        }
+      }
+
+      queryStr = `SELECT fee_data_code, fee_data_name, fee_data_enabled_start_date, fee_data_enabled_end_date FROM tbl_zhongtan_export_fee_data WHERE state = ? AND fee_data_payable_fixed = ? AND (fee_data_enabled_start_date IS NOT NULL OR fee_data_enabled_end_date IS NOT NULL) GROUP BY fee_data_code ORDER BY fee_data_id `
+      replacements = [GLBConfig.ENABLE, GLBConfig.ENABLE]
+      let etd_payable_fee = await model.simpleSelect(queryStr, replacements)
+      if(etd_payable_fee) {
+        for(let fee of etd_payable_fee) {
+          if(fee.fee_data_enabled_start_date && fee.fee_data_enabled_end_date) {
+            if(moment(ves.export_vessel_etd, 'DD/MM/YYYY').isBetween(fee.fee_data_enabled_start_date, fee.fee_data_enabled_end_date)) {
+              let exist = false
+              for(let ef of fixed_payable_fee) {
+                if(fee.fee_data_code === ef.fee_data_code) {
+                  exist = true
+                  break
+                }
+              }
+              if(!exist) {
+                fixed_payable_fee.push({
+                  fee_data_code: fee.fee_data_code,
+                  fee_data_name: fee.fee_data_name
+                })
+              }
+            }
+          } else if(fee.fee_data_enabled_start_date) {
+            if(moment(ves.export_vessel_etd, 'DD/MM/YYYY').isSameOrAfter(fee.fee_data_enabled_start_date)) {
+              let exist = false
+              for(let ef of fixed_payable_fee) {
+                if(fee.fee_data_code === ef.fee_data_code) {
+                  exist = true
+                  break
+                }
+              }
+              if(!exist) {
+                fixed_payable_fee.push({
+                  fee_data_code: fee.fee_data_code,
+                  fee_data_name: fee.fee_data_name
+                })
+              }
+            }
+          }
+        }
+      }
+    }
 
     queryStr = `SELECT f.*, u.uploadfile_url, c.user_name AS shipment_fee_submit_by_user FROM tbl_zhongtan_export_shipment_fee f 
                 LEFT JOIN tbl_zhongtan_uploadfile u ON f.shipment_fee_invoice_id = u.uploadfile_id AND u.state = ? AND u.api_name = ? 
@@ -248,7 +332,7 @@ exports.getBookingShipmentAct = async req => {
               shipment_fee_id: '',
               fee_data_code: fr.fee_data_code,
               shipment_fee_type: 'R',
-              shipment_fee_party: bl.export_masterbl_empty_release_agent,
+              shipment_fee_party: fee_data.shipment_fee_party ? fee_data.shipment_fee_party : bl.export_masterbl_empty_release_agent,
               shipment_fee_status: 'NE',
               fee_data_fixed: GLBConfig.ENABLE,
               shipment_fee_supplement: GLBConfig.DISABLE,
@@ -268,7 +352,7 @@ exports.getBookingShipmentAct = async req => {
             shipment_fee_id: '',
             fee_data_code: fr.fee_data_code,
             shipment_fee_type: 'R',
-            shipment_fee_party: bl.export_masterbl_empty_release_agent,
+            shipment_fee_party: fee_data.shipment_fee_party ? fee_data.shipment_fee_party : bl.export_masterbl_empty_release_agent,
             shipment_fee_status: 'NE',
             fee_data_fixed: GLBConfig.ENABLE,
             shipment_fee_supplement: GLBConfig.DISABLE,
@@ -1215,19 +1299,24 @@ const calculationShipmentFee = async function(fee_data_code, shipment_fee_type, 
       }
     } else {
       if(fee_data_type === 'BL') {
+        let shipment_fee_party = ''
+        
         if(shipment_fee_type === 'R') {
+          if(export_masterbl_bl.indexOf('COSU') >= 0){
+            shipment_fee_party = fee_data[0].fee_data_receivable_cosco_party ? fee_data[0].fee_data_receivable_cosco_party : fee_data[0].fee_data_receivable_common_party
+          } else if(export_masterbl_bl.indexOf('OOLU') >= 0){
+            shipment_fee_party = fee_data[0].fee_data_receivable_oocl_party ? fee_data[0].fee_data_receivable_oocl_party : fee_data[0].fee_data_receivable_common_party
+          }
           returnData = {
             fee_amount: fee_data[0].fee_data_receivable_amount,
-            fee_currency: fee_data[0].fee_data_receivable_amount_currency
+            fee_currency: fee_data[0].fee_data_receivable_amount_currency,
+            shipment_fee_party: shipment_fee_party
           }
         } else {
-          let shipment_fee_party = ''
-          if(fee_data[0].fee_data_payable_common_party) {
-            shipment_fee_party = fee_data[0].fee_data_payable_common_party
-          } else if(export_masterbl_bl.indexOf('COSU') >= 0){
-            shipment_fee_party = fee_data[0].fee_data_payable_cosco_party
+          if(export_masterbl_bl.indexOf('COSU') >= 0){
+            shipment_fee_party = fee_data[0].fee_data_payable_cosco_party ? fee_data[0].fee_data_payable_cosco_party : fee_data[0].fee_data_payable_common_party
           } else if(export_masterbl_bl.indexOf('OOLU') >= 0){
-            shipment_fee_party = fee_data[0].fee_data_payable_oocl_party
+            shipment_fee_party = fee_data[0].fee_data_payable_oocl_party ? fee_data[0].fee_data_payable_oocl_party : fee_data[0].fee_data_payable_common_party
           }
           returnData = {
             fee_amount: fee_data[0].fee_data_payable_amount,
@@ -1261,6 +1350,11 @@ const calculationShipmentFee = async function(fee_data_code, shipment_fee_type, 
                   fee_amount = '$'
                 }
                 fee_currency = con_fee_data.fee_data_receivable_amount_currency
+                if(export_masterbl_bl.indexOf('COSU') >= 0){
+                  shipment_fee_party = con_fee_data.fee_data_receivable_cosco_party ? con_fee_data.fee_data_receivable_cosco_party : con_fee_data.fee_data_receivable_common_party
+                } else if(export_masterbl_bl.indexOf('OOLU') >= 0){
+                  shipment_fee_party = con_fee_data.fee_data_receivable_oocl_party ? con_fee_data.fee_data_receivable_oocl_party : con_fee_data.fee_data_receivable_common_party
+                }
               }
             } else {
               let con_fee_data = await tb_fee_data.findOne({
@@ -1278,12 +1372,10 @@ const calculationShipmentFee = async function(fee_data_code, shipment_fee_type, 
                   fee_amount = '$'
                 }
                 fee_currency = con_fee_data.fee_data_payable_amount_currency
-                if(con_fee_data.fee_data_payable_common_party) {
-                  shipment_fee_party = con_fee_data.fee_data_payable_common_party
-                } else if(export_masterbl_bl.indexOf('COSU') >= 0){
-                  shipment_fee_party = con_fee_data.fee_data_payable_cosco_party
+                if(export_masterbl_bl.indexOf('COSU') >= 0){
+                  shipment_fee_party = con_fee_data.fee_data_payable_cosco_party ? con_fee_data.fee_data_payable_cosco_party : con_fee_data.fee_data_payable_amount_currency
                 } else if(export_masterbl_bl.indexOf('OOLU') >= 0){
-                  shipment_fee_party = con_fee_data.fee_data_payable_oocl_party
+                  shipment_fee_party = con_fee_data.fee_data_payable_oocl_party ? con_fee_data.fee_data_payable_oocl_party : con_fee_data.fee_data_payable_amount_currency
                 }
               }
             }

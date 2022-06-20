@@ -299,6 +299,16 @@ exports.uploadBookingAct = async req => {
                 }
               }
             }
+            if(conNo) {
+              let queryStr = `select invoice_containers_no, invoice_containers_size from tbl_zhongtan_invoice_containers where state = '1' and invoice_containers_no = ? LIMIT 1`
+              let replacements = [conNo]
+              let invoice_con = await model.simpleSelect(queryStr, replacements)
+              if(invoice_con && invoice_con.length > 0) {
+                if(invoice_con[0].invoice_containers_size && invoice_con[0].invoice_containers_size !== ct) {
+                  ct = invoice_con[0].invoice_containers_size
+                }
+              }
+            }
             let we = ''
             let wu = ''
             let vl = ''
@@ -825,17 +835,15 @@ exports.uploadShipmentAct = async req => {
                 })
               }
 
-              let queryStrOFT = `SELECT * FROM tbl_zhongtan_export_fee_data WHERE state = 1 AND fee_data_code = ? LIMIT 1`
+              let queryStrOFT = `SELECT * FROM tbl_zhongtan_export_fee_data WHERE state = 1 AND fee_data_code = ? AND fee_data_payable = 1 LIMIT 1`
               let replacementsOFT = ['OFT'] 
               let oftFee = await model.simpleSelect(queryStrOFT, replacementsOFT)
               let oft_shipment_fee_party = null
               if(oftFee && oftFee.length > 0) {
-                if(oftFee[0].fee_data_payable_common_party) {
-                  oft_shipment_fee_party = oftFee[0].fee_data_payable_common_party
-                } else if(masterbi_bl.indexOf('COSU') >= 0){
-                  oft_shipment_fee_party = oftFee[0].fee_data_payable_cosco_party
+                if(masterbi_bl.indexOf('COSU') >= 0){
+                  oft_shipment_fee_party = oftFee[0].fee_data_payable_cosco_party ? oftFee[0].fee_data_payable_cosco_party : oftFee[0].fee_data_payable_common_party
                 } else if(masterbi_bl.indexOf('OOLU') >= 0){
-                  oft_shipment_fee_party = oftFee[0].fee_data_payable_oocl_party
+                  oft_shipment_fee_party = oftFee[0].fee_data_payable_oocl_party ? oftFee[0].fee_data_payable_oocl_party : oftFee[0].fee_data_payable_common_party
                 }
               }
               await tb_shipment_fee.create({
@@ -934,17 +942,15 @@ exports.uploadShipmentAct = async req => {
                 })
               }
 
-              let queryStrFAF = `SELECT * FROM tbl_zhongtan_export_fee_data WHERE state = 1 AND fee_data_code = ? LIMIT 1`
+              let queryStrFAF = `SELECT * FROM tbl_zhongtan_export_fee_data WHERE state = 1 AND fee_data_code = ? AND fee_data_payable = 1 LIMIT 1`
               let replacementsFAF = ['FAF'] 
               let fafFee = await model.simpleSelect(queryStrFAF, replacementsFAF)
               let faf_shipment_fee_party = null
               if(fafFee && fafFee.length > 0) {
-                if(fafFee[0].fee_data_payable_common_party) {
-                  faf_shipment_fee_party = fafFee[0].fee_data_payable_common_party
-                } else if(masterbi_bl.indexOf('COSU') >= 0){
-                  faf_shipment_fee_party = fafFee[0].fee_data_payable_cosco_party
+               if(masterbi_bl.indexOf('COSU') >= 0){
+                  faf_shipment_fee_party = fafFee[0].fee_data_payable_cosco_party ? fafFee[0].fee_data_payable_cosco_party : fafFee[0].fee_data_payable_common_party
                 } else if(masterbi_bl.indexOf('OOLU') >= 0){
-                  faf_shipment_fee_party = fafFee[0].fee_data_payable_oocl_party
+                  faf_shipment_fee_party = fafFee[0].fee_data_payable_oocl_party ? fafFee[0].fee_data_payable_oocl_party : fafFee[0].fee_data_payable_common_party
                 }
               }
               await tb_shipment_fee.create({

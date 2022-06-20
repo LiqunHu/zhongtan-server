@@ -37,6 +37,10 @@ exports.initAct = async () => {
     order: [['edi_depot_name', 'ASC']]
   })
   returnData['UPLOAD_STATE'] = GLBConfig.UPLOAD_STATE
+
+  let queryStr = `SELECT invoice_vessel_id, CONCAT(invoice_vessel_name, '/',invoice_vessel_voyage) vessel_voyage FROM tbl_zhongtan_invoice_vessel WHERE state = '1' GROUP BY invoice_vessel_name, invoice_vessel_voyage ORDER BY STR_TO_DATE(invoice_vessel_eta, '%d/%m/%Y') DESC;`
+  let replacements = []
+  returnData['VESSEL_VOYAGE'] = await model.simpleSelect(queryStr, replacements)
   return common.success(returnData)
 }
 
@@ -59,6 +63,10 @@ exports.searchAct = async req => {
     if (doc.search_data.invoice_vessel_name) {
       queryStr += ' and b.invoice_vessel_name like ? '
       replacements.push('%' + doc.search_data.invoice_vessel_name + '%')
+    }
+    if (doc.search_data.invoice_vessel_id) {
+      queryStr += ' and b.invoice_vessel_id = ? '
+      replacements.push(doc.search_data.invoice_vessel_id)
     }
   }
   queryStr += ' ORDER BY b.invoice_vessel_id DESC, a.invoice_containers_bl, a.invoice_containers_no'
