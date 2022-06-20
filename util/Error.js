@@ -100,6 +100,7 @@ module.exports = {
   export_05: 'Please first receipt Export Guarantee Fee or Export Deposit Fee.',
   export_06: 'Already receipted the same B/L#',
   export_07: 'RELEASE Date must be before ETD',
+  export_08: 'Please upload the OOCL BOOKING ACKNOWLEDGEMENT',
   allot_depot_01: 'allot rule do not exist',
   allot_depot_02: 'allot rule can not be same enabled date',
   bk_cancellation_fee_01: 'Bk cancellation Fee has receipt',
