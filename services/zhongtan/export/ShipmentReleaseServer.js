@@ -232,36 +232,39 @@ exports.getBookingShipmentAct = async req => {
       let etd_receivable_fee = await model.simpleSelect(queryStr, replacements)
       if(etd_receivable_fee) {
         for(let fee of etd_receivable_fee) {
+          let exist = false
+          let existIndex = -1
+          for(let ef of fixed_receivable_fee) {
+            if(fee.fee_data_code === ef.fee_data_code) {
+              exist = true
+              existIndex = fixed_receivable_fee.indexOf(ef)
+              break
+            }
+          }
           if(fee.fee_data_enabled_start_date && fee.fee_data_enabled_end_date) {
             if(moment(ves.export_vessel_etd, 'DD/MM/YYYY').isBetween(fee.fee_data_enabled_start_date, fee.fee_data_enabled_end_date)) {
-              let exist = false
-              for(let ef of fixed_receivable_fee) {
-                if(fee.fee_data_code === ef.fee_data_code) {
-                  exist = true
-                  break
-                }
-              }
               if(!exist) {
                 fixed_receivable_fee.push({
                   fee_data_code: fee.fee_data_code,
                   fee_data_name: fee.fee_data_name
                 })
+              }
+            } else {
+              if(exist && existIndex >= 0) {
+                fixed_receivable_fee.splice(existIndex, 1)
               }
             }
           } else if(fee.fee_data_enabled_start_date) {
             if(moment(ves.export_vessel_etd, 'DD/MM/YYYY').isSameOrAfter(fee.fee_data_enabled_start_date)) {
-              let exist = false
-              for(let ef of fixed_receivable_fee) {
-                if(fee.fee_data_code === ef.fee_data_code) {
-                  exist = true
-                  break
-                }
-              }
               if(!exist) {
                 fixed_receivable_fee.push({
                   fee_data_code: fee.fee_data_code,
                   fee_data_name: fee.fee_data_name
                 })
+              }
+            } else {
+              if(exist && existIndex >= 0) {
+                fixed_receivable_fee.splice(existIndex, 1)
               }
             }
           }
@@ -273,36 +276,39 @@ exports.getBookingShipmentAct = async req => {
       let etd_payable_fee = await model.simpleSelect(queryStr, replacements)
       if(etd_payable_fee) {
         for(let fee of etd_payable_fee) {
+          let exist = false
+          let existIndex = -1
+          for(let ef of fixed_payable_fee) {
+            if(fee.fee_data_code === ef.fee_data_code) {
+              exist = true
+              existIndex = fixed_payable_fee.indexOf(ef)
+              break
+            }
+          }
           if(fee.fee_data_enabled_start_date && fee.fee_data_enabled_end_date) {
             if(moment(ves.export_vessel_etd, 'DD/MM/YYYY').isBetween(fee.fee_data_enabled_start_date, fee.fee_data_enabled_end_date)) {
-              let exist = false
-              for(let ef of fixed_payable_fee) {
-                if(fee.fee_data_code === ef.fee_data_code) {
-                  exist = true
-                  break
-                }
-              }
               if(!exist) {
                 fixed_payable_fee.push({
                   fee_data_code: fee.fee_data_code,
                   fee_data_name: fee.fee_data_name
                 })
+              }
+            } else {
+              if(exist && existIndex >= 0) {
+                fixed_payable_fee.splice(existIndex, 1)
               }
             }
           } else if(fee.fee_data_enabled_start_date) {
             if(moment(ves.export_vessel_etd, 'DD/MM/YYYY').isSameOrAfter(fee.fee_data_enabled_start_date)) {
-              let exist = false
-              for(let ef of fixed_payable_fee) {
-                if(fee.fee_data_code === ef.fee_data_code) {
-                  exist = true
-                  break
-                }
-              }
               if(!exist) {
                 fixed_payable_fee.push({
                   fee_data_code: fee.fee_data_code,
                   fee_data_name: fee.fee_data_name
                 })
+              }
+            } else {
+              if(exist && existIndex >= 0) {
+                fixed_payable_fee.splice(existIndex, 1)
               }
             }
           }
