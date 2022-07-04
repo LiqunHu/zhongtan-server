@@ -392,7 +392,53 @@ exports.checkPasswordAct = async req => {
 }
 
 exports.exportAct = async (req, res) => {
-  let doc = common.docValidate(req)
+  let doc = common.docValidate(req), user = req.user
+  let queryStr = `select pa.*, cb.user_name as payment_advice_beneficiary_name, cr.user_name as payment_advice_remarks_name, pi.payment_items_name as payment_advice_items_name
+                  from tbl_zhongtan_payment_advice pa left join tbl_common_user cb on pa.payment_advice_beneficiary = cb.user_id 
+                  left join tbl_common_user cr on pa.payment_advice_remarks = cr.user_id
+                  left join tbl_zhongtan_payment_items pi on pa.payment_advice_items = pi.payment_items_code
+                  where pa.state = '1' and (create_by is null or create_by = ?) `
+  let replacements = [user.user_id]
+  let search_data = doc.search_data
+  if(search_data) {
+    if (search_data.payment_advice_no) {
+      queryStr += ' and payment_advice_no like ?'
+      replacements.push('%' +search_data.payment_advice_no + '%')
+    }
+  
+    if (search_data.payment_advice_method) {
+      queryStr += ' and payment_advice_method = ?'
+      replacements.push(search_data.payment_advice_method)
+    }
+  
+    if (search_data.payment_advice_items) {
+      queryStr += ' and payment_advice_items = ?'
+      replacements.push(search_data.payment_advice_items)
+    }
+  
+    if (search_data.payment_advice_inv_cntrl) {
+      queryStr += ' and payment_advice_inv_cntrl like ? '
+      replacements.push('%' +search_data.payment_advice_inv_cntrl + '%')
+    }
+  
+    if (search_data.payment_advice_beneficiary) {
+      queryStr += ' and payment_advice_beneficiary = ?'
+      replacements.push(search_data.payment_advice_beneficiary)
+    }
+  
+    if (search_data.payment_advice_remarks) {
+      queryStr += ' and payment_advice_remarks = ?'
+      replacements.push(search_data.payment_advice_remarks)
+    }
+  }
+  queryStr += ' order by payment_advice_id desc'
+  let result = await model.simpleSelect(queryStr, replacements)
+  let filepath = await common.ejs2xlsx('PaymentAdvice.xlsx', result)
+  res.sendFile(filepath)
+}
+
+exports.exportAdminAct = async (req, res) => {
+  let doc = common.docValidate(req), user = req.user
   let queryStr = `select pa.*, cb.user_name as payment_advice_beneficiary_name, cr.user_name as payment_advice_remarks_name, pi.payment_items_name as payment_advice_items_name
                   from tbl_zhongtan_payment_advice pa left join tbl_common_user cb on pa.payment_advice_beneficiary = cb.user_id 
                   left join tbl_common_user cr on pa.payment_advice_remarks = cr.user_id
@@ -403,32 +449,32 @@ exports.exportAct = async (req, res) => {
   if(search_data) {
     if (search_data.payment_advice_no) {
       queryStr += ' and payment_advice_no like ?'
-      replacements.push('%' +doc.payment_advice_no + '%')
+      replacements.push('%' +search_data.payment_advice_no + '%')
     }
   
     if (search_data.payment_advice_method) {
       queryStr += ' and payment_advice_method = ?'
-      replacements.push(doc.payment_advice_method)
+      replacements.push(search_data.payment_advice_method)
     }
   
     if (search_data.payment_advice_items) {
       queryStr += ' and payment_advice_items = ?'
-      replacements.push(doc.payment_advice_items)
+      replacements.push(search_data.payment_advice_items)
     }
   
     if (search_data.payment_advice_inv_cntrl) {
       queryStr += ' and payment_advice_inv_cntrl like ? '
-      replacements.push('%' +doc.payment_advice_inv_cntrl + '%')
+      replacements.push('%' +search_data.payment_advice_inv_cntrl + '%')
     }
   
     if (search_data.payment_advice_beneficiary) {
       queryStr += ' and payment_advice_beneficiary = ?'
-      replacements.push(doc.payment_advice_beneficiary)
+      replacements.push(search_data.payment_advice_beneficiary)
     }
   
     if (search_data.payment_advice_remarks) {
       queryStr += ' and payment_advice_remarks = ?'
-      replacements.push(doc.payment_advice_remarks)
+      replacements.push(search_data.payment_advice_remarks)
     }
   }
   queryStr += ' order by payment_advice_id desc'
@@ -440,4 +486,29 @@ exports.exportAct = async (req, res) => {
 exports.uploadAct = async req => {
   let fileInfo = await common.fileSaveTemp(req)
   return common.success(fileInfo)
+}
+
+exports.removeAttachmentAct = async req => {
+  let doc = common.docValidate(req)
+  let file = await tb_uploadfile.findOne({
+    where: {
+      uploadfile_id: doc.uploadfile_id
+    }
+  })
+  if(file) {
+    file.state = GLBConfig.DISABLE
+    await file.save()
+  }
+
+  let atta_files = await tb_uploadfile.findAll({
+    where: {
+      uploadfile_index1: doc.uploadfile_index1,
+      api_name: 'PAYMENT ADVICE ATTACHMENT',
+      state: GLBConfig.ENABLE
+    }
+  })
+  let ret = {
+    atta_files: atta_files
+  }
+  return common.success(ret)
 }

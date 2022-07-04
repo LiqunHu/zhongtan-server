@@ -23,8 +23,12 @@ module.exports = async (req, res) => {
       ret = await srv.checkPasswordAct(req)
     } else if(method === 'export') {
       return await srv.exportAct(req, res)
+    } else if(method === 'export') {
+      return await srv.exportAdminAct(req, res)
     } else if (method === 'upload') {
       ret = await srv.uploadAct(req)
+    } else if (method === 'removeAttachment') {
+      ret = await srv.removeAttachmentAct(req)
     }
     common.sendData(res, ret)
   } catch (error) {
