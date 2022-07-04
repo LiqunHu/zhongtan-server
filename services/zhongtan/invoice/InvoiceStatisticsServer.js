@@ -79,6 +79,10 @@ exports.searchAct = async req => {
     queryStr += ' and a.invoice_masterbi_bl like ? '
     replacements.push('%' + doc.bl + '%')
   }
+  if (doc.delivery_order_no) {
+    queryStr += ' and a.invoice_masterbi_do_delivery_order_no like ? '
+    replacements.push('%' + doc.delivery_order_no)
+  }
   if(doc.do_status && doc.do_status === '1') {
     queryStr += ` and a.invoice_masterbi_do_date IS NOT NULL and  a.invoice_masterbi_do_date <> '' `
     if(doc.do_date && doc.do_date.length > 1 && doc.do_date[0] && doc.do_date[1]) {
