@@ -23,7 +23,7 @@ module.exports = async (req, res) => {
       ret = await srv.checkPasswordAct(req)
     } else if(method === 'export') {
       return await srv.exportAct(req, res)
-    } else if(method === 'export') {
+    } else if(method === 'exportAdmin') {
       return await srv.exportAdminAct(req, res)
     } else if (method === 'upload') {
       ret = await srv.uploadAct(req)
