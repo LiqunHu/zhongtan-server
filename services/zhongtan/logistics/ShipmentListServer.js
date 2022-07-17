@@ -192,6 +192,12 @@ exports.addAct = async req => {
   let addData = doc.add_shipment_list
   if(addData) {
     for(let d of addData) {
+      let shipment_list_customer = ''
+      if(d.shipment_list_cntr_owner === 'COS') {
+        shipment_list_customer = '14e84cf0-4421-11eb-a23b-a72bc46e4173'
+      } else if(d.shipment_list_cntr_owner === 'OOL') {
+        shipment_list_customer = '3d09e400-4421-11eb-a23b-a72bc46e4173'
+      }
       await tb_shipment_list.create({
         shipment_list_business_type: d.shipment_list_business_type,
         shipment_list_bill_no: d.shipment_list_bill_no,
@@ -209,7 +215,8 @@ exports.addAct = async req => {
         shipment_list_vessel_name: d.shipment_list_vessel_name,
         shipment_list_vessel_voyage: d.shipment_list_vessel_voyage,
         shipment_list_vessel_ata: d.shipment_list_vessel_ata,
-        shipment_list_vessel_etd: d.shipment_list_vessel_etd
+        shipment_list_vessel_etd: d.shipment_list_vessel_etd,
+        shipment_list_customer: shipment_list_customer
       })
     }
   }

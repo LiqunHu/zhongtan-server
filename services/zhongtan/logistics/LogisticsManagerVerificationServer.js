@@ -299,7 +299,7 @@ exports.approveAct = async req => {
           if(section) {
             renderData.section_by = section.user_name
           }
-          renderData.section_time = moment(ver.payment_verification_section_time).format('YYYY-MM-DD HH:mm:ss')
+          renderData.section_time = moment(ver.logistics_verification_section_time).format('YYYY-MM-DD HH:mm:ss')
         }
         if(ver.logistics_verification_manager_user) {
           let checked = await tb_user.findOne({
@@ -310,7 +310,7 @@ exports.approveAct = async req => {
           if(checked) {
             renderData.checked_by = checked.user_name
           }
-          renderData.checked_time = moment(ver.payment_verification_manager_time).format('YYYY-MM-DD HH:mm:ss')
+          renderData.checked_time = moment(ver.logistics_verification_manager_time).format('YYYY-MM-DD HH:mm:ss')
         }
         if(ver.logistics_verification_business_user) {
           let approve = await tb_user.findOne({
@@ -321,7 +321,7 @@ exports.approveAct = async req => {
           if(approve) {
             renderData.approve_by = approve.user_name
           }
-          renderData.approve_time = moment(ver.payment_verification_business_time).format('YYYY-MM-DD HH:mm:ss')
+          renderData.approve_time = moment(ver.logistics_verification_business_time).format('YYYY-MM-DD HH:mm:ss')
         }
         if(ver.logistics_verification_api_name === 'PAYMENT ADVANCE') {
           let payment_list = []

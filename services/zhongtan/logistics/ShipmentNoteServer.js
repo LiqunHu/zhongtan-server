@@ -6,11 +6,13 @@ const GLBConfig = require('../../../util/GLBConfig')
 const opSrv = require('../../common/system/OperationPasswordServer')
 const freightSrv = require('../logistics/TBLFreightConfigServer')
 
+const tb_user = model.common_user
 const tb_shipment_list = model.zhongtan_logistics_shipment_list
 const tb_verification = model.zhongtan_logistics_verification
 const tb_verification_freight = model.zhongtan_logistics_verification_freight
 const tb_uploadfile = model.zhongtan_uploadfile
 const tb_payment_extra = model.zhongtan_logistics_payment_extra
+const tb_logistics_paid = model.zhongtan_logistics_shipment_paid
 
 exports.initAct = async () => {
   let returnData = {}
@@ -29,6 +31,7 @@ exports.initAct = async () => {
   returnData.VENDOR = VENDOR
   returnData.RECEIPT_CURRENCY = GLBConfig.RECEIPT_CURRENCY
   returnData.PAYMENT_STATUS = GLBConfig.FREIGHT_PAYMENT_STATUS
+  returnData.LOGISTICS_PAID_STATE = GLBConfig.LOGISTICS_PAID_STATE
   return common.success(returnData)
 }
 
@@ -51,45 +54,169 @@ exports.searchAct = async req => {
       d._checked = false
       queryStr = `SELECT u.*, cu.user_name FROM tbl_zhongtan_uploadfile u LEFT JOIN tbl_common_user cu ON u.uploadfil_release_user_id = cu.user_id WHERE u.state = ? AND uploadfile_index1 IN (
                   SELECT logistics_verification_id FROM tbl_zhongtan_logistics_verification_freight WHERE state = ? AND shipment_list_id = ? AND logistics_freight_state = 'AP') 
-                  AND api_name IN ('PAYMENT ADVANCE', 'PAYMENT BALANCE', 'PAYMENT FULL') ORDER BY api_name`
+                  AND api_name IN ('PAYMENT ADVANCE', 'PAYMENT BALANCE', 'PAYMENT FULL', 'PAYMENT ADVICE ATTACHMENT', 'PAYMENT BALANCE ATTACHMENT', 'PAYMENT FULL ATTACHMENT') ORDER BY api_name`
       let replacements = [GLBConfig.ENABLE, GLBConfig.ENABLE, d.shipment_list_id]
       let paymentFiles = await model.simpleSelect(queryStr, replacements)
       let files = []
+      let attachments = []
       if(paymentFiles) {
         for(let pf of paymentFiles) {
-          files.push({
-            filetype: pf.api_name,
-            creater: pf.user_name,
-            amount: pf.uploadfile_amount,
-            currency: pf.uploadfile_currency,
-            date: moment(pf.created_at).format('YYYY-MM-DD HH:mm:ss'),
-            url: pf.uploadfile_url,
-            file_id : pf.uploadfile_id,
-            relation_id: pf.uploadfile_index1
-          })
+          if(pf.api_name === 'PAYMENT ADVANCE' || pf.api_name === 'PAYMENT BALANCE' || pf.api_name === 'PAYMENT FULL') {
+            let file = {
+              filetype: pf.api_name,
+              creater: pf.user_name,
+              amount: pf.uploadfile_amount,
+              currency: pf.uploadfile_currency,
+              date: moment(pf.created_at).format('YYYY-MM-DD HH:mm:ss'),
+              url: pf.uploadfile_url,
+              file_id : pf.uploadfile_id,
+              relation_id: pf.uploadfile_index1
+            }
+            let ver = await tb_verification.findOne({
+              where: {
+                logistics_verification_id: pf.uploadfile_index1,
+                state: GLBConfig.ENABLE
+              }
+            })
+            if(ver) {
+              if(ver.logistics_verification_create_user) {
+                let prepared = await tb_user.findOne({
+                  where: {
+                    user_id: ver.logistics_verification_create_user
+                  }
+                })
+                if(prepared) {
+                  file.prepared_by = prepared.user_name
+                }
+                file.prepared_time = moment(ver.created_at).format('YYYY-MM-DD HH:mm:ss')
+              }
+              if(ver.logistics_verification_section_user) {
+                let section = await tb_user.findOne({
+                  where: {
+                    user_id: ver.logistics_verification_section_user
+                  }
+                })
+                if(section) {
+                  file.section_by = section.user_name
+                }
+                file.section_time = moment(ver.logistics_verification_section_time).format('YYYY-MM-DD HH:mm:ss')
+              }
+              if(ver.logistics_verification_manager_user) {
+                let checked = await tb_user.findOne({
+                  where: {
+                    user_id: ver.logistics_verification_manager_user
+                  }
+                })
+                if(checked) {
+                  file.checked_by = checked.user_name
+                }
+                file.checked_time = moment(ver.logistics_verification_manager_time).format('YYYY-MM-DD HH:mm:ss')
+              }
+              if(ver.logistics_verification_business_user) {
+                let approve = await tb_user.findOne({
+                  where: {
+                    user_id: ver.logistics_verification_business_user
+                  }
+                })
+                if(approve) {
+                  file.approve_by = approve.user_name
+                }
+                file.approve_time = moment(ver.logistics_verification_business_time).format('YYYY-MM-DD HH:mm:ss')
+              }
+            }
+            files.push(file)
+          } else {
+            attachments.push({
+              filetype: pf.api_name,
+              url: pf.uploadfile_url,
+              date: moment(pf.created_at).format('YYYY-MM-DD HH:mm:ss'),
+            })
+          }
         }
       }
       queryStr = `SELECT u.*, cu.user_name FROM tbl_zhongtan_uploadfile u LEFT JOIN tbl_common_user cu ON u.user_id = cu.user_id WHERE u.state = ? AND uploadfile_index1 IN (
         SELECT logistics_verification_id FROM tbl_zhongtan_logistics_verification_freight WHERE state = ? AND logistics_freight_state = 'AP' 
         AND shipment_list_id IN (SELECT payment_extra_id FROM tbl_zhongtan_logistics_payment_extra WHERE state = 1 AND payment_extra_type = 'P' AND payment_extra_status = '7' AND payment_extra_shipment_id = ?)) 
-        AND api_name IN ('PAYMENT EXTRA') ORDER BY api_name`
+        AND api_name IN ('PAYMENT EXTRA', 'PAYMENT EXTRA ATTACHMENT') ORDER BY api_name`
       replacements = [GLBConfig.ENABLE, GLBConfig.ENABLE, d.shipment_list_id]
       let extraFiles = await model.simpleSelect(queryStr, replacements)
       if(extraFiles) {
         for(let ex of extraFiles) {
-          files.push({
-            filetype: ex.api_name,
-            creater: ex.user_name,
-            amount: ex.uploadfile_amount,
-            currency: ex.uploadfile_currency,
-            date: moment(ex.created_at).format('YYYY-MM-DD HH:mm:ss'),
-            url: ex.uploadfile_url,
-            file_id : ex.uploadfile_id,
-            relation_id: ex.uploadfile_index1
-          })
+          if(ex.api_name === 'PAYMENT EXTRA') {
+            let file = {
+              filetype: ex.api_name,
+              creater: ex.user_name,
+              amount: ex.uploadfile_amount,
+              currency: ex.uploadfile_currency,
+              date: moment(ex.created_at).format('YYYY-MM-DD HH:mm:ss'),
+              url: ex.uploadfile_url,
+              file_id : ex.uploadfile_id,
+              relation_id: ex.uploadfile_index1
+            }
+            let ver = await tb_verification.findOne({
+              where: {
+                logistics_verification_id: ex.uploadfile_index1,
+                state: GLBConfig.ENABLE
+              }
+            })
+            if(ver) {
+              if(ver.logistics_verification_create_user) {
+                let prepared = await tb_user.findOne({
+                  where: {
+                    user_id: ver.logistics_verification_create_user
+                  }
+                })
+                if(prepared) {
+                  file.prepared_by = prepared.user_name
+                }
+                file.prepared_time = moment(ver.created_at).format('YYYY-MM-DD HH:mm:ss')
+              }
+              if(ver.logistics_verification_section_user) {
+                let section = await tb_user.findOne({
+                  where: {
+                    user_id: ver.logistics_verification_section_user
+                  }
+                })
+                if(section) {
+                  file.section_by = section.user_name
+                }
+                file.section_time = moment(ver.logistics_verification_section_time).format('YYYY-MM-DD HH:mm:ss')
+              }
+              if(ver.logistics_verification_manager_user) {
+                let checked = await tb_user.findOne({
+                  where: {
+                    user_id: ver.logistics_verification_manager_user
+                  }
+                })
+                if(checked) {
+                  file.checked_by = checked.user_name
+                }
+                file.checked_time = moment(ver.logistics_verification_manager_time).format('YYYY-MM-DD HH:mm:ss')
+              }
+              if(ver.logistics_verification_business_user) {
+                let approve = await tb_user.findOne({
+                  where: {
+                    user_id: ver.logistics_verification_business_user
+                  }
+                })
+                if(approve) {
+                  file.approve_by = approve.user_name
+                }
+                file.approve_time = moment(ver.logistics_verification_business_time).format('YYYY-MM-DD HH:mm:ss')
+              }
+            }
+            files.push(file)
+          } else {
+            attachments.push({
+              filetype: ex.api_name,
+              url: ex.uploadfile_url,
+              date: moment(ex.created_at).format('YYYY-MM-DD HH:mm:ss'),
+            })
+          }
         }
       }
       d.files = files
+      d.attachments = attachments
       rows.push(d)
     }
   }
@@ -124,6 +251,10 @@ const queryWhereJoin = async (param) => {
     if(searchPara.shipment_list_payment_status) {
       queryStr = queryStr + ' and s.shipment_list_payment_status = ? '
       replacements.push(searchPara.shipment_list_payment_status)
+    }
+    if(searchPara.paid_status) {
+      queryStr = queryStr + ' and s.shipment_list_paid_status = ? '
+      replacements.push(searchPara.paid_status)
     }
     if(searchPara.shipment_list_business_type) {
       queryStr = queryStr + ' and s.shipment_list_business_type = ? '
@@ -858,4 +989,38 @@ exports.applyPaymentExtraAct = async req => {
     }
   }
   return common.success()
+}
+
+exports.searchPaidStatusAct = async req => {
+  let doc = common.docValidate(req)
+  queryStr = `SELECT p.*, cu.user_name FROM tbl_zhongtan_logistics_shipment_paid p left join tbl_common_user cu ON p.logistics_paid_created_by = cu.user_id WHERE p.state = ? AND shipment_list_id = ? order by logistics_paid_id desc`
+  replacements = [GLBConfig.ENABLE, doc.shipment_list_id]
+  let paid_list = await model.simpleSelect(queryStr, replacements)
+  let rows = []
+  if(paid_list) {
+    for(let p of paid_list) {
+      let row = JSON.parse(JSON.stringify(p))
+      row.created_time = moment(p.created_at).format('YYYY-MM-DD HH:mm:ss')
+      rows.push(row)
+    }
+  }
+  return common.success(rows)
+}
+
+exports.updatePaidStatusAct = async req => {
+  let doc = common.docValidate(req), user = req.user
+  await tb_logistics_paid.create({
+    shipment_list_id: doc.shipment_list_id,
+    logistics_paid_status: doc.paid_status,
+    logistics_paid_created_by: user.user_id
+  })
+  let sm = await tb_shipment_list.findOne({
+    where: {
+      shipment_list_id: doc.shipment_list_id,
+      state: GLBConfig.ENABLE
+    }
+  })
+  sm.shipment_list_paid_status = doc.paid_status
+  await sm.save()
+  return this.searchPaidStatusAct(req)
 }

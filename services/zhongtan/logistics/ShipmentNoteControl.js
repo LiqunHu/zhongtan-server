@@ -37,6 +37,10 @@ module.exports = async (req, res) => {
       ret = await srv.uploadAct(req)
     } else if(method === 'applyPaymentExtra') {
       ret = await srv.applyPaymentExtraAct(req)
+    } else if(method === 'searchPaidStatus') {
+      ret = await srv.searchPaidStatusAct(req)
+    } else if(method === 'updatePaidStatus') {
+      ret = await srv.updatePaidStatusAct(req)
     } 
 
     common.sendData(res, ret)

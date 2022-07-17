@@ -1,4 +1,5 @@
 const db = require('../../app/db')
+const GLBConfig = require('../../util/GLBConfig')
 // 提单表
 
 module.exports = db.defineModel('tbl_zhongtan_logistics_shipment_list', {
@@ -259,5 +260,11 @@ module.exports = db.defineModel('tbl_zhongtan_logistics_shipment_list', {
     // 航次
     type: db.STRING(50),
     allowNull: true
+  },
+  shipment_list_paid_status: {
+    // 支付状态
+    type: db.STRING(10),
+    allowNull: true,
+    defaultValue: '0'
   }
 })

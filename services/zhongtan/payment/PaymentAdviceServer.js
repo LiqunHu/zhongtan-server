@@ -23,7 +23,7 @@ exports.initAct = async () => {
   returnData.PAYMENT_ITEMS = await model.simpleSelect(queryStr, replacements)
 
   returnData.VESSELS = []
-  queryStr = `SELECT CONCAT(invoice_vessel_name, '/',invoice_vessel_voyage) AS vessel_voyage FROM tbl_zhongtan_invoice_vessel WHERE state = 1 GROUP BY invoice_vessel_name, invoice_vessel_voyage ORDER BY STR_TO_DATE(invoice_vessel_ata, '%d/%m/%Y') DESC;`
+  queryStr = `SELECT CONCAT(invoice_vessel_name, '/',invoice_vessel_voyage) AS vessel_voyage FROM tbl_zhongtan_invoice_vessel WHERE state = 1 AND invoice_vessel_name IS NOT NULL AND invoice_vessel_voyage IS NOT NULL AND invoice_vessel_name <> '' AND invoice_vessel_voyage <> '' GROUP BY invoice_vessel_name, invoice_vessel_voyage ORDER BY STR_TO_DATE(invoice_vessel_ata, '%d/%m/%Y') DESC;`
   replacements = []
   let imVs = await model.simpleSelect(queryStr, replacements)
   if(imVs) {
@@ -31,12 +31,16 @@ exports.initAct = async () => {
       returnData.VESSELS.push(i)
     }
   }
-  queryStr = `SELECT CONCAT(export_vessel_name, '/',export_vessel_voyage) AS vessel_voyage FROM tbl_zhongtan_export_vessel WHERE state = 1 GROUP BY export_vessel_name, export_vessel_voyage ORDER BY STR_TO_DATE(export_vessel_etd, '%d/%m/%Y') DESC;`
+  console.log(returnData.VESSELS)
+  queryStr = `SELECT CONCAT(export_vessel_name, '/',export_vessel_voyage) AS vessel_voyage FROM tbl_zhongtan_export_vessel WHERE state = 1 AND export_vessel_name IS NOT NULL AND export_vessel_voyage IS NOT NULL AND export_vessel_name <> '' AND export_vessel_voyage <> ''  GROUP BY export_vessel_name, export_vessel_voyage ORDER BY STR_TO_DATE(export_vessel_etd, '%d/%m/%Y') DESC;`
   replacements = []
   let exVs = await model.simpleSelect(queryStr, replacements)
   if(exVs) {
     for(let e of exVs) {
-      returnData.VESSELS.push(e)
+      let index = returnData.VESSELS.findIndex(item => item.vessel_voyage === e.vessel_voyage)
+      if(index === -1) {
+        returnData.VESSELS.push(e)
+      }
     }
   }
   return common.success(returnData)

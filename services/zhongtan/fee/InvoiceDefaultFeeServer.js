@@ -4,6 +4,7 @@ const model = require('../../../app/model')
 
 const tb_default_fee = model.zhongtan_invoice_default_fee
 const tb_fee_config = model.zhongtan_invoice_fixed_fee_config
+const tb_icd = model.zhongtan_icd
 
 exports.initAct = async () => {
   let fee_config = await tb_fee_config.findAll({
@@ -28,12 +29,27 @@ exports.initAct = async () => {
       }
     }
   }
+  let icds = await tb_icd.findAll({
+    where: {
+      state: GLBConfig.ENABLE
+    }
+  })
+  let icd_list = []
+  if(icds) {
+    for(let icd of icds) {
+      icd_list.push({
+        id: icd.icd_code,
+        text: icd.icd_code
+      })
+    }
+  }
   let returnData = {
     IM_FEE_NAME: im_fee,
     TR_FEE_NAME: tr_fee,
     FEE_TYPE: GLBConfig.INVOICE_DEFAULT_FEE_TYPE,
     RECEIPT_CURRENCY: GLBConfig.RECEIPT_CURRENCY,
-    CARGO_TYPE: GLBConfig.INVOICE_CARGO_TYPE
+    CARGO_TYPE: GLBConfig.INVOICE_CARGO_TYPE,
+    POD: icd_list 
   }
   return common.success(returnData)
 }
@@ -103,7 +119,8 @@ exports.createAct = async req => {
       fee_currency: doc.fee_currency,
       user_id: user.user_id,
       is_necessary: doc.is_necessary ? GLBConfig.ENABLE : GLBConfig.DISABLE,
-      fee_pol_mark: doc.fee_pol_mark
+      fee_pol_mark: doc.fee_pol_mark,
+      fee_pod: doc.fee_pod
     })
   }
   return common.success()
@@ -125,6 +142,7 @@ exports.updateAct = async req => {
       updateFee.is_necessary = GLBConfig.DISABLE
     }
     updateFee.fee_pol_mark = doc.new.fee_pol_mark
+    updateFee.fee_pod = doc.new.fee_pod
     updateFee.updated_at = new Date()
     await updateFee.save()
   }

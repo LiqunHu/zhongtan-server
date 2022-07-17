@@ -531,5 +531,12 @@ module.exports = {
     { id: 'CD', text: 'Commercial Declined' },
     { id: 'AP', text: 'All Approved' },
     { id: 'UN', text: 'UNDO' }
+  ],
+  LOGISTICS_PAID_STATE: [
+    { id: '0', text: 'UNPAID' },
+    { id: '1', text: 'ADVANCE PAID' },
+    { id: '2', text: 'BALANCE PAID' },
+    { id: '3', text: 'EXTRA PAID' },
+    { id: '4', text: 'FULL PAYMENT PAID' },
   ]
 }
