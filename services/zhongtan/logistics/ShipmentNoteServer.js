@@ -54,7 +54,7 @@ exports.searchAct = async req => {
       d._checked = false
       queryStr = `SELECT u.*, cu.user_name FROM tbl_zhongtan_uploadfile u LEFT JOIN tbl_common_user cu ON u.uploadfil_release_user_id = cu.user_id WHERE u.state = ? AND uploadfile_index1 IN (
                   SELECT logistics_verification_id FROM tbl_zhongtan_logistics_verification_freight WHERE state = ? AND shipment_list_id = ? AND logistics_freight_state = 'AP') 
-                  AND api_name IN ('PAYMENT ADVANCE', 'PAYMENT BALANCE', 'PAYMENT FULL', 'PAYMENT ADVICE ATTACHMENT', 'PAYMENT BALANCE ATTACHMENT', 'PAYMENT FULL ATTACHMENT') ORDER BY api_name`
+                  AND api_name IN ('PAYMENT ADVANCE', 'PAYMENT BALANCE', 'PAYMENT FULL', 'PAYMENT ADVANCE ATTACHMENT', 'PAYMENT BALANCE ATTACHMENT', 'PAYMENT FULL ATTACHMENT') ORDER BY api_name`
       let replacements = [GLBConfig.ENABLE, GLBConfig.ENABLE, d.shipment_list_id]
       let paymentFiles = await model.simpleSelect(queryStr, replacements)
       let files = []
