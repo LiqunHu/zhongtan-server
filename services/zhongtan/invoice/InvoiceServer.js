@@ -2664,6 +2664,13 @@ exports.searchFixedDepositAct = async req => {
     renderData.invoice_masterbi_of = bl.invoice_masterbi_freight_charge
   }
 
+  await countNominationAmount(bl)
+  if(bl.invoice_masterbi_cod_charge) {
+    renderData.invoice_masterbi_cod_charge = bl.invoice_masterbi_cod_charge
+    renderData.invoice_masterbi_cod_charge_necessary = '1'
+  }
+  
+
   if(doc.invoice_masterbi_customer_id) {
     queryStr = `select * from tbl_zhongtan_customer_fixed_deposit where state = '1' 
                     AND fixed_deposit_customer_id = ? AND deposit_work_state = ? AND ((deposit_begin_date <= ? AND deposit_long_term = ?) 
@@ -3150,4 +3157,30 @@ const checkConditionInvoiceState = async (bl) => {
     }
   }
   return blacklistCheck
+}
+
+exports.changeNominationAct = async req => {
+  let doc = common.docValidate(req)
+  let bl = await tb_bl.findOne({
+    where: {
+      invoice_masterbi_id: doc.invoice_masterbi_id
+    }
+  })
+  bl.invoice_masterbi_nomination = doc.invoice_masterbi_nomination
+  await countNominationAmount(bl)
+  await bl.save()
+
+
+  return common.success()
+}
+
+const countNominationAmount = async (bl) => {
+  if(bl.invoice_masterbi_nomination === GLBConfig.ENABLE && !bl.invoice_masterbi_cod_charge) {
+    queryStr = `select * from tbl_zhongtan_invoice_default_fee where state = '1' AND fee_name = ? AND fee_cargo_type = ? AND fee_type = ? LIMIT 1`
+    replacements = ['COD Charge', bl.invoice_masterbi_cargo_type, 'BL']
+    let defaultFees = await model.simpleSelect(queryStr, replacements)
+    if(defaultFees && defaultFees.length > 0) {
+      bl.invoice_masterbi_cod_charge = defaultFees[0].fee_amount
+    }
+  }
 }

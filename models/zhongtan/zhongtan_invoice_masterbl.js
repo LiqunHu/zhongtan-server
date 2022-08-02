@@ -1,4 +1,5 @@
 const db = require('../../app/db')
+const GLBConfig = require('../../util/GLBConfig')
 // 提单表
 
 module.exports = db.defineModel('tbl_zhongtan_invoice_masterbl', {
@@ -496,5 +497,11 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_masterbl', {
     // 编辑信息
     type: db.JSON,
     allowNull: true
+  },
+  invoice_masterbi_nomination: {
+    // 自动计算COD
+    type: db.STRING(5),
+    allowNull: true,
+    defaultValue: GLBConfig.DISABLE
   }
 })
