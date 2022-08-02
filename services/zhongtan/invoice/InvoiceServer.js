@@ -3167,7 +3167,14 @@ exports.changeNominationAct = async req => {
     }
   })
   bl.invoice_masterbi_nomination = doc.invoice_masterbi_nomination
-  await countNominationAmount(bl)
+  if(doc.invoice_masterbi_nomination === GLBConfig.DISABLE) {
+    // 取消设置，如果已有费用，且没有开票，则删除
+    if(bl.invoice_masterbi_cod_charge) {
+      if(!bl.invoice_masterbi_fee_release_date && !bl.invoice_masterbi_invoice_receipt_date) {
+        bl.invoice_masterbi_cod_charge = null
+      }
+    }
+  }
   await bl.save()
 
 
