@@ -480,7 +480,7 @@ exports.undoFreightAct = async req => {
             sp.shipment_list_receivable_status = '0'
             sp.shipment_list_receivable_freight = null
             sp.shipment_list_receivable_freight_invoice = null
-            // sp.shipment_list_customer = null
+            sp.shipment_list_customer = null
             await sp.save()
           }
         } else if(ver.logistics_verification_api_name === 'EXTRA INVOICE') {
