@@ -13,6 +13,7 @@ const puppeteerBrowser = require('../util/PuppeteerBrowser')
 
 const config = require('../app/config')
 const Error = require('./Error')
+const GLBConfig = require('./GLBConfig')
 const logger = require('../app/logger').createLogger(__filename)
 
 Date.prototype.Format = function(fmt) {
@@ -533,7 +534,11 @@ const checkDoState = bl => {
       }
     } else if(bl.invoice_masterbi_cargo_type === 'TR' && bl.invoice_masterbi_freight === 'PREPAID') {
       // at least deposit
-      if(bl.invoice_masterbi_deposit_receipt_date) {
+      if(bl.invoice_masterbi_nomination === GLBConfig.ENABLE) {
+        if(bl.invoice_masterbi_deposit_receipt_date && bl.invoice_masterbi_invoice_receipt_date) {
+          return true
+        }
+      } else if(bl.invoice_masterbi_deposit_receipt_date) {
         return true
       }
     } else if(bl.invoice_masterbi_cargo_type === 'TR' && bl.invoice_masterbi_freight === 'COLLECT') {
