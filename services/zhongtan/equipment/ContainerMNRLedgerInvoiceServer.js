@@ -39,7 +39,7 @@ exports.searchAct = async req => {
   let queryStr = `SELECT * from tbl_zhongtan_container_mnr_ledger WHERE state = '1' `
   let replacements = []
   if(doc.search_data) {
-    if(doc.search_data.date && doc.search_data.date.length > 1) {
+    if(doc.search_data.date && doc.search_data.date.length > 1 && doc.search_data.date[0] && doc.search_data.date[1]) {
       let start_date = doc.search_data.date[0]
       let end_date = doc.search_data.date[1]
       queryStr += ` AND created_at >= ? and created_at < ? `
@@ -117,6 +117,12 @@ exports.uploadAct = async req => {
 
 exports.addAct = async req => {
   let doc = common.docValidate(req), user = req.user
+  let queryStr = `SELECT * from tbl_zhongtan_container_mnr_ledger WHERE state = '1' AND mnr_ledger_container_no = ? AND mnr_ledger_description = ?`
+  let replacements = [doc.mnr_ledger_container_no, doc.mnr_ledger_description]
+  let existsMnr = await model.simpleSelect(queryStr, replacements)
+  if(existsMnr && existsMnr.length > 0) {
+    return common.error('mnr_01')
+  }
   let mnr = await tb_mnr_ledger.create({
     mnr_ledger_container_no_id: doc.mnr_ledger_container_no_id,
     mnr_ledger_vessel_id: doc.mnr_ledger_vessel_id,
@@ -154,6 +160,12 @@ exports.addAct = async req => {
 
 exports.updateAct = async req => {
   let doc = common.docValidate(req), user = req.user
+  let queryStr = `SELECT * from tbl_zhongtan_container_mnr_ledger WHERE state = '1' AND mnr_ledger_container_no = ? AND mnr_ledger_description = ? AND container_mnr_ledger_id <> ?`
+  let replacements = [doc.mnr_ledger_container_no, doc.mnr_ledger_description, doc.container_mnr_ledger_id]
+  let existsMnr = await model.simpleSelect(queryStr, replacements)
+  if(existsMnr && existsMnr.length > 0) {
+    return common.error('mnr_01')
+  }
   let mnr = await tb_mnr_ledger.findOne({
     where: {
       container_mnr_ledger_id: doc.container_mnr_ledger_id
