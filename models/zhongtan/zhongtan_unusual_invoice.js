@@ -35,12 +35,12 @@ module.exports = db.defineModel('tbl_zhongtan_unusual_invoice', {
   unusual_invoice_vessel: {
     // 船名
     type: db.STRING(50),
-    allowNull: false
+    allowNull: true
   },
   unusual_invoice_voyaga: {
     // 航次
     type: db.STRING(50),
-    allowNull: false
+    allowNull: true
   },
   unusual_invoice_no: {
     // 发票编号
