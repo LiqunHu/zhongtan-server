@@ -126,11 +126,12 @@ exports.modifyAct = async req => {
     where: {
       state: GLBConfig.ENABLE,
       [Op.or]: [{ user_phone: doc.new.user_phone }, { user_code: doc.new.user_code }],
-      [Op.ne]: [{user_id: doc.old.user_id}]
+      user_id: {[Op.ne]: doc.old.user_id}
     }
   })
+
   if (chkuser) {
-    return common.error('operator_02')
+    return common.error('operator_05')
   }
 
   let modiuser = await tb_user.findOne({

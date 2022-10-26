@@ -17,6 +17,7 @@ module.exports = {
   operator_02: '用户已经存在',
   operator_03: '用户不存在',
   operator_04: '用户下有未完成订单',
+  operator_05: '代码已经存在',
   menu_01: '菜单已经存在',
   menu_02: '菜单不存在',
   menu_03: '菜单下有子项',
