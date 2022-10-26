@@ -28,11 +28,12 @@ exports.initAct = async () => {
 exports.searchAct = async req => {
   let doc = common.docValidate(req)
   let returnData = {}
-  let queryStr = `select a.*, b.export_masterbl_bl, b.export_masterbl_cargo_type, b.export_masterbl_empty_release_valid_to, b.export_masterbl_cargo_descriptions, c.user_name as apply_user, d.user_name as empty_release_party, v.export_vessel_name, v.export_vessel_voyage , v.export_vessel_etd
+  let queryStr = `select a.*, b.export_masterbl_bl, b.export_masterbl_cargo_type, b.export_masterbl_empty_release_valid_to, b.export_masterbl_cargo_descriptions, c.user_name as apply_user, d.user_name as empty_release_party, v.export_vessel_name, v.export_vessel_voyage , v.export_vessel_etd, r.user_name as review_user
                 from tbl_zhongtan_export_verification a 
                 LEFT JOIN tbl_zhongtan_export_masterbl b ON a.export_masterbl_id = b.export_masterbl_id 
                 LEFT JOIN tbl_zhongtan_export_vessel v ON v.export_vessel_id = b.export_vessel_id 
                 LEFT JOIN tbl_common_user c ON a.export_verification_create_user = c.user_id
+                LEFT JOIN tbl_common_user r ON a.export_verification_review_user = r.user_id
                 LEFT JOIN tbl_common_user d ON a.export_verification_agent = d.user_id
                 WHERE a.state = '1' AND a.export_verification_api_name IN (?)`
   let api_name = ['EMPTY RELEASE']
@@ -67,6 +68,9 @@ exports.searchAct = async req => {
   if(result.data) {
     for(let d of result.data) {
       d.created_at = moment(d.created_at).format('YYYY-MM-DD HH:mm:ss')
+      if(d.export_verification_review_date) {
+        d.review_at = moment(d.export_verification_review_date).format('YYYY-MM-DD HH:mm:ss')
+      }
       d.attachments = await tb_uploadfile.findAll({
         where: {
           api_name: 'EMPTY RELEASE',

@@ -83,7 +83,7 @@ exports.addAct = async req => {
     let adduser = await tb_user.findOne({
       where: {
         state: GLBConfig.ENABLE,
-        [Op.or]: [{ user_phone: doc.user_phone }, { user_username: doc.user_username }]
+        [Op.or]: [{ user_phone: doc.user_phone }, { user_username: doc.user_username }, { user_code: doc.user_code }]
       }
     })
     if (adduser) {
@@ -98,7 +98,8 @@ exports.addAct = async req => {
       user_name: doc.user_name,
       user_gender: doc.user_gender,
       user_address: doc.user_address,
-      user_zipcode: doc.user_zipcode
+      user_zipcode: doc.user_zipcode,
+      user_code: doc.user_code
     })
 
     for (let gid of doc.user_groups) {
@@ -121,6 +122,17 @@ exports.addAct = async req => {
 exports.modifyAct = async req => {
   let doc = common.docValidate(req)
 
+  let chkuser = await tb_user.findOne({
+    where: {
+      state: GLBConfig.ENABLE,
+      [Op.or]: [{ user_phone: doc.new.user_phone }, { user_code: doc.new.user_code }],
+      [Op.ne]: [{user_id: doc.old.user_id}]
+    }
+  })
+  if (chkuser) {
+    return common.error('operator_02')
+  }
+
   let modiuser = await tb_user.findOne({
     where: {
       user_id: doc.old.user_id,
@@ -136,6 +148,7 @@ exports.modifyAct = async req => {
     modiuser.user_address = doc.new.user_address
     modiuser.user_state = doc.new.user_state
     modiuser.user_zipcode = doc.new.user_zipcode
+    modiuser.user_code = doc.new.user_code
     await modiuser.save()
 
     await tb_user_groups.destroy({

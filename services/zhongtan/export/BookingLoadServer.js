@@ -29,6 +29,10 @@ exports.initAct = async () => {
   queryStr = `SELECT export_vessel_id, CONCAT(export_vessel_name, '/', export_vessel_voyage) export_vessel_voyage FROM tbl_zhongtan_export_vessel WHERE state = 1 GROUP BY export_vessel_name, export_vessel_voyage ORDER BY export_vessel_name, export_vessel_voyage DESC`
   replacements = []
   returnData['VESSEL_VOYAGES'] = await model.simpleSelect(queryStr, replacements)
+
+  queryStr = `select * from tbl_common_user where state = '1' and user_type = ? and (user_code is not null or user_code <> '')`
+  replacements = [GLBConfig.TYPE_DEFAULT]
+  returnData['SALES_CODE'] = await model.simpleSelect(queryStr, replacements)
   return common.success(returnData)
 }
 
@@ -1050,6 +1054,7 @@ exports.searchBlAct = async req => {
           state: GLBConfig.ENABLE
         }
       })
+      d.old_export_masterbl_sales_code = d.export_masterbl_sales_code
       returnData.rows.push(d)
     }
   }
@@ -1342,6 +1347,7 @@ exports.bookingDataSaveAct = async req => {
       bl.export_masterbl_cargo_type = doc.export_masterbl_cargo_type
       bl.export_masterbl_cargo_type_input = doc.export_masterbl_cargo_type
     }
+    bl.export_masterbl_sales_code = doc.export_masterbl_sales_code
     await bl.save()
   }
   return common.success()

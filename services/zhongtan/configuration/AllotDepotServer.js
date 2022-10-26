@@ -11,7 +11,7 @@ const tb_container_size = model.zhongtan_container_size
 
 exports.initAct = async () => {
   let returnData = {}
-  let queryStr = `SELECT edi_depot_id, edi_depot_name FROM tbl_zhongtan_edi_depot WHERE state = ? AND edi_depot_is_wharf = ? ORDER BY edi_depot_name`
+  let queryStr = `SELECT edi_depot_id, edi_depot_name, edi_depot_address FROM tbl_zhongtan_edi_depot WHERE state = ? AND edi_depot_is_wharf = ? ORDER BY edi_depot_name`
   let replacements = [GLBConfig.ENABLE, GLBConfig.DISABLE]
   let depots = await model.simpleSelect(queryStr, replacements)
   returnData.allotRules = {

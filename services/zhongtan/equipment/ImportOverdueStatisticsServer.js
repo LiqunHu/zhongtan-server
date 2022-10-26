@@ -119,6 +119,14 @@ exports.searchAct = async req => {
         queryStr += ` and (a.invoice_containers_empty_return_invoice_date is null and a.invoice_containers_empty_return_receipt_date is null )  `
       }
     }
+    if (doc.search_data.invoice_no) {
+      queryStr += ` and a.invoice_containers_id IN (SELECT overdue_invoice_containers_invoice_containers_id FROM tbl_zhongtan_overdue_invoice_containers ic LEFT JOIN tbl_zhongtan_uploadfile uf ON ic.overdue_invoice_containers_invoice_uploadfile_id = uf.uploadfile_id WHERE ic.state = 1 AND uf.state = 1 AND uf.api_name = 'OVERDUE-INVOICE' AND uf.uploadfile_invoice_no LIKE ?) `
+      replacements.push('%' + doc.search_data.invoice_no + '%')
+    }
+    if (doc.search_data.receipt_no) {
+      queryStr += ` and a.invoice_containers_id IN (SELECT overdue_invoice_containers_invoice_containers_id FROM tbl_zhongtan_overdue_invoice_containers ic LEFT JOIN tbl_zhongtan_uploadfile uf ON ic.overdue_invoice_containers_invoice_uploadfile_id = uf.uploadfile_id WHERE ic.state = 1 AND uf.state = 1 AND uf.api_name = 'OVERDUE-INVOICE' AND uf.uploadfile_receipt_no LIKE ?) `
+      replacements.push('%' + doc.search_data.receipt_no + '%')
+    }
   }
   queryStr = queryStr + ' ORDER BY b.invoice_vessel_id DESC, a.invoice_containers_bl, a.invoice_containers_no'
   let result = await model.queryWithCount(doc, queryStr, replacements)

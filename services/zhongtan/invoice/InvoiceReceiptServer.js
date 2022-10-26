@@ -59,7 +59,7 @@ exports.searchVoyageAct = async req => {
     replacements = [],
     vessels = []
 
-  if (doc.bl || doc.invoice_no) {
+  if (doc.bl || doc.invoice_no || doc.receipt_no) {
     queryStr = `select a.*, b.user_name from tbl_zhongtan_invoice_masterbl a LEFT JOIN tbl_common_user b ON b.user_id = a.invoice_masterbi_customer_id WHERE a.state = ? `
     replacements = [GLBConfig.ENABLE]
     if(doc.bl) {
@@ -70,6 +70,11 @@ exports.searchVoyageAct = async req => {
       queryStr += `  AND a.invoice_masterbi_id in (SELECT uploadfile_index1 FROM tbl_zhongtan_uploadfile WHERE state = ? AND api_name in ('RECEIPT-FEE', 'RECEIPT-DEPOSIT') AND uploadfile_invoice_no LIKE ?) `
       replacements.push(GLBConfig.ENABLE)
       replacements.push('%' + doc.invoice_no)
+    }
+    if(doc.receipt_no) {
+      queryStr += `  AND a.invoice_masterbi_id in (SELECT uploadfile_index1 FROM tbl_zhongtan_uploadfile WHERE state = ? AND api_name = 'RECEIPT-RECEIPT' AND uploadfile_receipt_no LIKE ?) `
+      replacements.push(GLBConfig.ENABLE)
+      replacements.push('%' + doc.receipt_no)
     }
     let result = await model.queryWithCount(doc, queryStr, replacements)
     returnData.masterbl.total = result.count
@@ -217,6 +222,13 @@ exports.getMasterbiDataAct = async req => {
     replacements.push(GLBConfig.ENABLE)
     replacements.push('%' + doc.invoice_no)
   }
+
+  if(doc.receipt_no) {
+    queryStr += `  AND a.invoice_masterbi_id in (SELECT uploadfile_index1 FROM tbl_zhongtan_uploadfile WHERE state = ? AND api_name = 'RECEIPT-RECEIPT' AND uploadfile_receipt_no LIKE ?) `
+    replacements.push(GLBConfig.ENABLE)
+    replacements.push('%' + doc.receipt_no)
+  }
+
   let result = await model.queryWithCount(doc, queryStr, replacements)
   returnData.total = result.count
   returnData.rows = []

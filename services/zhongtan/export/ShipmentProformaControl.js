@@ -7,7 +7,9 @@ module.exports = async (req, res) => {
     let method = common.reqTrans(req, __filename)
     let ret = 'common_01'
     logger.debug(method)
-    if (method === 'upload') {
+    if (method === 'init') {
+      ret = await srv.initAct(req)
+    } else if (method === 'upload') {
       ret = await srv.uploadAct(req)
     } else if (method === 'uploadBooking') {
       ret = await srv.uploadBookingAct(req)

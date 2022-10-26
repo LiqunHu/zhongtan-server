@@ -88,6 +88,16 @@ exports.searchAct = async req => {
       queryStr += ' and payment_advice_remarks = ?'
       replacements.push(search_data.payment_advice_remarks)
     }
+
+    if (search_data.payment_advice_vessel_voyage) {
+      let payment_advice_vessel = search_data.payment_advice_vessel_voyage.split('/')[0]
+      let payment_advice_voyage = search_data.payment_advice_vessel_voyage.split('/')[1]
+      if(payment_advice_vessel && payment_advice_voyage) {
+        queryStr += ' and payment_advice_vessel = ? and payment_advice_voyage = ? '
+        replacements.push(payment_advice_vessel)
+        replacements.push(payment_advice_voyage)
+      }
+    }
   }
 
   queryStr += ' order by payment_advice_id desc'
@@ -178,6 +188,16 @@ exports.searchAdminAct = async req => {
     if (search_data.payment_advice_remarks) {
       queryStr += ' and payment_advice_remarks = ?'
       replacements.push(search_data.payment_advice_remarks)
+    }
+
+    if (search_data.payment_advice_vessel_voyage) {
+      let payment_advice_vessel = search_data.payment_advice_vessel_voyage.split('/')[0]
+      let payment_advice_voyage = search_data.payment_advice_vessel_voyage.split('/')[1]
+      if(payment_advice_vessel && payment_advice_voyage) {
+        queryStr += ' and payment_advice_vessel = ? and payment_advice_voyage = ? '
+        replacements.push(payment_advice_vessel)
+        replacements.push(payment_advice_voyage)
+      }
     }
   }
 

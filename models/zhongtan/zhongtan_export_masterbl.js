@@ -158,5 +158,10 @@ module.exports = db.defineModel('tbl_zhongtan_export_masterbl', {
     type: db.STRING(5),
     defaultValue: GLBConfig.DISABLE,
     allowNull: false
+  },
+  export_masterbl_sales_code: {
+    // sales code
+    type: db.STRING(50),
+    allowNull: true
   }
 })

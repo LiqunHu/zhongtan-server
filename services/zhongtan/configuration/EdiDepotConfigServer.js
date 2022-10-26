@@ -59,7 +59,8 @@ exports.addAct = async req => {
     edi_depot_empty_release_email: doc.edi_depot_empty_release_email,
     edi_depot_is_wharf: doc.edi_depot_is_wharf,
     edi_depot_bl_regex: doc.edi_depot_bl_regex,
-    edi_depot_carrier_regex: doc.edi_depot_carrier_regex
+    edi_depot_carrier_regex: doc.edi_depot_carrier_regex,
+    edi_depot_address: doc.edi_depot_address
   })
 
   return common.success(obj)
@@ -98,6 +99,7 @@ exports.modifyAct = async req => {
     obj.edi_depot_is_wharf = doc.new.edi_depot_is_wharf
     obj.edi_depot_bl_regex = doc.new.edi_depot_bl_regex
     obj.edi_depot_carrier_regex = doc.new.edi_depot_carrier_regex
+    obj.edi_depot_address = doc.new.edi_depot_address
     await obj.save()
     return common.success(obj)
   } else {

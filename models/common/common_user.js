@@ -138,4 +138,9 @@ module.exports = db.defineModel('tbl_common_user', {
     defaultValue: 1,
     allowNull: false
   },
+  user_code: {
+    type: db.STRING(50),
+    defaultValue: '',
+    allowNull: true
+  }
 })

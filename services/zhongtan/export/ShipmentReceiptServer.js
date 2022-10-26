@@ -33,8 +33,9 @@ exports.searchVesselAct = async req => {
   let etd_start_date = doc.etd_start_date
   let etd_end_date = doc.etd_end_date
   let vessel_name = doc.vessel_name
-  let invoice_no = doc.invoice_no
   let masterbi_bl = doc.masterbi_bl
+  let invoice_no = doc.invoice_no
+  let receipt_no = doc.receipt_no
   let queryStr =  `SELECT * FROM tbl_zhongtan_export_proforma_vessel v WHERE v.state = '1'`
   let replacements = []
   if(masterbi_bl) {
@@ -44,6 +45,10 @@ exports.searchVesselAct = async req => {
   if(invoice_no) {
     queryStr = queryStr + ` AND v.export_vessel_id IN (SELECT export_vessel_id FROM tbl_zhongtan_export_proforma_masterbl WHERE export_masterbl_id IN (SELECT DISTINCT(export_masterbl_id) FROM tbl_zhongtan_export_shipment_fee WHERE state = '1' AND shipment_fee_invoice_no LIKE ?))`
     replacements.push('%' + invoice_no + '%')
+  }
+  if(receipt_no) {
+    queryStr = queryStr + ` AND v.export_vessel_id IN (SELECT export_vessel_id FROM tbl_zhongtan_export_proforma_masterbl WHERE export_masterbl_id IN (SELECT DISTINCT(export_masterbl_id) FROM tbl_zhongtan_export_shipment_fee WHERE state = '1' AND shipment_fee_receipt_no LIKE ?))`
+    replacements.push('%' + receipt_no + '%')
   }
   if(etd_start_date && etd_end_date) {
     queryStr = queryStr + ` AND STR_TO_DATE(v.export_vessel_etd, "%d/%m/%Y") >= ? AND STR_TO_DATE(v.export_vessel_etd, "%d/%m/%Y") <= ? `
@@ -81,8 +86,9 @@ exports.searchBlAct = async req => {
   let doc = common.docValidate(req)
   let returnData = {}
   let export_vessel_id = doc.export_vessel_id
-  let invoice_no = doc.invoice_no
   let masterbi_bl = doc.masterbi_bl
+  let invoice_no = doc.invoice_no
+  let receipt_no = doc.receipt_no
   let queryStr =  `select * from tbl_zhongtan_export_proforma_masterbl b WHERE b.export_vessel_id = ? AND b.state = ?`
   let replacements = [export_vessel_id, GLBConfig.ENABLE]
   if(masterbi_bl) {
@@ -92,6 +98,10 @@ exports.searchBlAct = async req => {
   if(invoice_no) {
     queryStr = queryStr + ` AND b.export_masterbl_id IN (SELECT DISTINCT(export_masterbl_id) FROM tbl_zhongtan_export_shipment_fee WHERE state = '1' AND shipment_fee_invoice_no LIKE ?)`
     replacements.push('%' + invoice_no + '%')
+  }
+  if(receipt_no) {
+    queryStr = queryStr + ` AND b.export_masterbl_id IN (SELECT DISTINCT(export_masterbl_id) FROM tbl_zhongtan_export_shipment_fee WHERE state = '1' AND shipment_fee_receipt_no LIKE ?)`
+    replacements.push('%' + receipt_no + '%')
   }
   let bls = await model.queryWithCount(doc, queryStr, replacements)
   returnData.total = bls.count
@@ -284,12 +294,17 @@ exports.exportCollectAct = async (req, res) => {
     let renderData = []
     for(let r of result) {
       queryStr = `SELECT u.*, c.user_name FROM tbl_zhongtan_uploadfile u LEFT JOIN tbl_common_user c ON u.uploadfile_customer_id = c.user_id 
-                  WHERE u.state = '1' AND uploadfile_index1 = ? AND api_name = 'SHIPMENT-RECEIPT' ORDER by u.uploadfile_id`
+                  WHERE u.state = '1' AND u.uploadfile_index1 = ? AND u.api_name = 'SHIPMENT-RECEIPT'`
       replacements = []
       replacements.push(r.export_masterbl_id)
+      if(doc.collect_date && doc.collect_date.length > 1 && doc.collect_date[0] && doc.collect_date[1]) {
+        queryStr = queryStr + ` AND u.created_at > ? AND u.created_at < ? `
+        replacements.push(moment(doc.collect_date[0]).local().format('YYYY-MM-DD'))
+        replacements.push(moment(doc.collect_date[1]).local().add(1, 'days').format('YYYY-MM-DD'))
+      }
+      queryStr = queryStr + ` ORDER by u.uploadfile_id`
       let files = await model.simpleSelect(queryStr, replacements)
       if(files && files.length > 0) {
-        let index = 0
         for(let f of files) {
           let row = {}
           row.receipt_date = moment(f.created_at).format('YYYY/MM/DD')
@@ -347,38 +362,36 @@ exports.exportCollectAct = async (req, res) => {
                 row.receivable_others = receivable_others.toNumber()
               }
           }
-          if(index === 0) {
-            // 添加应付费用
-            queryStr = `SELECT f.*, d.fee_data_name FROM tbl_zhongtan_export_shipment_fee f 
-                        LEFT JOIN (SELECT fee_data_code, fee_data_name FROM tbl_zhongtan_export_fee_data GROUP BY fee_data_code) d ON f.fee_data_code = d.fee_data_code 
-                        WHERE f.state = '1' AND f.shipment_fee_type = 'P' AND f.shipment_fee_status = 'AP' AND f.export_masterbl_id = ?`
-            replacements = []
-            replacements.push(r.export_masterbl_id)
-            let payables = await model.simpleSelect(queryStr, replacements)
-            if(payables) {
-              let payable_others = 0
-              for(let pa of payables) {
-                if(pa.fee_data_name === 'DEMURRAGE FEE') {
-                  delete row[payable_map.get(pa.fee_data_name)]
-                }
-                if(payable_map.get(pa.fee_data_name)) {
-                  if(row[payable_map.get(pa.fee_data_name)]) {
-                    row[payable_map.get(pa.fee_data_name)] = new Decimal(row[payable_map.get(pa.fee_data_name)]).plus(new Decimal(pa.shipment_fee_amount))
-                  } else {
-                    row[payable_map.get(pa.fee_data_name)] = pa.shipment_fee_amount
-                  }
-                } else {
-                  if(pa.shipment_fee_amount) {
-                    payable_others = new Decimal(payable_others).plus(new Decimal(pa.shipment_fee_amount))
-                  }
-                }
+          // 添加应付费用
+          queryStr = `SELECT f.*, d.fee_data_name FROM tbl_zhongtan_export_shipment_fee f 
+          LEFT JOIN (SELECT fee_data_code, fee_data_name FROM tbl_zhongtan_export_fee_data GROUP BY fee_data_code) d ON f.fee_data_code = d.fee_data_code 
+          WHERE f.state = '1' AND f.shipment_fee_type = 'P' AND f.shipment_fee_status = 'AP' AND f.export_masterbl_id = ? AND f.shipment_fee_receipt_id = ? `
+          replacements = []
+          replacements.push(r.export_masterbl_id)
+          replacements.push(f.uploadfile_id)
+          let payables = await model.simpleSelect(queryStr, replacements)
+          if(payables) {
+            let payable_others = 0
+            for(let pa of payables) {
+              if(pa.fee_data_name === 'DEMURRAGE FEE') {
+                delete row[payable_map.get(pa.fee_data_name)]
               }
-              if(Decimal.isDecimal(payable_others) && payable_others.toNumber() !== 0) {
-                row.payable_others = payable_others.toNumber()
+              if(payable_map.get(pa.fee_data_name)) {
+                if(row[payable_map.get(pa.fee_data_name)]) {
+                  row[payable_map.get(pa.fee_data_name)] = new Decimal(row[payable_map.get(pa.fee_data_name)]).plus(new Decimal(pa.shipment_fee_amount))
+                } else {
+                  row[payable_map.get(pa.fee_data_name)] = pa.shipment_fee_amount
+                }
+              } else {
+                if(pa.shipment_fee_amount) {
+                  payable_others = new Decimal(payable_others).plus(new Decimal(pa.shipment_fee_amount))
+                }
               }
             }
+            if(Decimal.isDecimal(payable_others) && payable_others.toNumber() !== 0) {
+              row.payable_others = payable_others.toNumber()
+            }
           }
-          index++
           renderData.push(row)
         }
       } else {

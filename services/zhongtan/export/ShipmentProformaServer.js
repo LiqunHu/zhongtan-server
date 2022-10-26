@@ -22,6 +22,14 @@ const tb_fee_data = model.zhongtan_export_fee_data
 const tb_uploadfile = model.zhongtan_uploadfile
 const tb_export_verification = model.zhongtan_export_verification
 
+exports.initAct = async () => {
+  let returnData = {}
+  let queryStr = `select * from tbl_common_user where state = '1' and user_type = ? and (user_code is not null or user_code <> '')`
+  replacements = [GLBConfig.TYPE_DEFAULT]
+  returnData['SALES_CODE'] = await model.simpleSelect(queryStr, replacements)
+  return common.success(returnData)
+}
+
 exports.uploadBookingAct = async req => {
   let doc = common.docValidate(req), user = req.user
   let sizeConfig = await tb_container_size.findAll({
@@ -234,7 +242,8 @@ exports.uploadBookingAct = async req => {
                   export_masterbl_forwarder_company: bl.export_masterbl_forwarder_company,
                   export_masterbl_cargo_nature: bl.export_masterbl_cargo_nature,
                   export_masterbl_cargo_descriptions: bl.export_masterbl_cargo_descriptions,
-                  proforma_import: GLBConfig.ENABLE
+                  proforma_import: GLBConfig.ENABLE,
+                  export_masterbl_sales_code: bl.export_masterbl_sales_code
                 })
               }else {
                 proforma_bl = await tb_proforma_bl.create({
@@ -1172,6 +1181,7 @@ exports.searchBlAct = async req => {
       if(fees && fees.length > 0) {
         d.shipment_fee = true
       }
+      d.old_export_masterbl_sales_code = d.export_masterbl_sales_code
       returnData.rows.push(d)
     }
   }
@@ -1358,6 +1368,7 @@ exports.bookingDataSaveAct = async req => {
     if(doc.export_masterbl_cargo_type) {
       bl.export_masterbl_cargo_type = doc.export_masterbl_cargo_type
     }
+    bl.export_masterbl_sales_code = doc.export_masterbl_sales_code
     await bl.save()
   }
   return common.success()

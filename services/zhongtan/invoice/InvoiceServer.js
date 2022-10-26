@@ -1067,6 +1067,17 @@ exports.downloadDoAct = async req => {
   renderData.delivery_to = bl.invoice_masterbi_do_icd
   renderData.fcl = bl.invoice_masterbi_do_fcl
   renderData.depot = bl.invoice_masterbi_do_return_depot
+  if(bl.invoice_masterbi_do_return_depot) {
+    let depot = await tb_edi_depot.findOne({
+      where: {
+        state : GLBConfig.ENABLE,
+        edi_depot_name: bl.invoice_masterbi_do_return_depot
+      }
+    })
+    if(depot) {
+      renderData.depot_address = depot.edi_depot_address
+    }
+  }
   let carrier = 'COSCO'
   if(bl.invoice_masterbi_bl.indexOf('COS') >= 0) {
     carrier  = 'COSCO'
@@ -1109,18 +1120,31 @@ exports.downloadDoAct = async req => {
     uploadfil_release_user_id: user.user_id
   })
 
-  if(bl.invoice_masterbi_do_return_depot) {
-    let depot = await tb_edi_depot.findOne({
+  if(vessel.invoice_vessel_type && vessel.invoice_vessel_type === 'Bulk') {
+    let icd = await tb_icd.findOne({
       where: {
         state : GLBConfig.ENABLE,
-        edi_depot_name: bl.invoice_masterbi_do_return_depot
+        icd_name: 'TPA TERMINAL'
       }
     })
-    if(depot && depot.edi_depot_send_edi && depot.edi_depot_send_edi === GLBConfig.ENABLE && depot.edi_depot_send_edi_email) {
-      // D/O后发送EDI文件
-      this.createDepotEdiFile(depot.edi_depot_send_edi_email, bl)
+    if(icd && icd.icd_email) {
+      // this.createDepotEdiFile(icd.icd_email, bl)
+    }
+  } else {
+    if(bl.invoice_masterbi_do_return_depot) {
+      let depot = await tb_edi_depot.findOne({
+        where: {
+          state : GLBConfig.ENABLE,
+          edi_depot_name: bl.invoice_masterbi_do_return_depot
+        }
+      })
+      if(depot && depot.edi_depot_send_edi && depot.edi_depot_send_edi === GLBConfig.ENABLE && depot.edi_depot_send_edi_email) {
+        // D/O后发送EDI文件
+        // this.createDepotEdiFile(depot.edi_depot_send_edi_email, bl)
+      }
     }
   }
+  
   return common.success({ url: fileInfo.url })
 }
 

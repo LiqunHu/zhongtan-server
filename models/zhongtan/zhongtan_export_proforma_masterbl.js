@@ -165,5 +165,10 @@ module.exports = db.defineModel('tbl_zhongtan_export_proforma_masterbl', {
   shipment_list_bl_print_time: {
     type: db.STRING(20),
     allowNull: true
+  },
+  export_masterbl_sales_code: {
+    // sales code
+    type: db.STRING(50),
+    allowNull: true
   }
 })

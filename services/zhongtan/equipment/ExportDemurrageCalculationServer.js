@@ -235,7 +235,7 @@ exports.demurrageCalculationSaveAct = async req => {
                   oc_loading_date = oc.export_container_edi_wharf_gate_in_date
                 }
               }
-              if(bl.export_masterbl_bl_carrier === 'COSCO' && con.export_container_edi_wharf_gate_in_date) {
+              if(doc.export_masterbl_bl_carrier === 'COSCO' && con.export_container_edi_wharf_gate_in_date) {
                 oc_loading_date = oc.export_container_edi_wharf_gate_in_date
               }
               oc.export_container_cal_free_days = doc.export_container_cal_free_days

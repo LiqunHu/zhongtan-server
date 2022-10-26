@@ -90,5 +90,11 @@ module.exports = db.defineModel('tbl_zhongtan_edi_depot', {
     type: db.STRING(50),
     defaultValue: '',
     allowNull: false
+  },
+  edi_depot_address: {
+    // 堆场地址
+    type: db.STRING(200),
+    defaultValue: '',
+    allowNull: false
   }
 })

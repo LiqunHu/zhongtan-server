@@ -34,13 +34,16 @@ exports.initAct = async () => {
   replacements = [GLBConfig.TYPE_CUSTOMER]
   let agents = await model.simpleSelect(queryStr, replacements)
   returnData['AGENTS'] = agents
+  queryStr = `select * from tbl_common_user where state = '1' and user_type = ? and (user_code is not null or user_code <> '')`
+  replacements = [GLBConfig.TYPE_DEFAULT]
+  returnData['SALES_CODE'] = await model.simpleSelect(queryStr, replacements)
   return common.success(returnData)
 }
 
 exports.searchAct = async req => {
   let doc = common.docValidate(req)
   let returnData = {}
-  let queryStr = `SELECT b.export_masterbl_id, b.export_masterbl_bl, b.export_masterbl_cargo_type, b.export_masterbl_port_of_load, b.export_masterbl_port_of_discharge, b.export_masterbl_shipper_company, b.loading_list_import, b.proforma_import, b.bk_cancellation_status, b.shipment_list_bl_print, b.shipment_list_bl_print_user, u.user_name AS shipment_list_bl_print_user_name, b.shipment_list_bl_print_time,
+  let queryStr = `SELECT b.export_masterbl_id, b.export_masterbl_bl, b.export_masterbl_cargo_type, b.export_masterbl_port_of_load, b.export_masterbl_port_of_discharge, b.export_masterbl_shipper_company, b.loading_list_import, b.proforma_import, b.bk_cancellation_status, b.shipment_list_bl_print, b.shipment_list_bl_print_user, u.user_name AS shipment_list_bl_print_user_name, b.shipment_list_bl_print_time, b.export_masterbl_sales_code,
                   v.export_vessel_id, v.export_vessel_name, v.export_vessel_voyage, v.export_vessel_etd, f.total_count, f.receipt_count, f.total_amount
                   from tbl_zhongtan_export_proforma_masterbl b 
                   LEFT JOIN tbl_zhongtan_export_proforma_vessel v ON b.export_vessel_id = v.export_vessel_id 
@@ -80,6 +83,10 @@ exports.searchAct = async req => {
         // NON BGF
         queryStr += ` and NOT EXISTS (SELECT 1 FROM tbl_zhongtan_export_shipment_fee f WHERE f.export_masterbl_id = b.export_masterbl_id AND f.state = '1' AND f.shipment_fee_type = 'R' AND fee_data_code IN ('BGF')  GROUP BY f.export_masterbl_id) `
       }
+    }
+    if (doc.search_data.sales_code) {
+      queryStr += ' and b.export_masterbl_sales_code = ? '
+      replacements.push(doc.search_data.sales_code)
     }
   }
   queryStr += ' ORDER BY STR_TO_DATE(v.export_vessel_etd, "%d/%m/%Y") DESC, b.export_masterbl_bl'
@@ -188,7 +195,7 @@ exports.searchAct = async req => {
 
 exports.exportFreightAct = async (req, res) => {
   let doc = common.docValidate(req)
-  let queryStr = `SELECT b.export_masterbl_id, b.export_masterbl_bl, b.export_masterbl_cargo_type, b.export_masterbl_port_of_load, b.export_masterbl_port_of_discharge, b.export_masterbl_shipper_company, b.bk_cancellation_status, b.shipment_list_bl_print, b.shipment_list_bl_print_user, u.user_name AS shipment_list_bl_print_user_name, b.shipment_list_bl_print_time,
+  let queryStr = `SELECT b.export_masterbl_id, b.export_masterbl_bl, b.export_masterbl_cargo_type, b.export_masterbl_port_of_load, b.export_masterbl_port_of_discharge, b.export_masterbl_shipper_company, b.bk_cancellation_status, b.shipment_list_bl_print, b.shipment_list_bl_print_user, u.user_name AS shipment_list_bl_print_user_name, b.shipment_list_bl_print_time, b.export_masterbl_sales_code,
                   v.export_vessel_id, v.export_vessel_name, v.export_vessel_voyage, v.export_vessel_etd, f.total_count, f.receipt_count, f.total_amount
                   from tbl_zhongtan_export_proforma_masterbl b 
                   LEFT JOIN tbl_zhongtan_export_proforma_vessel v ON b.export_vessel_id = v.export_vessel_id 
@@ -219,6 +226,10 @@ exports.exportFreightAct = async (req, res) => {
     if (doc.search_data.receivable_agent) {
       queryStr += ` and EXISTS (SELECT 1 FROM tbl_zhongtan_export_shipment_fee f WHERE f.export_masterbl_id = b.export_masterbl_id AND f.state = '1' AND f.shipment_fee_type = 'R' AND f.shipment_fee_party = ? GROUP BY f.export_masterbl_id) `
       replacements.push(doc.search_data.receivable_agent)
+    }
+    if (doc.search_data.sales_code) {
+      queryStr += ' and b.export_masterbl_sales_code = ? '
+      replacements.push(doc.search_data.sales_code)
     }
   }
   queryStr += ' ORDER BY STR_TO_DATE(v.export_vessel_etd, "%d/%m/%Y") DESC, b.export_masterbl_bl'
@@ -264,7 +275,8 @@ exports.exportFreightAct = async (req, res) => {
             total_receivable: r.total_amount,
             receivable: f.total_amount,
             receipt_no: f.shipment_fee_receipt_no,
-            agent: f.user_name
+            agent: f.user_name,
+            sales_code: r.export_masterbl_sales_code
           }) 
         }
       } else {
@@ -280,7 +292,8 @@ exports.exportFreightAct = async (req, res) => {
           pod: r.export_masterbl_port_of_discharge,
           volume: container_volume,
           cntr_type: container_size,
-          shipper: r.export_masterbl_shipper_company
+          shipper: r.export_masterbl_shipper_company,
+          sales_code: r.export_masterbl_sales_code
         }) 
       }
     }

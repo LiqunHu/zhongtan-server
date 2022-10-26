@@ -13,6 +13,8 @@ module.exports = async (req, res) => {
       ret = await srv.searchAct(req)
     } else if (method === 'export') {
       return await srv.exportAct(req, res)
+    } else if (method === 'checkPassword') {
+      ret = await srv.checkPasswordAct(req)
     }
     
     common.sendData(res, ret)

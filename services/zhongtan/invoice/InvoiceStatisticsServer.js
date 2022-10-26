@@ -2,6 +2,7 @@ const moment = require('moment')
 // const logger = require('../../../app/logger').createLogger(__filename)
 const GLBConfig = require('../../../util/GLBConfig')
 const common = require('../../../util/CommonUtil')
+const opSrv = require('../../common/system/OperationPasswordServer')
 const model = require('../../../app/model')
 
 const tb_user = model.common_user
@@ -393,5 +394,15 @@ exports.exportAct = async (req, res) => {
   } else {
     let filepath = await common.ejs2xlsx('exportReceiptTemplate.xlsx', renderData)
     res.sendFile(filepath)
+  }
+}
+
+exports.checkPasswordAct = async req => {
+  let doc = common.docValidate(req)
+  let check = await opSrv.checkPassword(doc.action, doc.checkPassword)
+  if(check) {
+    return common.success()
+  } else {
+    return common.error('auth_24')
   }
 }
