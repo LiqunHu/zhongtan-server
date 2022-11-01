@@ -677,6 +677,18 @@ exports.applyFullPaymentAct = async req => {
   if(!fullFiles || fullFiles.length <= 0) {
     return common.error('logistics_13')
   }
+  for(let p of applyData) {
+    if(p.shipment_list_business_type === 'I') {
+      if(!p.shipment_list_discharge_date || !p.shipment_list_empty_return_date) {
+        return common.error('logistics_16')
+      }
+    } else if(p.shipment_list_business_type === 'E') {
+      if(!p.shipment_list_depot_gate_out_date || !p.shipment_list_loading_date) {
+        return common.error('logistics_16')
+      }
+    }
+  }
+
   let vgs = await common.groupingJson(applyData, 'shipment_list_vendor')
   if(vgs.length > 1) {
     return common.error('logistics_04')

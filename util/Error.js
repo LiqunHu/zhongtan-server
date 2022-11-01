@@ -120,6 +120,7 @@ module.exports = {
   logistics_13: 'Please refresh page, upload payment file',
   logistics_14: 'Please select invoice customer',
   logistics_15: 'Please select same customer',
+  logistics_16: 'Empty Returned Not',
   generate_file_01: 'system error, Please refresh data and retry.',
   payment_01: 'INV/CNTRL# already exists.',
   payment_02: 'Edit payment advice do not exist',
