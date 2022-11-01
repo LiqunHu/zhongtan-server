@@ -154,19 +154,40 @@ const parserMailAttachment = async (ediDepots, parserData) => {
             if(gt && gt.length > 1) {
               gate = gt[1]
             }
-            let regCAR = eval(edi.edi_depot_carrier_regex)
-            let car = regCAR.exec(ediStr)
-            if(car && car.length > 1) {
-              carrier = car[1]
-            }
-            if(edi.edi_depot_bl_regex) {
-              // 卸船，有提单信息
-              let regBl = eval(edi.edi_depot_bl_regex)
-              let bl = regBl.exec(e)
-              if(bl && bl.length > 1) {
-                billNo = bl[1]
+
+            let carrier_regex = edi.edi_depot_carrier_regex
+            if(carrier_regex) {
+              let carrier_regexs = carrier_regex.split(';')
+              if(carrier_regexs && carrier_regexs.length > 0) {
+                for(let cr of carrier_regexs) {
+                  if(cr) {
+                    let regCAR = eval(cr)
+                    let car = regCAR.exec(ediStr)
+                    if(car && car.length > 1) {
+                      carrier = car[1]
+                    }
+                  }
+                }
               }
             }
+            
+            if(edi.edi_depot_bl_regex) {
+              // 卸船，有提单信息
+              let bl_regex = edi.edi_depot_bl_regex
+              if(bl_regex) {
+                let bl_regexs = bl_regex.split(';')
+                if(bl_regexs && bl_regexs.length > 0) {
+                  for(let br of bl_regexs) {
+                    let regBl = eval(br)
+                    let bl = regBl.exec(e)
+                    if(bl && bl.length > 1) {
+                      billNo = bl[1]
+                    }
+                  }
+                }
+              }
+            }
+
             let regCN = eval(edi.edi_depot_cnt_regex)
             let cn = regCN.exec(e)
             if(cn && cn.length > 1) {
@@ -258,16 +279,38 @@ const parserMailAttachment = async (ediDepots, parserData) => {
             if(dtm && dtm.length > 1) {
               returnDate = dtm[1]
             }
-            let regCAR = eval(edi.edi_depot_carrier_regex)
-            let car = regCAR.exec(ediStr)
-            if(car && car.length > 1) {
-              carrier = car[1]
+            let carrier_regex = edi.edi_depot_carrier_regex
+            if(carrier_regex) {
+              let carrier_regexs = carrier_regex.split(';')
+              if(carrier_regexs && carrier_regexs.length > 0) {
+                for(let cr of carrier_regexs) {
+                  if(cr) {
+                    let regCAR = eval(cr)
+                    let car = regCAR.exec(ediStr)
+                    if(car && car.length > 1) {
+                      carrier = car[1]
+                    }
+                  }
+                }
+              }
             }
-            let regBL = eval(edi.edi_depot_bl_regex)
-            let bl = regBL.exec(e)
-            if(bl && bl.length > 1) {
-              billNo = bl[1]
+            if(edi.edi_depot_bl_regex) {
+              // 卸船，有提单信息
+              let bl_regex = edi.edi_depot_bl_regex
+              if(bl_regex) {
+                let bl_regexs = bl_regex.split(';')
+                if(bl_regexs && bl_regexs.length > 0) {
+                  for(let br of bl_regexs) {
+                    let regBl = eval(br)
+                    let bl = regBl.exec(e)
+                    if(bl && bl.length > 1) {
+                      billNo = bl[1]
+                    }
+                  }
+                }
+              }
             }
+           
             try {
               let ediData = {
                 depot: edi.edi_depot_name,
