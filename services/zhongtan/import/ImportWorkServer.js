@@ -495,8 +495,13 @@ exports.uploadImportAct = async req => {
           import_ship_voyage_main: xmldata.DATA_DS.P_VOY_MAIN._text,
           import_business_type: business_type
         })
-  
-        for (let a of xmldata.DATA_DS.G_DATA) {
+        let G_DATA_ARRAY = []
+        if(Array.isArray(xmldata.DATA_DS.G_DATA)) {
+          G_DATA_ARRAY = xmldata.DATA_DS.G_DATA
+        } else {
+          G_DATA_ARRAY.push(xmldata.DATA_DS.G_DATA)
+        }
+        for (let a of G_DATA_ARRAY) {
           let blarray = []
           if (_.isArray(a.G_DATAA.G_BL_NUMBER)) {
             blarray = a.G_DATAA.G_BL_NUMBER
