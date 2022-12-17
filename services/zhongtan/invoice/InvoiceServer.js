@@ -260,7 +260,11 @@ exports.uploadImportAct = async req => {
         return common.error('import_03')
       }
       let vessel_name = vesslInfoJS[0]['VESSEL NAME'].trim()
-      let vessel_voyage = vesslInfoJS[0]['VOYAGE NUM'].trim()
+      let vessel_voyage = vesslInfoJS[0]['VOYAGE NUM']
+      if(vessel_voyage) {
+        vessel_voyage = vessel_voyage + ''
+        vessel_voyage = vessel_voyage.trim()
+      }
       let vessel_code = vesslInfoJS[0]['VESSEL CODE'].trim()
       let vessel = await tb_vessel.findOne({
         where: {
