@@ -260,12 +260,12 @@ exports.handleAllotVesselDepot = async (vessel_id, reset = '0') => {
             let cosco_total = 0
             let oocl_total = 0
             for(let bc of bl_cons) {
-              if(bc.invoice_containers_bl.indexOf('COS') >= 0) {
-                cosco_bl_cons.push(bc)
-                cosco_total = cosco_total + bc.container_size_count
-              } else if(bc.invoice_containers_bl.indexOf('OOLU') >= 0) {
+              if(bc.invoice_containers_bl.indexOf('OOLU') >= 0) {
                 oocl_bl_cons.push(bc)
                 oocl_total = oocl_total + bc.container_size_count
+              } else {
+                cosco_bl_cons.push(bc)
+                cosco_total = cosco_total + bc.container_size_count
               }
             }
             let multiple_cons_bls = []
