@@ -211,7 +211,7 @@ exports.getMasterbiDataAct = async req => {
 
   let queryStr = `select a.*, b.user_name from tbl_zhongtan_invoice_masterbl a
   LEFT JOIN tbl_common_user b ON b.user_id = a.invoice_masterbi_customer_id
-  WHERE a.invoice_vessel_id = ?`
+  WHERE a.state = 1 and a.invoice_vessel_id = ?`
   let replacements = [doc.invoice_vessel_id]
   if (doc.bl) {
     queryStr += `  AND a.invoice_masterbi_bl = ? `
@@ -432,7 +432,7 @@ exports.getContainersDataAct = async req => {
   from
   tbl_zhongtan_invoice_containers
   WHERE
-    invoice_vessel_id = ?`
+    state = 1 and invoice_vessel_id = ?`
   let replacements = [doc.invoice_vessel_id]
   let result = await model.queryWithCount(doc, queryStr, replacements)
   returnData.total = result.count
