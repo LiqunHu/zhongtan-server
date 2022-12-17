@@ -435,7 +435,7 @@ exports.searchVoyageAct = async req => {
       tbl_zhongtan_invoice_masterbl a
     LEFT JOIN tbl_common_user b ON b.user_id = a.invoice_masterbi_customer_id
     WHERE
-      a.invoice_masterbi_bl = ?`
+      a.state = 1 and a.invoice_masterbi_bl = ?`
     replacements = [doc.bl]
     let result = await model.queryWithCount(doc, queryStr, replacements)
     returnData.masterbl.total = result.count
@@ -687,7 +687,7 @@ exports.getMasterbiDataAct = async req => {
       tbl_zhongtan_invoice_masterbl a
     LEFT JOIN tbl_common_user b ON b.user_id = a.invoice_masterbi_customer_id
     WHERE
-      a.invoice_vessel_id = ? `
+      a.state = 1 and a.invoice_vessel_id = ? `
   let replacements = [doc.invoice_vessel_id]
   if (doc.collect) {
     if (doc.collect === 'COLLECT') {
@@ -932,12 +932,16 @@ exports.getMasterbiFiles = async d => {
 
 exports.getContainersDataAct = async req => {
   let doc = common.docValidate(req),
-    returnData = {}
+  returnData = {}
+  returnData.total = 0
+  returnData.rows = []
   let queryStr = `select * from tbl_zhongtan_invoice_containers WHERE state = ?`
   let replacements = [GLBConfig.ENABLE]
   if(doc.invoice_vessel_id) {
     queryStr += ` AND invoice_vessel_id = ?`
     replacements.push(doc.invoice_vessel_id)
+  } else {
+    return returnData
   }
   if(doc.bl) {
     queryStr += ` AND invoice_containers_bl = ?`
@@ -945,7 +949,6 @@ exports.getContainersDataAct = async req => {
   }
   let result = await model.queryWithCount(doc, queryStr, replacements)
   returnData.total = result.count
-  returnData.rows = []
 
   if(result.data && result.data.length > 0) {
     for (let b of result.data) {
@@ -2200,23 +2203,34 @@ exports.changeblAct = async req => {
 
 exports.deleteVoyageAct = async req => {
   let doc = common.docValidate(req)
-  await tb_container.destroy({
-    where: {
-      invoice_vessel_id: doc.invoice_vessel_id
-    }
-  })
+  // await tb_container.destroy({
+  //   where: {
+  //     invoice_vessel_id: doc.invoice_vessel_id
+  //   }
+  // })
 
-  await tb_bl.destroy({
-    where: {
-      invoice_vessel_id: doc.invoice_vessel_id
-    }
-  })
+  // await tb_bl.destroy({
+  //   where: {
+  //     invoice_vessel_id: doc.invoice_vessel_id
+  //   }
+  // })
 
-  await tb_vessel.destroy({
-    where: {
-      invoice_vessel_id: doc.invoice_vessel_id
-    }
-  })
+  // await tb_vessel.destroy({
+  //   where: {
+  //     invoice_vessel_id: doc.invoice_vessel_id
+  //   }
+  // })
+
+  let replacements = [doc.invoice_vessel_id]
+  let delConStr = `UPDATE tbl_zhongtan_invoice_containers SET state = 0 WHERE invoice_vessel_id = ?;`
+  await model.simpleUpdate(delConStr, replacements)
+
+  let delBlStr = `UPDATE tbl_zhongtan_invoice_masterbl SET state = 0 WHERE invoice_vessel_id = ?;`
+  await model.simpleUpdate(delBlStr, replacements)
+
+  let delVesStr = `UPDATE tbl_zhongtan_invoice_vessel SET state = 0 WHERE invoice_vessel_id = ?;`
+  await model.simpleUpdate(delVesStr, replacements)
+
 
   return common.success()
 }
