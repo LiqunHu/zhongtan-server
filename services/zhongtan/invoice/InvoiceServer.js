@@ -326,7 +326,7 @@ exports.uploadImportAct = async req => {
               }
             }
             let masterbi_bl = m['#M B/L No']
-            let masterbi_carrier = ''
+            let masterbi_carrier = 'COSCO'
             if(masterbi_bl.indexOf('COS') >= 0) {
               masterbi_carrier  = 'COSCO'
             } else if(masterbi_bl.indexOf('OOLU') >= 0) {
