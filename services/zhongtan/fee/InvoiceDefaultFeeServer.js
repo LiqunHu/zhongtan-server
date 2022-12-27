@@ -94,9 +94,11 @@ exports.createAct = async req => {
           if(f.fee_pol_mark) {
             let pms = doc.fee_pol_mark.split(',')
             for(let pm of pms) {
-              if(f.fee_pol_mark.toUpperCase().indexOf(pm.toUpperCase())) {
-                can_create = false
-                break
+              if(pm) {
+                if(f.fee_pol_mark.toUpperCase().indexOf(pm.toUpperCase()) >= 0) {
+                  can_create = false
+                  break
+                }
               }
             }
           }
