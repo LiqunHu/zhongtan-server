@@ -223,6 +223,35 @@ exports.uploadImportAct = async req => {
             }
           }
         )
+        // let oldBills = await tb_billlading.findAll({
+        //   where: {
+        //     import_billlading_vessel_code: shipinfo.import_shipinfo_vessel_code,
+        //     import_billlading_vessel_name: shipinfo.import_shipinfo_vessel_name,
+        //     state: GLBConfig.ENABLE
+        //   }
+        // })
+        // if(oldBills) {
+        //   for(let bill of oldBills) {
+        //     bill.state = GLBConfig.DISABLE
+        //     await bill.save()
+        //     await tb_billlading_goods.update(
+        //       {'state': GLBConfig.DISABLE}, 
+        //       {'where': {'import_billlading_id': bill.import_billlading_id}}
+        //     )
+        //     await tb_billlading_charges.update(
+        //       {'state': GLBConfig.DISABLE}, 
+        //       {'where': {'import_billlading_id': bill.import_billlading_id}}
+        //     )
+        //     await tb_billlading_sumcharges.update(
+        //       {'state': GLBConfig.DISABLE}, 
+        //       {'where': {'import_billlading_id': bill.import_billlading_id}}
+        //     )
+        //     await tb_billlading_container.update(
+        //       {'state': GLBConfig.DISABLE}, 
+        //       {'where': {'import_billlading_id': bill.import_billlading_id}}
+        //     )
+        //   }
+        // }
       }
 
       ship = await tb_ship.create({
@@ -231,13 +260,8 @@ exports.uploadImportAct = async req => {
         import_ship_voyage_main: xmldata.DATA_DS.P_VOYAGE._text,
         import_business_type: business_type
       })
-      let G_DATA_ARRAY = []
-      if(Array.isArray(xmldata.DATA_DS.G_DATA_SEQ)) {
-        G_DATA_ARRAY = xmldata.DATA_DS.G_DATA_SEQ
-      } else {
-        G_DATA_ARRAY.push(xmldata.DATA_DS.G_DATA_SEQ)
-      }
-      for (let a of G_DATA_ARRAY) {
+
+      for (let a of xmldata.DATA_DS.G_DATA_SEQ) {
         let blarray = []
         if (_.isArray(a.G_DATA.G_DETAIL)) {
           blarray = a.G_DATA.G_DETAIL
