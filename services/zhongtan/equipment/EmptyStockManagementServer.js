@@ -46,6 +46,11 @@ exports.searchAct = async req => {
       replacements.push(doc.search_data.gate_out_depot_date[0])
       replacements.push(moment(doc.search_data.gate_out_depot_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
     }
+    if (doc.search_data.gate_in_terminal_date && doc.search_data.gate_in_terminal_date.length > 1) {
+      queryStr += ' and empty_stock_gate_in_terminal_date >= ? and empty_stock_gate_in_terminal_date < ? '
+      replacements.push(doc.search_data.gate_in_terminal_date[0])
+      replacements.push(moment(doc.search_data.gate_in_terminal_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
+    }
     if (doc.search_data.loading_date && doc.search_data.loading_date.length > 1) {
       queryStr += ' and empty_stock_loading_date >= ? and empty_stock_loading_date < ? '
       replacements.push(doc.search_data.loading_date[0])
@@ -132,6 +137,11 @@ exports.exportEmptyStockAct = async(req, res) => {
       queryStr += ' and empty_stock_gate_out_depot_date >= ? and empty_stock_gate_out_depot_date < ? '
       replacements.push(doc.search_data.gate_out_depot_date[0])
       replacements.push(moment(doc.search_data.gate_out_depot_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
+    }
+    if (doc.search_data.gate_in_terminal_date && doc.search_data.gate_in_terminal_date.length > 1) {
+      queryStr += ' and empty_stock_gate_in_terminal_date >= ? and empty_stock_gate_in_terminal_date < ? '
+      replacements.push(doc.search_data.gate_in_terminal_date[0])
+      replacements.push(moment(doc.search_data.gate_in_terminal_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
     }
     if (doc.search_data.loading_date && doc.search_data.loading_date.length > 1) {
       queryStr += ' and empty_stock_loading_date >= ? and empty_stock_loading_date < ? '

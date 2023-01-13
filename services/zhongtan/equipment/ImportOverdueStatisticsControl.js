@@ -15,6 +15,8 @@ module.exports = async (req, res) => {
       return await srv.exportDataAct(req, res)
     } else if (method === 'checkPassword') {
       ret = await srv.checkPasswordAct(req)
+    } else if (method === 'getConsignee') {
+      ret = await srv.getConsigneeAct(req)
     } 
     common.sendData(res, ret)
   } catch (error) {

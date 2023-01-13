@@ -15,7 +15,9 @@ module.exports = async (req, res) => {
       return await srv.exportDemurrageReportAct(req, res)
     } else if (method === 'exportDemurrageAdminReport') {
       return await srv.exportDemurrageAdminReportAct(req, res)
-    }
+    } else if (method === 'getConsignee') {
+      ret = await srv.getConsigneeAct(req)
+    } 
     common.sendData(res, ret)
   } catch (error) {
     common.sendFault(res, error)

@@ -127,6 +127,10 @@ exports.searchAct = async req => {
       queryStr += ` and a.invoice_containers_id IN (SELECT overdue_invoice_containers_invoice_containers_id FROM tbl_zhongtan_overdue_invoice_containers ic LEFT JOIN tbl_zhongtan_uploadfile uf ON ic.overdue_invoice_containers_invoice_uploadfile_id = uf.uploadfile_id WHERE ic.state = 1 AND uf.state = 1 AND uf.api_name = 'OVERDUE-INVOICE' AND uf.uploadfile_receipt_no LIKE ?) `
       replacements.push('%' + doc.search_data.receipt_no + '%')
     }
+    if (doc.search_data.consignee) {
+      queryStr += ` and c.invoice_masterbi_consignee_name = ?`
+      replacements.push(doc.search_data.consignee)
+    }
   }
   queryStr = queryStr + ' ORDER BY b.invoice_vessel_id DESC, a.invoice_containers_bl, a.invoice_containers_no'
   let result = await model.queryWithCount(doc, queryStr, replacements)
@@ -231,6 +235,10 @@ exports.exportDataAct = async(req, res) => {
         queryStr += ` and (a.invoice_containers_empty_return_invoice_date is null and a.invoice_containers_empty_return_receipt_date is null )  `
       }
     }
+    if (doc.search_data.consignee) {
+      queryStr += ` and c.invoice_masterbi_consignee_name = ?`
+      replacements.push(doc.search_data.consignee)
+    }
   }
   queryStr = queryStr + ' ORDER BY b.invoice_vessel_id DESC, a.invoice_containers_bl, a.invoice_containers_no'
   let result = await model.simpleSelect(queryStr, replacements)
@@ -308,4 +316,16 @@ exports.checkPasswordAct = async req => {
   } else {
     return common.error('auth_24')
   }
+}
+
+exports.getConsigneeAct = async req => {
+  let doc = common.docValidate(req)
+  let retData = {}
+  if(doc.query) {
+    let queryStr = `SELECT invoice_masterbi_consignee_name as name FROM tbl_zhongtan_invoice_masterbl WHERE state = 1 and invoice_masterbi_consignee_name like ? GROUP BY invoice_masterbi_consignee_name LIMIT 10`
+    let replacements = ['%' + doc.query + '%']
+    let consignees = await model.simpleSelect(queryStr, replacements)
+    retData.consignees = JSON.parse(JSON.stringify(consignees))
+  }
+  return common.success(retData)
 }

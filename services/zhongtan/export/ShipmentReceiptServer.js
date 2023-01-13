@@ -365,10 +365,9 @@ exports.exportCollectAct = async (req, res) => {
           // 添加应付费用
           queryStr = `SELECT f.*, d.fee_data_name FROM tbl_zhongtan_export_shipment_fee f 
           LEFT JOIN (SELECT fee_data_code, fee_data_name FROM tbl_zhongtan_export_fee_data GROUP BY fee_data_code) d ON f.fee_data_code = d.fee_data_code 
-          WHERE f.state = '1' AND f.shipment_fee_type = 'P' AND f.shipment_fee_status = 'AP' AND f.export_masterbl_id = ? AND f.shipment_fee_receipt_id = ? `
+          WHERE f.state = '1' AND f.shipment_fee_type = 'P' AND f.shipment_fee_status = 'AP' AND f.export_masterbl_id = ? `
           replacements = []
           replacements.push(r.export_masterbl_id)
-          replacements.push(f.uploadfile_id)
           let payables = await model.simpleSelect(queryStr, replacements)
           if(payables) {
             let payable_others = 0

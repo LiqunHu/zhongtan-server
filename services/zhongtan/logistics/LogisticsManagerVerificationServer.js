@@ -445,6 +445,7 @@ exports.approveAct = async req => {
             user_id: ver.logistics_verification_vendor
           }
         })
+        
         // 生成发票
         let freight_no = await seq.genLogisticsSeq('CT-L')
         let renderData = {}
@@ -464,13 +465,27 @@ exports.approveAct = async req => {
         }
         let freight_list = []
         for(let p of payments) {
+          let vendor_code = ''
+          if(customer.user_name === 'COSCO SHIPPING LINES') {
+            let vendor = await tb_vendor.findOne({
+              where: {
+                vendor_id: p.shipment_list_vendor
+              }
+            })
+            if(vendor) {
+              vendor_code = vendor.vendor_code
+            }
+          } else {
+            vendor_code = 'CTJT'
+          }
           freight_list.push({
             bl: p.shipment_list_bill_no,
             container_no: p.shipment_list_container_no,
             size_type: p.shipment_list_size_type,
             discharge_date: p.shipment_list_discharge_date,
             fnd: p.shipment_list_business_type === 'I' ?  p.shipment_list_port_of_destination : p.shipment_list_port_of_loading,
-            amount: p.shipment_list_receivable_freight
+            amount: p.shipment_list_receivable_freight,
+            vc: vendor_code
           })
         }
         renderData.freight_list = freight_list
