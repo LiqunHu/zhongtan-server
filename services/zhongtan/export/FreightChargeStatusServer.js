@@ -48,50 +48,63 @@ exports.searchAct = async req => {
                   from tbl_zhongtan_export_proforma_masterbl b 
                   LEFT JOIN tbl_zhongtan_export_proforma_vessel v ON b.export_vessel_id = v.export_vessel_id 
                   LEFT JOIN tbl_common_user u ON b.shipment_list_bl_print_user = u.user_id
-                  LEFT JOIN (SELECT export_masterbl_id, COUNT(1) AS total_count, COUNT(if(shipment_fee_status = 'RE', 1, null)) AS receipt_count, SUM(shipment_fee_amount) AS total_amount FROM tbl_zhongtan_export_shipment_fee WHERE state = '1' AND shipment_fee_type = 'R' AND shipment_fee_amount != 0 AND shipment_fee_status <> 'BA' GROUP BY export_masterbl_id) f ON f.export_masterbl_id = b.export_masterbl_id 
-                  WHERE b.state = 1 `
+                  LEFT JOIN (SELECT export_masterbl_id, COUNT(1) AS total_count, COUNT(if(shipment_fee_status = 'RE', 1, null)) AS receipt_count, SUM(shipment_fee_amount) AS total_amount FROM tbl_zhongtan_export_shipment_fee WHERE state = '1' AND shipment_fee_type = 'R' AND shipment_fee_amount != 0 AND shipment_fee_status <> 'BA' GROUP BY export_masterbl_id) f ON f.export_masterbl_id = b.export_masterbl_id `
+  let whereStr = ` WHERE b.state = 1`
   let replacements = []
   if(doc.search_data) {
     if (doc.search_data.masterbl_bl) {
-      queryStr += ' and b.export_masterbl_bl like ? '
+      whereStr += ' and b.export_masterbl_bl like ? '
       replacements.push('%' + doc.search_data.masterbl_bl + '%')
     }
     if (doc.search_data.vessel_id) {
-      queryStr += ' and v.export_vessel_id = ? '
+      whereStr += ' and v.export_vessel_id = ? '
       replacements.push(doc.search_data.vessel_id)
     }
     if (doc.search_data.etd_date && doc.search_data.etd_date.length > 1 && doc.search_data.etd_date[0] && doc.search_data.etd_date[1]) {
-      queryStr += ' and STR_TO_DATE(v.export_vessel_etd, "%d/%m/%Y") >= ? and STR_TO_DATE(v.export_vessel_etd, "%d/%m/%Y") < ? '
+      whereStr += ' and STR_TO_DATE(v.export_vessel_etd, "%d/%m/%Y") >= ? and STR_TO_DATE(v.export_vessel_etd, "%d/%m/%Y") < ? '
       replacements.push(doc.search_data.etd_date[0])
       replacements.push(moment(doc.search_data.etd_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
     }
     if (doc.search_data.charge_status === 'RELEASE') {
-      queryStr += ` and f.total_count = f.receipt_count and f.total_count > 0 `
+      whereStr += ` and f.total_count = f.receipt_count and f.total_count > 0 `
     }
     if (doc.search_data.charge_status === 'HOLD') {
-      queryStr += ` and f.total_count != f.receipt_count `
+      whereStr += ` and f.total_count != f.receipt_count `
     }
     if (doc.search_data.receivable_agent) {
-      queryStr += ` and EXISTS (SELECT 1 FROM tbl_zhongtan_export_shipment_fee f WHERE f.export_masterbl_id = b.export_masterbl_id AND f.state = '1' AND f.shipment_fee_type = 'R' AND f.shipment_fee_party = ? GROUP BY f.export_masterbl_id) `
+      whereStr += ` and EXISTS (SELECT 1 FROM tbl_zhongtan_export_shipment_fee f WHERE f.export_masterbl_id = b.export_masterbl_id AND f.state = '1' AND f.shipment_fee_type = 'R' AND f.shipment_fee_party = ? GROUP BY f.export_masterbl_id) `
       replacements.push(doc.search_data.receivable_agent)
     }
     if(doc.search_data.bgf_flg) {
       if(doc.search_data.bgf_flg === '1') {
         // BGF
-        queryStr += ` and EXISTS (SELECT 1 FROM tbl_zhongtan_export_shipment_fee f WHERE f.export_masterbl_id = b.export_masterbl_id AND f.state = '1' AND f.shipment_fee_type = 'R' AND fee_data_code IN ('BGF')  GROUP BY f.export_masterbl_id) `
+        whereStr += ` and EXISTS (SELECT 1 FROM tbl_zhongtan_export_shipment_fee f WHERE f.export_masterbl_id = b.export_masterbl_id AND f.state = '1' AND f.shipment_fee_type = 'R' AND fee_data_code IN ('BGF')  GROUP BY f.export_masterbl_id) `
       } else if(doc.search_data.bgf_flg === '2') {
         // NON BGF
-        queryStr += ` and NOT EXISTS (SELECT 1 FROM tbl_zhongtan_export_shipment_fee f WHERE f.export_masterbl_id = b.export_masterbl_id AND f.state = '1' AND f.shipment_fee_type = 'R' AND fee_data_code IN ('BGF')  GROUP BY f.export_masterbl_id) `
+        whereStr += ` and NOT EXISTS (SELECT 1 FROM tbl_zhongtan_export_shipment_fee f WHERE f.export_masterbl_id = b.export_masterbl_id AND f.state = '1' AND f.shipment_fee_type = 'R' AND fee_data_code IN ('BGF')  GROUP BY f.export_masterbl_id) `
       }
     }
     if (doc.search_data.sales_code) {
-      queryStr += ' and b.export_masterbl_sales_code = ? '
+      whereStr += ' and b.export_masterbl_sales_code = ? '
       replacements.push(doc.search_data.sales_code)
     }
+    if (doc.search_data.shipper) {
+      whereStr += ' and b.export_masterbl_shipper_company like ? '
+      replacements.push('%' + doc.search_data.shipper + '%')
+    }
+    
   }
-  queryStr += ' ORDER BY STR_TO_DATE(v.export_vessel_etd, "%d/%m/%Y") DESC, b.export_masterbl_bl'
+  queryStr = queryStr + whereStr +  ' ORDER BY STR_TO_DATE(v.export_vessel_etd, "%d/%m/%Y") DESC, b.export_masterbl_bl'
   let result = await model.queryWithCount(doc, queryStr, replacements)
-
+  let sumContainerStr = `SELECT SUM(b.export_masterbl_container_quantity) container_quantity_sum
+                        from tbl_zhongtan_export_proforma_masterbl b 
+                        LEFT JOIN tbl_zhongtan_export_proforma_vessel v ON b.export_vessel_id = v.export_vessel_id 
+                        LEFT JOIN tbl_common_user u ON b.shipment_list_bl_print_user = u.user_id
+                        LEFT JOIN (SELECT export_masterbl_id, COUNT(1) AS total_count, COUNT(if(shipment_fee_status = 'RE', 1, null)) AS receipt_count, SUM(shipment_fee_amount) AS total_amount FROM tbl_zhongtan_export_shipment_fee WHERE state = '1' AND shipment_fee_type = 'R' AND shipment_fee_amount != 0 AND shipment_fee_status <> 'BA' GROUP BY export_masterbl_id) f ON f.export_masterbl_id = b.export_masterbl_id`
+  let sumContainer = await model.simpleSelect(sumContainerStr + whereStr, replacements)
+  if(sumContainer && sumContainer.length > 0) {
+    returnData.sum = sumContainer[0]
+  }
   returnData.total = result.count
   let rows = []
   if(result.data) {
@@ -230,6 +243,10 @@ exports.exportFreightAct = async (req, res) => {
     if (doc.search_data.sales_code) {
       queryStr += ' and b.export_masterbl_sales_code = ? '
       replacements.push(doc.search_data.sales_code)
+    }
+    if (doc.search_data.shipper) {
+      whereStr += ' and b.export_masterbl_shipper_company like ? '
+      replacements.push('%' + doc.search_data.shipper + '%')
     }
   }
   queryStr += ' ORDER BY STR_TO_DATE(v.export_vessel_etd, "%d/%m/%Y") DESC, b.export_masterbl_bl'

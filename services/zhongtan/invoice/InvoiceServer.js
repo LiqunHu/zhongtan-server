@@ -51,6 +51,14 @@ exports.initAct = async () => {
     DEPOT = depots
   }
 
+  let POD = []
+  queryStr = `SELECT freight_place_code as id FROM tbl_zhongtan_freight_place WHERE state = ? ORDER BY freight_place_code`
+  replacements = [GLBConfig.ENABLE]
+  let pods = await model.simpleSelect(queryStr, replacements)
+  if(pods) {
+    POD = pods
+  }
+
   let returnData = {
     TFINFO: GLBConfig.TFINFO,
     RECEIPT_TYPE_INFO: GLBConfig.RECEIPT_TYPE_INFO,
@@ -60,7 +68,9 @@ exports.initAct = async () => {
     UPLOAD_STATE: GLBConfig.UPLOAD_STATE,
     DELIVER: DELIVER,
     ICD: ICD,
-    DEPOT: DEPOT
+    DEPOT: DEPOT,
+    POD: POD,
+    CARGO: ['IM', 'TR']
   }
 
   return common.success(returnData)
@@ -1960,6 +1970,7 @@ exports.changeblAct = async req => {
       edit_json = {}
     }
     let edit_flg = false
+    let count_flg = false
     if(b.invoice_masterbi_delivery && bl.invoice_masterbi_delivery !== b.invoice_masterbi_delivery) {
       edit_json['invoice_masterbi_delivery'] = edit_json['invoice_masterbi_delivery'] ? edit_json['invoice_masterbi_delivery'] + 1 : 1
       edit_flg = true
@@ -1967,6 +1978,7 @@ exports.changeblAct = async req => {
     if(b.invoice_masterbi_destination && bl.invoice_masterbi_destination !== b.invoice_masterbi_destination) {
       edit_json['invoice_masterbi_destination'] = edit_json['invoice_masterbi_destination'] ? edit_json['invoice_masterbi_destination'] + 1 : 1
       edit_flg = true
+      count_flg = true
     }
     if(b.invoice_masterbi_loading && bl.invoice_masterbi_loading !== b.invoice_masterbi_loading) {
       edit_json['invoice_masterbi_loading'] = edit_json['invoice_masterbi_loading'] ? edit_json['invoice_masterbi_loading'] + 1 : 1
@@ -1975,6 +1987,7 @@ exports.changeblAct = async req => {
     if(b.invoice_masterbi_cargo_type && bl.invoice_masterbi_cargo_type !== b.invoice_masterbi_cargo_type) {
       edit_json['invoice_masterbi_cargo_type'] = edit_json['invoice_masterbi_cargo_type'] ? edit_json['invoice_masterbi_cargo_type'] + 1 : 1
       edit_flg = true
+      count_flg = true
     }
     if(b.invoice_masterbi_bl_type && bl.invoice_masterbi_bl_type !== b.invoice_masterbi_bl_type) {
       edit_json['invoice_masterbi_bl_type'] = edit_json['invoice_masterbi_delivery'] ? edit_json['invoice_masterbi_delivery'] + 1 : 1
@@ -2195,6 +2208,29 @@ exports.changeblAct = async req => {
     bl.invoice_masterbi_line_code = b.invoice_masterbi_line_code
     bl.invoice_masterbi_terminal_code = b.invoice_masterbi_terminal_code
 
+    if(count_flg) {
+      let vessel = await tb_vessel.findOne({
+        where: {
+          invoice_vessel_id: bl.invoice_vessel_id
+        }
+      })
+    
+      let continers = await tb_container.findAll({
+        where: {
+          invoice_vessel_id: bl.invoice_vessel_id,
+          invoice_containers_bl: bl.invoice_masterbi_bl
+        }
+      })
+      if(continers && continers.length > 0) {
+        for(let con of continers) {
+          free_days = await cal_config_srv.queryContainerFreeDays(bl.invoice_masterbi_cargo_type, bl.invoice_masterbi_destination.substring(0, 2), bl.invoice_masterbi_carrier, con.invoice_containers_size, vessel.invoice_vessel_ata)
+          if(free_days > 0) {
+            con.invoice_containers_current_overdue_days = free_days
+            await con.save()
+          }
+        }
+      }
+    }
     await bl.save()
   }
 
@@ -2823,6 +2859,7 @@ exports.changeCnAct = async req => {
       edit_json = {}
     }
     let edit_flg = false
+    let count_flg = false
     if(c.invoice_containers_type && cn.invoice_containers_type !== c.invoice_containers_type) {
       edit_json['invoice_masterbi_delivery'] = edit_json['invoice_masterbi_delivery'] ? edit_json['invoice_masterbi_delivery'] + 1 : 1
       edit_flg = true
@@ -2834,6 +2871,7 @@ exports.changeCnAct = async req => {
     if(c.invoice_containers_size && cn.invoice_containers_size !== c.invoice_containers_size) {
       edit_json['invoice_containers_size'] = edit_json['invoice_containers_size'] ? edit_json['invoice_containers_size'] + 1 : 1
       edit_flg = true
+      count_flg = true
     }
     if(c.invoice_containers_seal1 && cn.invoice_containers_seal1 !== c.invoice_containers_seal1) {
       edit_json['invoice_containers_seal1'] = edit_json['invoice_containers_seal1'] ? edit_json['invoice_containers_seal1'] + 1 : 1
@@ -2923,6 +2961,24 @@ exports.changeCnAct = async req => {
     cn.invoice_containers_plug_reefer = c.invoice_containers_plug_reefer
     cn.invoice_containers_min_temperature = c.invoice_containers_min_temperature
     cn.invoice_containers_max_temperature = c.invoice_containers_max_temperature
+    if(count_flg) {
+      let vessel = await tb_vessel.findOne({
+        where: {
+          invoice_vessel_id: bl.invoice_vessel_id
+        }
+      })
+      let bl = await tb_bl.findOne({
+        where: {
+          invoice_vessel_id: cn.invoice_vessel_id,
+          invoice_masterbi_bl: cn.invoice_containers_bl,
+          state: GLBConfig.ENABLE
+        }
+      })
+      free_days = await cal_config_srv.queryContainerFreeDays(bl.invoice_masterbi_cargo_type, bl.invoice_masterbi_destination.substring(0, 2), bl.invoice_masterbi_carrier, cn.invoice_containers_size, vessel.invoice_vessel_ata)
+      if(free_days > 0) {
+        cn.invoice_containers_current_overdue_days = free_days
+      }
+    }
     await cn.save()
   }
 

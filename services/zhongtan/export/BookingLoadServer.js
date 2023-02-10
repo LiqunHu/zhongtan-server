@@ -1349,6 +1349,20 @@ exports.bookingDataSaveAct = async req => {
     }
     bl.export_masterbl_sales_code = doc.export_masterbl_sales_code
     await bl.save()
+
+    let pbs = await tb_proforma_bl.findAll({
+      where: {
+        export_masterbl_bl : bl.export_masterbl_bl,
+        bk_cancellation_status: GLBConfig.DISABLE,
+        state: GLBConfig.ENABLE
+      }
+    })
+    if(pbs && pbs.length > 0) {
+      for(let pb of pbs) {
+        pb.export_masterbl_sales_code = bl.export_masterbl_sales_code
+        await pb.save()
+      }
+    }
   }
   return common.success()
 }
