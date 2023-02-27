@@ -122,17 +122,32 @@ exports.addAct = async req => {
 exports.modifyAct = async req => {
   let doc = common.docValidate(req)
 
-  let chkuser = await tb_user.findOne({
-    where: {
-      state: GLBConfig.ENABLE,
-      [Op.or]: [{ user_phone: doc.new.user_phone }, { user_code: doc.new.user_code }],
-      user_id: {[Op.ne]: doc.old.user_id}
+  if(doc.new.user_code) {
+    let chkuser = await tb_user.findOne({
+      where: {
+        state: GLBConfig.ENABLE,
+        [Op.or]: [{ user_phone: doc.new.user_phone }, { user_code: doc.new.user_code }],
+        user_id: {[Op.ne]: doc.old.user_id}
+      }
+    })
+  
+    if (chkuser) {
+      return common.error('operator_05')
     }
-  })
-
-  if (chkuser) {
-    return common.error('operator_05')
+  } else {
+    let chkuser = await tb_user.findOne({
+      where: {
+        state: GLBConfig.ENABLE,
+        user_phone: doc.new.user_phone,
+        user_id: {[Op.ne]: doc.old.user_id}
+      }
+    })
+  
+    if (chkuser) {
+      return common.error('operator_06')
+    }
   }
+  
 
   let modiuser = await tb_user.findOne({
     where: {

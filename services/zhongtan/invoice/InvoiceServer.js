@@ -837,6 +837,7 @@ exports.getMasterbiDataAct = async req => {
 
 exports.getMasterbiFiles = async d => {
   d.files = []
+  let bulkFileCount = 0
   let queryStr = `SELECT a.*, b.user_name FROM tbl_zhongtan_uploadfile a
       left join tbl_common_user b on a.uploadfil_release_user_id = b.user_id
       WHERE a.state = '1' and a.uploadfile_index1 = ?`
@@ -935,8 +936,19 @@ exports.getMasterbiFiles = async d => {
       } else if(f.uploadfile_acttype === 'fee') {
         d.invoice_masterbi_invoice_receipt_date = moment(f.created_at).format('DD/MM/YYYY HH:mm')
       }
+    } else if (f.api_name === 'BULK-FILE') {
+      filetype = 'bulkFile'
+      d.files.push({
+        invoice_masterbi_id: d.invoice_masterbi_id,
+        filetype: filetype,
+        date: moment(f.created_at).format('YYYY-MM-DD'),
+        file_id: f.uploadfile_id,
+        url: f.uploadfile_url,
+      })
+      ++bulkFileCount
     }
   }
+  d.bulkFileCount = bulkFileCount
   return d
 }
 
@@ -3276,6 +3288,35 @@ exports.changeNominationAct = async req => {
   await bl.save()
 
 
+  return common.success()
+}
+
+
+exports.saveBulkFilesAct = async req => {
+  let doc = common.docValidate(req),
+    user = req.user, curDate = new Date()
+  let bl = await tb_bl.findOne({
+    where: {
+      invoice_masterbi_id: doc.invoice_masterbi_id
+    }
+  })
+
+  if(doc.files) {
+    for(let f of doc.files) {
+      let fileInfo = await common.fileSaveMongo(f, 'zhongtan')
+      if(fileInfo) {
+        await tb_uploadfile.create({
+          api_name: 'BULK-FILE',
+          user_id: user.user_id,
+          uploadfile_index1: bl.invoice_masterbi_id,
+          uploadfile_name: fileInfo.name,
+          uploadfile_url: fileInfo.url,
+          uploadfile_acttype: 'bulk',
+        })
+      }
+    }
+  }
+  
   return common.success()
 }
 

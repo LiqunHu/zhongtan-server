@@ -59,7 +59,10 @@ module.exports = async (req, res) => {
       ret = await srv.deliveryCheckAct(req)
     } else if (method === 'changeNomination') {
       ret = await srv.changeNominationAct(req)
+    } else if (method === 'saveBulkFiles') {
+      ret = await srv.saveBulkFilesAct(req)
     }
+    
     common.sendData(res, ret)
   } catch (error) {
     common.sendFault(res, error)
