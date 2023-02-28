@@ -2574,7 +2574,7 @@ exports.createEditFile = async (commonUser, bl, customer, vessel, continers, edi
     filename : ediData.ediName,
     path: fileInfo
   }]
-  await mailer.sendEdiMail(GLBConfig.EDI_EMAIL_SENDER, GLBConfig.EDI_EMAIL_RECEIVER, GLBConfig.EDI_EMAIL_CARBON_COPY, '', mailSubject, mailContent, mailHtml, attachments)
+  await mailer.sendEdiMail(GLBConfig.EDI_EMAIL_SENDER, GLBConfig.EDI_EMAIL_RECEIVER.split(';'), GLBConfig.EDI_EMAIL_CARBON_COPY, '', mailSubject, mailContent, mailHtml, attachments)
 }
 
 exports.searchFixedDepositAct = async req => {
