@@ -720,6 +720,20 @@ const jsonFindAll = async(arr, key, value) => {
   return ret
 }
 
+const fileSize2Str = async(size) => {
+  let sizeStr = ''
+  if(size < 1024) {
+    sizeStr = '1Kb'
+  } else if(size < 1024 * 1024) {
+    sizeStr = (size/1024).toFixed(2) + 'KB'
+  } else if(size < 1024 * 1024 * 1024) {
+    sizeStr = (size/(1024 * 1024)).toFixed(2) + 'MB'
+  } else {
+    sizeStr = (size/(1024 * 1024 * 1024)).toFixed(2) + 'GB'
+  }
+  return sizeStr
+}
+
 module.exports = {
   docValidate: docValidate,
   reqTrans: reqTrans,
@@ -761,5 +775,6 @@ module.exports = {
   depot2Edi: depot2Edi,
   groupingJson: groupingJson,
   jsonFindOne: jsonFindOne,
-  jsonFindAll: jsonFindAll
+  jsonFindAll: jsonFindAll,
+  fileSize2Str: fileSize2Str
 }

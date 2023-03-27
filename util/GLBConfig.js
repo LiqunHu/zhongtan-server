@@ -538,5 +538,13 @@ module.exports = {
     { id: '2', text: 'BALANCE PAID' },
     { id: '3', text: 'EXTRA PAID' },
     { id: '4', text: 'FULL PAYMENT PAID' },
+  ],
+  OBS_FILE_TYPE: [
+    { id: '0', text: 'FOLDER' },
+    { id: '1', text: 'FILE' }
+  ],
+  OBS_FILE_AUTH: [
+    { id: '0', text: 'PRIVATE' },
+    { id: '1', text: 'PUBLIC' }
   ]
 }

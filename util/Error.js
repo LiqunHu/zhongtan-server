@@ -131,5 +131,8 @@ module.exports = {
   unusual_02: 'Edit unusual invoice do not exist',
   unusual_03: 'same items and B/L# unusual invoice already exist',
   mail_01: 'Failed to send mail. Please try again later.',
-  mnr_01: 'same container no description exist'
+  mnr_01: 'same container no description exist',
+  obs_01: 'same folder name already exists',
+  obs_02: 'upload file failed',
+  obs_03: 'download file failed'
 }
