@@ -45,6 +45,8 @@ module.exports = async (req, res) => {
       ret = await srv.countRolloverChargeAct(req)
     } else if (method === 'deleteRolloverCharge') {
       ret = await srv.deleteRolloverChargeAct(req)
+    } else if (method === 'bkCancellationFeeCount') {
+      ret = await srv.bkCancellationFeeCountAct(req)
     } 
     
     common.sendData(res, ret)

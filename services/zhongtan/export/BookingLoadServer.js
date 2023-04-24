@@ -2238,3 +2238,60 @@ exports.createRolloverCharge = async (masterbl_bl, user_id) => {
     } 
   }
 }
+
+exports.bkCancellationFeeCountAct= async req => {
+  let doc = common.docValidate(req)
+  let bl = await tb_bl.findOne({
+    where: {
+      state: GLBConfig.ENABLE,
+      export_masterbl_id: doc.export_masterbl_id
+    }
+  })
+  let bl_containers = await tb_container.findAll({
+    where: {
+      export_vessel_id: bl.export_vessel_id,
+      export_container_bl: bl.export_masterbl_bl,
+      state: GLBConfig.ENABLE
+    }
+  })
+  let fee = {
+    fee_data_code: 'BGF',
+    fee_data_name: 'BOOKING GUARANTEE FEE',
+    fee_data_amount: ''
+  }
+  if(bl_containers && bl_containers.length > 0) {
+    let bgfs = await tb_export_fee_data.findAll({
+      where: {
+        fee_data_code: 'BGF',
+        fee_data_type: 'CON',
+        fee_data_receivable: GLBConfig.ENABLE,
+        state: GLBConfig.ENABLE
+      }
+    })
+    let bgfAmount = 0
+    // new Decimal(edfREAmount).plus(new Decimal(f.fee_data_amount))
+    if(bgfs && bgfs.length > 0) {
+      for(let c of bl_containers) {
+        for(let b of bgfs) {
+          if(c.export_container_size_type === b.fee_data_container_size) {
+            bgfAmount = new Decimal(bgfAmount).plus(new Decimal(b.fee_data_receivable_amount))
+          }
+        }
+      }
+    } else {
+      let blbgf = await tb_export_fee_data.findOne({
+        where: {
+          fee_data_code: 'BGF',
+          fee_data_type: 'BL',
+          fee_data_receivable: GLBConfig.ENABLE,
+          state: GLBConfig.ENABLE
+        }
+      })
+      if(blbgf) {
+        bgfAmount = new Decimal(blbgf.fee_data_receivable_amount)
+      }
+    }
+    fee.fee_data_amount = bgfAmount
+  }
+  return fee
+}
