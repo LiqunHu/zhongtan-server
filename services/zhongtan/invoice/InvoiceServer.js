@@ -23,6 +23,7 @@ const tb_fixed_deposit = model.zhongtan_customer_fixed_deposit
 const tb_icd = model.zhongtan_icd
 const tb_edi_depot = model.zhongtan_edi_depot
 const tb_shipment_list = model.zhongtan_logistics_shipment_list
+const tb_container_size = model.zhongtan_container_size
 
 exports.initAct = async () => {
   let DELIVER = []
@@ -59,6 +60,14 @@ exports.initAct = async () => {
     POD = pods
   }
 
+  let SIZE_TYPE = await tb_container_size.findAll({
+    attributes: ['container_size_code', 'container_size_name'],
+    where: {
+      state : GLBConfig.ENABLE
+    },
+    order: [['container_size_code', 'ASC']]
+  })
+
   let returnData = {
     TFINFO: GLBConfig.TFINFO,
     RECEIPT_TYPE_INFO: GLBConfig.RECEIPT_TYPE_INFO,
@@ -70,7 +79,8 @@ exports.initAct = async () => {
     ICD: ICD,
     DEPOT: DEPOT,
     POD: POD,
-    CARGO: ['IM', 'TR']
+    CARGO: ['IM', 'TR'],
+    SIZE_TYPE: SIZE_TYPE
   }
 
   return common.success(returnData)
@@ -2976,7 +2986,7 @@ exports.changeCnAct = async req => {
     if(count_flg) {
       let vessel = await tb_vessel.findOne({
         where: {
-          invoice_vessel_id: bl.invoice_vessel_id
+          invoice_vessel_id: cn.invoice_vessel_id
         }
       })
       let bl = await tb_bl.findOne({
