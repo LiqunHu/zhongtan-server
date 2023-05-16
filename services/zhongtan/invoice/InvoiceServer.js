@@ -2578,15 +2578,14 @@ exports.createEditFile = async (commonUser, bl, customer, vessel, continers, edi
   let fileInfo = await common.fs2Edi(ediData)
   
   let mailSubject = 'EDI ' + bl.invoice_masterbi_bl
-  let mailContent = '' //'Send By: ' + commonUser.user_name + ' ' + commonUser.user_phone + ' ' + commonUser.user_email
+  let mailContent = 'Dear Team,\
+  Pls find attached EDO for operation.Thanks.' //'Send By: ' + commonUser.user_name + ' ' + commonUser.user_phone + ' ' + commonUser.user_email
   let mailHtml = ''
   let attachments = [{
     filename : ediData.ediName,
     path: fileInfo
   }]
-  let body = 'Dear Team,\
-  Pls find attached EDO for operation.Thanks.'
-  await mailer.sendEdiMail(GLBConfig.EDI_EMAIL_SENDER, GLBConfig.EDI_EMAIL_RECEIVER.split(';'), GLBConfig.EDI_EMAIL_CARBON_COPY, body, mailSubject, mailContent, mailHtml, attachments)
+  await mailer.sendEdiMail(GLBConfig.EDI_EMAIL_SENDER, GLBConfig.EDI_EMAIL_RECEIVER.split(';'), GLBConfig.EDI_EMAIL_CARBON_COPY, '', mailSubject, mailContent, mailHtml, attachments)
 }
 
 exports.searchFixedDepositAct = async req => {
@@ -3079,15 +3078,14 @@ exports.createDepotEdiFile = async (email, bl) =>{
   let fileInfo = await common.depot2Edi(ediData)
   
   let mailSubject = 'EDI ' + bl.invoice_masterbi_bl
-  let mailContent = '' //'Send By: ' + commonUser.user_name + ' ' + commonUser.user_phone + ' ' + commonUser.user_email
+  let mailContent = 'Dear Team,\
+  Pls find attached EDO for operation.Thanks.' //'Send By: ' + commonUser.user_name + ' ' + commonUser.user_phone + ' ' + commonUser.user_email
   let mailHtml = ''
   let attachments = [{
     filename : ediData.ediName,
     path: fileInfo
   }]
-  let body = 'Dear Team,\
-  Pls find attached EDO for operation.Thanks.'
-  await mailer.sendEdiMail(GLBConfig.EDI_EMAIL_SENDER, email, GLBConfig.EDI_EMAIL_CARBON_COPY, body, mailSubject, mailContent, mailHtml, attachments)
+  await mailer.sendEdiMail(GLBConfig.EDI_EMAIL_SENDER, email, GLBConfig.EDI_EMAIL_CARBON_COPY, '', mailSubject, mailContent, mailHtml, attachments)
 }
 
 exports.deliveryCheckAct = async req => {
