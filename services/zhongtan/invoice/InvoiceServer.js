@@ -2584,7 +2584,9 @@ exports.createEditFile = async (commonUser, bl, customer, vessel, continers, edi
     filename : ediData.ediName,
     path: fileInfo
   }]
-  await mailer.sendEdiMail(GLBConfig.EDI_EMAIL_SENDER, GLBConfig.EDI_EMAIL_RECEIVER.split(';'), GLBConfig.EDI_EMAIL_CARBON_COPY, '', mailSubject, mailContent, mailHtml, attachments)
+  let body = 'Dear Team,\
+  Pls find attached EDO for operation.Thanks.'
+  await mailer.sendEdiMail(GLBConfig.EDI_EMAIL_SENDER, GLBConfig.EDI_EMAIL_RECEIVER.split(';'), GLBConfig.EDI_EMAIL_CARBON_COPY, body, mailSubject, mailContent, mailHtml, attachments)
 }
 
 exports.searchFixedDepositAct = async req => {
@@ -3083,7 +3085,9 @@ exports.createDepotEdiFile = async (email, bl) =>{
     filename : ediData.ediName,
     path: fileInfo
   }]
-  await mailer.sendEdiMail(GLBConfig.EDI_EMAIL_SENDER, email, GLBConfig.EDI_EMAIL_CARBON_COPY, '', mailSubject, mailContent, mailHtml, attachments)
+  let body = 'Dear Team,\
+  Pls find attached EDO for operation.Thanks.'
+  await mailer.sendEdiMail(GLBConfig.EDI_EMAIL_SENDER, email, GLBConfig.EDI_EMAIL_CARBON_COPY, body, mailSubject, mailContent, mailHtml, attachments)
 }
 
 exports.deliveryCheckAct = async req => {
