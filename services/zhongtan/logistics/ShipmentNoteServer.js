@@ -137,7 +137,7 @@ exports.searchAct = async req => {
       queryStr = `SELECT u.*, cu.user_name FROM tbl_zhongtan_uploadfile u LEFT JOIN tbl_common_user cu ON u.user_id = cu.user_id WHERE u.state = ? AND uploadfile_index1 IN (
         SELECT logistics_verification_id FROM tbl_zhongtan_logistics_verification_freight WHERE state = ? AND logistics_freight_state = 'AP' 
         AND shipment_list_id IN (SELECT payment_extra_id FROM tbl_zhongtan_logistics_payment_extra WHERE state = 1 AND payment_extra_type = 'P' AND payment_extra_status = '7' AND payment_extra_shipment_id = ?)) 
-        AND api_name IN ('PAYMENT EXTRA', 'PAYMENT EXTRA ATTACHMENT') ORDER BY api_name`
+        AND api_name IN ('PAYMENT EXTRA') ORDER BY api_name`
       replacements = [GLBConfig.ENABLE, GLBConfig.ENABLE, d.shipment_list_id]
       let extraFiles = await model.simpleSelect(queryStr, replacements)
       if(extraFiles) {
@@ -206,13 +206,21 @@ exports.searchAct = async req => {
               }
             }
             files.push(file)
-          } else {
-            attachments.push({
-              filetype: ex.api_name,
-              url: ex.uploadfile_url,
-              date: moment(ex.created_at).format('YYYY-MM-DD HH:mm:ss'),
-            })
           }
+        }
+      }
+
+      queryStr = `SELECT u.*, cu.user_name FROM tbl_zhongtan_uploadfile u LEFT JOIN tbl_common_user cu ON u.user_id = cu.user_id WHERE u.state = ? AND uploadfile_index1 IN (SELECT payment_extra_id FROM tbl_zhongtan_logistics_payment_extra WHERE state = 1 AND payment_extra_type = 'P' AND payment_extra_status = '7' AND payment_extra_shipment_id = ?)
+        AND api_name IN ('PAYMENT EXTRA ATTACHMENT') ORDER BY api_name`
+      replacements = [GLBConfig.ENABLE, d.shipment_list_id]
+      let extraAttachmentFiles = await model.simpleSelect(queryStr, replacements)
+      if(extraAttachmentFiles) {
+        for(let ex of extraAttachmentFiles) {
+          attachments.push({
+            filetype: ex.api_name,
+            url: ex.uploadfile_url,
+            date: moment(ex.created_at).format('YYYY-MM-DD HH:mm:ss'),
+          })
         }
       }
       d.files = files
