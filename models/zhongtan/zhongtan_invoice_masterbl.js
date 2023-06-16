@@ -503,5 +503,15 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_masterbl', {
     type: db.STRING(5),
     allowNull: true,
     defaultValue: GLBConfig.DISABLE
-  }
+  },
+  invoice_masterbi_do_fee: {
+    // D/O FEE
+    type: db.STRING(50),
+    defaultValue: '',
+    allowNull: false
+  },
+  invoice_masterbi_do_fee_receipt_date: {
+    type: db.DATE,
+    allowNull: true
+  },
 })

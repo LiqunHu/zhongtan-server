@@ -489,6 +489,9 @@ exports.downloadReceiptAct = async req => {
     if(bl.invoice_masterbi_tasac) {
       bl.invoice_masterbi_tasac_receipt = bl.invoice_masterbi_tasac
     }
+    if(bl.invoice_masterbi_do_fee) {
+      bl.invoice_masterbi_do_fee_receipt_date = curDate
+    }
     bl.invoice_masterbi_invoice_receipt_date = curDate
     receipt_type = 'INVOICE FEE'
   }

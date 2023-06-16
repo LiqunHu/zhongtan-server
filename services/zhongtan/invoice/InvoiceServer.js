@@ -1507,7 +1507,7 @@ exports.depositDoAct = async req => {
   } else if (doc.depositType === 'Invoice Fee') {
     if(bl.invoice_masterbi_freight === 'COLLECT') {
       if(bl.invoice_masterbi_cargo_type === 'IM') {
-        if(!(doc.invoice_masterbi_of &&
+        if(!(doc.invoice_masterbi_do_fee || doc.invoice_masterbi_of &&
           (doc.invoice_masterbi_bl_amendment || doc.invoice_masterbi_cod_charge || doc.invoice_masterbi_transfer 
             || doc.invoice_masterbi_lolf || doc.invoice_masterbi_lcl || doc.invoice_masterbi_amendment 
             || doc.invoice_masterbi_tasac || doc.invoice_masterbi_printing || doc.invoice_masterbi_others))) {
@@ -1517,7 +1517,7 @@ exports.depositDoAct = async req => {
         return common.error('deposit_04')
       }
     } else {
-      if(!(doc.invoice_masterbi_of || doc.invoice_masterbi_bl_amendment || doc.invoice_masterbi_cod_charge || doc.invoice_masterbi_transfer 
+      if(!(doc.invoice_masterbi_do_fee || doc.invoice_masterbi_of || doc.invoice_masterbi_bl_amendment || doc.invoice_masterbi_cod_charge || doc.invoice_masterbi_transfer 
         || doc.invoice_masterbi_lolf || doc.invoice_masterbi_lcl || doc.invoice_masterbi_amendment 
         || doc.invoice_masterbi_tasac || doc.invoice_masterbi_printing || doc.invoice_masterbi_others)) {
           return common.error('deposit_02')
@@ -1528,6 +1528,7 @@ exports.depositDoAct = async req => {
       bl.invoice_masterbi_delivery_to = customer.user_name
       bl.invoice_masterbi_carrier = doc.invoice_masterbi_carrier
     }
+    bl.invoice_masterbi_do_fee = doc.invoice_masterbi_do_fee
     bl.invoice_masterbi_of = doc.invoice_masterbi_of
     bl.invoice_masterbi_bl_amendment = doc.invoice_masterbi_bl_amendment
     bl.invoice_masterbi_cod_charge = doc.invoice_masterbi_cod_charge
@@ -1843,7 +1844,34 @@ exports.depositDoAct = async req => {
       renderData.fee.push(fee)
       renderData.sum_fee += parseFloat(bl.invoice_masterbi_of)
     }
-
+    if (bl.invoice_masterbi_do_fee) {
+      let fee = { type: 'D/O FEE', amount: formatCurrency(bl.invoice_masterbi_do_fee), containers: []}
+      if(doc.invoice_masterbi_do_fee_fixed && doc.invoice_masterbi_do_fee_fixed === '1') {
+        fee.containers.push({
+          quantity: '1',
+          cnty_type: '',
+          standard: 'B/L'
+        })
+      } else if(doc.invoice_masterbi_do_fee_necessary) {
+        if(doc.invoice_masterbi_do_fee_type ==='BL') {
+          fee.containers.push({
+            quantity: '1',
+            cnty_type: '',
+            standard: 'B/L'
+          })
+        } else {
+          for(let c of continers) {
+            fee.containers.push({
+              quantity: c.invoice_containers_count,
+              cnty_type: c.invoice_containers_size,
+              standard: ''
+            })
+          }
+        }
+      }
+      renderData.fee.push(fee)
+      renderData.sum_fee += parseFloat(bl.invoice_masterbi_do_fee)
+    }
     renderData.sum_fee = formatCurrency(renderData.sum_fee)
     let fileInfo = await common.ejs2Pdf('fee.ejs', renderData, 'zhongtan')
     if(!bl.invoice_masterbi_invoice_receipt_date) {

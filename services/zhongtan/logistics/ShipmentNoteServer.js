@@ -511,12 +511,12 @@ exports.applyPaymentSearchAct = async req => {
         }
         p.shipment_list_balance_payment_edit = false
         if(p.shipment_list_business_type === 'I') {
-          if(!p.shipment_list_discharge_date || !p.shipment_list_empty_return_date) {
+          if(!p.shipment_list_empty_return_date) {
             p._disabled = true
             p.disabled_title = 'Empty Returned Not'
           }
         } else if(p.shipment_list_business_type === 'E') {
-          if(!p.shipment_list_depot_gate_out_date || !p.shipment_list_loading_date) {
+          if(!p.shipment_list_loading_date) {
             p._disabled = true
             p.disabled_title = 'Empty Returned Not'
           }
