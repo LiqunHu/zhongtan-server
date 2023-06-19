@@ -105,6 +105,12 @@ exports.searchVoyageAct = async req => {
         } else if(d.invoice_masterbi_tasac && d.invoice_masterbi_tasac_receipt ){
           d.invoice_masterbi_tasac = ''
         }
+        if (d.invoice_masterbi_do_fee && d.invoice_masterbi_do_fee_receipt 
+          && parseFloat(d.invoice_masterbi_do_fee) > parseFloat(d.invoice_masterbi_do_fee_receipt)) {
+            d.invoice_masterbi_do_fee = parseFloat(d.invoice_masterbi_tasac) - parseFloat(d.invoice_masterbi_do_fee_receipt)
+        } else if(d.invoice_masterbi_do_fee && d.invoice_masterbi_do_fee_receipt ){
+          d.invoice_masterbi_do_fee = ''
+        }
         d.invoice_masterbi_do_release_date_fmt = moment(d.invoice_masterbi_do_release_date).format('DD/MM/YYYY hh:mm')
         d.invoice_masterbi_invoice_release_date_fmt = moment(d.invoice_masterbi_invoice_release_date).format('DD/MM/YYYY hh:mm')
         d.invoice_masterbi_receipt_release_date_fmt = moment(d.invoice_masterbi_receipt_release_date).format('DD/MM/YYYY hh:mm')
@@ -246,6 +252,12 @@ exports.getMasterbiDataAct = async req => {
         d.invoice_masterbi_tasac = parseFloat(d.invoice_masterbi_tasac) - parseFloat(d.invoice_masterbi_tasac_receipt)
     } else if(d.invoice_masterbi_tasac && d.invoice_masterbi_tasac_receipt ){
       d.invoice_masterbi_tasac = ''
+    }
+    if (d.invoice_masterbi_do_fee && d.invoice_masterbi_do_fee_receipt 
+      && parseFloat(d.invoice_masterbi_do_fee) > parseFloat(d.invoice_masterbi_do_fee_receipt)) {
+        d.invoice_masterbi_do_fee = parseFloat(d.invoice_masterbi_tasac) - parseFloat(d.invoice_masterbi_do_fee_receipt)
+    } else if(d.invoice_masterbi_do_fee && d.invoice_masterbi_do_fee_receipt ){
+      d.invoice_masterbi_do_fee = ''
     }
     d.invoice_masterbi_do_release_date_fmt = moment(d.invoice_masterbi_do_release_date).format('DD/MM/YYYY hh:mm')
     d.invoice_masterbi_invoice_release_date_fmt = moment(d.invoice_masterbi_invoice_release_date).format('DD/MM/YYYY hh:mm')
@@ -490,6 +502,7 @@ exports.downloadReceiptAct = async req => {
       bl.invoice_masterbi_tasac_receipt = bl.invoice_masterbi_tasac
     }
     if(bl.invoice_masterbi_do_fee) {
+      bl.invoice_masterbi_do_fee_receipt = bl.invoice_masterbi_do_fee
       bl.invoice_masterbi_do_fee_receipt_date = curDate
     }
     bl.invoice_masterbi_invoice_receipt_date = curDate

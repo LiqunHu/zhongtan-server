@@ -96,9 +96,18 @@ exports.searchAct = async req => {
       row.lolf = r.invoice_masterbi_lolf
       row.lcl = r.invoice_masterbi_lcl
       row.amendment = r.invoice_masterbi_amendment
-      row.tasac = r.invoice_masterbi_tasac
+      if(r.invoice_masterbi_tasac && r.invoice_masterbi_tasac_receipt) {
+        row.tasac = parseFloat(r.invoice_masterbi_tasac) - parseFloat(r.invoice_masterbi_tasac_receipt)
+      } else if(r.invoice_masterbi_tasac) {
+        row.tasac = r.invoice_masterbi_tasac
+      }
       row.printing = r.invoice_masterbi_printing
       row.others = r.invoice_masterbi_others
+      if(r.invoice_masterbi_do_fee && r.invoice_masterbi_do_fee_receipt) {
+        row.doFee = parseFloat(r.invoice_masterbi_do_fee) - parseFloat(r.invoice_masterbi_do_fee_receipt)
+      } else if(r.invoice_masterbi_do_fee) {
+        row.doFee = r.invoice_masterbi_do_fee
+      }
       row.feeTotal = 0
       if(row.of) {
         row.feeTotal += parseFloat(row.of)
@@ -129,6 +138,9 @@ exports.searchAct = async req => {
       }
       if(row.others) {
         row.feeTotal += parseFloat(row.others)
+      }
+      if(row.doFee) {
+        row.feeTotal += parseFloat(row.doFee)
       }
     } else if (r.api_name === 'GUARANTEE-LETTER') {
       row.receipt_type = 'Guarantee Letter'

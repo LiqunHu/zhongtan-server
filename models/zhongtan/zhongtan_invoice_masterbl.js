@@ -510,6 +510,12 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_masterbl', {
     defaultValue: '',
     allowNull: false
   },
+  invoice_masterbi_do_fee_receipt: {
+    // TASAC RECEIPT AMOUNT
+    type: db.STRING(50),
+    defaultValue: '',
+    allowNull: false
+  },
   invoice_masterbi_do_fee_receipt_date: {
     type: db.DATE,
     allowNull: true

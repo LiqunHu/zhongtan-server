@@ -1844,34 +1844,40 @@ exports.depositDoAct = async req => {
       renderData.fee.push(fee)
       renderData.sum_fee += parseFloat(bl.invoice_masterbi_of)
     }
+
     if (bl.invoice_masterbi_do_fee) {
-      let fee = { type: 'D/O FEE', amount: formatCurrency(bl.invoice_masterbi_do_fee), containers: []}
-      if(doc.invoice_masterbi_do_fee_fixed && doc.invoice_masterbi_do_fee_fixed === '1') {
-        fee.containers.push({
-          quantity: '1',
-          cnty_type: '',
-          standard: 'B/L'
-        })
-      } else if(doc.invoice_masterbi_do_fee_necessary) {
-        if(doc.invoice_masterbi_do_fee_type ==='BL') {
-          fee.containers.push({
-            quantity: '1',
-            cnty_type: '',
-            standard: 'B/L'
-          })
-        } else {
-          for(let c of continers) {
+      let masterbi_do_fee = ''
+      if (bl.invoice_masterbi_do_fee_receipt) {
+        if(parseFloat(bl.invoice_masterbi_do_fee) > parseFloat(bl.invoice_masterbi_do_fee_receipt)) {
+          masterbi_do_fee = parseFloat(bl.invoice_masterbi_do_fee) - parseFloat(bl.invoice_masterbi_do_fee_receipt)
+        }
+      } else {
+        masterbi_do_fee = bl.invoice_masterbi_do_fee
+      }
+      if(parseFloat(masterbi_do_fee) > 0 ) {
+        let fee = { type: 'TASAC FEE', amount: formatCurrency(masterbi_do_fee), containers: []}
+        if(doc.invoice_masterbi_do_fee_necessary) {
+          if(doc.invoice_masterbi_do_fee_type ==='BL') {
             fee.containers.push({
-              quantity: c.invoice_containers_count,
-              cnty_type: c.invoice_containers_size,
-              standard: ''
+              quantity: '1',
+              cnty_type: '',
+              standard: 'B/L'
             })
+          } else {
+            for(let c of continers) {
+              fee.containers.push({
+                quantity: c.invoice_containers_count,
+                cnty_type: c.invoice_containers_size,
+                standard: ''
+              })
+            }
           }
         }
+        renderData.fee.push(fee)
+        renderData.sum_fee += parseFloat(masterbi_do_fee)
       }
-      renderData.fee.push(fee)
-      renderData.sum_fee += parseFloat(bl.invoice_masterbi_do_fee)
     }
+
     renderData.sum_fee = formatCurrency(renderData.sum_fee)
     let fileInfo = await common.ejs2Pdf('fee.ejs', renderData, 'zhongtan')
     if(!bl.invoice_masterbi_invoice_receipt_date) {
