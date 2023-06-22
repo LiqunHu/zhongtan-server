@@ -1855,7 +1855,7 @@ exports.depositDoAct = async req => {
         masterbi_do_fee = bl.invoice_masterbi_do_fee
       }
       if(parseFloat(masterbi_do_fee) > 0 ) {
-        let fee = { type: 'TASAC FEE', amount: formatCurrency(masterbi_do_fee), containers: []}
+        let fee = { type: 'DO FEE', amount: formatCurrency(masterbi_do_fee), containers: []}
         if(doc.invoice_masterbi_do_fee_necessary) {
           if(doc.invoice_masterbi_do_fee_type ==='BL') {
             fee.containers.push({
