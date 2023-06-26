@@ -638,6 +638,7 @@ exports.downloadCollectAct = async (req, res) => {
     row.invoice_masterbi_tasac = ''
     row.invoice_masterbi_printing = ''
     row.invoice_masterbi_others = ''
+    row.invoice_masterbi_do_fee = ''
     if (r.uploadfile_acttype === 'deposit') {
       row.invoice_masterbi_deposit = r.invoice_masterbi_deposit
     }
@@ -652,6 +653,7 @@ exports.downloadCollectAct = async (req, res) => {
       row.invoice_masterbi_tasac = r.invoice_masterbi_tasac
       row.invoice_masterbi_printing = r.invoice_masterbi_printing
       row.invoice_masterbi_others = r.invoice_masterbi_others
+      row.invoice_masterbi_do_fee = r.invoice_masterbi_do_fee
     }
     row.invoice_vessel_name = r.invoice_vessel_name
     row.invoice_vessel_voyage = r.invoice_vessel_voyage
