@@ -107,7 +107,7 @@ exports.searchVoyageAct = async req => {
         }
         if (d.invoice_masterbi_do_fee && d.invoice_masterbi_do_fee_receipt 
           && parseFloat(d.invoice_masterbi_do_fee) > parseFloat(d.invoice_masterbi_do_fee_receipt)) {
-            d.invoice_masterbi_do_fee = parseFloat(d.invoice_masterbi_tasac) - parseFloat(d.invoice_masterbi_do_fee_receipt)
+            d.invoice_masterbi_do_fee = parseFloat(d.invoice_masterbi_do_fee) - parseFloat(d.invoice_masterbi_do_fee_receipt)
         } else if(d.invoice_masterbi_do_fee && d.invoice_masterbi_do_fee_receipt ){
           d.invoice_masterbi_do_fee = ''
         }
@@ -255,7 +255,7 @@ exports.getMasterbiDataAct = async req => {
     }
     if (d.invoice_masterbi_do_fee && d.invoice_masterbi_do_fee_receipt 
       && parseFloat(d.invoice_masterbi_do_fee) > parseFloat(d.invoice_masterbi_do_fee_receipt)) {
-        d.invoice_masterbi_do_fee = parseFloat(d.invoice_masterbi_tasac) - parseFloat(d.invoice_masterbi_do_fee_receipt)
+        d.invoice_masterbi_do_fee = parseFloat(d.invoice_masterbi_do_fee) - parseFloat(d.invoice_masterbi_do_fee_receipt)
     } else if(d.invoice_masterbi_do_fee && d.invoice_masterbi_do_fee_receipt ){
       d.invoice_masterbi_do_fee = ''
     }
