@@ -1144,3 +1144,269 @@ exports.exportShipmentListAct = async (req, res) => {
   let filepath = await common.ejs2xlsx('ExportShipmentListTemplate.xlsx', jsData)
   res.sendFile(filepath)
 }
+
+
+exports.exportSWOAct = async (req, res) => {
+  let doc = common.docValidate(req)
+  let renderData = []
+  let consignments = []
+  let good_details = []
+  let dangerous_goods_information = []
+  let placements = []
+  let containers =[]
+  let seal_numbers = []
+
+  let business_type = 'I'
+  if(doc.business_type) {
+    business_type = 'E'
+  }
+  let queryStr = `select * from tbl_zhongtan_import_billlading 
+                    where state = '1' AND import_business_type = ? `
+  let replacements = [business_type]
+
+  if (doc.vessel) {
+    queryStr += ' and import_billlading_vessel_code = ?'
+    replacements.push(doc.vessel)
+  }
+
+  if (doc.voyage) {
+    queryStr += ' and import_billlading_voyage = ?'
+    replacements.push(doc.voyage)
+  }
+
+  if (doc.bl) {
+    queryStr += ' and import_billlading_no = ?'
+    replacements.push(doc.bl)
+  }
+
+  if (doc.customer) {
+    queryStr += ' and import_billlading_customer_id = ?'
+    replacements.push(doc.customer)
+  }
+
+  if (doc.start_date) {
+    queryStr += ' and created_at >= ? and created_at <= ?'
+    replacements.push(doc.start_date)
+    replacements.push(
+      moment(doc.end_date, 'YYYY-MM-DD')
+        .add(1, 'days')
+        .format('YYYY-MM-DD')
+    )
+  }
+
+  queryStr += ' order by import_billlading_no'
+
+  let typeSizes = await tb_container_size.findAll({
+    attributes: ['container_size_code', 'container_size_name'],
+    where: {
+      state : GLBConfig.ENABLE
+    },
+    order: [['container_size_code', 'ASC']]
+  })
+
+  let mbls = await model.simpleSelect(queryStr, replacements)
+  if(mbls && mbls.length > 0) {
+    let goods_item_no = 1
+    for(let m of mbls) {
+      let port_of_discharge = ''
+      if(m.import_billlading_pod) {
+        let import_billlading_pod_temp = m.import_billlading_pod.replace(/[^a-zA-Z]/gi, '')
+        if(import_billlading_pod_temp.toUpperCase() === 'DARESSALAAM') {
+          port_of_discharge = 'TZDAR'
+        }
+      }
+      let place_of_delivery = ''
+      if(m.import_billlading_fnd) {
+        let import_billlading_fnd_temp = m.import_billlading_fnd.replace(/[^a-zA-Z]/gi, '')
+        if(import_billlading_fnd_temp.toUpperCase() === 'DARESSALAAM') {
+          place_of_delivery = 'TZDAR'
+        }
+      }
+      let port_of_loading = ''
+      if(m.import_billlading_pol) {
+        let import_billlading_pol_temp = m.import_billlading_pol.replace(/[^a-zA-Z]/gi, '')
+        if(import_billlading_pol_temp.toUpperCase() === 'SINGAPORE') {
+          port_of_loading = 'SGSIN'
+        }
+      }
+      let shipping_agent_code = 'COS'
+      let shipping_agent_name = 'CHINESE TANZANIAN JOINT SHIPPING COMPANY'
+      if(m.import_billlading_no.indexOf('OOLU') >= 0) {
+        shipping_agent_code = 'OOL'
+      }
+      consignments.push( {
+        master_bill_of_lading : m.import_billlading_no,
+        house_bill_of_lading : '',
+        trade_type : '',
+        port_of_origin : '',
+        port_of_discharge : port_of_discharge,
+        place_of_destination : '',
+        place_of_delivery : place_of_delivery,
+        port_of_loading : port_of_loading,
+        shipping_agent_code : shipping_agent_code,
+        shipping_agent_name : shipping_agent_name,
+        shipping_line_code : shipping_agent_code,
+        shipping_line_name : shipping_agent_name,
+        forwarder_code : '',
+        forwarder_name : '',
+        forwarder_contact_name : '',
+        forwarder_location_code : '',
+        forwarder_location_name : '',
+        forwarder_tel : '',
+        exporter_name : '',
+        exporter_tel : '',
+        exporter_address : '',
+        exporter_location_code : '',
+        exporter_location_name : '',
+        exporter_contact_name : '',
+        exporter_tin : '',
+        consignee_name : '',
+        consignee_tel : '',
+        consignee_address : '',
+        consignee_location_code : '',
+        consignee_location_name : '',
+        consignee_contact_name : '',
+        consignee_tin : '',
+        consignor_name : '',
+        consignor_tel : '',
+        consignor_address : '',
+        consignor_location_code : '',
+        consignor_location_name : '',
+        consignor_contact_name : '',
+        consignor_tin : '',
+        notify_name : '',
+        notify_tel : '',
+        notify_address : '',
+        notify_location_code : '',
+        notify_location_name : '',
+        notify_contact_name : '',
+        notify_tin : '',
+        notify_two_name : '',
+        notify_two_tel : '',
+        notify_two_address : '',
+        notify_two_location_code : '',
+        notify_two_location_name : '',
+        notify_two_contact_name : '',
+        notify_two_tin : '',
+      })
+      let goods = await tb_billlading_goods.findAll({
+        where: {
+          import_billlading_id: m.import_billlading_id
+        }
+      })
+      
+      if(goods && goods.length > 0) {
+        let description = []
+        for(let g of goods) {
+          if(g.import_billlading_goods_description && g.import_billlading_goods_description.trim()) {
+            description.push(g.import_billlading_goods_description)
+          }
+        }
+        let descriptionStr = description.join(' ')
+        for(let g of goods) {
+          good_details.push({
+            master_bill_of_lading: m.import_billlading_no,
+            house_bill_of_lading: '',
+            goods_item_no: goods_item_no,
+            description: descriptionStr,
+            packing_type: '',
+            package_quantity: g.import_billlading_goods_package_number,
+            package_type: g.import_billlading_goods_package_unit,
+            oil_type: '',
+            invoice_value: '',
+            invoice_currency: '',
+            insurance_value: '',
+            insurance_currency: '',
+            freight_charge: '',
+            freight_currency: '',
+            gross_weight: g.import_billlading_goods_gross_weight_kg,
+            gross_weight_unit: 'KG',
+            net_weight: g.import_billlading_goods_gross_weight_kg,
+            net_weight_unit: 'KG',
+            volume: g.import_billlading_goods_volume_cbm,
+            volume_unit: 'CBM',
+            length: '',
+            length_unit: '',
+            width: '',
+            width_unit: '',
+            height: '',
+            height_unit: '',
+            marks_numbers: '',
+            vehicle_vin: '',
+            vehicle_model: '',
+            vehicle_make: '',
+            vehicle_own_drive: ''
+          })
+        }
+      }
+
+      let container = await tb_billlading_container.findAll({
+        where: {
+          import_billlading_id: m.import_billlading_id
+        }
+      })
+      if(container && container.length > 0) {
+        for(let c of container) {
+          placements.push({
+            goods_item_no: goods_item_no,
+            container_no: c.import_billlading_container_num
+          })
+          let iso_size_type = c.import_billlading_container_type
+          if(typeSizes) {
+            for(let t of typeSizes) {
+              if(t.container_size_code === iso_size_type || t.container_size_name === iso_size_type) {
+                iso_size_type = t.container_size_code
+                break
+              }
+            }
+          }
+
+          let traffic_mode = c.import_billlading_container_traffic_mode
+          if(traffic_mode && traffic_mode.indexOf('/')) {
+            traffic_mode = traffic_mode.split('/')[1]
+          }
+          containers.push({
+            container_no: c.import_billlading_container_num,
+            container_size: iso_size_type,
+            type_of_container: 'C',
+            freight_indicator: traffic_mode,
+            empty_full_status: 'FULL',
+            length: '',
+            length_unit: '',
+            width: '',
+            width_unit: '',
+            height: '',
+            height_unit: '',
+            volume: '',
+            volume_unit: '',
+            weight: '',
+            weight_unit: '',
+            gross_weight: c.import_billlading_container_weight,
+            gross_weight_unit: 'KG',
+            temperature: '',
+            temperature_type: '',
+            temperature_unit: '',
+            minimum_temperature: '',
+            maximum_temperature: ''
+          })
+          seal_numbers.push({
+            container_no: c.import_billlading_container_num,
+            seal_number: c.import_billlading_container_seal
+          })
+        }
+      }
+      goods_item_no++
+    }
+  }
+
+
+
+  renderData.push(consignments)
+  renderData.push(good_details)
+  renderData.push(dangerous_goods_information)
+  renderData.push(placements)
+  renderData.push(containers)
+  renderData.push(seal_numbers)
+  let filepath = await common.ejs2xlsx('UNCONTROLLED_MANIFEST_CONTAINER_TEMPLATE.xlsx', renderData)
+  res.sendFile(filepath)
+}

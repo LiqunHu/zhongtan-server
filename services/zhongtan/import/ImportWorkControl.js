@@ -29,6 +29,8 @@ module.exports = async (req, res) => {
       ret = await srv.uploadAct(req)
     } else if (method === 'exportShipmentList') {
       return await srv.exportShipmentListAct(req, res)
+    } else if (method === 'exportSWO') {
+      return await srv.exportSWOAct(req, res)
     } 
     
     common.sendData(res, ret)
