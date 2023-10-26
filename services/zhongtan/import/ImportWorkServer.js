@@ -1313,11 +1313,14 @@ exports.exportSWOAct = async (req, res) => {
         goods_description = goods_description.trim()
         goods_description = goods_description.replace(/"/gi, '')
         if(goods_description && goods_description.indexOf('IMO CLASS:') >= 0) {
-          let regDangerous = eval('/IMO CLASS:\+([0-9]+)\+/')
+          let regDangerous = eval('/IMO CLASS:(.*?)UN NO:/')
           let rd = regDangerous.exec(goods_description)
           if(rd && rd.length > 1) {
             is_dangerous = true
             imo_class = rd[1]
+            if(imo_class) {
+              imo_class = imo_class.trim()
+            }
           }
         }
       }
