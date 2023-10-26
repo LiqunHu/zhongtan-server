@@ -1234,6 +1234,93 @@ exports.exportSWOAct = async (req, res) => {
       if(m.import_billlading_no.indexOf('OOLU') >= 0) {
         shipping_agent_code = 'OOL'
       }
+
+      let exporter_name = m.import_billlading_shipper
+      let exporter_address = ''
+      if(exporter_name) {
+        exporter_name = exporter_name.trim()
+        exporter_name = exporter_name.replace(/<br\/>/gi, '\r')
+        exporter_name = exporter_name.replace(/"/gi, '\r')
+        if(exporter_name.indexOf('ADD:') >=0) {
+          exporter_name = exporter_name.split('ADD:')[0]
+          exporter_address = exporter_name.split('ADD:')[1]
+        } else {
+          let firstLineIndex = exporter_name.indexOf('\r')
+          let all_exporter_name = exporter_name
+          exporter_name = all_exporter_name.substr(0, firstLineIndex)
+          exporter_address = all_exporter_name.substr(firstLineIndex + 1)
+        }
+      }
+
+      let consignee_name = m.import_billlading_consignee
+      let consignee_address = ''
+      if(consignee_name) {
+        consignee_name = consignee_name.trim()
+        consignee_name = consignee_name.replace(/<br\/>/gi, '\r')
+        consignee_name = consignee_name.replace(/"/gi, '\r')
+        if(consignee_name.indexOf('ADD:') >=0) {
+          consignee_name = consignee_name.split('ADD:')[0]
+          consignee_address = consignee_name.split('ADD:')[1]
+        } else {
+          let firstLineIndex = consignee_name.indexOf('\r')
+          let all_consignee_name = consignee_name
+          consignee_name = all_consignee_name.substr(0, firstLineIndex)
+          consignee_address = all_consignee_name.substr(firstLineIndex + 1)
+        }
+      }
+
+      let notify_name = m.import_billlading_notify_party
+      let notify_address = ''
+      if(notify_name) {
+        notify_name = notify_name.trim()
+        notify_name = notify_name.replace(/<br\/>/gi, '\r')
+        notify_name = notify_name.replace(/"/gi, '\r')
+        if(notify_name.indexOf('ADD:') >=0) {
+          notify_name = notify_name.split('ADD:')[0]
+          notify_address = notify_name.split('ADD:')[1]
+        } else {
+          let firstLineIndex = notify_name.indexOf('\r')
+          let all_notify_name = notify_name
+          notify_name = all_notify_name.substr(0, firstLineIndex)
+          notify_address = all_notify_name.substr(firstLineIndex + 1)
+        }
+      }
+
+      let goods = await tb_billlading_goods.findAll({
+        where: {
+          import_billlading_id: m.import_billlading_id
+        }
+      })
+
+      let container = await tb_billlading_container.findAll({
+        where: {
+          import_billlading_id: m.import_billlading_id
+        }
+      })
+
+      let goods_description = ''
+      let is_dangerous = false
+      let imo_class = ''
+      if(goods && goods.length > 0) {
+        let description = []
+        for(let g of goods) {
+          if(g.import_billlading_goods_description && g.import_billlading_goods_description.trim()) {
+            description.push(g.import_billlading_goods_description)
+          }
+        }
+        goods_description = description.join(' ')
+        goods_description = goods_description
+        goods_description = goods_description.trim()
+        goods_description = goods_description.replace(/"/gi, '')
+        if(goods_description && goods_description.indexOf('IMO CLASS:') >= 0) {
+          let regDangerous = eval('/IMO CLASS:\+([0-9]+)\+/')
+          let rd = regDangerous.exec(goods_description)
+          if(rd && rd.length > 1) {
+            is_dangerous = true
+            imo_class = rd[1]
+          }
+        }
+      }
       consignments.push( {
         master_bill_of_lading : m.import_billlading_no,
         house_bill_of_lading : '',
@@ -1253,30 +1340,30 @@ exports.exportSWOAct = async (req, res) => {
         forwarder_location_code : '',
         forwarder_location_name : '',
         forwarder_tel : '',
-        exporter_name : '',
+        exporter_name : exporter_name,
         exporter_tel : '',
-        exporter_address : '',
+        exporter_address : exporter_address,
         exporter_location_code : '',
         exporter_location_name : '',
         exporter_contact_name : '',
         exporter_tin : '',
-        consignee_name : '',
+        consignee_name : consignee_name,
         consignee_tel : '',
-        consignee_address : '',
+        consignee_address : consignee_address,
         consignee_location_code : '',
         consignee_location_name : '',
         consignee_contact_name : '',
         consignee_tin : '',
-        consignor_name : '',
+        consignor_name : exporter_name,
         consignor_tel : '',
         consignor_address : '',
         consignor_location_code : '',
         consignor_location_name : '',
         consignor_contact_name : '',
         consignor_tin : '',
-        notify_name : '',
+        notify_name : notify_name,
         notify_tel : '',
-        notify_address : '',
+        notify_address : notify_address,
         notify_location_code : '',
         notify_location_name : '',
         notify_contact_name : '',
@@ -1288,30 +1375,23 @@ exports.exportSWOAct = async (req, res) => {
         notify_two_location_name : '',
         notify_two_contact_name : '',
         notify_two_tin : '',
+        bl_description: goods_description
       })
-      let goods = await tb_billlading_goods.findAll({
-        where: {
-          import_billlading_id: m.import_billlading_id
-        }
-      })
-      
-      if(goods && goods.length > 0) {
-        let description = []
-        for(let g of goods) {
-          if(g.import_billlading_goods_description && g.import_billlading_goods_description.trim()) {
-            description.push(g.import_billlading_goods_description)
+
+      if(container && container.length > 0) {
+        for(let c of container) {
+          let traffic_mode = c.import_billlading_container_traffic_mode
+          if(traffic_mode && traffic_mode.indexOf('/')) {
+            traffic_mode = traffic_mode.split('/')[1]
           }
-        }
-        let descriptionStr = description.join(' ')
-        for(let g of goods) {
           good_details.push({
             master_bill_of_lading: m.import_billlading_no,
             house_bill_of_lading: '',
             goods_item_no: goods_item_no,
-            description: descriptionStr,
+            description: goods_description,
             packing_type: '',
-            package_quantity: g.import_billlading_goods_package_number,
-            package_type: g.import_billlading_goods_package_unit,
+            package_quantity: c.import_billlading_container_package_cnt,
+            package_type: c.import_billlading_container_cnt_unit,
             oil_type: '',
             invoice_value: '',
             invoice_currency: '',
@@ -1319,12 +1399,12 @@ exports.exportSWOAct = async (req, res) => {
             insurance_currency: '',
             freight_charge: '',
             freight_currency: '',
-            gross_weight: g.import_billlading_goods_gross_weight_kg,
+            gross_weight: c.import_billlading_container_weight,
             gross_weight_unit: 'KG',
-            net_weight: g.import_billlading_goods_gross_weight_kg,
+            net_weight: c.import_billlading_container_weight,
             net_weight_unit: 'KG',
-            volume: g.import_billlading_goods_volume_cbm,
-            volume_unit: 'CBM',
+            volume: '',
+            volume_unit: '',
             length: '',
             length_unit: '',
             width: '',
@@ -1337,16 +1417,25 @@ exports.exportSWOAct = async (req, res) => {
             vehicle_make: '',
             vehicle_own_drive: ''
           })
-        }
-      }
 
-      let container = await tb_billlading_container.findAll({
-        where: {
-          import_billlading_id: m.import_billlading_id
-        }
-      })
-      if(container && container.length > 0) {
-        for(let c of container) {
+          if(is_dangerous) {
+            dangerous_goods_information.push({
+              goods_item_no: goods_item_no,
+              class_code: imo_class,
+              description: '',
+              flashpoint_value: '',
+              shipm_flashpt_value: '',
+              shipm_flashpt_unit: '',
+              packing_group: '',
+              mar_pol_category: '',
+              imdgpage: '',
+              imdgclass: imo_class,
+              unnumber: '',
+              tremcard: '',
+              mfag: '',
+              ems: '',
+            })
+          }
           placements.push({
             goods_item_no: goods_item_no,
             container_no: c.import_billlading_container_num
@@ -1361,10 +1450,6 @@ exports.exportSWOAct = async (req, res) => {
             }
           }
 
-          let traffic_mode = c.import_billlading_container_traffic_mode
-          if(traffic_mode && traffic_mode.indexOf('/')) {
-            traffic_mode = traffic_mode.split('/')[1]
-          }
           containers.push({
             container_no: c.import_billlading_container_num,
             container_size: iso_size_type,
@@ -1393,13 +1478,11 @@ exports.exportSWOAct = async (req, res) => {
             container_no: c.import_billlading_container_num,
             seal_number: c.import_billlading_container_seal
           })
+          goods_item_no++
         }
       }
-      goods_item_no++
     }
   }
-
-
 
   renderData.push(consignments)
   renderData.push(good_details)
