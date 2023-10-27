@@ -1229,11 +1229,8 @@ exports.exportSWOAct = async (req, res) => {
           port_of_loading = 'SGSIN'
         }
       }
-      let shipping_agent_code = 'COS'
-      let shipping_agent_name = 'CHINESE TANZANIAN JOINT SHIPPING COMPANY'
-      if(m.import_billlading_no.indexOf('OOLU') >= 0) {
-        shipping_agent_code = 'OOL'
-      }
+      let shipping_agent_code = 'SNT'
+      let shipping_agent_name = 'COSCO SHIPPING LINES'
 
       let exporter_name = m.import_billlading_shipper
       let exporter_address = ''
@@ -1328,9 +1325,9 @@ exports.exportSWOAct = async (req, res) => {
         master_bill_of_lading : m.import_billlading_no,
         house_bill_of_lading : '',
         trade_type : '',
-        port_of_origin : '',
+        port_of_origin : m.import_billlading_por,
         port_of_discharge : port_of_discharge,
-        place_of_destination : '',
+        place_of_destination : place_of_delivery,
         place_of_delivery : place_of_delivery,
         port_of_loading : port_of_loading,
         shipping_agent_code : shipping_agent_code,
@@ -1481,9 +1478,11 @@ exports.exportSWOAct = async (req, res) => {
             container_no: c.import_billlading_container_num,
             seal_number: c.import_billlading_container_seal
           })
-          goods_item_no++
+          
         }
       }
+
+      goods_item_no++
     }
   }
 
