@@ -6,6 +6,7 @@ const common = require('../../../util/CommonUtil')
 const model = require('../../../app/model')
 const seq = require('../../../util/Sequence')
 const opSrv = require('../../common/system/OperationPasswordServer')
+const rateSrv = require('../../zhongtan/configuration/ExchangeRateConfigServer')
 const Op = model.Op
 
 const tb_user = model.common_user
@@ -472,7 +473,7 @@ exports.downloadReceiptAct = async req => {
       invoice_masterbi_id: doc.invoice_masterbi_id
     }
   })
-  bl.invoice_masterbi_receipt_amount = doc.invoice_masterbi_receipt_amount
+  bl.invoice_masterbi_receipt_amount = doc.invoice_masterbi_receipt_amount_rate
   bl.invoice_masterbi_receipt_currency = doc.invoice_masterbi_receipt_currency
   bl.invoice_masterbi_check_cash = doc.invoice_masterbi_check_cash
   bl.invoice_masterbi_check_no = doc.invoice_masterbi_check_no
@@ -535,7 +536,7 @@ exports.downloadReceiptAct = async req => {
       uploadfile_name: fileInfo.name,
       uploadfile_url: fileInfo.url,
       uploadfile_acttype: doc.checkType,
-      uploadfile_amount: doc.invoice_masterbi_receipt_amount,
+      uploadfile_amount: doc.invoice_masterbi_receipt_amount_rate,
       uploadfile_currency: doc.invoice_masterbi_receipt_currency,
       uploadfile_check_cash: doc.invoice_masterbi_check_cash,
       uploadfile_check_no: doc.invoice_masterbi_check_no,
@@ -849,4 +850,10 @@ exports.checkPasswordAct = async req => {
   } else {
     return common.error('auth_24')
   }
+}
+
+exports.changeReceiptCurrencyAct = async req => {
+  let doc = common.docValidate(req)
+  let tzsAmount = await rateSrv.getCurrentExchangeRateTZS(doc.usd_amount)
+  return common.success(tzsAmount)
 }

@@ -31,10 +31,18 @@ exports.searchAct = async req => {
     returnData = {}
   let queryStr = `select s.*, v.vendor_code as shipment_list_vendor_code, v.vendor_name as shipment_list_vendor_name from tbl_zhongtan_logistics_shipment_list s 
                   left join (SELECT shipment_list_bill_no, IFNULL(shipment_list_discharge_date, shipment_list_depot_gate_out_date) AS sort_date FROM tbl_zhongtan_logistics_shipment_list GROUP BY shipment_list_bill_no) ss ON s.shipment_list_bill_no = ss.shipment_list_bill_no
-                  left join tbl_common_vendor v on s.shipment_list_vendor = v.vendor_id where s.state = ?`
+                  left join tbl_common_vendor v on s.shipment_list_vendor = v.vendor_id where s.state = ? `
   let replacements = [GLBConfig.ENABLE]
   let searchPara = doc.searchPara
   if(searchPara) {
+    if(searchPara.currentTab) {
+      queryStr = queryStr + ' AND s.shipment_list_business_type = ? '
+      if(searchPara.currentTab === 'Import') {
+        replacements.push("I")
+      } else {
+        replacements.push("E")
+      }
+    }
     if(searchPara.shipment_list_bill_no) {
       queryStr = queryStr + ' and s.shipment_list_bill_no like ? '
       replacements.push('%' + searchPara.shipment_list_bill_no + '%')
@@ -144,13 +152,15 @@ exports.searchShipmentListAct = async req => {
   queryStr = `SELECT c.*, b.*, v.export_vessel_name, v.export_vessel_voyage, v.export_vessel_etd FROM tbl_zhongtan_export_proforma_container c 
               LEFT JOIN tbl_zhongtan_export_proforma_masterbl b ON c.export_vessel_id = b.export_vessel_id AND c.export_container_bl = b.export_masterbl_bl
               LEFT JOIN tbl_zhongtan_export_proforma_vessel v ON c.export_vessel_id = v.export_vessel_id
-              WHERE c.state = ? AND b.state = ? AND b.export_masterbl_bl LIKE ? 
+              WHERE c.state = ? AND b.state = ? AND b.bk_cancellation_status = 0 AND b.export_masterbl_bl LIKE ? 
               AND NOT EXISTS (SELECT 1 FROM tbl_zhongtan_logistics_shipment_list s WHERE s.state = ? AND s.shipment_list_bill_no = c.export_container_bl AND s.shipment_list_container_no = c.export_container_no) 
               ORDER BY b.export_masterbl_bl, c.export_container_no`
   replacements = [GLBConfig.ENABLE, GLBConfig.ENABLE, search_bl, GLBConfig.ENABLE]
   let ret_export = await model.simpleSelect(queryStr, replacements)
   if(ret_export && ret_export.length > 0) {
     total = total + ret_export.length
+    
+    let sameExportMasterblId = []
     for(let d of ret_export) {
       let r = {}
       r.shipment_list_business_type = 'E'
@@ -179,6 +189,21 @@ exports.searchShipmentListAct = async req => {
       r.shipment_list_vessel_voyage = d.export_vessel_voyage
       r.shipment_list_vessel_etd = d.export_vessel_etd ? moment(d.export_vessel_etd, 'DD/MM/YYYY').format('YYYY-MM-DD') : ''
       r._checked = false
+      // 查询已开收据费用信息
+      let receivableQueryStr = 'SELECT SUM(shipment_fee_amount) AS total_fee_amount FROM tbl_zhongtan_export_shipment_fee WHERE state = 1 AND export_masterbl_id = ? AND shipment_fee_type = ? AND shipment_fee_status = ?'
+      let receivableReplacements = [d.export_masterbl_id, 'R', 'RE']
+      let ret_receivable = await model.simpleSelect(receivableQueryStr, receivableReplacements)
+
+      let payableQueryStr = 'SELECT SUM(shipment_fee_amount) AS total_fee_amount FROM tbl_zhongtan_export_shipment_fee WHERE state = 1 AND export_masterbl_id = ? AND shipment_fee_type = ? AND shipment_fee_status = ?'
+      let payableReplacements = [d.export_masterbl_id, 'P', 'AP']
+      let ret_payable = await model.simpleSelect(payableQueryStr, payableReplacements)
+      if(ret_receivable && ret_receivable.length > 0 && ret_receivable[0].total_fee_amount 
+        && ret_payable && ret_payable.length > 0 && ret_payable[0].total_fee_amount) {
+          if(sameExportMasterblId.indexOf(d.export_masterbl_id) < 0) {
+            sameExportMasterblId.push(d.export_masterbl_id)
+            r.shipment_list_total_freight = new Decimal(ret_receivable[0].total_fee_amount).sub(new Decimal(ret_payable[0].total_fee_amount))
+          }
+      }
       rows.push(r)
     }
   }

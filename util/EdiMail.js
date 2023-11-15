@@ -11,6 +11,7 @@ const cal_config_srv = require('../services/zhongtan/equipment/OverdueCalculatio
 const empty_stock_srv = require('../services/zhongtan/equipment/EmptyStockManagementServer')
 const cal_demurrage_srv = require('../services/zhongtan/equipment/ExportDemurrageCalculationServer')
 const freight_srv = require('../services/zhongtan/logistics/ShipmentListServer')
+const customer_srv = require('../services/zhongtan/configuration/CustomerServer')
 
 const tb_invoice_containers = model.zhongtan_invoice_containers
 const tb_vessel = model.zhongtan_invoice_vessel
@@ -538,6 +539,7 @@ const updateContainerEdi = async (ediData) => {
           }
         }
         await incon.save()
+        await customer_srv.importDemurrageCheck(incon.invoice_containers_customer_id)
       }
     } else if(ediType === '36') {
       // 出口提箱出场

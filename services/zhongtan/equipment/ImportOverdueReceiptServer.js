@@ -5,6 +5,8 @@ const common = require('../../../util/CommonUtil')
 const GLBConfig = require('../../../util/GLBConfig')
 const model = require('../../../app/model')
 const seq = require('../../../util/Sequence')
+const customer_srv = require('../../zhongtan/configuration/CustomerServer')
+
 
 const tb_user = model.common_user
 const tb_bl = model.zhongtan_invoice_masterbl
@@ -201,13 +203,15 @@ exports.doReceiptAct = async req => {
       if(incon.overdue_invoice_containers_overdue_deduction) {
         con.invoice_containers_empty_return_overdue_deduction = new Decimal(con.invoice_containers_empty_return_overdue_deduction ? con.invoice_containers_empty_return_overdue_deduction : 0).plus(new Decimal(incon.overdue_invoice_containers_overdue_deduction)).toNumber()
       }
-      con.save()
+      await con.save()
 
       incon.overdue_invoice_containers_receipt_date = curDate
-      incon.save()
+      await incon.save()
+
+      await customer_srv.importDemurrageCheck(con.invoice_containers_customer_id)
     }
     invoice.uploadfile_receipt_no = receipt_no
-    invoice.save()
+    await invoice.save()
     return common.success({ url: fileInfo.url })
   } catch(e) {
     return common.error('generate_file_01')

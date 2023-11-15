@@ -7,6 +7,8 @@ const logger = require('../app/logger').createLogger(__filename)
 
 const cal_config_srv = require('../services/zhongtan/equipment/OverdueCalculationConfigServer')
 const empty_stock_srv = require('../services/zhongtan/equipment/EmptyStockManagementServer')
+const customer_srv = require('../services/zhongtan/configuration/CustomerServer')
+
 
 const tb_container = model.zhongtan_invoice_containers
 const tb_fixed_deposit = model.zhongtan_customer_fixed_deposit
@@ -59,6 +61,7 @@ const calculationCurrentOverdueDays = async () => {
         let cal_result = await cal_config_srv.demurrageCalculation(free_days, discharge_date, return_date, d.invoice_masterbi_cargo_type, d.invoice_masterbi_destination.substring(0, 2), d.invoice_masterbi_carrier, d.invoice_containers_size, d.invoice_vessel_ata)
         if(cal_result.diff_days !== -1) {
           await tb_container.update({'invoice_containers_current_overdue_days': cal_result.overdue_days}, {'where': {'invoice_containers_id': d.invoice_containers_id}})
+          await customer_srv.importDemurrageCheck(d.invoice_containers_customer_id)
         } 
       }
     }

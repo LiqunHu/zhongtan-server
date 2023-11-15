@@ -83,6 +83,16 @@ exports.searchAct = async req => {
         }
       }
     }
+    if (doc.search_data.is_paid) {
+      doc.search_data.is_overdue = '1'
+      // 查询是否支付时只判断超期的
+      if(doc.search_data.is_paid === '1') {
+        queryStr += ` and (a.invoice_containers_empty_return_invoice_date is not null and a.invoice_containers_empty_return_receipt_date is not null ) `
+      } else {
+        queryStr += ` and (a.invoice_containers_empty_return_invoice_date is null or a.invoice_containers_empty_return_receipt_date is null )  `
+      }
+    }
+
     if (doc.search_data.is_overdue) {
       if(doc.search_data.is_overdue === '1') {
         queryStr += ` AND CASE WHEN a.invoice_containers_empty_return_overdue_free_days IS NOT NULL AND a.invoice_containers_empty_return_overdue_free_days != '' THEN TIMESTAMPDIFF(DAY, STR_TO_DATE(IFNULL(a.invoice_containers_edi_discharge_date, b.invoice_vessel_ata), "%d/%m/%Y"), STR_TO_DATE(IFNULL(a.invoice_containers_empty_return_date, DATE_FORMAT(NOW(), '%d/%m/%Y')), "%d/%m/%Y")) > a.invoice_containers_empty_return_overdue_free_days+0 ELSE TIMESTAMPDIFF(DAY, STR_TO_DATE(IFNULL(a.invoice_containers_edi_discharge_date, b.invoice_vessel_ata), "%d/%m/%Y"), STR_TO_DATE(IFNULL(a.invoice_containers_empty_return_date, DATE_FORMAT(NOW(), '%d/%m/%Y')), "%d/%m/%Y")) > (SELECT overdue_charge_max_day
@@ -112,6 +122,7 @@ exports.searchAct = async req => {
           AND ((overdue_charge_enabled_date IS NOT NULL AND STR_TO_DATE(overdue_charge_enabled_date, '%Y-%m-%d') <= STR_TO_DATE(b.invoice_vessel_ata, "%d/%m/%Y")) OR (overdue_charge_enabled_date IS NULL)) ORDER BY overdue_charge_enabled_date DESC LIMIT 1) END  `
       }
     }
+
     if (doc.search_data.is_invoice) {
       if(doc.search_data.is_invoice === '1') {
         queryStr += ` and (a.invoice_containers_empty_return_invoice_date is not null or a.invoice_containers_empty_return_receipt_date is not null ) `
@@ -130,6 +141,10 @@ exports.searchAct = async req => {
     if (doc.search_data.consignee) {
       queryStr += ` and c.invoice_masterbi_consignee_name = ?`
       replacements.push(doc.search_data.consignee)
+    }
+    if (doc.search_data.sizeType) {
+      queryStr += ` and a.invoice_containers_size = ?`
+      replacements.push(doc.search_data.sizeType)
     }
   }
   queryStr = queryStr + ' ORDER BY b.invoice_vessel_id DESC, a.invoice_containers_bl, a.invoice_containers_no'
@@ -199,6 +214,15 @@ exports.exportDataAct = async(req, res) => {
         }
       }
     }
+    if (doc.search_data.is_paid) {
+      doc.search_data.is_overdue = '1'
+      // 查询是否支付时只判断超期的
+      if(doc.search_data.is_paid === '1') {
+        queryStr += ` and (a.invoice_containers_empty_return_invoice_date is not null and a.invoice_containers_empty_return_receipt_date is not null ) `
+      } else {
+        queryStr += ` and (a.invoice_containers_empty_return_invoice_date is null or a.invoice_containers_empty_return_receipt_date is null )  `
+      }
+    }
     if (doc.search_data.is_overdue) {
       if(doc.search_data.is_overdue === '1') {
         queryStr += ` AND CASE WHEN a.invoice_containers_empty_return_overdue_free_days IS NOT NULL AND a.invoice_containers_empty_return_overdue_free_days != '' THEN TIMESTAMPDIFF(DAY, STR_TO_DATE(IFNULL(a.invoice_containers_edi_discharge_date, b.invoice_vessel_ata), "%d/%m/%Y"), STR_TO_DATE(IFNULL(a.invoice_containers_empty_return_date, DATE_FORMAT(NOW(), '%d/%m/%Y')), "%d/%m/%Y")) > a.invoice_containers_empty_return_overdue_free_days+0 ELSE TIMESTAMPDIFF(DAY, STR_TO_DATE(IFNULL(a.invoice_containers_edi_discharge_date, b.invoice_vessel_ata), "%d/%m/%Y"), STR_TO_DATE(IFNULL(a.invoice_containers_empty_return_date, DATE_FORMAT(NOW(), '%d/%m/%Y')), "%d/%m/%Y")) > (SELECT overdue_charge_max_day
@@ -238,6 +262,10 @@ exports.exportDataAct = async(req, res) => {
     if (doc.search_data.consignee) {
       queryStr += ` and c.invoice_masterbi_consignee_name = ?`
       replacements.push(doc.search_data.consignee)
+    }
+    if (doc.search_data.sizeType) {
+      queryStr += ` and a.invoice_containers_size = ?`
+      replacements.push(doc.search_data.sizeType)
     }
   }
   queryStr = queryStr + ' ORDER BY b.invoice_vessel_id DESC, a.invoice_containers_bl, a.invoice_containers_no'

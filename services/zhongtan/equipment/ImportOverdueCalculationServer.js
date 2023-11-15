@@ -9,6 +9,7 @@ const mailer = require('../../../util/Mail')
 const cal_config_srv = require('./OverdueCalculationConfigServer')
 const opSrv = require('../../common/system/OperationPasswordServer')
 const freight_srv = require('../logistics/ShipmentListServer')
+const customer_srv = require('../../zhongtan/configuration/CustomerServer')
 const Op = model.Op
 
 const tb_user = model.common_user
@@ -249,6 +250,7 @@ exports.emptyReturnSaveAct = async req => {
         } 
       }
       await con.save()
+      await customer_srv.importDemurrageCheck(con.invoice_containers_customer_id)
     } else if(doc.invoice_containers_empty_return_overdue_free_days || doc.invoice_containers_edi_discharge_date){
       // 保存免箱期
       if(doc.invoice_containers_empty_return_overdue_free_days) {
@@ -300,6 +302,7 @@ exports.emptyReturnSaveAct = async req => {
                 } 
               }
               await oc.save()
+              await customer_srv.importDemurrageCheck(oc.invoice_containers_customer_id)
             }
           } else {
             await tb_container.update(

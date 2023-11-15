@@ -175,6 +175,11 @@ exports.changeBlacklistAct = async req => {
   })
   if (modiuser) {
     modiuser.user_blacklist = doc.user_blacklist
+    if(doc.user_blacklist === GLBConfig.ENABLE) {
+      modiuser.blacklist_from = GLBConfig.ENABLE
+    } else {
+      modiuser.blacklist_from = GLBConfig.DISABLE
+    }
     await modiuser.save()
     return common.success()
   } else {
@@ -256,4 +261,34 @@ exports.checkBlacklistAct = async user_id => {
     }
   } 
   return true
+}
+
+/**
+ * 检查客户是否有进口超期,并自动设置黑名单
+ * @param {} user_id 
+ */
+exports.importDemurrageCheck = async user_id => {
+  let user = await tb_user.findOne({
+    where: {
+      user_id: user_id,
+      blacklist_from: GLBConfig.DISABLE,
+      state: GLBConfig.ENABLE
+    }
+  })
+  if(user) {
+    let queryStr = `SELECT * FROM tbl_zhongtan_invoice_containers WHERE state = 1 AND invoice_containers_customer_id = ? AND invoice_containers_actually_return_overdue_days > 0 AND invoice_containers_empty_return_receipt_date IS NULL`
+    let replacements = [user_id]
+    let result = await model.simpleSelect(queryStr, replacements)
+    if(result && result.length > 0) {
+      if(user.user_blacklist === GLBConfig.DISABLE) {
+        user.user_blacklist = GLBConfig.ENABLE
+        await user.save()
+      }
+    } else {
+      if(user.user_blacklist === GLBConfig.ENABLE) {
+        user.user_blacklist = GLBConfig.DISABLE
+        await user.save()
+      }
+    }
+  }
 }
