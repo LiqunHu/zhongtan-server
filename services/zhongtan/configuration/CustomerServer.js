@@ -11,6 +11,7 @@ const Op = model.Op
 const tb_usergroup = model.common_usergroup
 const tb_user = model.common_user
 const tb_user_groups = model.common_user_groups
+const tb_vessel = model.zhongtan_invoice_vessel
 
 exports.initAct = async () => {
   let returnData = {
@@ -276,13 +277,65 @@ exports.importDemurrageCheck = async user_id => {
     }
   })
   if(user) {
-    let queryStr = `SELECT * FROM tbl_zhongtan_invoice_containers WHERE state = 1 AND invoice_containers_customer_id = ? AND invoice_containers_actually_return_overdue_days > 0 AND invoice_containers_empty_return_receipt_date IS NULL`
+    let queryStr = `SELECT * FROM tbl_zhongtan_invoice_containers WHERE state = 1 AND invoice_containers_customer_id = ? AND invoice_containers_empty_return_overdue_days > 0 `
     let replacements = [user_id]
     let result = await model.simpleSelect(queryStr, replacements)
     if(result && result.length > 0) {
       if(user.user_blacklist === GLBConfig.DISABLE) {
-        user.user_blacklist = GLBConfig.ENABLE
-        await user.save()
+        let user_blacklist = GLBConfig.DISABLE
+        for(let r of result) {
+          try {
+            // 1. 从卸船时间2020/7/1日开始，之前的没入系统，存在未核销的情况
+            let check_flg = false
+            if(r.invoice_containers_edi_discharge_date && moment(r.invoice_containers_edi_discharge_date, 'DD/MM/YYYY').isAfter('01/07/2020', 'DD/MM/YYYY')) {
+              check_flg = true
+            } else if(r.invoice_vessel_id){
+              let vessel = await tb_vessel.findOne({
+                where: {
+                  invoice_vessel_id: r.invoice_vessel_id
+                }
+              })
+              if(vessel && vessel.invoice_vessel_ata && moment(vessel.invoice_vessel_ata, 'DD/MM/YYYY').isAfter('01/07/2020', 'DD/MM/YYYY')) {
+                check_flg = true
+              }
+            }
+            if(check_flg) {
+              // 2. 针对已还箱- 产生滞期费- 未全额支付的- 自动拉黑  （EDI收箱日期+1天）
+              if(r.invoice_containers_actually_return_date) {
+                if(moment().diff(moment(r.invoice_containers_actually_return_date, 'DD/MM/YYYY'), 'days') > 0) {
+                  if(r.invoice_containers_empty_return_overdue_amount_receipt) {
+                    if(r.invoice_containers_empty_return_overdue_deduction) {
+                      if((parseInt(r.invoice_containers_empty_return_overdue_amount_receipt) + parseInt(r.invoice_containers_empty_return_overdue_deduction)) < parseInt(r.invoice_containers_empty_return_overdue_amount)) {
+                        user_blacklist = true
+                      } else if(parseInt(r.invoice_containers_empty_return_overdue_amount_receipt) < parseInt(r.invoice_containers_empty_return_overdue_amount)){
+                        user_blacklist = true
+                      }
+                    }
+                  } else {
+                    user_blacklist = true
+                    break
+                  }
+                }
+              } else {
+                // 3. 针对未还箱，在免箱天基础上超期超过30天、产生滞期费- 未支付到一定日期- 自动拉黑 
+                //（即免箱期内超期30天未还箱，例如超期第30天到12/1日，需开票支付到12/1日，开具收据后系统移除黑名单至支付截止日期12/1，费用未支付或到12/2号未还，费用未支付，自动拉黑）
+                if(r.invoice_containers_empty_return_date_receipt) {
+                  // 已经开收据
+                  if(moment().isAfter(moment(r.invoice_containers_empty_return_date_receipt, 'DD/MM/YYYY')) && parseInt(r.invoice_containers_empty_return_overdue_days) > 30) {
+                    // 开票日期在当前日期之前,并且超期大于30天
+                    user_blacklist = true
+                  }
+                } else if(parseInt(r.invoice_containers_empty_return_overdue_days) > 30){
+                  user_blacklist = true
+                }
+              }
+            }
+          } catch(error) {}
+        }
+        if(user_blacklist === GLBConfig.ENABLE) {
+          user.user_blacklist = GLBConfig.ENABLE
+          await user.save()
+        }
       }
     } else {
       if(user.user_blacklist === GLBConfig.ENABLE) {
