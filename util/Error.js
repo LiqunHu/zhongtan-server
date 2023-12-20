@@ -64,6 +64,7 @@ module.exports = {
   import_11: 'Freight charge is not number',
   import_12: 'BULKSHIPMENT do not exist',
   import_13: 'Please upload deposit attachment',
+  import_14: 'Please choose Bank',
   fee_01: 'Fee already exists, Please edit',
   fee_02: 'Fixed container deposit exists, Please invalid',
   fee_03: 'Fixed container deposit already approved, Please invalid',
@@ -134,5 +135,7 @@ module.exports = {
   mnr_01: 'same container no description exist',
   obs_01: 'same folder name already exists',
   obs_02: 'upload file failed',
-  obs_03: 'download file failed'
+  obs_03: 'download file failed',
+  bank_01: 'Edit Bank Info do not exist',
+  bank_02: 'Bank name or code already exists',
 }

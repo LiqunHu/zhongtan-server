@@ -117,5 +117,10 @@ module.exports = db.defineModel('tbl_zhongtan_uploadfile', {
     // 发票号
     type: db.STRING(50),
     allowNull: true
+  },
+  uploadfile_bank_info: {
+    // 银行信息
+    type: db.STRING(10),
+    allowNull: true
   }
 })

@@ -9,14 +9,30 @@ const opSrv = require('../../common/system/OperationPasswordServer')
 const tb_user = model.common_user
 const tb_fixed_deposit = model.zhongtan_customer_fixed_deposit
 const tb_uploadfile = model.zhongtan_uploadfile
+const tb_bank_info = model.zhongtan_bank_info
 
 exports.initAct = async () => {
+  let BANK_INFOS = []
+  let banks = await tb_bank_info.findAll({
+    where: {
+      state: GLBConfig.ENABLE
+    }
+  })
+  if(banks && banks.length > 0) {
+    for(let b of banks) {
+      BANK_INFOS.push({
+        bank_code: b.bank_code,
+        bank_name: b.bank_name
+      })
+    }
+  }
   let returnData = {
     CASH_BANK: GLBConfig.CASH_BANK_INFO,
     RECEIPT_CURRENCY: GLBConfig.RECEIPT_CURRENCY,
     DEPOSIT_TYPE: GLBConfig.FIXED_DEPOSIT_TYPE,
     WORK_STATE: GLBConfig.FIXED_DEPOSIT_WORK_STATE,
-    UPLOAD_STATE: GLBConfig.UPLOAD_STATE
+    UPLOAD_STATE: GLBConfig.UPLOAD_STATE,
+    BANK_INFOS: BANK_INFOS
   }
   return common.success(returnData)
 }
@@ -126,6 +142,11 @@ exports.receiptAct = async req => {
     return common.error('fee_04')
   }
 
+  if(!doc.deposit_bank_info) {
+    // && moment().isAfter(moment('2023-12-31', 'YYYY/MM/DD'))
+    return common.error('import_14')
+  }
+
   let theCustomer = await tb_user.findOne({
     where: {
       user_id: doc.fixed_deposit_customer_id
@@ -148,6 +169,7 @@ exports.receiptAct = async req => {
   theDeposit.updated_at = curDate
   theDeposit.deposit_receipt_release_date = curDate
   theDeposit.deposit_work_state = 'W'
+  theDeposit.deposit_bank_info = doc.deposit_bank_info
 
   let renderData = {}
   renderData.fixed_deposit_receipt_no = theDeposit.deposit_receipt_no
@@ -188,7 +210,8 @@ exports.receiptAct = async req => {
       uploadfile_received_from: theCustomer.user_name,
       uploadfile_receipt_no: theDeposit.deposit_receipt_no,
       uploadfil_release_date: curDate,
-      uploadfil_release_user_id: user.user_id
+      uploadfil_release_user_id: user.user_id,
+      uploadfile_bank_info: doc.deposit_bank_info
     })
     return common.success({ url: fileInfo.url })
   } catch(e) {

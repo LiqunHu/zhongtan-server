@@ -11,6 +11,7 @@ const tb_bl = model.zhongtan_export_proforma_masterbl
 const tb_container = model.zhongtan_export_proforma_container
 const tb_uploadfile = model.zhongtan_uploadfile
 const tb_shipment_fee = model.zhongtan_export_shipment_fee
+const tb_bank_info = model.zhongtan_bank_info
 
 exports.initAct = async () => {
   let returnData = {}
@@ -25,6 +26,22 @@ exports.initAct = async () => {
   replacements = [GLBConfig.ENABLE]
   let vessels = await model.simpleSelect(queryStr, replacements)
   returnData.VESSEL = vessels
+
+  let BANK_INFOS = []
+  let banks = await tb_bank_info.findAll({
+    where: {
+      state: GLBConfig.ENABLE
+    }
+  })
+  if(banks && banks.length > 0) {
+    for(let b of banks) {
+      BANK_INFOS.push({
+        bank_code: b.bank_code,
+        bank_name: b.bank_name
+      })
+    }
+  }
+  returnData.BANK_INFOS = BANK_INFOS
   return common.success(returnData)
 }
 
@@ -148,6 +165,11 @@ exports.searchContainerAct = async req => {
 exports.shipmentReceiptAct = async req => {
   let doc = common.docValidate(req), user = req.user, curDate = new Date()
   let file_id = doc.file_id
+  
+  if(!doc.shipment_receipt_bank_info) {
+    // && moment().isAfter(moment('2023-12-31', 'YYYY/MM/DD'))
+    return common.error('import_14')
+  }
   let commonUser = await tb_user.findOne({
     where: {
       user_id: user.user_id
@@ -211,7 +233,8 @@ exports.shipmentReceiptAct = async req => {
       uploadfile_receipt_no: receipt_no,
       uploadfil_release_date: curDate,
       uploadfil_release_user_id: user.user_id,
-      uploadfile_bank_reference_no: doc.shipment_receipt_bank_reference_no
+      uploadfile_bank_reference_no: doc.shipment_receipt_bank_reference_no,
+      uploadfile_bank_info: doc.shipment_receipt_bank_info
     })
     invoice.uploadfile_index3 = ruf.uploadfile_id
     invoice.uploadfile_receipt_no = receipt_no

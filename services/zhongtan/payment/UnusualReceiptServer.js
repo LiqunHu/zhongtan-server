@@ -10,6 +10,7 @@ const numberToText = require('number2text')
 const tb_unusual_invoice = model.zhongtan_unusual_invoice
 const tb_uploadfile = model.zhongtan_uploadfile
 const tb_user = model.common_user
+const tb_bank_info = model.zhongtan_bank_info
 
 exports.initAct = async () => {
   let returnData = {}
@@ -41,6 +42,21 @@ exports.initAct = async () => {
       returnData.VESSELS.push(e)
     }
   }
+  let BANK_INFOS = []
+  let banks = await tb_bank_info.findAll({
+    where: {
+      state: GLBConfig.ENABLE
+    }
+  })
+  if(banks && banks.length > 0) {
+    for(let b of banks) {
+      BANK_INFOS.push({
+        bank_code: b.bank_code,
+        bank_name: b.bank_name
+      })
+    }
+  }
+  returnData.BANK_INFOS = BANK_INFOS
   return common.success(returnData)
 }
 
@@ -86,6 +102,7 @@ exports.searchAct = async req => {
     }
   }
 
+  queryStr += ' order by unusual_invoice_id desc'
   let result = await model.queryWithCount(doc, queryStr, replacements)
 
   returnData.total = result.count
@@ -117,6 +134,11 @@ exports.searchAct = async req => {
 
 exports.receiptAct = async req => {
   let doc = common.docValidate(req), user = req.user, curDate = new Date()
+
+  if(!doc.unusual_receipt_bank_info) {
+    // && moment().isAfter(moment('2023-12-31', 'YYYY/MM/DD'))
+    return common.error('import_14')
+  }
   let commonUser = await tb_user.findOne({
     where: {
       user_id: user.user_id
@@ -170,7 +192,8 @@ exports.receiptAct = async req => {
       uploadfile_receipt_no: receipt_no,
       uploadfil_release_date: curDate,
       uploadfil_release_user_id: user.user_id,
-      uploadfile_bank_reference_no: doc.unusual_receipt_bank_reference_no ? doc.unusual_receipt_bank_reference_no : ''
+      uploadfile_bank_reference_no: doc.unusual_receipt_bank_reference_no ? doc.unusual_receipt_bank_reference_no : '',
+      uploadfile_bank_info: doc.unusual_receipt_bank_info
     })
     unusal.unusual_invoice_status = '3'
     unusal.unusual_receipt_no = receipt_no

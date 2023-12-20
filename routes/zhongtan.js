@@ -19,6 +19,8 @@ router.post('/configuration/AllotDepotConfig/:method', services.AllotDepotContro
 router.post('/configuration/VendorControl/:method', services.VendorControl)
 router.post('/configuration/FreightPlaceControl/:method', services.FreightPlaceControl)
 router.post('/configuration/ExchangeRateConfigControl/:method', services.ExchangeRateConfigControl)
+router.post('/configuration/BankInfoConfig/:method', services.BankInfoControl)
+
 
 router.post('/export/Booking/:method', services.BookingControl)
 router.post('/export/BookingWork/:method', services.BookingWorkControl)

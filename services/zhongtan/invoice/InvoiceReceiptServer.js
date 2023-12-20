@@ -13,6 +13,7 @@ const tb_user = model.common_user
 const tb_bl = model.zhongtan_invoice_masterbl
 const tb_vessel = model.zhongtan_invoice_vessel
 const tb_uploadfile = model.zhongtan_uploadfile
+const tb_bank_info = model.zhongtan_bank_info
 
 exports.initAct = async () => {
   let VESSEL_VOYAGE = []
@@ -40,6 +41,20 @@ exports.initAct = async () => {
     }
   }
 
+  let BANK_INFOS = []
+  let banks = await tb_bank_info.findAll({
+    where: {
+      state: GLBConfig.ENABLE
+    }
+  })
+  if(banks && banks.length > 0) {
+    for(let b of banks) {
+      BANK_INFOS.push({
+        bank_code: b.bank_code,
+        bank_name: b.bank_name
+      })
+    }
+  }
   let returnData = {
     TFINFO: GLBConfig.TFINFO,
     RECEIPT_TYPE_INFO: GLBConfig.RECEIPT_TYPE_INFO,
@@ -47,7 +62,8 @@ exports.initAct = async () => {
     RECEIPT_CURRENCY: GLBConfig.RECEIPT_CURRENCY,
     VESSEL_VOYAGE: VESSEL_VOYAGE,
     CUSTOMER: CUSTOMER,
-    RECEIVES: RECEIVES
+    RECEIVES: RECEIVES,
+    BANK_INFOS: BANK_INFOS
   }
 
   return common.success(returnData)
@@ -462,6 +478,10 @@ exports.downloadReceiptAct = async req => {
     return common.error('import_06')
   }
 
+  if(!doc.receipt_bank_info) {
+    // && moment().isAfter(moment('2023-12-31', 'YYYY/MM/DD'))
+    return common.error('import_14')
+  }
   let commonUser = await tb_user.findOne({
     where: {
       user_id: user.user_id
@@ -497,6 +517,7 @@ exports.downloadReceiptAct = async req => {
   let receipt_type = ''
   if(doc.checkType === 'deposit') {
     bl.invoice_masterbi_deposit_receipt_date = curDate
+    bl.invoice_masterbi_deposit_bank = doc.receipt_bank_info
     receipt_type = 'DEPOSIT'
   } else if(doc.checkType === 'fee') {
     if(bl.invoice_masterbi_tasac) {
@@ -507,6 +528,7 @@ exports.downloadReceiptAct = async req => {
       bl.invoice_masterbi_do_fee_receipt_date = curDate
     }
     bl.invoice_masterbi_invoice_receipt_date = curDate
+    bl.invoice_masterbi_fee_bank = doc.receipt_bank_info
     receipt_type = 'INVOICE FEE'
   }
   if(common.checkDoState(bl)) {
@@ -545,6 +567,7 @@ exports.downloadReceiptAct = async req => {
       uploadfil_release_date: curDate,
       uploadfil_release_user_id: user.user_id,
       uploadfile_bank_reference_no: doc.invoice_masterbi_bank_reference_no,
+      uploadfile_bank_info: doc.receipt_bank_info
     })
     await bl.save()
     return common.success({ url: fileInfo.url })

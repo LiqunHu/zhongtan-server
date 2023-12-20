@@ -90,7 +90,9 @@ exports.addAct = async req => {
       user_bank_account_usd: doc.user_bank_account_usd ? doc.user_bank_account_usd.trim() : '',
       user_bank_account_tzs: doc.user_bank_account_tzs ? doc.user_bank_account_tzs.trim() : '',
       export_split_shipment: doc.export_split_shipment ? doc.export_split_shipment : [],
-      user_rate: doc.user_rate
+      user_rate: doc.user_rate,
+      u8_code: doc.u8_code,
+      u8_alias: doc.u8_alias
     })
 
     await tb_user_groups.create({
@@ -134,6 +136,8 @@ exports.modifyAct = async req => {
     modiuser.user_bank_account_tzs = doc.new.user_bank_account_tzs ? doc.new.user_bank_account_tzs.trim() : ''
     modiuser.export_split_shipment = doc.new.export_split_shipment ? doc.new.export_split_shipment : []
     modiuser.user_rate = doc.new.user_rate
+    modiuser.u8_code = doc.new.u8_code
+    modiuser.u8_alias = doc.new.u8_alias
     await modiuser.save()
 
     let returnData = JSON.parse(JSON.stringify(modiuser))
@@ -285,6 +289,7 @@ exports.importDemurrageCheck = async user_id => {
         let user_blacklist = GLBConfig.DISABLE
         for(let r of result) {
           try {
+            
             // 1. 从卸船时间2020/7/1日开始，之前的没入系统，存在未核销的情况
             let check_flg = false
             if(r.invoice_containers_edi_discharge_date && moment(r.invoice_containers_edi_discharge_date, 'DD/MM/YYYY').isAfter('01/07/2020', 'DD/MM/YYYY')) {
@@ -298,6 +303,10 @@ exports.importDemurrageCheck = async user_id => {
               if(vessel && vessel.invoice_vessel_ata && moment(vessel.invoice_vessel_ata, 'DD/MM/YYYY').isAfter('01/07/2020', 'DD/MM/YYYY')) {
                 check_flg = true
               }
+            }
+            if(r.invoice_containers_type === 'S') {
+              // SOC箱不判断
+              check_flg = false
             }
             if(check_flg) {
               // 2. 针对已还箱- 产生滞期费- 未全额支付的- 自动拉黑  （EDI收箱日期+1天）
@@ -324,9 +333,11 @@ exports.importDemurrageCheck = async user_id => {
                   if(moment().isAfter(moment(r.invoice_containers_empty_return_date_receipt, 'DD/MM/YYYY')) && parseInt(r.invoice_containers_empty_return_overdue_days) > 30) {
                     // 开票日期在当前日期之前,并且超期大于30天
                     user_blacklist = true
+                    break
                   }
                 } else if(parseInt(r.invoice_containers_empty_return_overdue_days) > 30){
                   user_blacklist = true
+                  break
                 }
               }
             }

@@ -112,4 +112,9 @@ module.exports = db.defineModel('tbl_zhongtan_customer_fixed_deposit', {
     type: db.STRING(200),
     allowNull: true
   },
+  deposit_bank_info: {
+    // 银行信息
+    type: db.STRING(10),
+    allowNull: true
+  },
 })

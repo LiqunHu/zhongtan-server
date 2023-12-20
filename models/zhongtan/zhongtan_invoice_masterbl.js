@@ -520,4 +520,14 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_masterbl', {
     type: db.DATE,
     allowNull: true
   },
+  invoice_masterbi_deposit_bank: {
+    // Deposit bank info
+    type: db.STRING(10),
+    allowNull: true
+  },
+  invoice_masterbi_fee_bank: {
+    // Fee bank info
+    type: db.STRING(10),
+    allowNull: true
+  }
 })

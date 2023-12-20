@@ -148,4 +148,14 @@ module.exports = db.defineModel('tbl_common_user', {
     defaultValue: '0',
     allowNull: false
   },
+  u8_code: {
+    // 用户U8系统代码
+    type: db.STRING(50),
+    allowNull: true
+  },
+  u8_alias: {
+    // U8系统别名
+    type: db.STRING(50),
+    allowNull: true
+  },
 })
