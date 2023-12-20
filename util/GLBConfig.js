@@ -394,7 +394,8 @@ module.exports = {
   USER_CUSTOMER_TYPE: [
     { id: '0', text: 'ALL', color: 'primary' },
     { id: '1', text: 'AGENT', color: 'success'},
-    { id: '2', text: 'CONSIGNEE', color: 'warning'}
+    { id: '2', text: 'CONSIGNEE', color: 'warning'},
+    { id: '3', text: 'SUPPLIER', color: 'error'}
   ],
   MNR_CARGO_TYPE: [
     { id: 'LOCAL', text: 'LOCAL', color: 'primary' },
