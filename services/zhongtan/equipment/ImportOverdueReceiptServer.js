@@ -15,6 +15,7 @@ const tb_discharge_port = model.zhongtan_discharge_port
 const tb_container = model.zhongtan_invoice_containers
 const tb_invoice_container = model.zhongtan_overdue_invoice_containers
 const tb_uploadfile = model.zhongtan_uploadfile
+const tb_bank_info = model.zhongtan_bank_info
 
 exports.initAct = async () => {
   let returnData = {}
@@ -34,6 +35,21 @@ exports.initAct = async () => {
   })
   returnData['UPLOAD_STATE'] = GLBConfig.UPLOAD_STATE
   returnData['CASH_BANK_INFO'] = GLBConfig.CASH_BANK_INFO
+  let BANK_INFOS = []
+  let banks = await tb_bank_info.findAll({
+    where: {
+      state: GLBConfig.ENABLE
+    }
+  })
+  if(banks && banks.length > 0) {
+    for(let b of banks) {
+      BANK_INFOS.push({
+        bank_code: b.bank_code,
+        bank_name: b.bank_name
+      })
+    }
+  }
+  returnData['BANK_INFOS'] = BANK_INFOS
   return common.success(returnData)
 }
 
@@ -120,6 +136,10 @@ exports.searchAct = async req => {
 exports.doReceiptAct = async req => {
   let doc = common.docValidate(req), user = req.user, curDate = new Date()
   let file_id = doc.file_id
+  if(doc.overdue_invoice_check_cash === 'TRANSFER' && !doc.receipt_bank_info) {
+    // && moment().isAfter(moment('2023-12-31', 'YYYY/MM/DD'))
+    return common.error('import_14')
+  }
   let commonUser = await tb_user.findOne({
     where: {
       user_id: user.user_id
@@ -153,7 +173,7 @@ exports.doReceiptAct = async req => {
   if (doc.overdue_invoice_check_cash === 'CASH') {
     renderData.check_cash = 'Cash'
   } else if (doc.overdue_invoice_check_cash === 'TRANSFER') {
-    renderData.check_cash = 'Bank transfer/ ' + doc.overdue_invoice_bank_reference_no
+    renderData.check_cash = 'Bank transfer(' + doc.receipt_bank_info + ')/ ' + doc.overdue_invoice_bank_reference_no
   } else {
     renderData.check_cash = 'Cheque/ ' + doc.overdue_invoice_check_no
   }
@@ -181,6 +201,7 @@ exports.doReceiptAct = async req => {
       uploadfil_release_date: curDate,
       uploadfil_release_user_id: user.user_id,
       uploadfile_bank_reference_no: doc.overdue_invoice_bank_reference_no,
+      uploadfile_bank_info: doc.receipt_bank_info
     })
 
     let invoiceContainers = await tb_invoice_container.findAll({

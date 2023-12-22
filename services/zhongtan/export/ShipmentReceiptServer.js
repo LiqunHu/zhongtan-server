@@ -166,7 +166,7 @@ exports.shipmentReceiptAct = async req => {
   let doc = common.docValidate(req), user = req.user, curDate = new Date()
   let file_id = doc.file_id
   
-  if(!doc.shipment_receipt_bank_info) {
+  if(doc.shipment_receipt_check_cash === 'TRANSFER' && !doc.shipment_receipt_bank_info) {
     // && moment().isAfter(moment('2023-12-31', 'YYYY/MM/DD'))
     return common.error('import_14')
   }
@@ -200,7 +200,7 @@ exports.shipmentReceiptAct = async req => {
   if (doc.shipment_receipt_check_cash === 'CASH') {
     renderData.check_cash = 'Cash'
   } else if (doc.shipment_receipt_check_cash === 'TRANSFER') {
-    renderData.check_cash = 'Bank transfer/ ' + doc.shipment_receipt_bank_reference_no
+    renderData.check_cash = 'Bank transfer(' + doc.shipment_receipt_bank_info + ')/ ' + doc.shipment_receipt_bank_reference_no
   } else {
     renderData.check_cash = 'Cheque/ ' + doc.shipment_receipt_check_no
   }

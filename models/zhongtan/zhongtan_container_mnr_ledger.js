@@ -133,4 +133,8 @@ module.exports = db.defineModel('tbl_zhongtan_container_mnr_ledger', {
     type: db.STRING(20),
     allowNull: true
   },
+  mnr_ledger_bank_info: {
+    type: db.STRING(20),
+    allowNull: true
+  },
 })

@@ -158,4 +158,9 @@ module.exports = db.defineModel('tbl_common_user', {
     type: db.STRING(50),
     allowNull: true
   },
+  blacklist_order: {
+    // U8系统别名
+    type: db.STRING(50),
+    allowNull: true
+  },
 })

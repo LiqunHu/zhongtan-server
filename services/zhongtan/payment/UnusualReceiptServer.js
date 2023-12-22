@@ -135,7 +135,7 @@ exports.searchAct = async req => {
 exports.receiptAct = async req => {
   let doc = common.docValidate(req), user = req.user, curDate = new Date()
 
-  if(!doc.unusual_receipt_bank_info) {
+  if(doc.unusual_receipt_check_cash === 'TRANSFER' && !doc.unusual_receipt_bank_info) {
     // && moment().isAfter(moment('2023-12-31', 'YYYY/MM/DD'))
     return common.error('import_14')
   }
@@ -160,7 +160,7 @@ exports.receiptAct = async req => {
   if (doc.unusual_receipt_check_cash === 'CASH') {
     renderData.check_cash = 'Cash'
   } else if (doc.unusual_receipt_check_cash === 'TRANSFER') {
-    renderData.check_cash = 'Bank transfer/ ' + doc.unusual_receipt_bank_reference_no
+    renderData.check_cash = 'Bank transfer(' + doc.unusual_receipt_bank_info + ')/ ' + doc.unusual_receipt_bank_reference_no
   } else {
     renderData.check_cash = 'Cheque/ ' + doc.unusual_receipt_check_no
   }

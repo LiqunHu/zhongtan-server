@@ -478,9 +478,11 @@ exports.downloadReceiptAct = async req => {
     return common.error('import_06')
   }
 
-  if(!doc.receipt_bank_info) {
+  if(doc.invoice_masterbi_check_cash === 'TRANSFER' && !doc.receipt_bank_info) {
     // && moment().isAfter(moment('2023-12-31', 'YYYY/MM/DD'))
-    return common.error('import_14')
+    if(doc.invoice_masterbi_receipt_amount_rate && parseInt(doc.invoice_masterbi_receipt_amount_rate) > 0) {
+      return common.error('import_14')
+    }
   }
   let commonUser = await tb_user.findOne({
     where: {
@@ -540,7 +542,7 @@ exports.downloadReceiptAct = async req => {
   if (bl.invoice_masterbi_check_cash === 'CASH') {
     renderData.check_cash = 'Cash'
   } else if (bl.invoice_masterbi_check_cash === 'TRANSFER') {
-    renderData.check_cash = 'Bank transfer/ ' + bl.invoice_masterbi_bank_reference_no
+    renderData.check_cash = 'Bank transfer(' + doc.receipt_bank_info + ')/ ' + bl.invoice_masterbi_bank_reference_no
   } else {
     renderData.check_cash = 'Cheque/ ' + bl.invoice_masterbi_check_no
   }
@@ -640,13 +642,18 @@ exports.downloadCollectAct = async (req, res) => {
     row.invoice_masterbi_receipt_currency = r.uploadfile_currency
     row.sum_amount = r.uploadfile_amount
     row.bc = ''
-    if (r.uploadfile_check_cash === 'CASH') {
-      row.bc = '1'
-    } else if (r.uploadfile_check_cash === 'CHEQUE') {
-      row.bc = '2'
-    } else if (r.uploadfile_check_cash === 'TRANSFER') {
-      row.bc = '3'
+    if(r.uploadfile_bank_info) {
+      row.bc = r.uploadfile_bank_info
+    } else {
+      if (r.uploadfile_check_cash === 'CASH') {
+        row.bc = '1'
+      } else if (r.uploadfile_check_cash === 'CHEQUE') {
+        row.bc = '2'
+      } else if (r.uploadfile_check_cash === 'TRANSFER') {
+        row.bc = '3'
+      }
     }
+    
     row.user_name = r.user_name
     row.invoice_masterbi_bl = r.invoice_masterbi_bl
     row.invoice_masterbi_check_no = r.uploadfile_check_no

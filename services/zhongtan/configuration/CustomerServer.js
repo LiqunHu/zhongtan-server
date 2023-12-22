@@ -287,12 +287,12 @@ exports.importDemurrageCheck = async user_id => {
     if(result && result.length > 0) {
       if(user.user_blacklist === GLBConfig.DISABLE) {
         let user_blacklist = GLBConfig.DISABLE
+        let blacklist_order = null
         for(let r of result) {
           try {
-            
             // 1. 从卸船时间2020/7/1日开始，之前的没入系统，存在未核销的情况
             let check_flg = false
-            if(r.invoice_containers_edi_discharge_date && moment(r.invoice_containers_edi_discharge_date, 'DD/MM/YYYY').isAfter('01/07/2020', 'DD/MM/YYYY')) {
+            if(r.invoice_containers_edi_discharge_date && moment(r.invoice_containers_edi_discharge_date, 'DD/MM/YYYY').isAfter('12/31/2020', 'DD/MM/YYYY')) {
               check_flg = true
             } else if(r.invoice_vessel_id){
               let vessel = await tb_vessel.findOne({
@@ -316,12 +316,15 @@ exports.importDemurrageCheck = async user_id => {
                     if(r.invoice_containers_empty_return_overdue_deduction) {
                       if((parseInt(r.invoice_containers_empty_return_overdue_amount_receipt) + parseInt(r.invoice_containers_empty_return_overdue_deduction)) < parseInt(r.invoice_containers_empty_return_overdue_amount)) {
                         user_blacklist = true
-                      } else if(parseInt(r.invoice_containers_empty_return_overdue_amount_receipt) < parseInt(r.invoice_containers_empty_return_overdue_amount)){
-                        user_blacklist = true
-                      }
+                        blacklist_order = r.invoice_containers_id
+                      } 
+                    } else if(parseInt(r.invoice_containers_empty_return_overdue_amount_receipt) < parseInt(r.invoice_containers_empty_return_overdue_amount)){
+                      user_blacklist = true
+                      blacklist_order = r.invoice_containers_id
                     }
                   } else {
                     user_blacklist = true
+                    blacklist_order = r.invoice_containers_id
                     break
                   }
                 }
@@ -333,10 +336,12 @@ exports.importDemurrageCheck = async user_id => {
                   if(moment().isAfter(moment(r.invoice_containers_empty_return_date_receipt, 'DD/MM/YYYY')) && parseInt(r.invoice_containers_empty_return_overdue_days) > 30) {
                     // 开票日期在当前日期之前,并且超期大于30天
                     user_blacklist = true
+                    blacklist_order = r.invoice_containers_id
                     break
                   }
                 } else if(parseInt(r.invoice_containers_empty_return_overdue_days) > 30){
                   user_blacklist = true
+                  blacklist_order = r.invoice_containers_id
                   break
                 }
               }
@@ -345,6 +350,7 @@ exports.importDemurrageCheck = async user_id => {
         }
         if(user_blacklist === GLBConfig.ENABLE) {
           user.user_blacklist = GLBConfig.ENABLE
+          user.blacklist_order = blacklist_order
           await user.save()
         }
       }
