@@ -1,6 +1,7 @@
 const redisClient = require('server-utils').redisClient
 
 const common = require('../../../util/CommonUtil')
+const moment = require('moment')
 const GLBConfig = require('../../../util/GLBConfig')
 const logger = require('../../../app/logger').createLogger(__filename)
 const model = require('../../../app/model')
@@ -315,15 +316,15 @@ exports.importDemurrageCheck = async user_id => {
                   if(r.invoice_containers_empty_return_overdue_amount_receipt) {
                     if(r.invoice_containers_empty_return_overdue_deduction) {
                       if((parseInt(r.invoice_containers_empty_return_overdue_amount_receipt) + parseInt(r.invoice_containers_empty_return_overdue_deduction)) < parseInt(r.invoice_containers_empty_return_overdue_amount)) {
-                        user_blacklist = true
+                        user_blacklist = GLBConfig.ENABLE
                         blacklist_order = r.invoice_containers_id
                       } 
                     } else if(parseInt(r.invoice_containers_empty_return_overdue_amount_receipt) < parseInt(r.invoice_containers_empty_return_overdue_amount)){
-                      user_blacklist = true
+                      user_blacklist = GLBConfig.ENABLE
                       blacklist_order = r.invoice_containers_id
                     }
                   } else {
-                    user_blacklist = true
+                    user_blacklist = GLBConfig.ENABLE
                     blacklist_order = r.invoice_containers_id
                     break
                   }
@@ -335,18 +336,19 @@ exports.importDemurrageCheck = async user_id => {
                   // 已经开收据
                   if(moment().isAfter(moment(r.invoice_containers_empty_return_date_receipt, 'DD/MM/YYYY')) && parseInt(r.invoice_containers_empty_return_overdue_days) > 30) {
                     // 开票日期在当前日期之前,并且超期大于30天
-                    user_blacklist = true
+                    user_blacklist = GLBConfig.ENABLE
                     blacklist_order = r.invoice_containers_id
                     break
                   }
                 } else if(parseInt(r.invoice_containers_empty_return_overdue_days) > 30){
-                  user_blacklist = true
+                  user_blacklist = GLBConfig.ENABLE
                   blacklist_order = r.invoice_containers_id
                   break
                 }
               }
             }
-          } catch(error) {}
+          } catch(error) {
+          }
         }
         if(user_blacklist === GLBConfig.ENABLE) {
           user.user_blacklist = GLBConfig.ENABLE
