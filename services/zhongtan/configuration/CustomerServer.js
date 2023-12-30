@@ -309,9 +309,9 @@ exports.importDemurrageCheck = async user_id => {
             check_flg = false
           }
           if(check_flg) {
-            // 2. 针对已还箱- 产生滞期费- 未全额支付的- 自动拉黑  （EDI收箱日期+1天）
+            // 2. 针对已还箱- 产生滞期费- 未全额支付的- 自动拉黑  （EDI收箱日期+2天）
             if(r.invoice_containers_actually_return_date) {
-              if(moment().diff(moment(r.invoice_containers_actually_return_date, 'DD/MM/YYYY'), 'days') > 0) {
+              if(moment().diff(moment(r.invoice_containers_actually_return_date, 'DD/MM/YYYY'), 'days') > 1) {
                 if(r.invoice_containers_empty_return_overdue_amount_receipt) {
                   if(r.invoice_containers_empty_return_overdue_deduction) {
                     if((parseInt(r.invoice_containers_empty_return_overdue_amount_receipt) + parseInt(r.invoice_containers_empty_return_overdue_deduction)) < parseInt(r.invoice_containers_actually_return_overdue_amount)) {
