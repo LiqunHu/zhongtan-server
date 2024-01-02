@@ -404,11 +404,13 @@ exports.importBookingPdf = async (path, sizeConfig) => {
       let soc = ''
       let cargoWeight = ''
       let datas = pdfData.replace(/[\r]/ig, '').split(/[\n]+/ig)
-      regex = '/BOOKING\\s*NUMBER\\s*:\\s*([0-9]+)/i'
+      regex = '/BOOKING\\s*NUMBER\\s*:\\s*([COSU]+[0-9]+)/i'
       for(let d of datas) {
         bookingNumber = common.valueFilter(d, regex).trim()
         if(bookingNumber) {
-          bookingNumber = 'COSU' + bookingNumber
+          if(bookingNumber.indexOf('COSU') < 0) {
+            bookingNumber = 'COSU' + bookingNumber
+          } 
           break
         }
       }
@@ -682,7 +684,7 @@ const pdf2jsonParser = async (path) => {
   let promise = new Promise(resolve => {
     let pdfParser = new PDFParser(this, 1)
     pdfParser.loadPDF(path)
-    // pdfParser.on('pdfParser_dataError', errData => console.error(errData.parserError))
+    // pdfParser.on('pdfParser_dataError', errData => console.error(errData))
     pdfParser.on('pdfParser_dataReady', () => {
       let data = pdfParser.getRawTextContent()
       resolve(data)
