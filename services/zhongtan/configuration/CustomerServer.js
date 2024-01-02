@@ -292,7 +292,7 @@ exports.importDemurrageCheck = async user_id => {
         try {
           // 1. 从卸船时间2020/7/1日开始，之前的没入系统，存在未核销的情况
           let check_flg = false
-          if(r.invoice_containers_edi_discharge_date && moment(r.invoice_containers_edi_discharge_date, 'DD/MM/YYYY').isAfter('31/12/2020', 'DD/MM/YYYY')) {
+          if(r.invoice_containers_edi_discharge_date && moment(r.invoice_containers_edi_discharge_date, 'DD/MM/YYYY').isAfter(moment('31/12/2020', 'DD/MM/YYYY'))) {
             check_flg = true
           } else if(r.invoice_vessel_id){
             let vessel = await tb_vessel.findOne({
@@ -300,7 +300,7 @@ exports.importDemurrageCheck = async user_id => {
                 invoice_vessel_id: r.invoice_vessel_id
               }
             })
-            if(vessel && vessel.invoice_vessel_ata && moment(vessel.invoice_vessel_ata, 'DD/MM/YYYY').isAfter('31/12/2020', 'DD/MM/YYYY')) {
+            if(vessel && vessel.invoice_vessel_ata && moment(vessel.invoice_vessel_ata, 'DD/MM/YYYY').isAfter(moment('31/12/2020', 'DD/MM/YYYY'))) {
               check_flg = true
             }
           }
