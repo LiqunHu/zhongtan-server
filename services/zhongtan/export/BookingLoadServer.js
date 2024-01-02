@@ -404,7 +404,7 @@ exports.importBookingPdf = async (path, sizeConfig) => {
       let soc = ''
       let cargoWeight = ''
       let datas = pdfData.replace(/[\r]/ig, '').split(/[\n]+/ig)
-      regex = '/BOOKING\\s*NUMBER\\s*:\\s*([COSU]+[0-9]+)/i'
+      regex = '/BOOKING\\s*NUMBER\\s*:\\s*([COSU]*[0-9]+)/i'
       for(let d of datas) {
         bookingNumber = common.valueFilter(d, regex).trim()
         if(bookingNumber) {
