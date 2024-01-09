@@ -386,6 +386,15 @@ exports.exportAct = async (req, res) => {
       }
     }
     row.empty_return_depot = r.invoice_masterbi_do_return_depot
+
+    // 
+    row.invoice_masterbi_goods_description = r.invoice_masterbi_goods_description
+    row.invoice_masterbi_package_no = r.invoice_masterbi_package_no
+    row.invoice_masterbi_package_unit = r.invoice_masterbi_package_unit
+    row.invoice_masterbi_gross_weight = r.invoice_masterbi_gross_weight
+    row.invoice_masterbi_gross_weight_unit = r.invoice_masterbi_gross_weight_unit
+    row.invoice_masterbi_gross_volume = r.invoice_masterbi_gross_volume
+    row.invoice_masterbi_gross_volume_unit = r.invoice_masterbi_gross_volume_unit
     renderData.push(row)
   }
   if(doc.do_status && doc.do_status === GLBConfig.DISABLE) {
