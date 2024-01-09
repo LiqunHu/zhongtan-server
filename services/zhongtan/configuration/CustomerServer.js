@@ -93,7 +93,9 @@ exports.addAct = async req => {
       export_split_shipment: doc.export_split_shipment ? doc.export_split_shipment : [],
       user_rate: doc.user_rate,
       u8_code: doc.u8_code,
-      u8_alias: doc.u8_alias
+      u8_alias: doc.u8_alias,
+      u8_vendor_code: doc.u8_vendor_code,
+      u8_vendor_alias: doc.u8_vendor_alias
     })
 
     await tb_user_groups.create({
@@ -139,6 +141,8 @@ exports.modifyAct = async req => {
     modiuser.user_rate = doc.new.user_rate
     modiuser.u8_code = doc.new.u8_code
     modiuser.u8_alias = doc.new.u8_alias
+    modiuser.u8_vendor_code = doc.new.u8_vendor_code
+    modiuser.u8_vendor_alias = doc.new.u8_vendor_alias
     await modiuser.save()
 
     let returnData = JSON.parse(JSON.stringify(modiuser))
@@ -292,7 +296,7 @@ exports.importDemurrageCheck = async user_id => {
         try {
           // 1. 从卸船时间2020/7/1日开始，之前的没入系统，存在未核销的情况
           let check_flg = false
-          if(r.invoice_containers_edi_discharge_date && moment(r.invoice_containers_edi_discharge_date, 'DD/MM/YYYY').isAfter(moment('31/12/2020', 'DD/MM/YYYY'))) {
+          if(r.invoice_containers_edi_discharge_date && moment(r.invoice_containers_edi_discharge_date, 'DD/MM/YYYY').isAfter(moment('31/12/2020', 'DD/MM/YYYY'), 'day')) {
             check_flg = true
           } else if(r.invoice_vessel_id){
             let vessel = await tb_vessel.findOne({
@@ -300,7 +304,7 @@ exports.importDemurrageCheck = async user_id => {
                 invoice_vessel_id: r.invoice_vessel_id
               }
             })
-            if(vessel && vessel.invoice_vessel_ata && moment(vessel.invoice_vessel_ata, 'DD/MM/YYYY').isAfter(moment('31/12/2020', 'DD/MM/YYYY'))) {
+            if(vessel && vessel.invoice_vessel_ata && moment(vessel.invoice_vessel_ata, 'DD/MM/YYYY').isAfter(moment('31/12/2020', 'DD/MM/YYYY'), 'day')) {
               check_flg = true
             }
           }
@@ -333,7 +337,7 @@ exports.importDemurrageCheck = async user_id => {
               //（即免箱期内超期30天未还箱，例如超期第30天到12/1日，需开票支付到12/1日，开具收据后系统移除黑名单至支付截止日期12/1，费用未支付或到12/2号未还，费用未支付，自动拉黑）
               if(r.invoice_containers_empty_return_date_receipt) {
                 // 已经开收据
-                if(moment().isAfter(moment(r.invoice_containers_empty_return_date_receipt, 'DD/MM/YYYY')) && parseInt(r.invoice_containers_empty_return_overdue_days) > 30) {
+                if(moment().isAfter(moment(r.invoice_containers_empty_return_date_receipt, 'DD/MM/YYYY'), 'day') && parseInt(r.invoice_containers_empty_return_overdue_days) > 30) {
                   // 开票日期在当前日期之前,并且超期大于30天
                   user_blacklist = GLBConfig.ENABLE
                   blacklist_order = r.invoice_containers_id
