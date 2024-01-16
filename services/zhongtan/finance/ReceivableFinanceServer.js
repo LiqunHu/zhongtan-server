@@ -310,6 +310,12 @@ exports.queryReceivableAct = async req => {
                             item.receipt_detail_total = new Decimal(bl.invoice_masterbi_deposit).toNumber()
                         }
                         item.receipt_detail = fees
+                        if(item.receipt_currency === 'TZS') {
+                            let tzs_amount = new Decimal(item.receipt_detail_total).times(new Decimal(item.receipt_amount_rate))
+                            item.receipt_detail_total = Decimal.isDecimal(tzs_amount) ? tzs_amount.toNumber() : tzs_amount
+                        } else {
+                            item.receipt_detail_total = Decimal.isDecimal(item.receipt_detail_total) ? item.receipt_detail_total.toNumber() : item.receipt_detail_total
+                        }
                     }
                 }
             } else if(r.api_name === 'OVERDUE-RECEIPT') {
@@ -347,7 +353,12 @@ exports.queryReceivableAct = async req => {
                             }
                         }
                         item.receipt_detail = fees
-                        item.receipt_detail_total = Decimal.isDecimal(fee_total) ? fee_total.toNumber() : fee_total
+                        if(item.receipt_currency === 'TZS') {
+                            let tzs_amount = new Decimal(fee_total).times(new Decimal(item.receipt_amount_rate))
+                            item.receipt_detail_total = Decimal.isDecimal(tzs_amount) ? tzs_amount.toNumber() : tzs_amount
+                        } else {
+                            item.receipt_detail_total = Decimal.isDecimal(fee_total) ? fee_total.toNumber() : fee_total
+                        }
                     }
                 }
             } else if(r.api_name === 'SHIPMENT-RECEIPT') {
@@ -376,7 +387,12 @@ exports.queryReceivableAct = async req => {
                             fee_total = new Decimal(fee_total).plus(new Decimal(sf.shipment_fee_amount))
                         }
                         item.receipt_detail = fees
-                        item.receipt_detail_total = Decimal.isDecimal(fee_total) ? fee_total.toNumber() : fee_total
+                        if(item.receipt_currency === 'TZS') {
+                            let tzs_amount = new Decimal(fee_total).times(new Decimal(item.receipt_amount_rate))
+                            item.receipt_detail_total = Decimal.isDecimal(tzs_amount) ? tzs_amount.toNumber() : tzs_amount
+                        } else {
+                            item.receipt_detail_total = Decimal.isDecimal(fee_total) ? fee_total.toNumber() : fee_total
+                        }
                     }
                 }
             } else if(r.api_name === 'MNR-RECEIPT') {
@@ -401,6 +417,12 @@ exports.queryReceivableAct = async req => {
                     fees.push({'fee_name': 'MNR', 'fee_amount': mnr.mnr_ledger_receipt_amount})
                     item.receipt_detail_total = new Decimal(mnr.mnr_ledger_receipt_amount).toNumber()
                     item.receipt_detail = fees
+                    if(item.receipt_currency === 'TZS') {
+                        let tzs_amount = new Decimal(item.receipt_detail_total).times(new Decimal(item.receipt_amount_rate))
+                        item.receipt_detail_total = Decimal.isDecimal(tzs_amount) ? tzs_amount.toNumber() : tzs_amount
+                    } else {
+                        item.receipt_detail_total = Decimal.isDecimal(item.receipt_detail_total) ? item.receipt_detail_total.toNumber() : item.receipt_detail_total
+                    }
                 }
             } else if(r.api_name === 'UNUSUAL RECEIPT') {
                 item.receipt_type = 'UNUSUAL Receivable'
@@ -424,6 +446,12 @@ exports.queryReceivableAct = async req => {
                     fees.push({'fee_name': 'UNUSUAL', 'fee_amount': unusual.unusual_invoice_amount})
                     item.receipt_detail_total = new Decimal(unusual.unusual_invoice_amount).toNumber()
                     item.receipt_detail = fees
+                    if(item.receipt_currency === 'TZS') {
+                        let tzs_amount = new Decimal(item.receipt_detail_total).times(new Decimal(item.receipt_amount_rate))
+                        item.receipt_detail_total = Decimal.isDecimal(tzs_amount) ? tzs_amount.toNumber() : tzs_amount
+                    } else {
+                        item.receipt_detail_total = Decimal.isDecimal(item.receipt_detail_total) ? item.receipt_detail_total.toNumber() : item.receipt_detail_total
+                    }
                 }
             } else if(r.api_name === 'FIXED-RECEIPT') {
                 item.receipt_type = 'Import Fixed'
@@ -441,6 +469,12 @@ exports.queryReceivableAct = async req => {
                     fees.push({'fee_name': fixed.fixed_deposit_type === 'FD' ? 'FIXED DEPOSIT' : 'GUARANTEE', 'fee_amount': fixed.deposit_amount})
                     item.receipt_detail_total = new Decimal(fixed.deposit_amount).toNumber()
                     item.receipt_detail = fees
+                    if(item.receipt_currency === 'TZS') {
+                        let tzs_amount = new Decimal(item.receipt_detail_total).times(new Decimal(item.receipt_amount_rate))
+                        item.receipt_detail_total = Decimal.isDecimal(tzs_amount) ? tzs_amount.toNumber() : tzs_amount
+                    } else {
+                        item.receipt_detail_total = Decimal.isDecimal(item.receipt_detail_total) ? item.receipt_detail_total.toNumber() : item.receipt_detail_total
+                    }
                 }
             }
             item._disabled = true
