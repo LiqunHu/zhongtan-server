@@ -160,7 +160,7 @@ module.exports = db.defineModel('tbl_common_user', {
   },
   blacklist_order: {
     // U8系统别名
-    type: db.STRING(50),
+    type: db.STRING(100),
     allowNull: true
   },
   u8_department_code: {
@@ -175,7 +175,7 @@ module.exports = db.defineModel('tbl_common_user', {
   },
   u8_vendor_alias: {
     // U8系统供应商别名
-    type: db.STRING(50),
+    type: db.STRING(100),
     allowNull: true
   },
 })
