@@ -3,6 +3,7 @@ const common = require('../../../util/CommonUtil')
 const GLBConfig = require('../../../util/GLBConfig')
 const model = require('../../../app/model')
 const opSrv = require('../../common/system/OperationPasswordServer')
+const rateSrv = require('../../zhongtan/configuration/ExchangeRateConfigServer')
 const Op = model.Op
 
 const tb_payment_advice = model.zhongtan_payment_advice
@@ -31,7 +32,6 @@ exports.initAct = async () => {
       returnData.VESSELS.push(i)
     }
   }
-  console.log(returnData.VESSELS)
   queryStr = `SELECT CONCAT(export_vessel_name, '/',export_vessel_voyage) AS vessel_voyage FROM tbl_zhongtan_export_vessel WHERE state = 1 AND export_vessel_name IS NOT NULL AND export_vessel_voyage IS NOT NULL AND export_vessel_name <> '' AND export_vessel_voyage <> ''  GROUP BY export_vessel_name, export_vessel_voyage ORDER BY STR_TO_DATE(export_vessel_etd, '%d/%m/%Y') DESC;`
   replacements = []
   let exVs = await model.simpleSelect(queryStr, replacements)
@@ -43,6 +43,7 @@ exports.initAct = async () => {
       }
     }
   }
+  returnData.PAYMENT_VESSEL_TYPE = GLBConfig.PAYMENT_VESSEL_TYPE
   return common.success(returnData)
 }
 
@@ -265,6 +266,12 @@ exports.addAct = async req => {
     payment_advice_vessel = doc.payment_advice_vessel_voyage.split('/')[0]
     payment_advice_voyage = doc.payment_advice_vessel_voyage.split('/')[1]
   }
+
+  let rate = 1
+  let amount_rate = await rateSrv.getCurrentExchangeRateTZS(1)
+  if(amount_rate) {
+    rate = amount_rate.rate
+  }
   let obj = await tb_payment_advice.create({
     payment_advice_method: doc.payment_advice_method,
     payment_advice_items: doc.payment_advice_items,
@@ -277,7 +284,9 @@ exports.addAct = async req => {
     payment_advice_status: '1',
     payment_advice_vessel: payment_advice_vessel,
     payment_advice_voyage: payment_advice_voyage,
-    create_by: user.user_id
+    create_by: user.user_id,
+    payment_advice_rate: rate,
+    payment_vessel_type: doc.payment_vessel_type,
   })
 
   if(doc.payment_atta_files && doc.payment_atta_files.length > 0) {
@@ -345,6 +354,7 @@ exports.modifyAct = async req => {
     obj.payment_advice_currency = doc.new.payment_advice_currency
     obj.payment_advice_bank_account = doc.new.payment_advice_bank_account
     obj.payment_advice_remarks = doc.new.payment_advice_remarks
+    obj.payment_vessel_type = doc.new.payment_vessel_type
     obj.payment_advice_vessel = payment_advice_vessel
     obj.payment_advice_voyage = payment_advice_voyage
     if(doc.new.payment_atta_files && doc.new.payment_atta_files.length > 0) {

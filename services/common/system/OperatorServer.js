@@ -101,7 +101,8 @@ exports.addAct = async req => {
       user_zipcode: doc.user_zipcode,
       user_code: doc.user_code,
       u8_code: doc.u8_code,
-      u8_alias: doc.u8_alias
+      u8_alias: doc.u8_alias,
+      u8_department_code: doc.u8_department_code
     })
 
     for (let gid of doc.user_groups) {
@@ -169,6 +170,7 @@ exports.modifyAct = async req => {
     modiuser.user_code = doc.new.user_code
     modiuser.u8_code = doc.new.u8_code
     modiuser.u8_alias = doc.new.u8_alias
+    modiuser.u8_department_code = doc.new.u8_department_code
     await modiuser.save()
 
     await tb_user_groups.destroy({

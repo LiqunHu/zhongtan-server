@@ -1,0 +1,999 @@
+
+const _ = require('lodash')
+const common = require('../../../util/CommonUtil')
+const moment = require('moment')
+const Decimal = require('decimal.js')
+const model = require('../../../app/model')
+const GLBConfig = require('../../../util/GLBConfig')
+const axios = require('axios')
+const redisClient = require('server-utils').redisClient
+const logger = require('../../../app/logger').createLogger(__filename)
+const seq = require('../../../util/Sequence')
+
+const tb_user = model.common_user
+const tb_upload_file = model.zhongtan_uploadfile
+const tb_finance_payable = model.zhongtan_finance_payable
+
+exports.initAct = async req => {
+    let doc = common.docValidate(req)
+    let returnData = {}
+    queryStr = `SELECT payment_items_code, payment_items_name, payment_items_type FROM tbl_zhongtan_payment_items WHERE state = '1' and payment_items_type in ('1','2','3','4','5') ORDER BY payment_items_type, payment_items_code`
+    replacements = []
+    returnData.PAYMENT_ITEMS = await model.simpleSelect(queryStr, replacements)
+    return common.success(returnData)
+}
+
+exports.queryPayableAct = async req => {
+    let doc = common.docValidate(req), user = req.user
+    let opUser = await tb_user.findOne({
+        where: {
+            user_id: user.user_id,
+            state: GLBConfig.ENABLE
+        }
+    })
+    let returnData = {}
+    let queryStr = `SELECT pa.* from tbl_zhongtan_payment_advice pa left join tbl_zhongtan_payment_items pi on pa.payment_advice_items = pi.payment_items_code WHERE pa.state = 1 AND pi.payment_items_type in ('1','2','3','4','5') AND payment_advice_status = '2' AND payment_advice_id NOT IN (SELECT payment_advice_id FROM tbl_zhongtan_finance_payable WHERE state = '1')`
+    let replacements = []
+    if(doc.search_data) {
+        if(doc.search_data.receipt_date && doc.search_data.receipt_date.length > 1 && doc.search_data.receipt_date[0]  && doc.search_data.receipt_date[1]) {
+            let start_date = doc.search_data.receipt_date[0]
+            let end_date = doc.search_data.receipt_date[1]
+            queryStr += ` AND pa.created_at >= ? and pa.created_at < ? `
+            replacements.push(start_date)
+            replacements.push(moment(end_date, 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
+        }
+        if(doc.search_data.items_type) {
+            queryStr += ` AND pa.payment_advice_items = ? `
+            replacements.push(doc.search_data.items_type)
+        }
+    }
+
+    queryStr += ' ORDER BY payment_advice_id DESC'
+    let result = await model.queryWithCount(doc, queryStr, replacements)
+    returnData.total = result.count
+    let rows = result.data
+    let payables = []
+    if(rows && rows.length > 0) {
+        queryStr = `SELECT * FROM tbl_zhongtan_payment_items WHERE state = '1'`
+        replacements = []
+        let PAYMENT_ITEMS = await model.simpleSelect(queryStr, replacements)
+
+        queryStr = `SELECT * FROM tbl_common_user WHERE state = '1' AND user_type = ?`
+        replacements = [GLBConfig.TYPE_CUSTOMER]
+        let COMMON_CUSTOMER = await model.simpleSelect(queryStr, replacements)
+        
+
+        queryStr = `SELECT * FROM tbl_zhongtan_payment_item_code WHERE state = '1'`
+        replacements = []
+        let PAYMENT_ITEM_CODES = await model.simpleSelect(queryStr, replacements)
+
+        queryStr = `SELECT * FROM tbl_zhongtan_payment_item_code_carrier WHERE state = '1'`
+        replacements = []
+        let PAYMENT_ITEM_CODE_CARRIERS = await model.simpleSelect(queryStr, replacements)
+
+        let VESSELS = []
+        queryStr = `SELECT invoice_vessel_name AS vessel_name, invoice_vessel_voyage AS voyage, STR_TO_DATE(invoice_vessel_eta, '%d/%m/%Y') AS invoice_vessel_eta, STR_TO_DATE(invoice_vessel_ata, '%d/%m/%Y') AS invoice_vessel_ata, STR_TO_DATE(invoice_vessel_atd, '%d/%m/%Y') AS invoice_vessel_atd FROM tbl_zhongtan_invoice_vessel WHERE state = 1 AND invoice_vessel_name IS NOT NULL AND invoice_vessel_voyage IS NOT NULL AND invoice_vessel_name <> '' AND invoice_vessel_voyage <> '' GROUP BY invoice_vessel_name, invoice_vessel_voyage;`
+        replacements = []
+        let imVs = await model.simpleSelect(queryStr, replacements)
+        if(imVs) {
+          for(let i of imVs) {
+            if(i.invoice_vessel_ata) {
+                i.vessel_date = i.invoice_vessel_ata
+            } else if(i.invoice_vessel_ata) {
+                i.vessel_date = i.invoice_vessel_eta
+            } else if(i.invoice_vessel_atd) {
+                i.vessel_date = i.invoice_vessel_atd
+            }
+            if(i.vessel_date) {
+                VESSELS.push(i)
+            }
+          }
+        }
+        queryStr = `SELECT export_vessel_name AS vessel_name, export_vessel_voyage AS voyage, STR_TO_DATE(export_vessel_etd, '%d/%m/%Y') AS vessel_date FROM tbl_zhongtan_export_vessel WHERE state = 1 AND export_vessel_name IS NOT NULL AND export_vessel_voyage IS NOT NULL AND export_vessel_name <> '' AND export_vessel_voyage <> '' AND STR_TO_DATE(export_vessel_etd, '%d/%m/%Y') IS NOT NULL GROUP BY export_vessel_name, export_vessel_voyage;`
+        replacements = []
+        let exVs = await model.simpleSelect(queryStr, replacements)
+        if(exVs) {
+          for(let e of exVs) {
+            let index = VESSELS.findIndex(item => item.vessel_name === e.vessel_name && item.voyage === e.voyage)
+            if(index === -1) {
+                VESSELS.push(e)
+            }
+          }
+        }
+
+        for(let r of rows) {
+            let _disabled_message = []
+            let item = JSON.parse(JSON.stringify(r))
+            item._disabled = true
+            if(r.payment_advice_amount) {
+                let amount = r.payment_advice_amount.replace(/,/g, '')
+                if(amount) {
+                    amount = amount.trim()
+                }
+                item.payment_advice_amount = new Decimal(amount).toNumber()
+            }
+            if(opUser && opUser.u8_code) {
+                item.operator_u8_code = opUser.u8_code
+            } else {
+                _disabled_message.push('Payment operator not exist in U8 system.')
+            }
+            let i_i = _.find(PAYMENT_ITEMS, function(o) { return o.payment_items_code === r.payment_advice_items})
+            if(i_i) {
+                item.payment_advice_items_name = i_i.payment_items_name
+                item.payment_advice_items_type = i_i.payment_items_type
+            }
+            let b_c = _.find(COMMON_CUSTOMER, function(o) { return o.user_id === r.payment_advice_beneficiary})
+            if(b_c) {
+                item.payment_advice_beneficiary_name = b_c.user_name
+                if(b_c.u8_code && b_c.u8_alias) {
+                    item.payment_advice_beneficiary_u8_customerr_code = b_c.u8_code
+                    item.payment_advice_beneficiary_u8_customer_alias = b_c.u8_alias
+                } else {
+                    _disabled_message.push('Payment beneficiary customer not exist in U8 system.')
+                }
+            } else {
+                _disabled_message.push('Payment beneficiary not exist.')
+            }
+            let r_c = _.find(COMMON_CUSTOMER, function(o) { return o.user_id === r.payment_advice_remarks})
+            if(r_c) {
+                item.payment_advice_remarks_name = r_c.user_name
+                if(r_c.u8_vendor_code && r_c.u8_vendor_alias) {
+                    item.payment_advice_remarks_u8_vendor_code = r_c.u8_vendor_code
+                    item.payment_advice_remarks_u8_vendor_alias = r_c.u8_vendor_alias
+                } else {
+                    _disabled_message.push('Payment remarks vendor not exist in U8 system.')
+                }
+            }
+            if(item.payment_advice_items_type === '1' || item.payment_advice_items_type === '2' || item.payment_advice_items_type === '5') {
+                if(r.payment_advice_vessel && r.payment_advice_voyage) {
+                    let v_y = _.find(VESSELS, function(o) { return o.vessel_name === r.payment_advice_vessel && o.voyage === r.payment_advice_voyage })
+                    if(v_y) {
+                        item.payment_advice_vessel_date = v_y.vessel_date
+                    } else {
+                        _disabled_message.push('Payment vessel not exist.')
+                    }
+                } else {
+                    _disabled_message.push('Payment vessel not exist.')
+                }
+            }
+            
+            item.create_date = moment(r.created_at, 'YYYY-MM-DD hh:mm:ss').format('YYYY-MM-DD hh:mm:ss')
+            let payment_file = await tb_upload_file.findOne({
+                where: {
+                    uploadfile_index1: item.payment_advice_id,
+                    api_name: 'PAYMENT ADVICE',
+                    state: GLBConfig.ENABLE
+                }
+            })
+            if(payment_file) {
+                item.payment_advice_file_id = payment_file.uploadfile_id
+                item.payment_advice_file_url = payment_file.uploadfile_url
+                item.payment_advice_amount_rate = payment_file.uploadfile_amount_rate
+            }
+
+            let carrier = _.find(PAYMENT_ITEM_CODE_CARRIERS, function(o) { return o.payment_item_code === item.payment_advice_items && o.item_code_carrier === item.payment_advice_remarks})
+            if(carrier) {
+                let code = _.find(PAYMENT_ITEM_CODES, function(o) { return o.item_code_id.toString() === carrier.item_code_id.toString() && o.payment_item_code === carrier.payment_item_code})
+                if(code) {
+                    item.item_code_payable_debit = code.item_code_payable_debit
+                    item.item_code_payable_credit = code.item_code_payable_credit
+                } else {
+                    _disabled_message.push('Payment item subject code not exist.')
+                }
+            } else {
+                let code = _.find(PAYMENT_ITEM_CODES, function(o) { return o.payment_item_code === item.payment_advice_items})
+                if(code) {
+                    item.item_code_payable_debit = code.item_code_payable_debit
+                    item.item_code_payable_credit = code.item_code_payable_credit
+                } else {
+                    _disabled_message.push('Payment item subject code not exist.')
+                }
+            }
+            if(_disabled_message && _disabled_message.length > 0) {
+                item._disabled_message = _disabled_message.join('\r\n')
+            } else {
+                item._disabled = false
+            }
+            payables.push(item)
+        }
+    }
+    returnData.rows = payables
+    return common.success(returnData)
+}
+
+exports.submitPayableAct = async req => {
+    let doc = common.docValidate(req), user = req.user
+    let opUser = await tb_user.findOne({
+        where: {
+            user_id: user.user_id,
+            state: GLBConfig.ENABLE
+        }
+    })
+    let returnData = {}
+    let errMessage = []
+    if(doc.payable_list) {
+        await this.getU8Token(false)
+        let token = await redisClient.get(GLBConfig.U8_CONFIG.token_name)
+        logger.error('token', token)
+        if(token) {
+            for(let pl of doc.payable_list) {
+                try {
+                    let biz_id = await seq.genU8SystemSeq('BIZ')
+                    let payable_url = GLBConfig.U8_CONFIG.host + GLBConfig.U8_CONFIG.oughtpay_add_api_url + `?from_account=${GLBConfig.U8_CONFIG.from_account}&to_account=${GLBConfig.U8_CONFIG.to_account}&app_key=${GLBConfig.U8_CONFIG.app_key}&token=${token}&biz_id=${biz_id}&sync=1` 
+                    let amount = new Decimal(pl.payment_advice_amount).toNumber()
+                    let natamount = new Decimal(pl.payment_advice_amount).toNumber()
+                    let currency_name = '美元'
+                    let currency_rate = 1
+                    let digest = ''
+                    let entry_digest = ''
+                    let item = null
+                    let cust_vendor_code = pl.payment_advice_remarks_u8_vendor_code
+                    let entry_cust_vendor_code = pl.payment_advice_remarks_u8_vendor_code
+                    if(pl.payment_advice_items_type === '1') {
+                        digest = 'MV ' + pl.payment_advice_vessel + ' ' + pl.payment_advice_voyage + ' ' + pl.payment_advice_items
+                        entry_digest = 'Receivable from ' + pl.payment_advice_remarks_u8_vendor_alias
+                        let itemcode = moment(pl.payment_advice_vessel_date, 'YYYY-MM-DD').format('YYYYMMDD') + '-' + await seq.genU8SystemOneSeq()
+                        let itemname = pl.payment_advice_vessel + ' ' + pl.payment_advice_voyage
+                        let citemccode = '01'
+                        let citemcname = 'CONTAINER VESSEL'
+                        if(pl.payment_vessel_type && pl.payment_vessel_type === '2') {
+                            // 散货
+                            citemccode = '02'
+                            citemcname = 'GENERAL VESSEL'
+                        }
+                        item = await this.addFItem(itemcode, itemname, citemccode, citemcname)
+                        if(!item) {
+                            errMessage.push(pl.payment_advice_no + 'send error: item create faied')
+                            continue
+                        }
+                        if(pl.item_code_payable_debit === '113106') {
+                            entry_cust_vendor_code = pl.payment_advice_beneficiary_u8_customerr_code
+                        }
+                    } else if(pl.payment_advice_items_type === '2') {
+                        digest = 'Payable for freight tax/' + pl.payment_advice_vessel + ' ' + pl.payment_advice_voyage
+                        entry_digest = 'Receivable from ' + pl.payment_advice_remarks_u8_vendor_alias + '/' + pl.payment_advice_vessel + ' ' + pl.payment_advice_voyage
+                    } else if(pl.payment_advice_items_type === '3') {
+                        digest = 'Payable to ' + pl.payment_advice_beneficiary_u8_customer_alias + ' for ' + pl.payment_advice_items + '/' +  pl.payment_advice_inv_cntrl
+                        entry_digest = 'Receivable from ' + pl.payment_advice_remarks_u8_vendor_alias + ' for depot-' + amount
+                    } else if(pl.payment_advice_items_type === '4') {
+                        digest = 'Payable to ' + pl.payment_advice_beneficiary_u8_customer_alias + '-' + amount
+                        entry_digest = 'Receivable from ' + pl.payment_advice_remarks_u8_vendor_alias + ' for logistic/' +  pl.payment_advice_inv_cntrl
+                        let itemcode = moment().format('YYYY') + '-' + await seq.genU8SystemOneSeq()
+                        let itemname = pl.payment_advice_inv_cntrl
+                        let citemccode = '03'
+                        let citemcname = 'LOGISTIC BL'
+                        item = await this.addFItem(itemcode, itemname, citemccode, citemcname)
+                        if(!item) {
+                            errMessage.push(pl.payment_advice_no + 'send error: item create faied')
+                            continue
+                        }
+                    } else if(pl.payment_advice_items_type === '5') { 
+                        digest = 'Payable to ' + pl.payment_advice_beneficiary_u8_customer_alias + '/' + pl.payment_advice_vessel + ' ' + pl.payment_advice_voyage
+                        entry_digest = 'Receivable from ' + pl.payment_advice_beneficiary_u8_customer_alias + '/' + pl.payment_advice_vessel + ' ' + pl.payment_advice_voyage
+
+                        let itemcode = moment(pl.payment_advice_vessel_date, 'YYYY-MM-DD').format('YYYYMMDD') + '-' + await seq.genU8SystemOneSeq()
+                        let itemname = pl.payment_advice_vessel + ' ' + pl.payment_advice_voyage
+                        let citemccode = '01'
+                        let citemcname = 'CONTAINER VESSEL'
+                        if(pl.payment_vessel_type && pl.payment_vessel_type === '2') {
+                            // 散货
+                            citemccode = '02'
+                            citemcname = 'GENERAL VESSEL'
+                        }
+                        item = await this.addFItem(itemcode, itemname, citemccode, citemcname)
+                        if(!item) {
+                            errMessage.push(pl.payment_advice_no + 'send error: item create faied')
+                            continue
+                        }
+                    }
+                    
+                    if(pl.payment_advice_currency === 'TZS') {
+                        let format_amount = await this.getNatAmount(pl.payment_advice_currency, pl.payment_advice_amount, pl.payment_advice_amount_rate)
+                        natamount = format_amount.natamount
+                        currency_name = 'TZS'
+                        currency_rate = new Decimal(pl.payment_advice_amount_rate).toNumber()
+                    }
+                    let entryitem = {
+                        cust_vendor_code: entry_cust_vendor_code,
+                        bdebitcredit: 1,
+                        subjectcode: pl.item_code_payable_debit, // 应付借
+                        amount: amount,
+                        natamount: natamount,
+                        currency_name: currency_name,
+                        currency_rate: currency_rate,
+                        digest: entry_digest
+                    }
+                    if(item && pl.payment_advice_items_type === '1') {
+                        entryitem.item_classcode = '97'
+                        entryitem.item_code = item.citemcode
+                    }
+                    if(pl.item_code_payable_debit === '113106') {
+                        entryitem.define28 = entry_cust_vendor_code
+                    }
+                    let entry = []
+                    entry.push(entryitem)
+                    let oughtpay = {
+                        code: pl.payment_advice_no,
+                        date: moment().format('YYYY-MM-DD'),
+                        cust_vendor_code: cust_vendor_code,
+                        bdebitcredit: 0,
+                        subjectcode: pl.item_code_payable_credit, // 应付贷
+                        operator: opUser.user_name,
+                        amount: amount,
+                        natamount: natamount,
+                        currency_name: currency_name,
+                        currency_rate: currency_rate,
+                        digest: digest,
+                        entry: entry
+                    }
+                    if(item) {
+                        oughtpay.item_classcode = '97'
+                        oughtpay.item_code = item.citemcode
+                    }
+                    let payable_param = {
+                        oughtpay: oughtpay
+                    }
+
+                    logger.error('payable_url', payable_url)
+                    logger.error('entry', entry)
+                    logger.error('oughtpay', oughtpay)
+                    logger.error('payable_param', payable_param)
+                    await axios.post(payable_url, payable_param).then(async response => {
+                        logger.error(response.data)
+                        let data = response.data
+                        if(data) {
+                            if(data.errcode === '0') {
+                                let finance_payable_item = null
+                                let finance_payable_entry_item = null
+                                if(pl.payment_advice_items_type === '1') {
+                                    if(item) {
+                                        finance_payable_item = item.citemcode
+                                        finance_payable_entry_item = item.citemcode
+                                    }
+                                } else if(pl.payment_advice_items_type === '4' || pl.payment_advice_items_type === '5') {
+                                    if(item) {
+                                        finance_payable_entry_item = item.citemcode
+                                    }
+                                } 
+                                await tb_finance_payable.create({
+                                    payment_advice_id: pl.payment_advice_id,
+                                    finance_payable_amount: amount,
+                                    finance_payable_currency: pl.payment_advice_currency,
+                                    finance_payable_natamount: natamount,
+                                    finance_payable_original_amount: amount,
+                                    finance_payable_rate: currency_rate,
+                                    finance_payable_code: pl.item_code_payable_debit,
+                                    finance_payable_entry_code: pl.item_code_payable_credit,
+                                    finance_payable_u8_id: data.id,
+                                    finance_payable_u8_trade_id:  data.tradeid,
+                                    finance_payable_item: finance_payable_item,
+                                    finance_payable_entry_item: finance_payable_entry_item
+                                })
+                            } else {
+                                // todo 发送失败
+                                errMessage.push(pl.payment_advice_no + 'send error: ' + data.errmsg)
+                            }
+                        } else {
+                            // todo 发送失败
+                            errMessage.push(pl.payment_advice_no + 'send error: no return')
+                        }
+                    }).catch(function (error) {
+                        errMessage.push(pl.payment_advice_no + 'send error: ' + error)
+                    })
+                } catch(err) {
+                    errMessage.push(pl.payment_advice_no + 'send error: ' + err)
+                }
+            }
+        } else {
+            return common.error('u8_01')
+        }
+    }
+    if(errMessage && errMessage.length > 0) {
+        returnData.code = '0'
+        returnData.errMessage = errMessage.join(', ')
+    } else {
+        returnData.code = '1'
+    }
+    return common.success(returnData)
+}
+
+exports.queryPaymentAct= async req => {
+    let doc = common.docValidate(req), user = req.user
+    let opUser = await tb_user.findOne({
+        where: {
+            user_id: user.user_id,
+            state: GLBConfig.ENABLE
+        }
+    })
+    let returnData = {}
+    let queryStr = `SELECT pa.*, fp.finance_payable_id, fp.finance_payable_u8_id, fp.finance_payable_u8_trade_id from tbl_zhongtan_payment_advice pa right join tbl_zhongtan_finance_payable fp on pa.payment_advice_id = fp.payment_advice_id  WHERE pa.state = 1 AND fp.state = 1 AND pa.payment_advice_status = '2' AND fp.finance_payable_u8_id IS NOT NULL AND fp.finance_payment_u8_id IS NULL`
+    let replacements = []
+    if(doc.search_data) {
+        if(doc.search_data.payable_date && doc.search_data.payable_date.length > 1 && doc.search_data.payable_date[0]  && doc.search_data.payable_date[1]) {
+            let start_date = doc.search_data.payable_date[0]
+            let end_date = doc.search_data.payable_date[1]
+            queryStr += ` AND fp.created_at >= ? and fp.created_at < ? `
+            replacements.push(start_date)
+            replacements.push(moment(end_date, 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
+        }
+    }
+
+    queryStr += ' ORDER BY fp.created_at DESC'
+    let result = await model.queryWithCount(doc, queryStr, replacements)
+    returnData.total = result.count
+    let rows = result.data
+    let payables = []
+    if(rows && rows.length > 0) {
+        queryStr = `SELECT * FROM tbl_zhongtan_payment_items WHERE state = '1'`
+        replacements = []
+        let PAYMENT_ITEMS = await model.simpleSelect(queryStr, replacements)
+
+        queryStr = `SELECT * FROM tbl_common_user WHERE state = '1' AND user_type = ?`
+        replacements = [GLBConfig.TYPE_CUSTOMER]
+        let COMMON_CUSTOMER = await model.simpleSelect(queryStr, replacements)
+        
+
+        queryStr = `SELECT * FROM tbl_zhongtan_payment_item_code WHERE state = '1'`
+        replacements = []
+        let PAYMENT_ITEM_CODES = await model.simpleSelect(queryStr, replacements)
+
+        let VESSELS = []
+        queryStr = `SELECT invoice_vessel_name AS vessel_name, invoice_vessel_voyage AS voyage, STR_TO_DATE(invoice_vessel_eta, '%d/%m/%Y') AS invoice_vessel_eta, STR_TO_DATE(invoice_vessel_ata, '%d/%m/%Y') AS invoice_vessel_ata, STR_TO_DATE(invoice_vessel_atd, '%d/%m/%Y') AS invoice_vessel_atd FROM tbl_zhongtan_invoice_vessel WHERE state = 1 AND invoice_vessel_name IS NOT NULL AND invoice_vessel_voyage IS NOT NULL AND invoice_vessel_name <> '' AND invoice_vessel_voyage <> '' GROUP BY invoice_vessel_name, invoice_vessel_voyage;`
+        replacements = []
+        let imVs = await model.simpleSelect(queryStr, replacements)
+        if(imVs) {
+          for(let i of imVs) {
+            if(i.invoice_vessel_ata) {
+                i.vessel_date = i.invoice_vessel_ata
+            } else if(i.invoice_vessel_ata) {
+                i.vessel_date = i.invoice_vessel_eta
+            } else if(i.invoice_vessel_atd) {
+                i.vessel_date = i.invoice_vessel_atd
+            }
+            if(i.vessel_date) {
+                VESSELS.push(i)
+            }
+          }
+        }
+        queryStr = `SELECT export_vessel_name AS vessel_name, export_vessel_voyage AS voyage, STR_TO_DATE(export_vessel_etd, '%d/%m/%Y') AS vessel_date FROM tbl_zhongtan_export_vessel WHERE state = 1 AND export_vessel_name IS NOT NULL AND export_vessel_voyage IS NOT NULL AND export_vessel_name <> '' AND export_vessel_voyage <> '' AND STR_TO_DATE(export_vessel_etd, '%d/%m/%Y') IS NOT NULL GROUP BY export_vessel_name, export_vessel_voyage;`
+        replacements = []
+        let exVs = await model.simpleSelect(queryStr, replacements)
+        if(exVs) {
+          for(let e of exVs) {
+            let index = VESSELS.findIndex(item => item.vessel_name === e.vessel_name && item.voyage === e.voyage)
+            if(index === -1) {
+                VESSELS.push(e)
+            }
+          }
+        }
+
+        for(let r of rows) {
+            let _disabled_message = []
+            let item = JSON.parse(JSON.stringify(r))
+            item._disabled = true
+            if(r.payment_advice_amount) {
+                let amount = r.payment_advice_amount.replace(/,/g, '')
+                item.payment_advice_amount = new Decimal(amount).toNumber()
+            }
+            if(opUser && opUser.u8_code) {
+                item.operator_u8_code = opUser.u8_code
+            } else {
+                _disabled_message.push('Payment operator not exist in U8 system.')
+            }
+            let i_i = _.find(PAYMENT_ITEMS, function(o) { return o.payment_items_code === r.payment_advice_items})
+            if(i_i) {
+                item.payment_advice_items_name = i_i.payment_items_name
+                item.payment_advice_items_type = i_i.payment_items_type
+            }
+            let b_c = _.find(COMMON_CUSTOMER, function(o) { return o.user_id === r.payment_advice_beneficiary})
+            if(b_c) {
+                item.payment_advice_beneficiary_name = b_c.user_name
+                if(b_c.u8_vendor_code && b_c.u8_vendor_alias) {
+                    item.payment_advice_beneficiary_u8_vendor_code = b_c.u8_vendor_code
+                    item.payment_advice_beneficiary_u8_vendor_alias = b_c.u8_vendor_alias
+                } else {
+                    _disabled_message.push('Payment beneficiary vendor not exist in U8 system.')
+                }
+            } else {
+                _disabled_message.push('Payment beneficiary not exist.')
+            }
+            let r_c = _.find(COMMON_CUSTOMER, function(o) { return o.user_id === r.payment_advice_remarks})
+            if(r_c) {
+                item.payment_advice_remarks_name = r_c.user_name
+                if(r_c.u8_vendor_code && r_c.u8_vendor_alias) {
+                    item.payment_advice_remarks_u8_vendor_code = r_c.u8_vendor_code
+                    item.payment_advice_remarks_u8_vendor_alias = r_c.u8_vendor_alias
+                } else {
+                    _disabled_message.push('Payment remarks vendor not exist in U8 system.')
+                }
+            }  else {
+                _disabled_message.push('Payment remarks not exist.')
+            }
+            if(item.payment_advice_items_type === '1' || item.payment_advice_items_type === '2' || item.payment_advice_items_type === '5') {
+                if(r.payment_advice_vessel && r.payment_advice_voyage) {
+                    let v_y = _.find(VESSELS, function(o) { return o.vessel_name === r.payment_advice_vessel && o.voyage === r.payment_advice_voyage })
+                    if(v_y) {
+                        item.payment_advice_vessel_date = v_y.vessel_date
+                    } else {
+                        _disabled_message.push('Payment vessel not exist.')
+                    }
+                } else {
+                    _disabled_message.push('Payment vessel not exist.')
+                }
+            }
+            item.create_date = moment(r.created_at, 'YYYY-MM-DD hh:mm:ss').format('YYYY-MM-DD hh:mm:ss')
+            let payment_file = await tb_upload_file.findOne({
+                where: {
+                    uploadfile_index1: item.payment_advice_id,
+                    api_name: 'PAYMENT ADVICE',
+                    state: GLBConfig.ENABLE
+                }
+            })
+            if(payment_file) {
+                item.payment_advice_file_id = payment_file.uploadfile_id
+                item.payment_advice_file_url = payment_file.uploadfile_url
+                item.payment_advice_amount_rate = payment_file.uploadfile_amount_rate
+            }
+
+            let code = _.find(PAYMENT_ITEM_CODES, function(o) { return o.payment_item_code === item.payment_advice_items && o.item_code_payment_debit})
+            if(code) {
+                item.item_code_payment_debit = code.item_code_payment_debit
+            } else {
+                _disabled_message.push('Payment item subject code not exist.')
+            }
+            if(_disabled_message && _disabled_message.length > 0) {
+                item._disabled_message = _disabled_message.join('\r\n')
+            } else {
+                item._disabled = false
+            }
+            payables.push(item)
+        }
+    }
+    returnData.rows = payables
+    return common.success(returnData)
+}
+
+exports.submitPaymentAct = async req => {
+    let doc = common.docValidate(req), user = req.user
+    let opUser = await tb_user.findOne({
+        where: {
+            user_id: user.user_id,
+            state: GLBConfig.ENABLE
+        }
+    })
+    let returnData = {}
+    let errMessage = []
+    if(doc.payment_list) {
+        await this.getU8Token(false)
+        let token = await redisClient.get(GLBConfig.U8_CONFIG.token_name)
+        logger.error('token', token)
+        if(token) {
+            for(let pl of doc.payment_list) {
+                let fp = await tb_finance_payable.findOne({
+                    where: {
+                        payment_advice_id: pl.payment_advice_id,
+                        state: GLBConfig.ENABLE
+                    }
+                })
+                if(fp) {
+                    try {
+                        let biz_id = await seq.genU8SystemSeq('BIZ')
+                        let vouch_code = await seq.genU8SystemSeq('PAID')
+                        let payment_url = GLBConfig.U8_CONFIG.host + GLBConfig.U8_CONFIG.pay_add_api_url + `?from_account=${GLBConfig.U8_CONFIG.from_account}&to_account=${GLBConfig.U8_CONFIG.to_account}&app_key=${GLBConfig.U8_CONFIG.app_key}&token=${token}&biz_id=${biz_id}&sync=1` 
+                        let amount = new Decimal(pl.payment_advice_amount).toNumber()
+                        let original_amount = new Decimal(pl.payment_advice_amount).toNumber()
+                        let currency_name = 'USD'
+                        let currency_rate = 1
+                        let digest = ''
+                        let entry_digest = ''
+                        if(pl.payment_advice_items_type === '1') {
+                            digest = 'MV ' + pl.payment_advice_vessel + ' ' + pl.payment_advice_voyage + ' ' + pl.payment_advice_items + '/' + pl.payment_advice_inv_cntrl
+                            entry_digest = 'MV ' + pl.payment_advice_vessel + ' ' + pl.payment_advice_voyage + ' ' + pl.payment_advice_items
+                        } else if(pl.payment_advice_items_type === '2') {
+                            digest = 'Paid for freight tax/' + pl.payment_advice_vessel + ' ' + pl.payment_advice_voyage
+                            entry_digest = 'Paid for freight tax/' + pl.payment_advice_vessel + ' ' + pl.payment_advice_voyage
+                        } else if(pl.payment_advice_items_type === '3') {
+                            digest = 'Paid to ' + pl.payment_advice_beneficiary_u8_customer_alias + ' for depot'
+                            entry_digest = 'Payable to ' + pl.payment_advice_beneficiary_u8_customer_alias + ' for ' + pl.payment_advice_inv_cntrl
+                        } else if(pl.payment_advice_items_type === '4') {
+                            digest = 'Paid to ' + pl.payment_advice_beneficiary_u8_customer_alias + ' for logistic'
+                            entry_digest = 'Paid to ' + pl.payment_advice_beneficiary_u8_customer_alias + '-' + amount
+                        } else if(pl.payment_advice_items_type === '5') { 
+                            digest = 'Paid to ' + pl.payment_advice_beneficiary_u8_customer_alias + ' for Stv.'
+                            entry_digest = 'Paid to ' + pl.payment_advice_beneficiary_u8_customer_alias + '/' + pl.payment_advice_vessel + ' ' + pl.payment_advice_voyage
+                        }
+                        
+                        if(pl.payment_advice_currency === 'TZS') {
+                            let format_amount = await this.getNatAmount(pl.payment_advice_currency, pl.payment_advice_amount, pl.payment_advice_amount_rate)
+                            amount = format_amount.natamount
+                            original_amount = format_amount.originalamount
+                            currency_name = 'TZS'
+                            currency_rate = new Decimal(pl.payment_advice_amount_rate).toNumber()
+                        }
+                        let entryitem = {
+                            customercode: pl.payment_advice_beneficiary_u8_vendor_code,
+                            itemcode: pl.item_code_payment_debit, // 付款借
+                            amount: amount,
+                            originalamount: original_amount,
+                            foreigncurrency: currency_name,
+                            currencyrate: currency_rate,
+                            cmemo: entry_digest
+                        }
+
+                        if(pl.payment_advice_items_type === '1') {
+                            if(pl.finance_payable_item) {
+                                entryitem.projectclass = '97'
+                                entryitem.project = pl.finance_payable_item
+                            } else {
+                                let itemcode = moment(pl.payment_advice_vessel_date, 'YYYY-MM-DD').format('YYYYMMDD') + '-' + await seq.genU8SystemOneSeq()
+                                let itemname = pl.payment_advice_vessel + ' ' + pl.payment_advice_voyage
+                                let citemccode = '01'
+                                let citemcname = 'CONTAINER VESSEL'
+                                if(pl.payment_vessel_type && pl.payment_vessel_type === '2') {
+                                    // 散货
+                                    citemccode = '02'
+                                    citemcname = 'GENERAL VESSEL'
+                                }
+                                item = await this.addFItem(itemcode, itemname, citemccode, citemcname)
+                                if(!item) {
+                                    errMessage.push(pl.payment_advice_no + 'send error: item create faied')
+                                    continue
+                                } else {
+                                    entryitem.projectclass = '97'
+                                    entryitem.project = item.citemcode
+                                }
+                            }
+                        }
+
+                        let entry = []
+                        entry.push(entryitem)
+
+                        let balancecode = '1'
+                        if(pl.payment_advice_method === 'CHEQUE') {
+                            balancecode = '2'
+                        } else if(pl.payment_advice_method === 'CASH') {
+                            balancecode = '3'
+                        } 
+                        let pay = {
+                            vouchcode: vouch_code,
+                            vouchdate: moment().format('YYYY-MM-DD'),
+                            period: moment().format('M'), // 单据日期 月份
+                            vouchtype: '49',
+                            customercode: pl.payment_advice_beneficiary_u8_vendor_code,
+                            balancecode: balancecode,
+                            personcode: opUser.u8_code,
+                            amount: amount,
+                            originalamount: original_amount,
+                            foreigncurrency: currency_name,
+                            currencyrate: currency_rate,
+                            digest: digest,
+                            entry: entry
+                        }
+                        let payment_param = {
+                            pay: pay
+                        }
+
+                        logger.error('payment_url', payment_url)
+                        logger.error('entry', entry)
+                        logger.error('pay', pay)
+                        logger.error('payable_param', payment_param)
+                        await axios.post(payment_url, payment_param).then(async response => {
+                            logger.error(response.data)
+                            let data = response.data
+                            if(data) {
+                                if(data.errcode === '0') {
+                                    fp.finance_payment_u8_id = data.id
+                                    fp.finance_payment_u8_trade_id = data.tradeid
+                                    if(pay.itemcode) {
+                                        fp.finance_payment_item = pay.itemcode
+                                    }
+                                    fp.finance_payment_at = new Date()
+                                    await fp.save()
+                                } else {
+                                    // todo 发送失败
+                                    errMessage.push(pl.payment_advice_no + 'send error: ' + data.errmsg)
+                                }
+                            } else {
+                                // todo 发送失败
+                                errMessage.push(pl.payment_advice_no + 'send error: no return')
+                            }
+                        }).catch(function (error) {
+                            errMessage.push(pl.payment_advice_no + 'send error: ' + error)
+                        })
+                    } catch(err) {
+                        errMessage.push(pl.payment_advice_no + 'send error: ' + err)
+                    }
+                } else {
+                    errMessage.push(pl.payment_advice_no + 'may not exist or may have been deleted ')
+                }
+            }
+        } else {
+            errMessage.push('U8 system api token not exist')
+        }
+    }
+    if(errMessage && errMessage.length > 0) {
+        returnData.code = '0'
+        returnData.errMessage = errMessage.join(', ')
+    } else {
+        returnData.code = '1'
+    }
+    return common.success(returnData)
+}
+
+exports.watchU8PayableAct = async req => {
+    let doc = common.docValidate(req), user = req.user
+    let fp = await tb_finance_payable.findOne({
+        where: {
+            finance_payable_id: doc.finance_payable_id,
+            state: GLBConfig.ENABLE
+        }
+    })
+    let ought_pay = ''
+    if(fp && fp.finance_payable_u8_id) {
+        await this.getU8Token(false)
+        let token = await redisClient.get(GLBConfig.U8_CONFIG.token_name)
+        if(token) {
+            let get_url = GLBConfig.U8_CONFIG.host + GLBConfig.U8_CONFIG.oughtpay_get_api_url + `?from_account=${GLBConfig.U8_CONFIG.from_account}&to_account=${GLBConfig.U8_CONFIG.to_account}&app_key=${GLBConfig.U8_CONFIG.app_key}&token=${token}&id=${fp.finance_payable_u8_id}`
+            logger.error('watchU8PayableAct', get_url)
+            await axios.get(get_url).then(async response => {
+                logger.error(response.data)
+                let data = response.data
+                if(data) {
+                    if(data.errcode === '0') {
+                        ought_pay = data.oughtpay
+                    }
+                }
+            })
+        }
+    }
+    if(ought_pay) {
+        return common.success(ought_pay)
+    } else {
+        return common.error('u8_02')
+    }
+}
+
+exports.queryCompleteAct = async req => {
+    let doc = common.docValidate(req), user = req.user
+    let opUser = await tb_user.findOne({
+        where: {
+            user_id: user.user_id,
+            state: GLBConfig.ENABLE
+        }
+    })
+    let returnData = {}
+    let queryStr = `SELECT pa.*, fp.finance_payable_id, fp.finance_payable_u8_id, fp.finance_payable_u8_trade_id, fp.finance_payment_u8_id, fp.finance_payment_u8_trade_id, fp.created_at AS finance_payable_at, fp.finance_payment_at from tbl_zhongtan_payment_advice pa right join tbl_zhongtan_finance_payable fp on pa.payment_advice_id = fp.payment_advice_id  WHERE pa.state = 1 AND fp.state = 1 AND pa.payment_advice_status = '2' AND fp.finance_payable_u8_id IS NOT NULL AND fp.finance_payment_u8_id IS NOT NULL`
+    let replacements = []
+    if(doc.search_data) {
+        if(doc.search_data.payable_date && doc.search_data.payable_date.length > 1 && doc.search_data.payable_date[0]  && doc.search_data.payable_date[1]) {
+            let start_date = doc.search_data.payable_date[0]
+            let end_date = doc.search_data.payable_date[1]
+            queryStr += ` AND fp.created_at >= ? and fp.created_at < ? `
+            replacements.push(start_date)
+            replacements.push(moment(end_date, 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
+        }
+        if(doc.search_data.payment_date && doc.search_data.payment_date.length > 1 && doc.search_data.payment_date[0]  && doc.search_data.payment_date[1]) {
+            let start_date = doc.search_data.payment_date[0]
+            let end_date = doc.search_data.payment_date[1]
+            queryStr += ` AND fp.finance_payment_at >= ? and fp.finance_payment_at < ? `
+            replacements.push(start_date)
+            replacements.push(moment(end_date, 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
+        }
+    }
+
+    queryStr += ' ORDER BY fp.finance_payment_at DESC'
+    let result = await model.queryWithCount(doc, queryStr, replacements)
+    returnData.total = result.count
+    let rows = result.data
+    let payables = []
+    if(rows && rows.length > 0) {
+        queryStr = `SELECT * FROM tbl_zhongtan_payment_items WHERE state = '1'`
+        replacements = []
+        let PAYMENT_ITEMS = await model.simpleSelect(queryStr, replacements)
+
+        queryStr = `SELECT * FROM tbl_common_user WHERE state = '1' AND user_type = ?`
+        replacements = [GLBConfig.TYPE_CUSTOMER]
+        let COMMON_CUSTOMER = await model.simpleSelect(queryStr, replacements)
+
+        let VESSELS = []
+        queryStr = `SELECT invoice_vessel_name AS vessel_name, invoice_vessel_voyage AS voyage, STR_TO_DATE(invoice_vessel_eta, '%d/%m/%Y') AS invoice_vessel_eta, STR_TO_DATE(invoice_vessel_ata, '%d/%m/%Y') AS invoice_vessel_ata, STR_TO_DATE(invoice_vessel_atd, '%d/%m/%Y') AS invoice_vessel_atd FROM tbl_zhongtan_invoice_vessel WHERE state = 1 AND invoice_vessel_name IS NOT NULL AND invoice_vessel_voyage IS NOT NULL AND invoice_vessel_name <> '' AND invoice_vessel_voyage <> '' GROUP BY invoice_vessel_name, invoice_vessel_voyage;`
+        replacements = []
+        let imVs = await model.simpleSelect(queryStr, replacements)
+        if(imVs) {
+          for(let i of imVs) {
+            if(i.invoice_vessel_ata) {
+                i.vessel_date = i.invoice_vessel_ata
+            } else if(i.invoice_vessel_ata) {
+                i.vessel_date = i.invoice_vessel_eta
+            } else if(i.invoice_vessel_atd) {
+                i.vessel_date = i.invoice_vessel_atd
+            }
+            if(i.vessel_date) {
+                VESSELS.push(i)
+            }
+          }
+        }
+        queryStr = `SELECT export_vessel_name AS vessel_name, export_vessel_voyage AS voyage, STR_TO_DATE(export_vessel_etd, '%d/%m/%Y') AS vessel_date FROM tbl_zhongtan_export_vessel WHERE state = 1 AND export_vessel_name IS NOT NULL AND export_vessel_voyage IS NOT NULL AND export_vessel_name <> '' AND export_vessel_voyage <> '' AND STR_TO_DATE(export_vessel_etd, '%d/%m/%Y') IS NOT NULL GROUP BY export_vessel_name, export_vessel_voyage;`
+        replacements = []
+        let exVs = await model.simpleSelect(queryStr, replacements)
+        if(exVs) {
+          for(let e of exVs) {
+            let index = VESSELS.findIndex(item => item.vessel_name === e.vessel_name && item.voyage === e.voyage)
+            if(index === -1) {
+                VESSELS.push(e)
+            }
+          }
+        }
+
+        for(let r of rows) {
+            let _disabled_message = []
+            let item = JSON.parse(JSON.stringify(r))
+            if(r.payment_advice_amount) {
+                let amount = r.payment_advice_amount.replace(/,/g, '')
+                item.payment_advice_amount = new Decimal(amount).toNumber()
+            }
+            let i_i = _.find(PAYMENT_ITEMS, function(o) { return o.payment_items_code === r.payment_advice_items})
+            if(i_i) {
+                item.payment_advice_items_name = i_i.payment_items_name
+                item.payment_advice_items_type = i_i.payment_items_type
+            }
+            let b_c = _.find(COMMON_CUSTOMER, function(o) { return o.user_id === r.payment_advice_beneficiary})
+            if(b_c) {
+                item.payment_advice_beneficiary_name = b_c.user_name
+                if(b_c.u8_code && b_c.u8_alias) {
+                    item.payment_advice_beneficiary_u8_customerr_code = b_c.u8_code
+                    item.payment_advice_beneficiary_u8_customer_alias = b_c.u8_alias
+                }
+            }
+            let r_c = _.find(COMMON_CUSTOMER, function(o) { return o.user_id === r.payment_advice_remarks})
+            if(r_c) {
+                item.payment_advice_remarks_name = r_c.user_name
+                if(r_c.u8_vendor_code && r_c.u8_vendor_alias) {
+                    item.payment_advice_remarks_u8_vendor_code = r_c.u8_vendor_code
+                    item.payment_advice_remarks_u8_vendor_alias = r_c.u8_vendor_alias
+                }
+            }
+            if(item.payment_advice_items_type === '1' || item.payment_advice_items_type === '2' || item.payment_advice_items_type === '5') {
+                if(r.payment_advice_vessel && r.payment_advice_voyage) {
+                    let v_y = _.find(VESSELS, function(o) { return o.vessel_name === r.payment_advice_vessel && o.voyage === r.payment_advice_voyage })
+                    if(v_y) {
+                        item.payment_advice_vessel_date = v_y.vessel_date
+                    }
+                }
+            }
+            item.finance_payable_at = moment(r.finance_payable_at, 'YYYY-MM-DD hh:mm:ss').format('YYYY-MM-DD hh:mm:ss')
+            item.finance_payment_at = moment(r.finance_payment_at, 'YYYY-MM-DD hh:mm:ss').format('YYYY-MM-DD hh:mm:ss')
+            let payment_file = await tb_upload_file.findOne({
+                where: {
+                    uploadfile_index1: item.payment_advice_id,
+                    api_name: 'PAYMENT ADVICE',
+                    state: GLBConfig.ENABLE
+                }
+            })
+            if(payment_file) {
+                item.payment_advice_file_id = payment_file.uploadfile_id
+                item.payment_advice_file_url = payment_file.uploadfile_url
+                item.payment_advice_amount_rate = payment_file.uploadfile_amount_rate
+            }
+            payables.push(item)
+        }
+    }
+    returnData.rows = payables
+    return common.success(returnData)
+}
+
+exports.watchPaymentAct = async req => {
+    let doc = common.docValidate(req), user = req.user
+    let fp = await tb_finance_payable.findOne({
+        where: {
+            finance_payable_id: doc.finance_payable_id,
+            state: GLBConfig.ENABLE
+        }
+    })
+    let ought_paid = ''
+    if(fp && fp.finance_payment_u8_id) {
+        await this.getU8Token(false)
+        let token = await redisClient.get(GLBConfig.U8_CONFIG.token_name)
+        if(token) {
+            let get_url = GLBConfig.U8_CONFIG.host + GLBConfig.U8_CONFIG.pay_get_api_url + `?from_account=${GLBConfig.U8_CONFIG.from_account}&to_account=${GLBConfig.U8_CONFIG.to_account}&app_key=${GLBConfig.U8_CONFIG.app_key}&token=${token}&id=${fp.finance_payment_u8_id}`
+            logger.error('watchPaymentAct', get_url)
+            await axios.get(get_url).then(async response => {
+                logger.error(response.data)
+                let data = response.data
+                if(data) {
+                    if(data.errcode === '0') {
+                        ought_paid = data.pay
+                    }
+                }
+            })
+        }
+    }
+    if(ought_paid) {
+        return common.success(ought_paid)
+    } else {
+        return common.error('u8_02')
+    }
+}
+
+exports.getU8Token = async loginFlg => {
+    if(!loginFlg) {
+        let token = await redisClient.get(GLBConfig.U8_CONFIG.token_name)
+        if(token) {
+            return token
+        }
+    }
+    let token_url = GLBConfig.U8_CONFIG.host + GLBConfig.U8_CONFIG.token_api_url + `?from_account=${GLBConfig.U8_CONFIG.from_account}&app_key=${GLBConfig.U8_CONFIG.app_key}&app_secret=${GLBConfig.U8_CONFIG.app_secret}`
+    logger.error('token_purl', token_url)
+    await axios.get(token_url).then(async response => {
+        logger.error(response.data)
+        let data = response.data
+        if(data) {
+            if(data.errcode === '0') {
+                let token = data.token
+                if(token) {
+                    await redisClient.set(GLBConfig.U8_CONFIG.token_name, token.id, GLBConfig.U8_CONFIG.token_expired)
+                    logger.error('token.id', token.id)
+                } else {
+                    return common.error('u8_01')
+                }
+            } else {
+                return common.error('u8_01')
+            }
+        } else {
+            return common.error('u8_01')
+        }
+    })
+    .catch(error => {
+        console.error(error)
+        return common.error('u8_01')
+    })
+}
+
+exports.addFItem = async (code, name, citemccode, citemcname) => {
+    await this.getU8Token(false)
+    let token = await redisClient.get(GLBConfig.U8_CONFIG.token_name)
+    let biz_id = await seq.genU8SystemSeq('BIZ')
+    let item_url = GLBConfig.U8_CONFIG.host + GLBConfig.U8_CONFIG.fitem_add_api_url + `?from_account=${GLBConfig.U8_CONFIG.from_account}&to_account=${GLBConfig.U8_CONFIG.to_account}&app_key=${GLBConfig.U8_CONFIG.app_key}&token=${token}&biz_id=${biz_id}&sync=1` 
+    let fitem = {
+        citemcode: code,
+        citemname: name,
+        citemccode: citemccode,
+        citemcname: citemcname,
+        citem_class: '97',
+        citem_name: '项目管理',
+        bclose: false
+    }
+    let item_param = {
+        fitem: fitem
+    }
+    logger.error('item_url', item_url)
+    logger.error('item_param', item_param)
+    let u8Item = ''
+    await axios.post(item_url, item_param).then(async response => {
+        let data = response.data
+        if(data) {
+            logger.error('addFItem', data)
+            if(data.errcode === '0') {
+                u8Item = fitem
+            }
+        }
+    }).catch(function (error) {
+    })
+    return u8Item
+}
+
+exports.getNatAmount = async (currency, amount, rate) =>  {
+    if(currency === 'USD') {
+        let tzs_amount = new Decimal(amount).times(new Decimal(rate))
+        return {
+            natamount: new Decimal(amount),
+            originalamount: new Decimal(tzs_amount).toNumber()
+        }
+    } else {
+        let usd_amount = new Decimal(amount).div(new Decimal(rate)).toFixed(2, Decimal.ROUND_HALF_UP)
+        return {
+            natamount: new Decimal(usd_amount).toNumber(),
+            originalamount: new Decimal(amount).toNumber()
+        }
+    }
+}

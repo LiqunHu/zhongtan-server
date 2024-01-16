@@ -553,6 +553,7 @@ exports.downloadReceiptAct = async req => {
   renderData.user_email = commonUser.user_email
   try {
     let fileInfo = await common.ejs2Pdf('receipta.ejs', renderData, 'zhongtan')
+    let amount_rate = await rateSrv.getCurrentExchangeRateTZS(doc.invoice_masterbi_receipt_amount)
     await tb_uploadfile.create({
       api_name: 'RECEIPT-RECEIPT',
       user_id: user.user_id,
@@ -561,6 +562,7 @@ exports.downloadReceiptAct = async req => {
       uploadfile_url: fileInfo.url,
       uploadfile_acttype: doc.checkType,
       uploadfile_amount: doc.invoice_masterbi_receipt_amount_rate,
+      uploadfile_amount_rate: amount_rate.rate,
       uploadfile_currency: doc.invoice_masterbi_receipt_currency,
       uploadfile_check_cash: doc.invoice_masterbi_check_cash,
       uploadfile_check_no: doc.invoice_masterbi_check_no,
@@ -644,20 +646,23 @@ exports.downloadCollectAct = async (req, res) => {
     row.bc = ''
     if(r.uploadfile_bank_info) {
       row.bc = r.uploadfile_bank_info
+      row.invoice_masterbi_bank_reference_no = r.uploadfile_bank_reference_no
     } else {
       if (r.uploadfile_check_cash === 'CASH') {
         row.bc = '1'
       } else if (r.uploadfile_check_cash === 'CHEQUE') {
         row.bc = '2'
+        row.invoice_masterbi_check_no = r.uploadfile_check_no
       } else if (r.uploadfile_check_cash === 'TRANSFER') {
         row.bc = '3'
+        row.invoice_masterbi_bank_reference_no = r.uploadfile_bank_reference_no
       }
     }
     
     row.user_name = r.user_name
     row.invoice_masterbi_bl = r.invoice_masterbi_bl
-    row.invoice_masterbi_check_no = r.uploadfile_check_no
-    row.invoice_masterbi_bank_reference_no = r.uploadfile_bank_reference_no
+    // row.invoice_masterbi_check_no = r.uploadfile_check_no
+    // row.invoice_masterbi_bank_reference_no = r.uploadfile_bank_reference_no
     row.invoice_masterbi_deposit = ''
     row.invoice_masterbi_bl_amendment = ''
     row.invoice_masterbi_cod_charge = ''
@@ -884,6 +889,6 @@ exports.checkPasswordAct = async req => {
 
 exports.changeReceiptCurrencyAct = async req => {
   let doc = common.docValidate(req)
-  let tzsAmount = await rateSrv.getCurrentExchangeRateTZS(doc.usd_amount)
-  return common.success(tzsAmount)
+  let result = await rateSrv.getCurrentExchangeRateTZS(doc.usd_amount)
+  return common.success(result.amount)
 }

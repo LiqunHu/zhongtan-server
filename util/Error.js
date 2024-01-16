@@ -138,4 +138,6 @@ module.exports = {
   obs_03: 'download file failed',
   bank_01: 'Edit Bank Info do not exist',
   bank_02: 'Bank name or code already exists',
+  u8_01: 'get token error',
+  u8_01: 'get oughtreceive error'
 }

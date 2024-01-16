@@ -91,4 +91,9 @@ router.post('/payment/UnusualCommercial/:method', services.UnusualCommercialCont
 
 router.post('/file/ObsFile/:method', services.ObsFileControl)
 router.post('/fileAdmin/ObsFile/:method', services.ObsFileControl)
+
+
+router.post('/finance/ReceivableFinance/:method', services.ReceivableFinanceControl)
+router.post('/finance/PayableFinance/:method', services.PayableFinanceControl)
+
 module.exports = router

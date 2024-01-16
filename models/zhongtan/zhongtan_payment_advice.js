@@ -71,5 +71,15 @@ module.exports = db.defineModel('tbl_zhongtan_payment_advice', {
     // 创建人
     type: db.STRING(50),
     allowNull: true
+  },
+  payment_advice_rate: {
+    // 汇率
+    type: db.STRING(50),
+    allowNull: true
+  },
+  payment_vessel_type: {
+    // 船类型
+    type: db.STRING(5),
+    allowNull: false
   }
 })

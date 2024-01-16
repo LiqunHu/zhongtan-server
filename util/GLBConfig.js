@@ -521,6 +521,18 @@ module.exports = {
     { id: 'AP', text: 'All Approved' },
     { id: 'UN', text: 'UNDO' }
   ],
+  PAYMENT_ITEM_TYPE: [
+    { id: '1', text: 'PORT' },
+    { id: '2', text: 'FREIGHT' }, 
+    { id: '3', text: 'DEPOT' }, 
+    { id: '4', text: 'LOGISTIC' }, 
+    { id: '5', text: 'AGENT' }, 
+    { id: '6', text: 'ADMINSTRATION' }, 
+  ],
+  PAYMENT_VESSEL_TYPE: [
+    { id: '1', text: 'CONTAINER' },
+    { id: '2', text: 'GENERAL' }, 
+  ],
   UNUSUAL_STATUS: [
     // 支付状态 1：申请，2：发票 3: 收据
     { id: '1', text: 'APPLY' },  // 申请
@@ -547,5 +559,28 @@ module.exports = {
   OBS_FILE_AUTH: [
     { id: '0', text: 'PRIVATE' },
     { id: '1', text: 'PUBLIC' }
-  ]
+  ],
+  U8_CONFIG: {
+    host: 'https://api.yonyouup.com/',
+    from_account: 'zhongtan',
+    to_account: 'zhongtan',
+    app_key: 'opa1f41a2b2769492b7',
+    app_secret: '9d0bf70a1483454e8117ec0405728d3a',
+    token_name: 'u8_zhongtan_api_token',
+    token_expired: 5400, //2*60*60
+    token_api_url: 'system/token',
+    u8_cosco_code: 'G00004',
+    u8_cosco_alias: 'COSCO SHIPPING LINES',
+    u8_oocl_code: 'B00031',
+    u8_oocl_alias: 'OOCL',
+    oughtreceive_add_api_url: 'api/oughtreceive/add', // 应收单
+    oughtreceive_get_api_url: 'api/oughtreceive/get', // 应收单
+    accept_add_api_url: 'api/accept/add', // 收款单
+    accept_get_api_url: 'api/accept/get', // 应收单
+    oughtpay_add_api_url: 'api/oughtpay/add', // 应付单
+    oughtpay_get_api_url: 'api/oughtpay/get', // 应付单
+    pay_add_api_url: 'api/pay/add', // 付款单
+    pay_get_api_url: 'api/pay/get', // 付款单
+    fitem_add_api_url: 'api/fitem/add' // 新项目
+  }
 }

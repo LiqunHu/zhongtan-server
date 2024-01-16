@@ -87,9 +87,9 @@ exports.getCurrentExchangeRateTZS = async usdAmount => {
     if(rate_item.rate_tzs) {
       rate_amount = new Decimal(usdAmount).times(new Decimal(rate_item.rate_tzs))
     }
-    return Decimal.isDecimal(rate_amount) ? rate_amount.toNumber() : rate_amount
+    return {amount: Decimal.isDecimal(rate_amount) ? rate_amount.toNumber() : rate_amount, rate: new Decimal(rate_item.rate_tzs).toNumber()}
   } else {
-    return usdAmount
+    return {amount: usdAmount, rate: 1}
   }
 }
 
@@ -102,10 +102,10 @@ exports.getCurrentExchangeRateUSD = async tzsAmount => {
     let rate_item = rate_rows[0]
     let rate_amount = tzsAmount
     if(rate_item.rate_tzs) {
-      rate_amount = new Decimal(tzsAmount).times(new Decimal(rate_item.rate_usd))
+      rate_amount = new Decimal(tzsAmount).div(new Decimal(rate_item.rate_usd))
     }
-    return Decimal.isDecimal(rate_amount) ? rate_amount.toNumber() : rate_amount
+    return {amount: Decimal.isDecimal(rate_amount) ? rate_amount.toNumber() : rate_amount, rate: new Decimal(rate_item.rate_usd).toNumber()}
   } else {
-    return tzsAmount
+    return {amount: tzsAmount, rate: 1}
   }
 }

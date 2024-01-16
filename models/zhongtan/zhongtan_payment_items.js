@@ -16,5 +16,10 @@ module.exports = db.defineModel('tbl_zhongtan_payment_items', {
     // 费用名称
     type: db.STRING(100),
     allowNull: false
+  },
+  payment_items_type: {
+    // 费用名称
+    type: db.STRING(10),
+    allowNull: true
   }
 })

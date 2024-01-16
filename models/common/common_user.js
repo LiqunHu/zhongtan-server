@@ -166,8 +166,7 @@ module.exports = db.defineModel('tbl_common_user', {
   u8_department_code: {
     // U8系统部门代码
     type: db.STRING(10),
-    defaultValue: '1',
-    allowNull: false
+    allowNull: true
   },
   u8_vendor_code: {
     // 用户U8系统供应商代码

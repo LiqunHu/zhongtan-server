@@ -226,6 +226,32 @@ let genUnusualSeq = async () => {
   }
 }
 
+let genU8SystemSeq = async (biz) => {
+  try {
+    let queryRst = await sequelize.query("select nextval('U8SystemSeq') num", {
+      type: sequelize.QueryTypes.SELECT
+    }) 
+    let currentIndex = biz + moment().format('YYYYMMDD') + ('000000' + queryRst[0].num).slice(-6)
+    return currentIndex
+  } catch (error) {
+    logger.error(error)
+    return error
+  }
+}
+
+let genU8SystemOneSeq = async () => {
+  try {
+    let queryRst = await sequelize.query("select nextval('U8SystemSeq') num", {
+      type: sequelize.QueryTypes.SELECT
+    }) 
+    let currentIndex = ('000000' + queryRst[0].num).slice(-6)
+    return currentIndex
+  } catch (error) {
+    logger.error(error)
+    return error
+  }
+}
+
 module.exports = {
   genUserID: genUserID,
   genReceiptNo: genReceiptNo,
@@ -242,5 +268,7 @@ module.exports = {
   genShipmentReceiptSeq: genShipmentReceiptSeq,
   genLogisticsSeq: genLogisticsSeq,
   genPaymentAdviceSeq: genPaymentAdviceSeq,
-  genUnusualSeq: genUnusualSeq
+  genUnusualSeq: genUnusualSeq,
+  genU8SystemSeq: genU8SystemSeq,
+  genU8SystemOneSeq: genU8SystemOneSeq
 }

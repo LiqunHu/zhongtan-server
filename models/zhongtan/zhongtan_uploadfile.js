@@ -122,5 +122,11 @@ module.exports = db.defineModel('tbl_zhongtan_uploadfile', {
     // 银行信息
     type: db.STRING(10),
     allowNull: true
+  },
+  uploadfile_amount_rate: {
+    // 汇率
+    type: db.STRING(20),
+    defaultValue: '1',
+    allowNull: false
   }
 })
