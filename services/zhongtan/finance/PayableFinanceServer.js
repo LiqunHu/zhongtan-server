@@ -72,16 +72,16 @@ exports.queryPayableAct = async req => {
         let PAYMENT_ITEM_CODE_CARRIERS = await model.simpleSelect(queryStr, replacements)
 
         let VESSELS = []
-        queryStr = `SELECT invoice_vessel_name AS vessel_name, invoice_vessel_voyage AS voyage, STR_TO_DATE(invoice_vessel_eta, '%d/%m/%Y') AS invoice_vessel_eta, STR_TO_DATE(invoice_vessel_ata, '%d/%m/%Y') AS invoice_vessel_ata, STR_TO_DATE(invoice_vessel_atd, '%d/%m/%Y') AS invoice_vessel_atd FROM tbl_zhongtan_invoice_vessel WHERE state = 1 AND invoice_vessel_name IS NOT NULL AND invoice_vessel_voyage IS NOT NULL AND invoice_vessel_name <> '' AND invoice_vessel_voyage <> '' GROUP BY invoice_vessel_name, invoice_vessel_voyage;`
+        queryStr = `SELECT invoice_vessel_name AS vessel_name, invoice_vessel_voyage AS voyage, invoice_vessel_eta, invoice_vessel_ata, invoice_vessel_atd FROM tbl_zhongtan_invoice_vessel WHERE state = 1 AND invoice_vessel_name IS NOT NULL AND invoice_vessel_voyage IS NOT NULL AND invoice_vessel_name <> '' AND invoice_vessel_voyage <> '' GROUP BY invoice_vessel_name, invoice_vessel_voyage;`
         replacements = []
         let imVs = await model.simpleSelect(queryStr, replacements)
         if(imVs) {
           for(let i of imVs) {
-            if(i.invoice_vessel_ata) {
+            if(i.invoice_vessel_ata && moment(i.invoice_vessel_ata, 'DD/MM/YYYY').isValid()) {
                 i.vessel_date = i.invoice_vessel_ata
-            } else if(i.invoice_vessel_ata) {
+            } else if(i.invoice_vessel_eta && moment(i.invoice_vessel_eta, 'DD/MM/YYYY').isValid()) {
                 i.vessel_date = i.invoice_vessel_eta
-            } else if(i.invoice_vessel_atd) {
+            } else if(i.invoice_vessel_atd && moment(i.invoice_vessel_atd, 'DD/MM/YYYY').isValid()) {
                 i.vessel_date = i.invoice_vessel_atd
             }
             if(i.vessel_date) {
@@ -89,13 +89,16 @@ exports.queryPayableAct = async req => {
             }
           }
         }
-        queryStr = `SELECT export_vessel_name AS vessel_name, export_vessel_voyage AS voyage, STR_TO_DATE(export_vessel_etd, '%d/%m/%Y') AS vessel_date FROM tbl_zhongtan_export_vessel WHERE state = 1 AND export_vessel_name IS NOT NULL AND export_vessel_voyage IS NOT NULL AND export_vessel_name <> '' AND export_vessel_voyage <> '' AND STR_TO_DATE(export_vessel_etd, '%d/%m/%Y') IS NOT NULL GROUP BY export_vessel_name, export_vessel_voyage;`
+        queryStr = `SELECT export_vessel_name AS vessel_name, export_vessel_voyage AS voyage, export_vessel_etd FROM tbl_zhongtan_export_vessel WHERE state = 1 AND export_vessel_name IS NOT NULL AND export_vessel_voyage IS NOT NULL AND export_vessel_name <> '' AND export_vessel_voyage <> '' AND STR_TO_DATE(export_vessel_etd, '%d/%m/%Y') IS NOT NULL GROUP BY export_vessel_name, export_vessel_voyage;`
         replacements = []
         let exVs = await model.simpleSelect(queryStr, replacements)
         if(exVs) {
           for(let e of exVs) {
             let index = VESSELS.findIndex(item => item.vessel_name === e.vessel_name && item.voyage === e.voyage)
             if(index === -1) {
+                if(e.export_vessel_etd && moment(e.export_vessel_etd, 'DD/MM/YYYY').isValid()) {
+                    e.vessel_date = e.export_vessel_etd
+                }
                 VESSELS.push(e)
             }
           }
@@ -439,16 +442,16 @@ exports.queryPaymentAct= async req => {
         let PAYMENT_ITEM_CODES = await model.simpleSelect(queryStr, replacements)
 
         let VESSELS = []
-        queryStr = `SELECT invoice_vessel_name AS vessel_name, invoice_vessel_voyage AS voyage, STR_TO_DATE(invoice_vessel_eta, '%d/%m/%Y') AS invoice_vessel_eta, STR_TO_DATE(invoice_vessel_ata, '%d/%m/%Y') AS invoice_vessel_ata, STR_TO_DATE(invoice_vessel_atd, '%d/%m/%Y') AS invoice_vessel_atd FROM tbl_zhongtan_invoice_vessel WHERE state = 1 AND invoice_vessel_name IS NOT NULL AND invoice_vessel_voyage IS NOT NULL AND invoice_vessel_name <> '' AND invoice_vessel_voyage <> '' GROUP BY invoice_vessel_name, invoice_vessel_voyage;`
+        queryStr = `SELECT invoice_vessel_name AS vessel_name, invoice_vessel_voyage AS voyage, invoice_vessel_eta, invoice_vessel_ata, invoice_vessel_atd FROM tbl_zhongtan_invoice_vessel WHERE state = 1 AND invoice_vessel_name IS NOT NULL AND invoice_vessel_voyage IS NOT NULL AND invoice_vessel_name <> '' AND invoice_vessel_voyage <> '' GROUP BY invoice_vessel_name, invoice_vessel_voyage;`
         replacements = []
         let imVs = await model.simpleSelect(queryStr, replacements)
         if(imVs) {
           for(let i of imVs) {
-            if(i.invoice_vessel_ata) {
+            if(i.invoice_vessel_ata && moment(i.invoice_vessel_ata, 'DD/MM/YYYY').isValid()) {
                 i.vessel_date = i.invoice_vessel_ata
-            } else if(i.invoice_vessel_ata) {
+            } else if(i.invoice_vessel_eta && moment(i.invoice_vessel_eta, 'DD/MM/YYYY').isValid()) {
                 i.vessel_date = i.invoice_vessel_eta
-            } else if(i.invoice_vessel_atd) {
+            } else if(i.invoice_vessel_atd && moment(i.invoice_vessel_atd, 'DD/MM/YYYY').isValid()) {
                 i.vessel_date = i.invoice_vessel_atd
             }
             if(i.vessel_date) {
@@ -456,13 +459,16 @@ exports.queryPaymentAct= async req => {
             }
           }
         }
-        queryStr = `SELECT export_vessel_name AS vessel_name, export_vessel_voyage AS voyage, STR_TO_DATE(export_vessel_etd, '%d/%m/%Y') AS vessel_date FROM tbl_zhongtan_export_vessel WHERE state = 1 AND export_vessel_name IS NOT NULL AND export_vessel_voyage IS NOT NULL AND export_vessel_name <> '' AND export_vessel_voyage <> '' AND STR_TO_DATE(export_vessel_etd, '%d/%m/%Y') IS NOT NULL GROUP BY export_vessel_name, export_vessel_voyage;`
+        queryStr = `SELECT export_vessel_name AS vessel_name, export_vessel_voyage AS voyage, export_vessel_etd FROM tbl_zhongtan_export_vessel WHERE state = 1 AND export_vessel_name IS NOT NULL AND export_vessel_voyage IS NOT NULL AND export_vessel_name <> '' AND export_vessel_voyage <> '' AND STR_TO_DATE(export_vessel_etd, '%d/%m/%Y') IS NOT NULL GROUP BY export_vessel_name, export_vessel_voyage;`
         replacements = []
         let exVs = await model.simpleSelect(queryStr, replacements)
         if(exVs) {
           for(let e of exVs) {
             let index = VESSELS.findIndex(item => item.vessel_name === e.vessel_name && item.voyage === e.voyage)
             if(index === -1) {
+                if(e.export_vessel_etd && moment(e.export_vessel_etd, 'DD/MM/YYYY').isValid()) {
+                    e.vessel_date = e.export_vessel_etd
+                }
                 VESSELS.push(e)
             }
           }
@@ -798,16 +804,16 @@ exports.queryCompleteAct = async req => {
         let COMMON_CUSTOMER = await model.simpleSelect(queryStr, replacements)
 
         let VESSELS = []
-        queryStr = `SELECT invoice_vessel_name AS vessel_name, invoice_vessel_voyage AS voyage, STR_TO_DATE(invoice_vessel_eta, '%d/%m/%Y') AS invoice_vessel_eta, STR_TO_DATE(invoice_vessel_ata, '%d/%m/%Y') AS invoice_vessel_ata, STR_TO_DATE(invoice_vessel_atd, '%d/%m/%Y') AS invoice_vessel_atd FROM tbl_zhongtan_invoice_vessel WHERE state = 1 AND invoice_vessel_name IS NOT NULL AND invoice_vessel_voyage IS NOT NULL AND invoice_vessel_name <> '' AND invoice_vessel_voyage <> '' GROUP BY invoice_vessel_name, invoice_vessel_voyage;`
+        queryStr = `SELECT invoice_vessel_name AS vessel_name, invoice_vessel_voyage AS voyage, invoice_vessel_eta, invoice_vessel_ata, invoice_vessel_atd FROM tbl_zhongtan_invoice_vessel WHERE state = 1 AND invoice_vessel_name IS NOT NULL AND invoice_vessel_voyage IS NOT NULL AND invoice_vessel_name <> '' AND invoice_vessel_voyage <> '' GROUP BY invoice_vessel_name, invoice_vessel_voyage;`
         replacements = []
         let imVs = await model.simpleSelect(queryStr, replacements)
         if(imVs) {
           for(let i of imVs) {
-            if(i.invoice_vessel_ata) {
+            if(i.invoice_vessel_ata && moment(i.invoice_vessel_ata, 'DD/MM/YYYY').isValid()) {
                 i.vessel_date = i.invoice_vessel_ata
-            } else if(i.invoice_vessel_ata) {
+            } else if(i.invoice_vessel_eta && moment(i.invoice_vessel_eta, 'DD/MM/YYYY').isValid()) {
                 i.vessel_date = i.invoice_vessel_eta
-            } else if(i.invoice_vessel_atd) {
+            } else if(i.invoice_vessel_atd && moment(i.invoice_vessel_atd, 'DD/MM/YYYY').isValid()) {
                 i.vessel_date = i.invoice_vessel_atd
             }
             if(i.vessel_date) {
@@ -815,13 +821,16 @@ exports.queryCompleteAct = async req => {
             }
           }
         }
-        queryStr = `SELECT export_vessel_name AS vessel_name, export_vessel_voyage AS voyage, STR_TO_DATE(export_vessel_etd, '%d/%m/%Y') AS vessel_date FROM tbl_zhongtan_export_vessel WHERE state = 1 AND export_vessel_name IS NOT NULL AND export_vessel_voyage IS NOT NULL AND export_vessel_name <> '' AND export_vessel_voyage <> '' AND STR_TO_DATE(export_vessel_etd, '%d/%m/%Y') IS NOT NULL GROUP BY export_vessel_name, export_vessel_voyage;`
+        queryStr = `SELECT export_vessel_name AS vessel_name, export_vessel_voyage AS voyage, export_vessel_etd FROM tbl_zhongtan_export_vessel WHERE state = 1 AND export_vessel_name IS NOT NULL AND export_vessel_voyage IS NOT NULL AND export_vessel_name <> '' AND export_vessel_voyage <> '' AND STR_TO_DATE(export_vessel_etd, '%d/%m/%Y') IS NOT NULL GROUP BY export_vessel_name, export_vessel_voyage;`
         replacements = []
         let exVs = await model.simpleSelect(queryStr, replacements)
         if(exVs) {
           for(let e of exVs) {
             let index = VESSELS.findIndex(item => item.vessel_name === e.vessel_name && item.voyage === e.voyage)
             if(index === -1) {
+                if(e.export_vessel_etd && moment(e.export_vessel_etd, 'DD/MM/YYYY').isValid()) {
+                    e.vessel_date = e.export_vessel_etd
+                }
                 VESSELS.push(e)
             }
           }
