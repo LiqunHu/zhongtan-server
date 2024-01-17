@@ -268,7 +268,7 @@ exports.addAct = async req => {
   }
 
   let rate = 1
-  let amount_rate = await rateSrv.getCurrentExchangeRateTZS(1)
+  let amount_rate = await rateSrv.getCurrentExchangeRateTZS('1')
   if(amount_rate) {
     rate = amount_rate.rate
   }
