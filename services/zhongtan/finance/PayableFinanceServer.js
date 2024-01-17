@@ -339,7 +339,7 @@ exports.submitPayableAct = async req => {
                     logger.error('oughtpay', oughtpay)
                     logger.error('payable_param', payable_param)
                     await axios.post(payable_url, payable_param).then(async response => {
-                        logger.error(response.data)
+                        logger.error('payable_response', response.data)
                         let data = response.data
                         if(data) {
                             if(data.errcode === '0') {
@@ -378,6 +378,7 @@ exports.submitPayableAct = async req => {
                             errMessage.push(pl.payment_advice_no + 'send error: no return')
                         }
                     }).catch(function (error) {
+                        logger.error('payable_error', error)
                         errMessage.push(pl.payment_advice_no + 'send error: ' + error)
                     })
                 } catch(err) {
@@ -676,9 +677,9 @@ exports.submitPaymentAct = async req => {
                         logger.error('payment_url', payment_url)
                         logger.error('entry', entry)
                         logger.error('pay', pay)
-                        logger.error('payable_param', payment_param)
+                        logger.error('payment_param', payment_param)
                         await axios.post(payment_url, payment_param).then(async response => {
-                            logger.error(response.data)
+                            logger.error('payment_response', response.data)
                             let data = response.data
                             if(data) {
                                 if(data.errcode === '0') {
@@ -698,6 +699,7 @@ exports.submitPaymentAct = async req => {
                                 errMessage.push(pl.payment_advice_no + 'send error: no return')
                             }
                         }).catch(function (error) {
+                            logger.error('payment_error', error)
                             errMessage.push(pl.payment_advice_no + 'send error: ' + error)
                         })
                     } catch(err) {
@@ -970,14 +972,15 @@ exports.addFItem = async (code, name, citemccode, citemcname) => {
     logger.error('item_param', item_param)
     let u8Item = ''
     await axios.post(item_url, item_param).then(async response => {
+        logger.error('item_response', response.data)
         let data = response.data
         if(data) {
-            logger.error('addFItem', data)
             if(data.errcode === '0') {
                 u8Item = fitem
             }
         }
     }).catch(function (error) {
+        logger.error('item_error', error)
     })
     return u8Item
 }

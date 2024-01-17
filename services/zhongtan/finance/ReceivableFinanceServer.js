@@ -620,7 +620,7 @@ exports.submitReceivableAct = async req => {
                     logger.error('receive_url', receive_url)
                     logger.error('receive_param', receive_param)
                     await axios.post(receive_url, receive_param).then(async response => {
-                        logger.error(response.data)
+                        logger.error('receive_response', response.data)
                         let data = response.data
                         if(data) {
                             if(data.errcode === '0') {
@@ -675,6 +675,7 @@ exports.submitReceivableAct = async req => {
                             errMessage.push(rl.receipt_no + 'send error: no return')
                         }
                     }).catch(function (error) {
+                        logger.error('receive_error', error)
                         errMessage.push(rl.receipt_no + 'send error: ' + error)
                     })
                 } catch(err) {
@@ -915,7 +916,7 @@ exports.submitReceivedAct = async req => {
                                 logger.error('accept_url', accept_url)
                                 logger.error('accept_param', accept_param)
                                 await axios.post(accept_url, accept_param).then(async response => {
-                                    logger.error(response.data)
+                                    logger.error('accept_response', response.data)
                                     let data = response.data
                                     if(data) {
                                         if(data.errcode === '0') {
@@ -949,6 +950,7 @@ exports.submitReceivedAct = async req => {
                                         errMessage.push(rl.ought_receive_no + 'send error: no return')
                                     }
                                 }).catch(function (error) {
+                                    logger.error('accept_error', error)
                                     errMessage.push(rl.ought_receive_no + 'send error: ' + error)
                                 })
                             } else {
@@ -1007,7 +1009,7 @@ exports.submitReceivedAct = async req => {
                             logger.error('accept_url', accept_url)
                             logger.error('accept_param', accept_param)
                             await axios.post(accept_url, accept_param).then(async response => {
-                                logger.error(response.data)
+                                logger.error('accept_response', response.data)
                                 let data = response.data
                                 if(data) {
                                     if(data.errcode === '0') {
@@ -1041,6 +1043,7 @@ exports.submitReceivedAct = async req => {
                                     errMessage.push(rl.ought_receive_no + 'send error: no return')
                                 }
                             }).catch(function (error) {
+                                logger.error('accept_error', error)
                                 errMessage.push(rl.ought_receive_no + 'send error: ' + error)
                             })
                         }
@@ -1430,12 +1433,12 @@ exports.submitSplitReceivedAct = async req => {
                                             rs_add.receive_split_subject_code = '2251'
                                             rs_add.receive_split_received_no = vouch_code
                                         }
-                                        logger.error('accept', accept)
-                                        logger.error('accept_entry', accept_entry)
-                                        logger.error('accept_url', accept_url)
-                                        logger.error('accept_param', accept_param)
+                                        logger.error('accept_split', accept)
+                                        logger.error('accept_split_entry', accept_entry)
+                                        logger.error('accept_split_url', accept_url)
+                                        logger.error('accept_split_param', accept_param)
                                         await axios.post(accept_url, accept_param).then(async response => {
-                                            logger.error(response.data)
+                                            logger.error('accept_split_response', response.data)
                                             let data = response.data
                                             if(data) {
                                                 if(data.errcode === '0') {
@@ -1483,6 +1486,7 @@ exports.submitSplitReceivedAct = async req => {
                                                 errMessage.push(srl.ought_receive_no + 'send error: no return')
                                             }
                                         }).catch(function (error) {
+                                            logger.error('accept_split_error', error)
                                             errMessage.push(srl.ought_receive_no + 'send error: ' + error)
                                         })
                                     } else {
@@ -1604,12 +1608,12 @@ exports.submitSplitReceivedAct = async req => {
                                         rs_add.receive_split_subject_code = accept_item_code
                                         rs_add.receive_split_received_no = vouch_code
                                     }
-                                    logger.error('accept', accept)
-                                    logger.error('accept_entry', accept_entry)
-                                    logger.error('accept_url', accept_url)
-                                    logger.error('accept_param', accept_param)
+                                    logger.error('accept_split', accept)
+                                    logger.error('accept_split_entry', accept_entry)
+                                    logger.error('accept_split_url', accept_url)
+                                    logger.error('accept_split_param', accept_param)
                                     await axios.post(accept_url, accept_param).then(async response => {
-                                        logger.error(response.data)
+                                        logger.error('accept_split_response', response.data)
                                         let data = response.data
                                         if(data) {
                                             if(data.errcode === '0') {
@@ -1657,6 +1661,7 @@ exports.submitSplitReceivedAct = async req => {
                                             errMessage.push(srl.ought_receive_no + 'send error: no return')
                                         }
                                     }).catch(function (error) {
+                                        logger.error('accept_split_error', error)
                                         errMessage.push(srl.ought_receive_no + 'send error: ' + error)
                                     })
                                 }
@@ -1739,6 +1744,7 @@ exports.addFItem = async (receipt_no, customer_alias, bill_no) => {
     logger.error('item_param', item_param)
     let u8Item = ''
     await axios.post(item_url, item_param).then(async response => {
+        logger.error('item_response', response.data)
         let data = response.data
         if(data) {
             logger.error('addFItem', data)
@@ -1747,6 +1753,7 @@ exports.addFItem = async (receipt_no, customer_alias, bill_no) => {
             }
         }
     }).catch(function (error) {
+        logger.error('item_error', error)
     })
     return u8Item
 }
