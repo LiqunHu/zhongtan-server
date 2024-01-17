@@ -307,9 +307,6 @@ exports.submitPayableAct = async req => {
                         entryitem.item_classcode = '97'
                         entryitem.item_code = item.citemcode
                     }
-                    if(pl.item_code_payable_debit === '113106' || pl.item_code_payable_debit === '113107') {
-                        entryitem.define32 = pl.payment_advice_beneficiary_u8_customer_alias
-                    }
                     let entry = []
                     entry.push(entryitem)
                     let oughtpay = {
@@ -329,6 +326,9 @@ exports.submitPayableAct = async req => {
                     if(item) {
                         oughtpay.item_classcode = '97'
                         oughtpay.item_code = item.citemcode
+                    }
+                    if(pl.item_code_payable_debit === '113106' || pl.item_code_payable_debit === '113107') {
+                        oughtpay.define11 = pl.payment_advice_beneficiary_u8_customer_alias
                     }
                     let payable_param = {
                         oughtpay: oughtpay
