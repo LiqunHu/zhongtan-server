@@ -2001,14 +2001,14 @@ getReceiptAmount = async (currency, amount, rate) =>  {
     if(currency === 'USD') {
         let tzs_amount = new Decimal(amount).times(new Decimal(rate))
         return {
-            natamount: amount,
-            originalamount: tzs_amount.toNumber()
+            natamount: new Decimal(amount).toNumber(),
+            originalamount: new Decimal(tzs_amount).toNumber()
         }
     } else {
         let usd_amount = new Decimal(amount).div(new Decimal(rate)).toFixed(2, Decimal.ROUND_HALF_UP)
         return {
-            natamount: usd_amount.toNumber(),
-            originalamount: amount
+            natamount: new Decimal(usd_amount).toNumber(),
+            originalamount: new Decimal(amount).toNumber()
         }
     }
 }
