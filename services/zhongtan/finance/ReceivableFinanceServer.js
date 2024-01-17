@@ -709,7 +709,7 @@ exports.queryReceivedAct= async req => {
             replacements.push(moment(end_date, 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
         }
         if(doc.search_data.receipt_carrier) {
-            queryStr += ` AND uploadfile_receipt_no like ? `
+            queryStr += ` AND ought_receive_no like ? `
             replacements.push(doc.search_data.receipt_carrier + '%')
         }
     }
@@ -1121,7 +1121,7 @@ exports.queryCompleteAct = async req => {
             replacements.push(moment(end_date, 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
         }
         if(doc.search_data.receipt_carrier) {
-            queryStr += ` AND uploadfile_receipt_no like ? `
+            queryStr += ` AND ought_receive_no like ? `
             replacements.push(doc.search_data.receipt_carrier + '%')
         }
     }
