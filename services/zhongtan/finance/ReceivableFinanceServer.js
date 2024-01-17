@@ -698,7 +698,7 @@ exports.submitReceivableAct = async req => {
 exports.queryReceivedAct= async req => {
     let doc = common.docValidate(req), user = req.user
     let returnData = {}
-    let queryStr = `SELECT u.* from tbl_zhongtan_finance_ought_receive u WHERE u.state = 1 AND u.ought_receive_u8_trade_id IS NOT NULL AND accept_trade_id IS NULL `
+    let queryStr = `SELECT u.* from tbl_zhongtan_finance_ought_receive u WHERE u.state = 1 AND u.ought_receive_u8_id IS NOT NULL AND accept_u8_id IS NULL `
     let replacements = []
     if(doc.search_data) {
         if(doc.search_data.receivable_date && doc.search_data.receivable_date.length > 1 && doc.search_data.receivable_date[0]  && doc.search_data.receivable_date[1]) {
@@ -1102,7 +1102,7 @@ exports.watchU8ReceviableAct = async req => {
 exports.queryCompleteAct = async req => {
     let doc = common.docValidate(req), user = req.user
     let returnData = {}
-    let queryStr = `SELECT u.* from tbl_zhongtan_finance_ought_receive u WHERE u.state = 1 AND u.ought_receive_u8_trade_id IS NOT NULL AND accept_trade_id IS NOT NULL `
+    let queryStr = `SELECT u.* from tbl_zhongtan_finance_ought_receive u WHERE u.state = 1 AND u.ought_receive_u8_id IS NOT NULL AND accept_u8_id IS NOT NULL `
     let replacements = []
     if(doc.search_data) {
         if(doc.search_data.receivable_date && doc.search_data.receivable_date.length > 1 && doc.search_data.receivable_date[0]  && doc.search_data.receivable_date[1]) {
@@ -1688,6 +1688,85 @@ exports.submitSplitReceivedAct = async req => {
     }
     return common.success(returnData)
 }
+
+exports.syncU8ReceivableAct= async req => {
+    let doc = common.docValidate(req), user = req.user
+    let rl = doc.sync_data
+    
+    await this.getU8Token(false)
+    let token = await redisClient.get(GLBConfig.U8_CONFIG.token_name)
+    if(token) {
+        let ought_receive = ''
+        let get_url = GLBConfig.U8_CONFIG.host + GLBConfig.U8_CONFIG.oughtreceive_get_api_url + `?from_account=${GLBConfig.U8_CONFIG.from_account}&to_account=${GLBConfig.U8_CONFIG.to_account}&app_key=${GLBConfig.U8_CONFIG.app_key}&token=${token}&id=${rl.receipt_no}`
+        console.log('get_url', get_url)
+        await axios.get(get_url).then(async response => {
+            logger.error(response.data)
+            let data = response.data
+            if(data) {
+                if(data.errcode === '0') {
+                    ought_receive = data.oughtreceive
+                }
+            }
+        })
+        if(ought_receive) {
+            let opUser = await tb_user.findOne({
+                where: {
+                    user_id: user.user_id,
+                    state: GLBConfig.ENABLE
+                }
+            })
+            let rl_amount = await getReceiptAmount(rl.receipt_currency, rl.receipt_amount, rl.receipt_amount_rate)
+            let receipt_amount = rl.receipt_amount
+            let natamount = rl_amount.natamount
+            let originalamount = rl_amount.originalamount
+            let rl_add = await tb_ought_receive.create({
+                ought_receive_receipt_file_id: rl.receipt_id,
+                ought_receive_no: rl.receipt_no,
+                ought_receive_type: rl.receipt_type,
+                ought_receive_amount: receipt_amount,
+                ought_receive_natamount: natamount,
+                ought_receive_original_amount: originalamount,
+                ought_receive_currency: rl.receipt_currency,
+                ought_receive_bank: rl.receipt_bank,
+                ought_receive_reference_no: rl.receipt_reference_no,
+                ought_receive_object_id: rl.receipt_object_id,
+                ought_receive_object: rl.receipt_object,
+                ought_receive_carrier: rl.receipt_object_carrier,
+                ought_receive_from_id: rl.receipt_from_id,
+                ought_receive_from: rl.receipt_from,
+                ought_receive_from_u8_code: rl.receipt_from_u8_code,
+                ought_receive_from_u8_alias: rl.receipt_from_u8_alias,
+                ought_receive_operator_id: opUser.user_id,
+                ought_receive_operator_name: opUser.user_name,
+                ought_receive_subject_code: rl.parent_code,
+                ought_receive_u8_id: rl.receipt_no,
+                ought_receive_balance_code: rl.receipt_check_cash,
+                ought_receive_currency_rate: rl.receipt_amount_rate,
+                ought_receive_digest: rl.receipt_digest
+            })
+            if(rl_add && rl.receipt_detail && rl.receipt_detail.length > 0) {
+                for(let rd of rl.receipt_detail) {
+                    let rd_amount = await getReceiptAmount('USD', rd.fee_amount, rl.receipt_amount_rate)
+                    await tb_ought_receive_detail.create({
+                        ought_receive_id: rl_add.ought_receive_id,
+                        ought_receive_detail_code: rd.fee_code,
+                        ought_receive_detail_fee_code: rd.fee_type,
+                        ought_receive_detail_fee_name: rd.fee_name,
+                        ought_receive_detail_amount: rd.fee_amount,
+                        ought_receive_detail_natamount: rd_amount.natamount,
+                        ought_receive_detail_original_amount: rd_amount.originalamount,
+                        ought_receive_detail_digest: rd.fee_digest,
+                    })
+                }
+            }
+        } else {
+            return common.error('u8_09')
+        }
+    } else {
+        return common.error('u8_01')
+    }
+}
+
 
 exports.getU8Token = async loginFlg => {
     if(!loginFlg) {

@@ -29,6 +29,8 @@ module.exports = async (req, res) => {
       ret = await srv.watchU8SplitReceviedAct(req)
     } else if (method === 'submitSplitReceived') {
       ret = await srv.submitSplitReceivedAct(req)
+    } else if (method === 'syncU8Receivable') {
+      ret = await srv.syncU8ReceivableAct(req)
     } 
     
     common.sendData(res, ret)
