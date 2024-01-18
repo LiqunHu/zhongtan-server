@@ -1052,7 +1052,8 @@ exports.submitReceivedAct = async req => {
                     }
                 }
             } catch(err) {
-                errMessage.push(rl.ought_receive_no + 'send error: ' + err)
+                logger.error('send accept error', err)
+                errMessage.push('send error: ' + err)
             }
         } else {
             errMessage.push('U8 system api token not exist')
@@ -1863,7 +1864,7 @@ exports.addSubFItem = async (reference_no) => {
             if(receipt.api_name === 'RECEIPT-RECEIPT') {
                 let bl = await tb_bl.findOne({
                     where: {
-                      invoice_masterbi_id: r.uploadfile_index1,
+                      invoice_masterbi_id: receipt.uploadfile_index1,
                       state: GLBConfig.ENABLE
                     }
                 })
@@ -1880,37 +1881,37 @@ exports.addSubFItem = async (reference_no) => {
                 if(bl) {
                     sub_bill_no = bl.invoice_masterbi_bl
                 }
-            } else if(r.api_name === 'SHIPMENT-RECEIPT') {
+            } else if(receipt.api_name === 'SHIPMENT-RECEIPT') {
                 let bl = await tb_export_bl.findOne({
                     where: {
-                        export_masterbl_id: r.uploadfile_index1,
+                        export_masterbl_id: receipt.uploadfile_index1,
                         state: GLBConfig.ENABLE
                     }
                 })
                 if(bl) {
                     sub_bill_no = bl.export_masterbl_bl
                 }
-            } else if(r.api_name === 'MNR-RECEIPT') {
+            } else if(receipt.api_name === 'MNR-RECEIPT') {
                 let mnr = await tb_mnr_ledger.findOne({
                     where: {
-                        container_mnr_ledger_id: r.uploadfile_index1,
+                        container_mnr_ledger_id: receipt.uploadfile_index1,
                         state: GLBConfig.ENABLE
                     }
                 })
                 if(mnr) {
                     sub_bill_no = mnr.mnr_ledger_bl
                 }
-            } else if(r.api_name === 'UNUSUAL RECEIPT') {
+            } else if(receipt.api_name === 'UNUSUAL RECEIPT') {
                 let unusual = await tb_unusual_invoice.findOne({
                     where: {
-                        unusual_invoice_id: r.uploadfile_index1,
+                        unusual_invoice_id: receipt.uploadfile_index1,
                         state: GLBConfig.ENABLE
                     }
                 })
                 if(unusual) {
                     sub_bill_no = unusual.unusual_invoice_bl
                 }
-            } else if(r.api_name === 'FIXED-RECEIPT') {
+            } else if(receipt.api_name === 'FIXED-RECEIPT') {
                 sub_bill_no = 'fix deposit'
             }
             if(sub_receipt_no && sub_customer_alias && sub_bill_no) {
