@@ -868,7 +868,7 @@ exports.submitReceivedAct = async req => {
                                 if(rl.receive_detail && rl.receive_detail.length > 0) {
                                     for(let d of rl.receive_detail) {
                                         let entry_rate = 1
-                                        let entry_amount = new Decimal(d.ought_receive_detail_amountt).toNumber()
+                                        let entry_amount = new Decimal(d.ought_receive_detail_amount).toNumber()
                                         let entry_original_amount = new Decimal(d.ought_receive_detail_amount).toNumber()
                                         if(rl.ought_receive_currency === 'TZS') {
                                             entry_rate = new Decimal(rl.ought_receive_currency_rate).toNumber()
