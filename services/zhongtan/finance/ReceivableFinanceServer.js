@@ -1854,7 +1854,7 @@ exports.addSubFItem = async (reference_no) => {
 
             let customer = await tb_user.findOne({
                 where: {
-                    user_name: receipt.receipt_from,
+                    user_name: receipt.uploadfile_received_from,
                     state: GLBConfig.ENABLE
                 }
             })
