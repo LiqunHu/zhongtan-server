@@ -1842,7 +1842,7 @@ exports.addSubFItem = async (reference_no) => {
     let rollover_reference_no = common.valueFilter(reference_no, regex).trim()
     if(rollover_reference_no) {
         let queryStr = `select * from tbl_zhongtan_uploadfile where state = '1' AND api_name IN ('RECEIPT-RECEIPT', 'OVERDUE-RECEIPT', 'SHIPMENT-RECEIPT', 'MNR-RECEIPT', 'UNUSUAL RECEIPT', 'FIXED-RECEIPT') and uploadfile_receipt_no like ? order by uploadfile_id desc limit 1`
-        let replacements = [ rollover_reference_no+'%' ]
+        let replacements = [ '%' + rollover_reference_no]
         let receipt_files = await model.simpleSelect(queryStr, replacements)
         if(receipt_files && receipt_files.length === 1) {
             let receipt = receipt_files[0]
