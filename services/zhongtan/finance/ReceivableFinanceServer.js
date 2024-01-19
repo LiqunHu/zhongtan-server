@@ -1554,12 +1554,12 @@ exports.submitSplitReceivedAct = async req => {
                                                     rd.accept_u8_id = data.id
                                                     rd.accept_trade_id = data.tradeid
                                                     rd.accept_u8_biz_id = biz_id
-                                                    rd.ought_received_digest = rl.received_digest
+                                                    rd.ought_received_digest = srl.received_digest
                                                     rd.accept_at = new Date()
                                                     await rd.save()
 
-                                                    if(rl.receive_detail && rl.receive_detail.length > 0) {
-                                                        for(let d of rl.receive_detail) {
+                                                    if(srl.receive_detail && srl.receive_detail.length > 0) {
+                                                        for(let d of srl.receive_detail) {
                                                             let rdd = await tb_ought_receive_detail.findOne({
                                                                 where: {
                                                                     ought_receive_detail_id: d.ought_receive_detail_id,
@@ -1732,12 +1732,12 @@ exports.submitSplitReceivedAct = async req => {
                                                             rd.accept_u8_id = data.id
                                                             rd.accept_trade_id = data.tradeid
                                                             rd.accept_u8_biz_id = biz_id
-                                                            rd.ought_received_digest = rl.received_digest
+                                                            rd.ought_received_digest = srl.received_digest
                                                             rd.accept_at = new Date()
                                                             await rd.save()
                 
-                                                            if(rl.receive_detail && rl.receive_detail.length > 0) {
-                                                                for(let d of rl.receive_detail) {
+                                                            if(srl.receive_detail && srl.receive_detail.length > 0) {
+                                                                for(let d of srl.receive_detail) {
                                                                     let rdd = await tb_ought_receive_detail.findOne({
                                                                         where: {
                                                                             ought_receive_detail_id: d.ought_receive_detail_id,
@@ -1907,12 +1907,12 @@ exports.submitSplitReceivedAct = async req => {
                                                         rd.accept_u8_id = data.id
                                                         rd.accept_trade_id = data.tradeid
                                                         rd.accept_u8_biz_id = biz_id
-                                                        rd.ought_received_digest = rl.received_digest
+                                                        rd.ought_received_digest = srl.received_digest
                                                         rd.accept_at = new Date()
                                                         await rd.save()
     
-                                                        if(rl.receive_detail && rl.receive_detail.length > 0) {
-                                                            for(let d of rl.receive_detail) {
+                                                        if(srl.receive_detail && srl.receive_detail.length > 0) {
+                                                            for(let d of srl.receive_detail) {
                                                                 let rdd = await tb_ought_receive_detail.findOne({
                                                                     where: {
                                                                         ought_receive_detail_id: d.ought_receive_detail_id,
