@@ -1413,192 +1413,12 @@ exports.submitSplitReceivedAct = async req => {
                                         receive_split_reference_no: sd.split_reference_no
                                     })
                                 }
-                                if(sd.split_bank === 'ROLLOVER') {
-                                    let u8Item = await this.addFItem(rd.ought_receive_no, rd.ought_receive_from_u8_alias, rd.ought_receive_object)
-                                    let addSubFItem = await this.addSubFItem(rd.ought_receive_reference_no)
-                                    if(u8Item && addSubFItem) {
-                                        let u8_customer_code = GLBConfig.U8_CONFIG.u8_cosco_code
-                                        if(rd.ought_receive_carrier === 'OOCL') {
-                                            u8_customer_code = GLBConfig.U8_CONFIG.u8_oocl_code
-                                        }
-
-                                        let accept_item_code = ''
-                                        let entry_item_code = ''
-                                        let match_codes = await tb_match_code.findAll({
-                                            where: {
-                                                match_code_bill_type: 'accept',
-                                                match_code_fee_currency: sd.split_currency,
-                                                match_code_fee_bank: sd.split_bank,
-                                                state: GLBConfig.ENABLE
-                                            }
-                                        })
-                                        if(match_codes && match_codes.length === 1) {
-                                            accept_item_code = match_codes[0].finance_subject_code
-                                            let sc = await tb_subject_code.findOne({
-                                                where: {
-                                                    subject_code: accept_item_code,
-                                                    state: GLBConfig.ENABLE
-                                                }
-                                            })
-                                            if(sc) {
-                                                entry_item_code = sc.parent_code
-                                            }
-                                        }
-                                        if(!accept_item_code || !entry_item_code) {
-                                            errMessage.push(srl.ought_receive_no + ' item code not exist')
-                                            continue first
-                                        }
-                                        
-                                        let biz_id = await seq.genU8SystemSeq('BIZ')
-                                        let vouch_code = await seq.genU8SystemSeq('RECEIVED')
-                                        let accept_url = GLBConfig.U8_CONFIG.host + GLBConfig.U8_CONFIG.accept_add_api_url + `?from_account=${GLBConfig.U8_CONFIG.from_account}&to_account=${GLBConfig.U8_CONFIG.to_account}&app_key=${GLBConfig.U8_CONFIG.app_key}&token=${token}&biz_id=${biz_id}&sync=1` 
-                                        let accept_entry = []
-                                        if(sd.split_fees && sd.split_fees.length > 0) {
-                                            for(let d of sd.split_fees) {
-                                                let entry_rate = 1
-                                                let entry_amount = new Decimal(d.split_detail_amount).toNumber()
-                                                if(entry_amount !== 0) {
-                                                    let entry_original_amount = new Decimal(d.split_detail_amount).toNumber()
-                                                    if(sd.split_currency === 'TZS') {
-                                                        entry_rate = new Decimal(srl.ought_receive_currency_rate).toNumber()
-                                                        let entry_format_amount = await this.getReceiptAmount(sd.split_currency, d.split_detail_amount, srl.ought_receive_currency_rate)
-                                                        entry_amount = new Decimal(entry_format_amount.natamount).toNumber()
-                                                        entry_original_amount = new Decimal(entry_format_amount.originalamount).toNumber()
-                                                    }
-                                                    accept_entry.push({
-                                                        customercode: u8_customer_code,
-                                                        itemcode: entry_item_code,
-                                                        foreigncurrency: sd.split_currency,
-                                                        currencyrate: entry_rate,
-                                                        amount: entry_amount,
-                                                        originalamount: entry_original_amount,
-                                                        cmemo: 'Received from consignee',//d.received_fee_digest,
-                                                        // type: 2,
-                                                        projectclass: '00',
-                                                        project: addSubFItem.citemcode,
-                                                    })
-
-                                                    if(split_flg) {
-                                                        await tb_receive_split_detail.create({
-                                                            receive_split_id: rs_add.receive_split_id,
-                                                            ought_receive_id: rs_add.ought_receive_id,
-                                                            split_detail_amount: d.split_detail_amount,
-                                                            split_detail_natamount: entry_amount,
-                                                            split_detail_original_amount: entry_original_amount,
-                                                            split_detail_code: entry_item_code,
-                                                            split_detail_fee_code: d.ought_receive_detail_fee_code,
-                                                            split_detail_fee_name: d.ought_receive_detail_fee_name
-                                                        })
-                                                    }
-                                                }
-                                            }
-                                        }
-
-                                        if(accept_entry.length === 0) {
-                                            continue second
-                                        }
-                                        let accept_rate = 1
-                                        let accept_amount = new Decimal(sd.split_amount).toNumber()
-                                        let accept_original_amount = new Decimal(sd.split_amount).toNumber()
-                                        if(sd.split_currency === 'TZS') {
-                                            accept_rate = new Decimal(srl.ought_receive_currency_rate).toNumber()
-                                            let accept_format_amount = await this.getReceiptAmount(sd.split_currency, sd.split_amount, srl.ought_receive_currency_rate)
-                                            accept_amount = new Decimal(accept_format_amount.natamount).toNumber()
-                                            accept_original_amount = new Decimal(accept_format_amount.originalamount).toNumber()
-                                        }
-                                        let accept = {
-                                            vouchcode: vouch_code, // 应收单号
-                                            vouchdate: moment().format('YYYY-MM-DD'), // 单据日期
-                                            period: moment().format('M'), // 单据日期 月份
-                                            vouchtype: '48',
-                                            customercode: u8_customer_code, // 客商编码
-                                            balanceitemcode: accept_item_code,
-                                            balancecode: '4',
-                                            foreigncurrency: sd.split_currency,
-                                            currencyrate: accept_rate,
-                                            amount:accept_amount, //
-                                            originalamount: accept_original_amount,
-                                            operator: opUser.user_name, // 操作员
-                                            digest: 'Received from ' + srl.ought_receive_from_u8_alias + '/' + sd.split_reference_no,
-                                            entry: accept_entry,
-                                            itemclasscode: '00',
-                                            itemcode: u8Item.citemcode,
-                                        }
-                                        rd.ought_accept_subject_code = '2251'
-                                        let accept_param = {
-                                            accept: accept
-                                        }
-                                        if(split_flg) {
-                                            rs_add.receive_split_natamount = accept_amount
-                                            rs_add.receive_split_original_amount = accept_original_amount
-                                            rs_add.receive_split_subject_code = accept_item_code
-                                            rs_add.receive_split_received_no = vouch_code
-                                        }
-                                        logger.error('accept_split', accept)
-                                        logger.error('accept_split_entry', accept_entry)
-                                        logger.error('accept_split_url', accept_url)
-                                        logger.error('accept_split_param', accept_param)
-                                        await axios.post(accept_url, accept_param).then(async response => {
-                                            logger.error('accept_split_response', response.data)
-                                            let data = response.data
-                                            if(data) {
-                                                if(data.errcode === '0') {
-                                                    if(split_flg) {
-                                                        rs_add.receive_split_u8_id = data.id
-                                                        rs_add.receive_split_trade_id = data.tradeid
-                                                        rs_add.receive_split_u8_biz_id = biz_id
-                                                        await rs_add.save()
-
-                                                        rd.received_no = vouch_code
-                                                        rd.accept_u8_id = data.id
-                                                        rd.accept_trade_id = data.tradeid
-                                                        rd.accept_u8_biz_id = biz_id
-                                                        rd.accept_at = new Date()
-                                                        await rd.save()
-                                                    } else {
-                                                        rd.received_no = vouch_code
-                                                        rd.accept_u8_id = data.id
-                                                        rd.accept_trade_id = data.tradeid
-                                                        rd.accept_u8_biz_id = biz_id
-                                                        rd.ought_received_digest = rl.received_digest
-                                                        rd.accept_at = new Date()
-                                                        await rd.save()
-            
-                                                        if(rl.receive_detail && rl.receive_detail.length > 0) {
-                                                            for(let d of rl.receive_detail) {
-                                                                let rdd = await tb_ought_receive_detail.findOne({
-                                                                    where: {
-                                                                        ought_receive_detail_id: d.ought_receive_detail_id,
-                                                                        state: GLBConfig.ENABLE
-                                                                    }
-                                                                })
-                                                                if(rdd) {
-                                                                    rdd.ought_received_detail_code = d.received_fee_code
-                                                                    rdd.ought_received_detail_digest = d.received_fee_digest
-                                                                    await rdd.save()
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                } else {
-                                                    errMessage.push(srl.ought_receive_no + 'send error: ' + data.errmsg)
-                                                }
-                                            } else {
-                                                errMessage.push(srl.ought_receive_no + 'send error: no return')
-                                            }
-                                        }).catch(function (error) {
-                                            logger.error('accept_split_error', error)
-                                            errMessage.push(srl.ought_receive_no + 'send error: ' + error)
-                                        })
-                                    } else {
-                                        errMessage.push(srl.ought_receive_no + 'create item failed')
-                                    }
-                                } else {
+                                if(sd.custom_header_subject_code) {
                                     let u8_customer_code = GLBConfig.U8_CONFIG.u8_cosco_code
                                     if(rd.ought_receive_carrier === 'OOCL') {
                                         u8_customer_code = GLBConfig.U8_CONFIG.u8_oocl_code
                                     }
-                                    let accept_item_code = ''
+                                    let accept_item_code = sd.custom_header_subject_code
                                     let entry_item_code = ''
                                     let match_codes = await tb_match_code.findAll({
                                         where: {
@@ -1609,7 +1429,6 @@ exports.submitSplitReceivedAct = async req => {
                                         }
                                     })
                                     if(match_codes && match_codes.length === 1) {
-                                        accept_item_code = match_codes[0].finance_subject_code
                                         let sc = await tb_subject_code.findOne({
                                             where: {
                                                 subject_code: accept_item_code,
@@ -1765,6 +1584,360 @@ exports.submitSplitReceivedAct = async req => {
                                         logger.error('accept_split_error', error)
                                         errMessage.push(srl.ought_receive_no + 'send error: ' + error)
                                     })
+                                } else {
+                                    if(sd.split_bank === 'ROLLOVER') {
+                                        let u8Item = await this.addFItem(rd.ought_receive_no, rd.ought_receive_from_u8_alias, rd.ought_receive_object)
+                                        let addSubFItem = await this.addSubFItem(rd.ought_receive_reference_no)
+                                        if(u8Item && addSubFItem) {
+                                            let u8_customer_code = GLBConfig.U8_CONFIG.u8_cosco_code
+                                            if(rd.ought_receive_carrier === 'OOCL') {
+                                                u8_customer_code = GLBConfig.U8_CONFIG.u8_oocl_code
+                                            }
+    
+                                            let accept_item_code = ''
+                                            let entry_item_code = ''
+                                            let match_codes = await tb_match_code.findAll({
+                                                where: {
+                                                    match_code_bill_type: 'accept',
+                                                    match_code_fee_currency: sd.split_currency,
+                                                    match_code_fee_bank: sd.split_bank,
+                                                    state: GLBConfig.ENABLE
+                                                }
+                                            })
+                                            if(match_codes && match_codes.length === 1) {
+                                                accept_item_code = match_codes[0].finance_subject_code
+                                                let sc = await tb_subject_code.findOne({
+                                                    where: {
+                                                        subject_code: accept_item_code,
+                                                        state: GLBConfig.ENABLE
+                                                    }
+                                                })
+                                                if(sc) {
+                                                    entry_item_code = sc.parent_code
+                                                }
+                                            }
+                                            if(!accept_item_code || !entry_item_code) {
+                                                errMessage.push(srl.ought_receive_no + ' item code not exist')
+                                                continue first
+                                            }
+                                            
+                                            let biz_id = await seq.genU8SystemSeq('BIZ')
+                                            let vouch_code = await seq.genU8SystemSeq('RECEIVED')
+                                            let accept_url = GLBConfig.U8_CONFIG.host + GLBConfig.U8_CONFIG.accept_add_api_url + `?from_account=${GLBConfig.U8_CONFIG.from_account}&to_account=${GLBConfig.U8_CONFIG.to_account}&app_key=${GLBConfig.U8_CONFIG.app_key}&token=${token}&biz_id=${biz_id}&sync=1` 
+                                            let accept_entry = []
+                                            if(sd.split_fees && sd.split_fees.length > 0) {
+                                                for(let d of sd.split_fees) {
+                                                    let entry_rate = 1
+                                                    let entry_amount = new Decimal(d.split_detail_amount).toNumber()
+                                                    if(entry_amount !== 0) {
+                                                        let entry_original_amount = new Decimal(d.split_detail_amount).toNumber()
+                                                        if(sd.split_currency === 'TZS') {
+                                                            entry_rate = new Decimal(srl.ought_receive_currency_rate).toNumber()
+                                                            let entry_format_amount = await this.getReceiptAmount(sd.split_currency, d.split_detail_amount, srl.ought_receive_currency_rate)
+                                                            entry_amount = new Decimal(entry_format_amount.natamount).toNumber()
+                                                            entry_original_amount = new Decimal(entry_format_amount.originalamount).toNumber()
+                                                        }
+                                                        accept_entry.push({
+                                                            customercode: u8_customer_code,
+                                                            itemcode: entry_item_code,
+                                                            foreigncurrency: sd.split_currency,
+                                                            currencyrate: entry_rate,
+                                                            amount: entry_amount,
+                                                            originalamount: entry_original_amount,
+                                                            cmemo: 'Received from consignee',//d.received_fee_digest,
+                                                            // type: 2,
+                                                            projectclass: '00',
+                                                            project: addSubFItem.citemcode,
+                                                        })
+    
+                                                        if(split_flg) {
+                                                            await tb_receive_split_detail.create({
+                                                                receive_split_id: rs_add.receive_split_id,
+                                                                ought_receive_id: rs_add.ought_receive_id,
+                                                                split_detail_amount: d.split_detail_amount,
+                                                                split_detail_natamount: entry_amount,
+                                                                split_detail_original_amount: entry_original_amount,
+                                                                split_detail_code: entry_item_code,
+                                                                split_detail_fee_code: d.ought_receive_detail_fee_code,
+                                                                split_detail_fee_name: d.ought_receive_detail_fee_name
+                                                            })
+                                                        }
+                                                    }
+                                                }
+                                            }
+    
+                                            if(accept_entry.length === 0) {
+                                                continue second
+                                            }
+                                            let accept_rate = 1
+                                            let accept_amount = new Decimal(sd.split_amount).toNumber()
+                                            let accept_original_amount = new Decimal(sd.split_amount).toNumber()
+                                            if(sd.split_currency === 'TZS') {
+                                                accept_rate = new Decimal(srl.ought_receive_currency_rate).toNumber()
+                                                let accept_format_amount = await this.getReceiptAmount(sd.split_currency, sd.split_amount, srl.ought_receive_currency_rate)
+                                                accept_amount = new Decimal(accept_format_amount.natamount).toNumber()
+                                                accept_original_amount = new Decimal(accept_format_amount.originalamount).toNumber()
+                                            }
+                                            let accept = {
+                                                vouchcode: vouch_code, // 应收单号
+                                                vouchdate: moment().format('YYYY-MM-DD'), // 单据日期
+                                                period: moment().format('M'), // 单据日期 月份
+                                                vouchtype: '48',
+                                                customercode: u8_customer_code, // 客商编码
+                                                balanceitemcode: accept_item_code,
+                                                balancecode: '4',
+                                                foreigncurrency: sd.split_currency,
+                                                currencyrate: accept_rate,
+                                                amount:accept_amount, //
+                                                originalamount: accept_original_amount,
+                                                operator: opUser.user_name, // 操作员
+                                                digest: 'Received from ' + srl.ought_receive_from_u8_alias + '/' + sd.split_reference_no,
+                                                entry: accept_entry,
+                                                itemclasscode: '00',
+                                                itemcode: u8Item.citemcode,
+                                            }
+                                            rd.ought_accept_subject_code = '2251'
+                                            let accept_param = {
+                                                accept: accept
+                                            }
+                                            if(split_flg) {
+                                                rs_add.receive_split_natamount = accept_amount
+                                                rs_add.receive_split_original_amount = accept_original_amount
+                                                rs_add.receive_split_subject_code = accept_item_code
+                                                rs_add.receive_split_received_no = vouch_code
+                                            }
+                                            logger.error('accept_split', accept)
+                                            logger.error('accept_split_entry', accept_entry)
+                                            logger.error('accept_split_url', accept_url)
+                                            logger.error('accept_split_param', accept_param)
+                                            await axios.post(accept_url, accept_param).then(async response => {
+                                                logger.error('accept_split_response', response.data)
+                                                let data = response.data
+                                                if(data) {
+                                                    if(data.errcode === '0') {
+                                                        if(split_flg) {
+                                                            rs_add.receive_split_u8_id = data.id
+                                                            rs_add.receive_split_trade_id = data.tradeid
+                                                            rs_add.receive_split_u8_biz_id = biz_id
+                                                            await rs_add.save()
+    
+                                                            rd.received_no = vouch_code
+                                                            rd.accept_u8_id = data.id
+                                                            rd.accept_trade_id = data.tradeid
+                                                            rd.accept_u8_biz_id = biz_id
+                                                            rd.accept_at = new Date()
+                                                            await rd.save()
+                                                        } else {
+                                                            rd.received_no = vouch_code
+                                                            rd.accept_u8_id = data.id
+                                                            rd.accept_trade_id = data.tradeid
+                                                            rd.accept_u8_biz_id = biz_id
+                                                            rd.ought_received_digest = rl.received_digest
+                                                            rd.accept_at = new Date()
+                                                            await rd.save()
+                
+                                                            if(rl.receive_detail && rl.receive_detail.length > 0) {
+                                                                for(let d of rl.receive_detail) {
+                                                                    let rdd = await tb_ought_receive_detail.findOne({
+                                                                        where: {
+                                                                            ought_receive_detail_id: d.ought_receive_detail_id,
+                                                                            state: GLBConfig.ENABLE
+                                                                        }
+                                                                    })
+                                                                    if(rdd) {
+                                                                        rdd.ought_received_detail_code = d.received_fee_code
+                                                                        rdd.ought_received_detail_digest = d.received_fee_digest
+                                                                        await rdd.save()
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    } else {
+                                                        errMessage.push(srl.ought_receive_no + 'send error: ' + data.errmsg)
+                                                    }
+                                                } else {
+                                                    errMessage.push(srl.ought_receive_no + 'send error: no return')
+                                                }
+                                            }).catch(function (error) {
+                                                logger.error('accept_split_error', error)
+                                                errMessage.push(srl.ought_receive_no + 'send error: ' + error)
+                                            })
+                                        } else {
+                                            errMessage.push(srl.ought_receive_no + 'create item failed')
+                                        }
+                                    } else {
+                                        let u8_customer_code = GLBConfig.U8_CONFIG.u8_cosco_code
+                                        if(rd.ought_receive_carrier === 'OOCL') {
+                                            u8_customer_code = GLBConfig.U8_CONFIG.u8_oocl_code
+                                        }
+                                        let accept_item_code = ''
+                                        let entry_item_code = ''
+                                        let match_codes = await tb_match_code.findAll({
+                                            where: {
+                                                match_code_bill_type: 'accept',
+                                                match_code_fee_currency: sd.split_currency,
+                                                match_code_fee_bank: sd.split_bank,
+                                                state: GLBConfig.ENABLE
+                                            }
+                                        })
+                                        if(match_codes && match_codes.length === 1) {
+                                            accept_item_code = match_codes[0].finance_subject_code
+                                            let sc = await tb_subject_code.findOne({
+                                                where: {
+                                                    subject_code: accept_item_code,
+                                                    state: GLBConfig.ENABLE
+                                                }
+                                            })
+                                            if(sc) {
+                                                entry_item_code = sc.parent_code
+                                            }
+                                        }
+                                        if(!accept_item_code || !entry_item_code) {
+                                            errMessage.push(srl.ought_receive_no + ' item code not exist')
+                                            continue first
+                                        }
+    
+                                        let biz_id = await seq.genU8SystemSeq('BIZ')
+                                        let vouch_code = await seq.genU8SystemSeq('RECEIVED')
+                                        let accept_url = GLBConfig.U8_CONFIG.host + GLBConfig.U8_CONFIG.accept_add_api_url + `?from_account=${GLBConfig.U8_CONFIG.from_account}&to_account=${GLBConfig.U8_CONFIG.to_account}&app_key=${GLBConfig.U8_CONFIG.app_key}&token=${token}&biz_id=${biz_id}&sync=1` 
+                                        let accept_entry = []
+                                        if(sd.split_fees && sd.split_fees.length > 0) {
+                                            for(let d of sd.split_fees) {
+                                                let entry_rate = 1
+                                                let entry_amount = new Decimal(d.split_detail_amount).toNumber()
+                                                if(entry_amount !== 0) {
+                                                    let entry_original_amount = new Decimal(d.split_detail_amount).toNumber()
+                                                    if(sd.split_currency === 'TZS') {
+                                                        entry_rate = new Decimal(srl.ought_receive_currency_rate).toNumber()
+                                                        let entry_format_amount = await this.getReceiptAmount(sd.split_currency, d.split_detail_amount, srl.ought_receive_currency_rate)
+                                                        entry_amount = new Decimal(entry_format_amount.natamount).toNumber()
+                                                        entry_original_amount = new Decimal(entry_format_amount.originalamount).toNumber()
+                                                    }
+                                                    accept_entry.push({
+                                                        customercode: u8_customer_code,
+                                                        itemcode: entry_item_code,
+                                                        foreigncurrency: sd.split_currency,
+                                                        currencyrate: entry_rate,
+                                                        amount: entry_amount,
+                                                        originalamount: entry_original_amount,
+                                                        cmemo: 'Received from consignee'//d.received_fee_digest,
+                                                    })
+                                                    if(split_flg) {
+                                                        await tb_receive_split_detail.create({
+                                                            receive_split_id: rs_add.receive_split_id,
+                                                            ought_receive_id: rs_add.ought_receive_id,
+                                                            split_detail_amount: d.split_detail_amount,
+                                                            split_detail_natamount: entry_amount,
+                                                            split_detail_original_amount: entry_original_amount,
+                                                            split_detail_code: entry_item_code,
+                                                            split_detail_fee_code: d.ought_receive_detail_fee_code,
+                                                            split_detail_fee_name: d.ought_receive_detail_fee_name
+                                                        })
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        if(accept_entry.length === 0) {
+                                            continue second
+                                        }
+                                        let balancecode = '1'
+                                        if(srl.ought_receive_balance_code === 'CHEQUE') {
+                                            balancecode = '2'
+                                        } else if(srl.ought_receive_balance_code === 'CASH') {
+                                            balancecode = '3'
+                                        } 
+                                        let accept_rate = 1
+                                        let accept_amount = new Decimal(sd.split_amount).toNumber()
+                                        let accept_original_amount = new Decimal(sd.split_amount).toNumber()
+                                        if(sd.split_currency === 'TZS') {
+                                            accept_rate = new Decimal(srl.ought_receive_currency_rate).toNumber()
+                                            let accept_format_amount = await this.getReceiptAmount(sd.split_currency, sd.split_amount, srl.ought_receive_currency_rate)
+                                            accept_amount = new Decimal(accept_format_amount.natamount).toNumber()
+                                            accept_original_amount = new Decimal(accept_format_amount.originalamount).toNumber()
+                                        }
+                                        let accept = {
+                                            vouchcode: vouch_code, // 应收单号
+                                            vouchdate: moment().format('YYYY-MM-DD'), // 单据日期
+                                            period: moment().format('M'), // 单据日期 月份
+                                            vouchtype: '48',
+                                            customercode: u8_customer_code, // 客商编码
+                                            balanceitemcode: accept_item_code,
+                                            balancecode: balancecode,
+                                            foreigncurrency: sd.split_currency,
+                                            currencyrate: accept_rate,
+                                            amount: accept_amount, //
+                                            originalamount: accept_original_amount,
+                                            operator: opUser.user_name, // 操作员
+                                            digest: 'Received from ' + srl.ought_receive_from_u8_alias + '/' + sd.split_reference_no,
+                                            entry: accept_entry
+                                        }
+                                        rd.ought_accept_subject_code = accept_item_code
+                                        let accept_param = {
+                                            accept: accept
+                                        }
+                                        if(split_flg) {
+                                            rs_add.receive_split_natamount = accept_amount
+                                            rs_add.receive_split_original_amount = accept_original_amount
+                                            rs_add.receive_split_subject_code = accept_item_code
+                                            rs_add.receive_split_received_no = vouch_code
+                                        }
+                                        logger.error('accept_split', accept)
+                                        logger.error('accept_split_entry', accept_entry)
+                                        logger.error('accept_split_url', accept_url)
+                                        logger.error('accept_split_param', accept_param)
+                                        await axios.post(accept_url, accept_param).then(async response => {
+                                            logger.error('accept_split_response', response.data)
+                                            let data = response.data
+                                            if(data) {
+                                                if(data.errcode === '0') {
+                                                    if(split_flg) {
+                                                        rs_add.receive_split_u8_id = data.id
+                                                        rs_add.receive_split_trade_id = data.tradeid
+                                                        rs_add.receive_split_u8_biz_id = biz_id
+                                                        await rs_add.save()
+    
+                                                        rd.received_no = vouch_code
+                                                        rd.accept_u8_id = data.id
+                                                        rd.accept_trade_id = data.tradeid
+                                                        rd.accept_u8_biz_id = biz_id
+                                                        rd.accept_at = new Date()
+                                                        await rd.save()
+                                                    } else {
+                                                        rd.received_no = vouch_code
+                                                        rd.accept_u8_id = data.id
+                                                        rd.accept_trade_id = data.tradeid
+                                                        rd.accept_u8_biz_id = biz_id
+                                                        rd.ought_received_digest = rl.received_digest
+                                                        rd.accept_at = new Date()
+                                                        await rd.save()
+    
+                                                        if(rl.receive_detail && rl.receive_detail.length > 0) {
+                                                            for(let d of rl.receive_detail) {
+                                                                let rdd = await tb_ought_receive_detail.findOne({
+                                                                    where: {
+                                                                        ought_receive_detail_id: d.ought_receive_detail_id,
+                                                                        state: GLBConfig.ENABLE
+                                                                    }
+                                                                })
+                                                                if(rdd) {
+                                                                    rdd.ought_received_detail_code = d.received_fee_code
+                                                                    rdd.ought_received_detail_digest = d.received_fee_digest
+                                                                    await rdd.save()
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                } else {
+                                                    errMessage.push(srl.ought_receive_no + 'send error: ' + data.errmsg)
+                                                }
+                                            } else {
+                                                errMessage.push(srl.ought_receive_no + 'send error: no return')
+                                            }
+                                        }).catch(function (error) {
+                                            logger.error('accept_split_error', error)
+                                            errMessage.push(srl.ought_receive_no + 'send error: ' + error)
+                                        })
+                                    }
                                 }
                             }
                         } else {
