@@ -695,6 +695,78 @@ exports.submitReceivableAct = async req => {
     return common.success(returnData)
 }
 
+exports.skip2ReceivedAct = async req => {
+    let doc = common.docValidate(req), user = req.user
+    let opUser = await tb_user.findOne({
+        where: {
+            user_id: user.user_id,
+            state: GLBConfig.ENABLE
+        }
+    })
+    let returnData = {}
+    let errMessage = []
+    if(doc.receivable_list) {
+        for(let rl of doc.receivable_list) {
+            try {
+                let rl_amount = await getReceiptAmount(rl.receipt_currency, rl.receipt_amount, rl.receipt_amount_rate)
+                let receipt_amount = rl.receipt_amount
+                let natamount = rl_amount.natamount
+                let originalamount = rl_amount.originalamount
+
+                let rl_add = await tb_ought_receive.create({
+                    ought_receive_receipt_file_id: rl.receipt_id,
+                    ought_receive_no: rl.receipt_no,
+                    ought_receive_type: rl.receipt_type,
+                    ought_receive_amount: receipt_amount,
+                    ought_receive_natamount: natamount,
+                    ought_receive_original_amount: originalamount,
+                    ought_receive_currency: rl.receipt_currency,
+                    ought_receive_bank: rl.receipt_bank,
+                    ought_receive_reference_no: rl.receipt_reference_no,
+                    ought_receive_object_id: rl.receipt_object_id,
+                    ought_receive_object: rl.receipt_object,
+                    ought_receive_carrier: rl.receipt_object_carrier,
+                    ought_receive_from_id: rl.receipt_from_id,
+                    ought_receive_from: rl.receipt_from,
+                    ought_receive_from_u8_code: rl.receipt_from_u8_code,
+                    ought_receive_from_u8_alias: rl.receipt_from_u8_alias,
+                    ought_receive_operator_id: opUser.user_id,
+                    ought_receive_operator_name: opUser.user_name,
+                    ought_receive_subject_code: rl.parent_code,
+                    ought_receive_u8_id: 'SKIP',
+                    ought_receive_balance_code: rl.receipt_check_cash,
+                    ought_receive_currency_rate: rl.receipt_amount_rate,
+                    ought_receive_digest: rl.receipt_digest
+                })
+                if(rl_add && rl.receipt_detail && rl.receipt_detail.length > 0) {
+                    for(let rd of rl.receipt_detail) {
+                        let rd_amount = await getReceiptAmount('USD', rd.fee_amount, rl.receipt_amount_rate)
+                        await tb_ought_receive_detail.create({
+                            ought_receive_id: rl_add.ought_receive_id,
+                            ought_receive_detail_code: rd.fee_code,
+                            ought_receive_detail_fee_code: rd.fee_type,
+                            ought_receive_detail_fee_name: rd.fee_name,
+                            ought_receive_detail_amount: rd.fee_amount,
+                            ought_receive_detail_natamount: rd_amount.natamount,
+                            ought_receive_detail_original_amount: rd_amount.originalamount,
+                            ought_receive_detail_digest: rd.fee_digest,
+                        })
+                    }
+                }
+            } catch(err) {
+                errMessage.push(rl.receipt_no + 'skip error: ' + err)
+            }
+        }
+    }
+    if(errMessage && errMessage.length > 0) {
+        returnData.code = '0'
+        returnData.errMessage = errMessage.join(', ')
+    } else {
+        returnData.code = '1'
+    }
+    return common.success(returnData)
+}
+
 exports.queryReceivedAct= async req => {
     let doc = common.docValidate(req), user = req.user
     let returnData = {}
@@ -877,7 +949,7 @@ exports.submitReceivedAct = async req => {
                                         }
                                         accept_entry.push({
                                             customercode: u8_customer_code,
-                                            itemcode: '2251',
+                                            itemcode: d.received_fee_code,
                                             foreigncurrency: rl.ought_receive_currency,
                                             currencyrate: entry_rate,
                                             amount: entry_amount,
@@ -895,7 +967,7 @@ exports.submitReceivedAct = async req => {
                                     period: moment().format('M'), // 单据日期 月份
                                     vouchtype: '48',
                                     customercode: u8_customer_code, // 客商编码
-                                    balanceitemcode: '2251',
+                                    balanceitemcode: rl.parent_code,
                                     balancecode: '4',
                                     foreigncurrency: rl.ought_receive_currency,
                                     currencyrate: rl.ought_receive_currency === 'USD' ? 1 : new Decimal(rl.ought_receive_currency_rate).toNumber(),
@@ -1349,6 +1421,34 @@ exports.submitSplitReceivedAct = async req => {
                                         if(rd.ought_receive_carrier === 'OOCL') {
                                             u8_customer_code = GLBConfig.U8_CONFIG.u8_oocl_code
                                         }
+
+                                        let accept_item_code = ''
+                                        let entry_item_code = ''
+                                        let match_codes = await tb_match_code.findAll({
+                                            where: {
+                                                match_code_bill_type: 'accept',
+                                                match_code_fee_currency: sd.split_currency,
+                                                match_code_fee_bank: sd.split_bank,
+                                                state: GLBConfig.ENABLE
+                                            }
+                                        })
+                                        if(match_codes && match_codes.length === 1) {
+                                            accept_item_code = match_codes[0].finance_subject_code
+                                            let sc = await tb_subject_code.findOne({
+                                                where: {
+                                                    subject_code: accept_item_code,
+                                                    state: GLBConfig.ENABLE
+                                                }
+                                            })
+                                            if(sc) {
+                                                entry_item_code = sc.parent_code
+                                            }
+                                        }
+                                        if(!accept_item_code || !entry_item_code) {
+                                            errMessage.push(srl.ought_receive_no + ' item code not exist')
+                                            continue first
+                                        }
+                                        
                                         let biz_id = await seq.genU8SystemSeq('BIZ')
                                         let vouch_code = await seq.genU8SystemSeq('RECEIVED')
                                         let accept_url = GLBConfig.U8_CONFIG.host + GLBConfig.U8_CONFIG.accept_add_api_url + `?from_account=${GLBConfig.U8_CONFIG.from_account}&to_account=${GLBConfig.U8_CONFIG.to_account}&app_key=${GLBConfig.U8_CONFIG.app_key}&token=${token}&biz_id=${biz_id}&sync=1` 
@@ -1367,7 +1467,7 @@ exports.submitSplitReceivedAct = async req => {
                                                     }
                                                     accept_entry.push({
                                                         customercode: u8_customer_code,
-                                                        itemcode: '2251',
+                                                        itemcode: entry_item_code,
                                                         foreigncurrency: sd.split_currency,
                                                         currencyrate: entry_rate,
                                                         amount: entry_amount,
@@ -1385,7 +1485,7 @@ exports.submitSplitReceivedAct = async req => {
                                                             split_detail_amount: d.split_detail_amount,
                                                             split_detail_natamount: entry_amount,
                                                             split_detail_original_amount: entry_original_amount,
-                                                            split_detail_code: '2251',
+                                                            split_detail_code: entry_item_code,
                                                             split_detail_fee_code: d.ought_receive_detail_fee_code,
                                                             split_detail_fee_name: d.ought_receive_detail_fee_name
                                                         })
@@ -1412,7 +1512,7 @@ exports.submitSplitReceivedAct = async req => {
                                             period: moment().format('M'), // 单据日期 月份
                                             vouchtype: '48',
                                             customercode: u8_customer_code, // 客商编码
-                                            balanceitemcode: '2251',
+                                            balanceitemcode: accept_item_code,
                                             balancecode: '4',
                                             foreigncurrency: sd.split_currency,
                                             currencyrate: accept_rate,
@@ -1431,7 +1531,7 @@ exports.submitSplitReceivedAct = async req => {
                                         if(split_flg) {
                                             rs_add.receive_split_natamount = accept_amount
                                             rs_add.receive_split_original_amount = accept_original_amount
-                                            rs_add.receive_split_subject_code = '2251'
+                                            rs_add.receive_split_subject_code = accept_item_code
                                             rs_add.receive_split_received_no = vouch_code
                                         }
                                         logger.error('accept_split', accept)

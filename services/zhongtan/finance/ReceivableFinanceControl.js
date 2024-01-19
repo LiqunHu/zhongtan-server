@@ -13,6 +13,8 @@ module.exports = async (req, res) => {
       ret = await srv.queryReceivableAct(req)
     } else if (method === 'submitReceivable') {
       ret = await srv.submitReceivableAct(req)
+    } else if (method === 'skip2Received') {
+      ret = await srv.skip2ReceivedAct(req)
     } else if (method === 'queryReceived') {
         ret = await srv.queryReceivedAct(req)
     } else if (method === 'submitReceivedBankInfo') {
