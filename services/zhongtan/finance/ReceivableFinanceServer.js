@@ -955,7 +955,7 @@ exports.submitReceivedAct = async req => {
                                             amount: entry_amount,
                                             originalamount: entry_original_amount,
                                             cmemo: 'Received from consignee',//d.received_fee_digest,
-                                            type: 2,
+                                            // type: 2,
                                             projectclass: '00',
                                             project: addSubFItem.citemcode,
                                         })
@@ -1473,7 +1473,7 @@ exports.submitSplitReceivedAct = async req => {
                                                         amount: entry_amount,
                                                         originalamount: entry_original_amount,
                                                         cmemo: 'Received from consignee',//d.received_fee_digest,
-                                                        type: 2,
+                                                        // type: 2,
                                                         projectclass: '00',
                                                         project: addSubFItem.citemcode,
                                                     })
