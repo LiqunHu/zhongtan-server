@@ -130,7 +130,7 @@ exports.queryPayableAct = async req => {
             let b_c = _.find(COMMON_CUSTOMER, function(o) { return o.user_id === r.payment_advice_beneficiary})
             if(b_c) {
                 item.payment_advice_beneficiary_name = b_c.user_name
-                if(b_c.u8_code && b_c.u8_alias) {
+                if(b_c.u8_vendor_code && b_c.u8_vendor_alias) {
                     item.payment_advice_beneficiary_u8_vendor_code = b_c.u8_vendor_code
                     item.payment_advice_beneficiary_u8_vendor_alias = b_c.u8_vendor_alias
                 } else {
