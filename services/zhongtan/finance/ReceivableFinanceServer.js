@@ -924,7 +924,8 @@ exports.submitReceivedAct = async req => {
                         }
                     })
                     if(rd) {
-                        if(rd.ought_receive_bank === 'ROLLOVER') {
+                        let vouch_code = rd.received_no
+                        if(rl.ought_receive_bank === 'ROLLOVER') {
                             // 押金调整 固定科目2251 需要创建item
                             let u8Item = await this.addFItem(rd.ought_receive_no, rd.ought_receive_from_u8_alias, rd.ought_receive_object)
                             let addSubFItem = await this.addSubFItem(rd.ought_receive_reference_no)
@@ -934,7 +935,11 @@ exports.submitReceivedAct = async req => {
                                     u8_customer_code = GLBConfig.U8_CONFIG.u8_oocl_code
                                 }
                                 let biz_id = await seq.genU8SystemSeq('BIZ')
-                                let vouch_code = await seq.genU8SystemSeq('RECEIVED')
+                                if(!vouch_code) {
+                                    vouch_code = await seq.genU8SystemSeq('RECEIVED')
+                                    rd.received_no = vouch_code
+                                    await rd.save()
+                                }
                                 let accept_url = GLBConfig.U8_CONFIG.host + GLBConfig.U8_CONFIG.accept_add_api_url + `?from_account=${GLBConfig.U8_CONFIG.from_account}&to_account=${GLBConfig.U8_CONFIG.to_account}&app_key=${GLBConfig.U8_CONFIG.app_key}&token=${token}&biz_id=${biz_id}&sync=1` 
                                 let accept_entry = []
                                 if(rl.receive_detail && rl.receive_detail.length > 0) {
@@ -1034,7 +1039,11 @@ exports.submitReceivedAct = async req => {
                                 u8_customer_code = GLBConfig.U8_CONFIG.u8_oocl_code
                             }
                             let biz_id = await seq.genU8SystemSeq('BIZ')
-                            let vouch_code = await seq.genU8SystemSeq('RECEIVED')
+                            if(!vouch_code) {
+                                vouch_code = await seq.genU8SystemSeq('RECEIVED')
+                                rd.received_no = vouch_code
+                                await rd.save()
+                            }
                             let accept_url = GLBConfig.U8_CONFIG.host + GLBConfig.U8_CONFIG.accept_add_api_url + `?from_account=${GLBConfig.U8_CONFIG.from_account}&to_account=${GLBConfig.U8_CONFIG.to_account}&app_key=${GLBConfig.U8_CONFIG.app_key}&token=${token}&biz_id=${biz_id}&sync=1` 
                             let accept_entry = []
                             if(rl.receive_detail && rl.receive_detail.length > 0) {
@@ -1085,14 +1094,12 @@ exports.submitReceivedAct = async req => {
                                 let data = response.data
                                 if(data) {
                                     if(data.errcode === '0') {
-                                        rd.received_no = vouch_code
                                         rd.accept_u8_id = data.id
                                         rd.accept_trade_id = data.tradeid
                                         rd.accept_u8_biz_id = biz_id
                                         rd.ought_received_digest = rl.received_digest
                                         rd.accept_at = new Date()
                                         await rd.save()
-
                                         if(rl.receive_detail && rl.receive_detail.length > 0) {
                                             for(let d of rl.receive_detail) {
                                                 let rdd = await tb_ought_receive_detail.findOne({
@@ -1414,6 +1421,14 @@ exports.submitSplitReceivedAct = async req => {
                                     })
                                 }
                                 if(sd.custom_header_subject_code) {
+                                    let custom_project = null
+                                    if(sd.custom_header_project_code && sd.custom_header_project_name) {
+                                        custom_project = await this.addU8FItem(d.custom_header_project_code, sd.custom_header_project_name)
+                                        if(!custom_project) {
+                                            errMessage.push(srl.ought_receive_no + ' project create error')
+                                            continue second
+                                        }
+                                    }
                                     let u8_customer_code = GLBConfig.U8_CONFIG.u8_cosco_code
                                     if(rd.ought_receive_carrier === 'OOCL') {
                                         u8_customer_code = GLBConfig.U8_CONFIG.u8_oocl_code
@@ -1441,7 +1456,7 @@ exports.submitSplitReceivedAct = async req => {
                                     }
                                     if(!accept_item_code || !entry_item_code) {
                                         errMessage.push(srl.ought_receive_no + ' item code not exist')
-                                        continue first
+                                        continue second
                                     }
 
                                     let biz_id = await seq.genU8SystemSeq('BIZ')
@@ -1517,6 +1532,10 @@ exports.submitSplitReceivedAct = async req => {
                                         operator: opUser.user_name, // 操作员
                                         digest: 'Received from ' + srl.ought_receive_from_u8_alias + '/' + sd.split_reference_no,
                                         entry: accept_entry
+                                    }
+                                    if(custom_project) {
+                                        accept.itemclasscode = '00'
+                                        accept.itemcode = custom_project.citemcode
                                     }
                                     rd.ought_accept_subject_code = accept_item_code
                                     let accept_param = {
@@ -2074,6 +2093,41 @@ exports.getU8Token = async loginFlg => {
         console.error(error)
         return common.error('u8_01')
     })
+}
+
+exports.addU8FItem = async (citemcode, citemname) => {
+    await this.getU8Token(false)
+    let token = await redisClient.get(GLBConfig.U8_CONFIG.token_name)
+    let biz_id = await seq.genU8SystemSeq('BIZ')
+    let item_url = GLBConfig.U8_CONFIG.host + GLBConfig.U8_CONFIG.fitem_add_api_url + `?from_account=${GLBConfig.U8_CONFIG.from_account}&to_account=${GLBConfig.U8_CONFIG.to_account}&app_key=${GLBConfig.U8_CONFIG.app_key}&token=${token}&biz_id=${biz_id}&sync=1` 
+    let fitem = {
+        citemcode: citemcode,
+        citemname: citemname,
+        citemccode: '01',
+        citemcname: '无分类',
+        citem_class: '00',
+        citem_name: '押金',
+        bclose: false
+    }
+    let item_param = {
+        fitem: fitem
+    }
+    logger.error('item_url', item_url)
+    logger.error('item_param', item_param)
+    let u8Item = ''
+    await axios.post(item_url, item_param).then(async response => {
+        logger.error('item_response', response.data)
+        let data = response.data
+        if(data) {
+            logger.error('addFItem', data)
+            if(data.errcode === '0') {
+                u8Item = fitem
+            }
+        }
+    }).catch(function (error) {
+        logger.error('item_error', error)
+    })
+    return u8Item
 }
 
 exports.addFItem = async (receipt_no, customer_alias, bill_no) => {
