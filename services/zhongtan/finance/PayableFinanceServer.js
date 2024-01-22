@@ -13,6 +13,8 @@ const seq = require('../../../util/Sequence')
 const tb_user = model.common_user
 const tb_upload_file = model.zhongtan_uploadfile
 const tb_finance_payable = model.zhongtan_finance_payable
+const tb_finance_item = model.zhongtan_finance_item
+
 
 exports.initAct = async req => {
     let doc = common.docValidate(req)
@@ -129,10 +131,10 @@ exports.queryPayableAct = async req => {
             if(b_c) {
                 item.payment_advice_beneficiary_name = b_c.user_name
                 if(b_c.u8_code && b_c.u8_alias) {
-                    item.payment_advice_beneficiary_u8_customerr_code = b_c.u8_code
-                    item.payment_advice_beneficiary_u8_customer_alias = b_c.u8_alias
+                    item.payment_advice_beneficiary_u8_vendor_code = b_c.u8_vendor_code
+                    item.payment_advice_beneficiary_u8_vendor_alias = b_c.u8_vendor_alias
                 } else {
-                    _disabled_message.push('Payment beneficiary customer not exist in U8 system.')
+                    _disabled_message.push('Payment beneficiary vendor not exist in U8 system.')
                 }
             } else {
                 _disabled_message.push('Payment beneficiary not exist.')
@@ -171,7 +173,6 @@ exports.queryPayableAct = async req => {
             if(payment_file) {
                 item.payment_advice_file_id = payment_file.uploadfile_id
                 item.payment_advice_file_url = payment_file.uploadfile_url
-                item.payment_advice_amount_rate = payment_file.uploadfile_amount_rate
             }
 
             let carrier = _.find(PAYMENT_ITEM_CODE_CARRIERS, function(o) { return o.payment_item_code === item.payment_advice_items && o.item_code_carrier === item.payment_advice_remarks})
@@ -191,6 +192,14 @@ exports.queryPayableAct = async req => {
                 } else {
                     _disabled_message.push('Payment item subject code not exist.')
                 }
+            }
+            let carrier_dr_spe = _.find(PAYMENT_ITEM_CODE_CARRIERS, function(o) { return o.item_code_id === 'payable-dr' && o.item_code_carrier === item.payment_advice_remarks})
+            if(carrier_dr_spe) {
+                item.item_code_payable_debit = carrier_dr_spe.payment_item_code
+            }
+            let carrier_cr_spe = _.find(PAYMENT_ITEM_CODE_CARRIERS, function(o) { return o.item_code_id === 'payable-cr' && o.item_code_carrier === item.payment_advice_remarks})
+            if(carrier_cr_spe) {
+                item.item_code_payable_credit = carrier_cr_spe.payment_item_code
             }
             if(_disabled_message && _disabled_message.length > 0) {
                 item._disabled_message = _disabled_message.join('\r\n')
@@ -230,8 +239,12 @@ exports.submitPayableAct = async req => {
                     let digest = ''
                     let entry_digest = ''
                     let item = null
-                    let cust_vendor_code = pl.payment_advice_remarks_u8_vendor_code
-                    let entry_cust_vendor_code = pl.payment_advice_remarks_u8_vendor_code
+                    let cust_vendor_code = pl.payment_advice_beneficiary_u8_vendor_code
+                    let entry_cust_vendor_code = pl.payment_advice_beneficiary_u8_vendor_code
+                    if(pl.item_code_payable_debit.indexOf('2') === 0) {
+                        cust_vendor_code = pl.payment_advice_remarks_u8_vendor_code
+                        entry_cust_vendor_code = pl.payment_advice_remarks_u8_vendor_code
+                    }
                     if(pl.payment_advice_items_type === '1') {
                         digest = 'MV ' + pl.payment_advice_vessel + ' ' + pl.payment_advice_voyage + ' ' + pl.payment_advice_items
                         entry_digest = 'Receivable from ' + pl.payment_advice_remarks_u8_vendor_alias
@@ -249,17 +262,14 @@ exports.submitPayableAct = async req => {
                             errMessage.push(pl.payment_advice_no + 'send error: item create faied')
                             continue
                         }
-                        if(pl.item_code_payable_debit === '113106') {
-                            entry_cust_vendor_code = pl.payment_advice_beneficiary_u8_customerr_code
-                        }
                     } else if(pl.payment_advice_items_type === '2') {
                         digest = 'Payable for freight tax/' + pl.payment_advice_vessel + ' ' + pl.payment_advice_voyage
                         entry_digest = 'Receivable from ' + pl.payment_advice_remarks_u8_vendor_alias + '/' + pl.payment_advice_vessel + ' ' + pl.payment_advice_voyage
                     } else if(pl.payment_advice_items_type === '3') {
-                        digest = 'Payable to ' + pl.payment_advice_beneficiary_u8_customer_alias + ' for ' + pl.payment_advice_items + '/' +  pl.payment_advice_inv_cntrl
+                        digest = 'Payable to ' + pl.payment_advice_beneficiary_u8_vendor_alias + ' for ' + pl.payment_advice_items + '/' +  pl.payment_advice_inv_cntrl
                         entry_digest = 'Receivable from ' + pl.payment_advice_remarks_u8_vendor_alias + ' for depot-' + amount
                     } else if(pl.payment_advice_items_type === '4') {
-                        digest = 'Payable to ' + pl.payment_advice_beneficiary_u8_customer_alias + '-' + amount
+                        digest = 'Payable to ' + pl.payment_advice_beneficiary_u8_vendor_alias + '-' + amount
                         entry_digest = 'Receivable from ' + pl.payment_advice_remarks_u8_vendor_alias + ' for logistic/' +  pl.payment_advice_inv_cntrl
                         let itemcode = moment().format('YYYY') + '-' + await seq.genU8SystemOneSeq()
                         let itemname = pl.payment_advice_inv_cntrl
@@ -271,8 +281,8 @@ exports.submitPayableAct = async req => {
                             continue
                         }
                     } else if(pl.payment_advice_items_type === '5') { 
-                        digest = 'Payable to ' + pl.payment_advice_beneficiary_u8_customer_alias + '/' + pl.payment_advice_vessel + ' ' + pl.payment_advice_voyage
-                        entry_digest = 'Receivable from ' + pl.payment_advice_beneficiary_u8_customer_alias + '/' + pl.payment_advice_vessel + ' ' + pl.payment_advice_voyage
+                        digest = 'Payable to ' + pl.payment_advice_beneficiary_u8_vendor_alias + '/' + pl.payment_advice_vessel + ' ' + pl.payment_advice_voyage
+                        entry_digest = 'Receivable from ' + pl.payment_advice_beneficiary_u8_vendor_alias + '/' + pl.payment_advice_vessel + ' ' + pl.payment_advice_voyage
 
                         let itemcode = moment(pl.payment_advice_vessel_date, 'YYYY-MM-DD').format('YYYYMMDD') + '-' + await seq.genU8SystemOneSeq()
                         let itemname = pl.payment_advice_vessel + ' ' + pl.payment_advice_voyage
@@ -291,11 +301,12 @@ exports.submitPayableAct = async req => {
                     }
                     
                     if(pl.payment_advice_currency === 'TZS') {
-                        let format_amount = await this.getNatAmount(pl.payment_advice_currency, pl.payment_advice_amount, pl.payment_advice_amount_rate)
+                        let format_amount = await this.getNatAmount(pl.payment_advice_currency, pl.payment_advice_amount, pl.payment_advice_rate)
                         natamount = format_amount.natamount
                         currency_name = 'TZS'
-                        currency_rate = new Decimal(pl.payment_advice_amount_rate).toNumber()
+                        currency_rate = new Decimal(pl.payment_advice_rate).toNumber()
                     }
+
                     let entryitem = {
                         cust_vendor_code: entry_cust_vendor_code,
                         bdebitcredit: 1,
@@ -331,7 +342,7 @@ exports.submitPayableAct = async req => {
                         oughtpay.item_code = item.citemcode
                     }
                     if(pl.item_code_payable_debit === '113106' || pl.item_code_payable_debit === '113107') {
-                        oughtpay.define11 = pl.payment_advice_beneficiary_u8_customer_alias
+                        oughtpay.define11 = pl.payment_advice_remarks_u8_vendor_alias
                     }
                     let payable_param = {
                         oughtpay: oughtpay
@@ -539,7 +550,6 @@ exports.queryPaymentAct= async req => {
             if(payment_file) {
                 item.payment_advice_file_id = payment_file.uploadfile_id
                 item.payment_advice_file_url = payment_file.uploadfile_url
-                item.payment_advice_amount_rate = payment_file.uploadfile_amount_rate
             }
 
             let code = _.find(PAYMENT_ITEM_CODES, function(o) { return o.payment_item_code === item.payment_advice_items && o.item_code_payment_debit})
@@ -600,22 +610,22 @@ exports.submitPaymentAct = async req => {
                             digest = 'Paid for freight tax/' + pl.payment_advice_vessel + ' ' + pl.payment_advice_voyage
                             entry_digest = 'Paid for freight tax/' + pl.payment_advice_vessel + ' ' + pl.payment_advice_voyage
                         } else if(pl.payment_advice_items_type === '3') {
-                            digest = 'Paid to ' + pl.payment_advice_beneficiary_u8_customer_alias + ' for depot'
-                            entry_digest = 'Payable to ' + pl.payment_advice_beneficiary_u8_customer_alias + ' for ' + pl.payment_advice_inv_cntrl
+                            digest = 'Paid to ' + pl.payment_advice_beneficiary_u8_vendor_alias + ' for depot'
+                            entry_digest = 'Payable to ' + pl.payment_advice_beneficiary_u8_vendor_alias + ' for ' + pl.payment_advice_inv_cntrl
                         } else if(pl.payment_advice_items_type === '4') {
-                            digest = 'Paid to ' + pl.payment_advice_beneficiary_u8_customer_alias + ' for logistic'
-                            entry_digest = 'Paid to ' + pl.payment_advice_beneficiary_u8_customer_alias + '-' + amount
+                            digest = 'Paid to ' + pl.payment_advice_beneficiary_u8_vendor_alias + ' for logistic'
+                            entry_digest = 'Paid to ' + pl.payment_advice_beneficiary_u8_vendor_alias + '-' + amount
                         } else if(pl.payment_advice_items_type === '5') { 
-                            digest = 'Paid to ' + pl.payment_advice_beneficiary_u8_customer_alias + ' for Stv.'
-                            entry_digest = 'Paid to ' + pl.payment_advice_beneficiary_u8_customer_alias + '/' + pl.payment_advice_vessel + ' ' + pl.payment_advice_voyage
+                            digest = 'Paid to ' + pl.payment_advice_beneficiary_u8_vendor_alias + ' for Stv.'
+                            entry_digest = 'Paid to ' + pl.payment_advice_beneficiary_u8_vendor_alias + '/' + pl.payment_advice_vessel + ' ' + pl.payment_advice_voyage
                         }
                         
                         if(pl.payment_advice_currency === 'TZS') {
-                            let format_amount = await this.getNatAmount(pl.payment_advice_currency, pl.payment_advice_amount, pl.payment_advice_amount_rate)
+                            let format_amount = await this.getNatAmount(pl.payment_advice_currency, pl.payment_advice_amount, pl.payment_advice_rate)
                             amount = format_amount.natamount
                             original_amount = format_amount.originalamount
                             currency_name = 'TZS'
-                            currency_rate = new Decimal(pl.payment_advice_amount_rate).toNumber()
+                            currency_rate = new Decimal(pl.payment_advice_rate).toNumber()
                         }
                         let entryitem = {
                             customercode: pl.payment_advice_beneficiary_u8_vendor_code,
@@ -884,7 +894,6 @@ exports.queryCompleteAct = async req => {
             if(payment_file) {
                 item.payment_advice_file_id = payment_file.uploadfile_id
                 item.payment_advice_file_url = payment_file.uploadfile_url
-                item.payment_advice_amount_rate = payment_file.uploadfile_amount_rate
             }
             payables.push(item)
         }
@@ -961,6 +970,26 @@ exports.getU8Token = async loginFlg => {
 }
 
 exports.addFItem = async (code, name, citemccode, citemcname) => {
+    
+    let dbItem = await tb_finance_item.findOne({
+        where: {
+            finance_item_type: 'payable',
+            finance_item_name: name,
+            state: GLBConfig.ENABLE
+        }
+    })
+    if(dbItem) {
+        return {
+            citemcode: dbItem.finance_item_code,
+            citemname: dbItem.finance_item_name,
+            citemccode: dbItem.finance_item_ccode,
+            citemcname: dbItem.finance_item_cname,
+            citem_class: '97',
+            citem_name: '项目管理',
+            bclose: false
+        }
+    }
+    
     await this.getU8Token(false)
     let token = await redisClient.get(GLBConfig.U8_CONFIG.token_name)
     let biz_id = await seq.genU8SystemSeq('BIZ')
@@ -986,6 +1015,15 @@ exports.addFItem = async (code, name, citemccode, citemcname) => {
         if(data) {
             if(data.errcode === '0') {
                 u8Item = fitem
+                await tb_finance_item.create({
+                    finance_item_type: 'payable',
+                    finance_item_code: code,
+                    finance_item_name: name,
+                    finance_item_ccode: citemccode,
+                    finance_item_cname: citemcname,
+                    finance_item_calss_code: '97',
+                    finance_item_calss_name: '项目管理',
+                })
             }
         }
     }).catch(function (error) {
