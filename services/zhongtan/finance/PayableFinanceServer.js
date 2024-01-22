@@ -48,6 +48,10 @@ exports.queryPayableAct = async req => {
             queryStr += ` AND pa.payment_advice_items = ? `
             replacements.push(doc.search_data.items_type)
         }
+        if(doc.search_data.inv_cntrl) {
+            queryStr += ` AND pa.payment_advice_inv_cntrl like ? `
+            replacements.push('%' + doc.search_data.inv_cntrl + '%')
+        }
     }
 
     queryStr += ' ORDER BY payment_advice_id DESC'
@@ -431,6 +435,10 @@ exports.queryPaymentAct= async req => {
             replacements.push(start_date)
             replacements.push(moment(end_date, 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
         }
+        if(doc.search_data.inv_cntrl) {
+            queryStr += ` AND pa.payment_advice_inv_cntrl like ? `
+            replacements.push('%' + doc.search_data.inv_cntrl + '%')
+        }
     }
 
     queryStr += ' ORDER BY fp.created_at DESC'
@@ -796,6 +804,10 @@ exports.queryCompleteAct = async req => {
             queryStr += ` AND fp.finance_payment_at >= ? and fp.finance_payment_at < ? `
             replacements.push(start_date)
             replacements.push(moment(end_date, 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
+        }
+        if(doc.search_data.inv_cntrl) {
+            queryStr += ` AND pa.payment_advice_inv_cntrl like ? `
+            replacements.push('%' + doc.search_data.inv_cntrl + '%')
         }
     }
 
