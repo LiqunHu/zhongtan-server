@@ -329,7 +329,7 @@ exports.submitPayableAct = async req => {
                         cust_vendor_code: cust_vendor_code,
                         bdebitcredit: 0,
                         subjectcode: pl.item_code_payable_credit, // 应付贷
-                        operator: opUser.user_name,
+                        operator: opUser.u8_alias ? opUser.u8_alias : opUser.user_name,
                         amount: amount,
                         natamount: natamount,
                         currency_name: currency_name,
@@ -682,7 +682,7 @@ exports.submitPaymentAct = async req => {
                             vouchtype: '49',
                             customercode: pl.payment_advice_beneficiary_u8_vendor_code,
                             balancecode: balancecode,
-                            personcode: opUser.u8_code,
+                            operator: opUser.u8_alias ? opUser.u8_alias : opUser.user_name,
                             amount: amount,
                             originalamount: original_amount,
                             foreigncurrency: currency_name,
