@@ -245,10 +245,6 @@ exports.submitPayableAct = async req => {
                     let item = null
                     let cust_vendor_code = pl.payment_advice_beneficiary_u8_vendor_code
                     let entry_cust_vendor_code = pl.payment_advice_beneficiary_u8_vendor_code
-                    if(pl.item_code_payable_debit.indexOf('2') === 0) {
-                        cust_vendor_code = pl.payment_advice_remarks_u8_vendor_code
-                        entry_cust_vendor_code = pl.payment_advice_remarks_u8_vendor_code
-                    }
                     if(pl.payment_advice_items_type === '1') {
                         digest = 'MV ' + pl.payment_advice_vessel + ' ' + pl.payment_advice_voyage + ' ' + pl.payment_advice_items
                         entry_digest = 'Receivable from ' + pl.payment_advice_remarks_u8_vendor_alias
