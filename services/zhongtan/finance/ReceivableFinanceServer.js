@@ -908,9 +908,9 @@ exports.submitReceivedAct = async req => {
                         }
                         if(rl.ought_receive_bank === 'ROLLOVER') {
                             // 押金调整 固定科目2251 需要创建item
-                            let u8Item = await this.addFItem(rd.ought_receive_no, rd.ought_receive_from_u8_alias, rd.ought_receive_object)
+                            // let u8Item = await this.addFItem(rd.ought_receive_no, rd.ought_receive_from_u8_alias, rd.ought_receive_object)
                             let addSubFItem = await this.addSubFItem(rd.ought_receive_reference_no)
-                            if(u8Item && addSubFItem) {
+                            if(addSubFItem) {
                                 let u8_customer_code = GLBConfig.U8_CONFIG.u8_cosco_code
                                 if(rd.ought_receive_carrier === 'OOCL') {
                                     u8_customer_code = GLBConfig.U8_CONFIG.u8_oocl_code
@@ -954,9 +954,6 @@ exports.submitReceivedAct = async req => {
                                         amount: merge_entry_amount,
                                         originalamount: merge_entry_original_amount,
                                         cmemo: 'Received from consignee',//d.received_fee_digest,
-                                        // type: 2,
-                                        projectclass: '00',
-                                        project: addSubFItem.citemcode,
                                     })
                                 }
                                 let accept = {
@@ -974,7 +971,7 @@ exports.submitReceivedAct = async req => {
                                     operator: opUser.user_name, // 操作员
                                     digest: rl.received_digest,
                                     itemclasscode: '00',
-                                    itemcode: u8Item.citemcode,
+                                    itemcode: addSubFItem.citemcode,
                                     entry: accept_entry
                                 }
                                 rd.ought_accept_subject_code = rl.parent_code
@@ -1635,9 +1632,9 @@ exports.submitSplitReceivedAct = async req => {
                                     })
                                 } else {
                                     if(sd.split_bank === 'ROLLOVER') {
-                                        let u8Item = await this.addFItem(rd.ought_receive_no, rd.ought_receive_from_u8_alias, rd.ought_receive_object)
+                                        // let u8Item = await this.addFItem(rd.ought_receive_no, rd.ought_receive_from_u8_alias, rd.ought_receive_object)
                                         let addSubFItem = await this.addSubFItem(rd.ought_receive_reference_no)
-                                        if(u8Item && addSubFItem) {
+                                        if(addSubFItem) {
                                             let u8_customer_code = GLBConfig.U8_CONFIG.u8_cosco_code
                                             if(rd.ought_receive_carrier === 'OOCL') {
                                                 u8_customer_code = GLBConfig.U8_CONFIG.u8_oocl_code
@@ -1719,9 +1716,6 @@ exports.submitSplitReceivedAct = async req => {
                                                     amount: merge_entry_amount,
                                                     originalamount: merge_entry_original_amount,
                                                     cmemo: 'Received from consignee',//d.received_fee_digest,
-                                                    // type: 2,
-                                                    projectclass: '00',
-                                                    project: addSubFItem.citemcode,
                                                 })
                                             }
     
@@ -1744,7 +1738,7 @@ exports.submitSplitReceivedAct = async req => {
                                                 digest: 'Received from ' + srl.ought_receive_from_u8_alias + '/' + sd.split_reference_no,
                                                 entry: accept_entry,
                                                 itemclasscode: '00',
-                                                itemcode: u8Item.citemcode,
+                                                itemcode: addSubFItem.citemcode,
                                             }
                                             rd.ought_accept_subject_code = '2251'
                                             let accept_param = {
