@@ -98,4 +98,14 @@ module.exports = db.defineModel('tbl_zhongtan_finance_payable', {
     type: db.DATE,
     allowNull: true
   },
+  finance_payable_order_no: {
+    // 应付单编号
+    type: db.STRING(50),
+    allowNull: true
+  },
+  finance_payment_order_no: {
+    // 付款单编号
+    type: db.STRING(50),
+    allowNull: true
+  },
 })

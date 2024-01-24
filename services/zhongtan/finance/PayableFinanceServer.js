@@ -17,7 +17,6 @@ const tb_finance_item = model.zhongtan_finance_item
 
 
 exports.initAct = async req => {
-    let doc = common.docValidate(req)
     let returnData = {}
     queryStr = `SELECT payment_items_code, payment_items_name, payment_items_type FROM tbl_zhongtan_payment_items WHERE state = '1' and payment_items_type in ('1','2','3','4','5') ORDER BY payment_items_type, payment_items_code`
     replacements = []
@@ -205,7 +204,7 @@ exports.queryPayableAct = async req => {
             if(carrier_cr_spe) {
                 item.item_code_payable_credit = carrier_cr_spe.payment_item_code
             }
-            if(_disabled_message && _disabled_message.length > 0) {
+            if(_disabled_message.length > 0) {
                 item._disabled_message = _disabled_message.join('\r\n')
             } else {
                 item._disabled = false
@@ -323,11 +322,18 @@ exports.submitPayableAct = async req => {
                     }
                     let entry = []
                     entry.push(entryitem)
+                    
+                    let header_bdebitcredit = 0 // 单据类型（0蓝单1红单，默认为0）
+                    if(new Decimal(amount).cmp(new Decimal(0)) < 0) {
+                        header_bdebitcredit = 1
+                        amount = new Decimal(amount).abs().toNumber()
+                        natamount = new Decimal(natamount).abs().toNumber()
+                    }
                     let oughtpay = {
                         code: pl.payment_advice_no,
                         date: moment().format('YYYY-MM-DD'),
                         cust_vendor_code: cust_vendor_code,
-                        bdebitcredit: 0,
+                        bdebitcredit: header_bdebitcredit,
                         subjectcode: pl.item_code_payable_credit, // 应付贷
                         operator: opUser.u8_alias ? opUser.u8_alias : opUser.user_name,
                         amount: amount,
@@ -378,6 +384,7 @@ exports.submitPayableAct = async req => {
                                     finance_payable_rate: currency_rate,
                                     finance_payable_code: pl.item_code_payable_debit,
                                     finance_payable_entry_code: pl.item_code_payable_credit,
+                                    finance_payable_order_no: pl.payment_advice_no,
                                     finance_payable_u8_id: data.id,
                                     finance_payable_u8_trade_id:  data.tradeid,
                                     finance_payable_item: finance_payable_item,
@@ -403,7 +410,7 @@ exports.submitPayableAct = async req => {
             return common.error('u8_01')
         }
     }
-    if(errMessage && errMessage.length > 0) {
+    if(errMessage.length > 0) {
         returnData.code = '0'
         returnData.errMessage = errMessage.join(', ')
     } else {
@@ -562,7 +569,7 @@ exports.queryPaymentAct= async req => {
             } else {
                 _disabled_message.push('Payment item subject code not exist.')
             }
-            if(_disabled_message && _disabled_message.length > 0) {
+            if(_disabled_message.length > 0) {
                 item._disabled_message = _disabled_message.join('\r\n')
             } else {
                 item._disabled = false
@@ -599,7 +606,12 @@ exports.submitPaymentAct = async req => {
                 if(fp) {
                     try {
                         let biz_id = await seq.genU8SystemSeq('BIZ')
-                        let vouch_code = await seq.genU8SystemSeq('PAID')
+                        let vouch_code = fp.finance_payment_order_no
+                        if(!vouch_code) {
+                            vouch_code = await seq.genU8SystemSeq('PAID')
+                            fp.finance_payment_order_no = vouch_code
+                            await fp.save()
+                        }
                         let payment_url = GLBConfig.U8_CONFIG.host + GLBConfig.U8_CONFIG.pay_add_api_url + `?from_account=${GLBConfig.U8_CONFIG.from_account}&to_account=${GLBConfig.U8_CONFIG.to_account}&app_key=${GLBConfig.U8_CONFIG.app_key}&token=${token}&biz_id=${biz_id}&sync=1` 
                         let amount = new Decimal(pl.payment_advice_amount).toNumber()
                         let original_amount = new Decimal(pl.payment_advice_amount).toNumber()
@@ -623,13 +635,18 @@ exports.submitPaymentAct = async req => {
                             digest = 'Paid to ' + pl.payment_advice_beneficiary_u8_vendor_alias + ' for Stv.'
                             entry_digest = 'Paid to ' + pl.payment_advice_beneficiary_u8_vendor_alias + '/' + pl.payment_advice_vessel + ' ' + pl.payment_advice_voyage
                         }
-                        
                         if(pl.payment_advice_currency === 'TZS') {
                             let format_amount = await this.getNatAmount(pl.payment_advice_currency, pl.payment_advice_amount, pl.payment_advice_rate)
                             amount = format_amount.natamount
                             original_amount = format_amount.originalamount
                             currency_name = 'TZS'
                             currency_rate = new Decimal(pl.payment_advice_rate).toNumber()
+                        }
+                        let header_vouchtype = '49' // 单据类型(48=收款单;49=付款单)
+                        if(new Decimal(amount).cmp(new Decimal(0)) < 0) {
+                            header_vouchtype = '48'
+                            amount = new Decimal(amount).abs().toNumber()
+                            original_amount = new Decimal(original_amount).abs().toNumber()
                         }
                         let entryitem = {
                             customercode: pl.payment_advice_beneficiary_u8_vendor_code,
@@ -655,13 +672,13 @@ exports.submitPaymentAct = async req => {
                                     citemccode = '02'
                                     citemcname = 'GENERAL VESSEL'
                                 }
-                                item = await this.addFItem(itemcode, itemname, citemccode, citemcname)
-                                if(!item) {
+                                let new_item = await this.addFItem(itemcode, itemname, citemccode, citemcname)
+                                if(!new_item) {
                                     errMessage.push(pl.payment_advice_no + 'send error: item create faied')
                                     continue
                                 } else {
                                     entryitem.projectclass = '97'
-                                    entryitem.project = item.citemcode
+                                    entryitem.project = new_item.citemcode
                                 }
                             }
                         }
@@ -679,9 +696,10 @@ exports.submitPaymentAct = async req => {
                             vouchcode: vouch_code,
                             vouchdate: moment().format('YYYY-MM-DD'),
                             period: moment().format('M'), // 单据日期 月份
-                            vouchtype: '49',
+                            vouchtype: header_vouchtype,
                             customercode: pl.payment_advice_beneficiary_u8_vendor_code,
                             balancecode: balancecode,
+                            balanceitemcode: '100299',
                             operator: opUser.u8_alias ? opUser.u8_alias : opUser.user_name,
                             amount: amount,
                             originalamount: original_amount,
@@ -693,7 +711,6 @@ exports.submitPaymentAct = async req => {
                         let payment_param = {
                             pay: pay
                         }
-
                         logger.error('payment_url', payment_url)
                         logger.error('entry', entry)
                         logger.error('pay', pay)
@@ -733,7 +750,7 @@ exports.submitPaymentAct = async req => {
             errMessage.push('U8 system api token not exist')
         }
     }
-    if(errMessage && errMessage.length > 0) {
+    if(errMessage.length > 0) {
         returnData.code = '0'
         returnData.errMessage = errMessage.join(', ')
     } else {
@@ -743,7 +760,7 @@ exports.submitPaymentAct = async req => {
 }
 
 exports.watchU8PayableAct = async req => {
-    let doc = common.docValidate(req), user = req.user
+    let doc = common.docValidate(req)
     let fp = await tb_finance_payable.findOne({
         where: {
             finance_payable_id: doc.finance_payable_id,
@@ -776,13 +793,7 @@ exports.watchU8PayableAct = async req => {
 }
 
 exports.queryCompleteAct = async req => {
-    let doc = common.docValidate(req), user = req.user
-    let opUser = await tb_user.findOne({
-        where: {
-            user_id: user.user_id,
-            state: GLBConfig.ENABLE
-        }
-    })
+    let doc = common.docValidate(req)
     let returnData = {}
     let queryStr = `SELECT pa.*, fp.finance_payable_id, fp.finance_payable_u8_id, fp.finance_payable_u8_trade_id, fp.finance_payment_u8_id, fp.finance_payment_u8_trade_id, fp.created_at AS finance_payable_at, fp.finance_payment_at from tbl_zhongtan_payment_advice pa right join tbl_zhongtan_finance_payable fp on pa.payment_advice_id = fp.payment_advice_id  WHERE pa.state = 1 AND fp.state = 1 AND pa.payment_advice_status = '2' AND fp.finance_payable_u8_id IS NOT NULL AND fp.finance_payment_u8_id IS NOT NULL`
     let replacements = []
@@ -911,7 +922,7 @@ exports.queryCompleteAct = async req => {
 }
 
 exports.watchPaymentAct = async req => {
-    let doc = common.docValidate(req), user = req.user
+    let doc = common.docValidate(req)
     let fp = await tb_finance_payable.findOne({
         where: {
             finance_payable_id: doc.finance_payable_id,

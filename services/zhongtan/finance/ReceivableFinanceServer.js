@@ -28,7 +28,6 @@ const tb_receive_split = model.zhongtan_finance_receive_split
 const tb_receive_split_detail = model.zhongtan_finance_receive_split_detail
 
 exports.initAct = async req => {
-    let doc = common.docValidate(req)
     let returnData = {}
     let RECEIPT_TYPES = [
        {value: 'RECEIPT-RECEIPT', name: 'Import Deposit/Fee'},
@@ -549,68 +548,36 @@ exports.submitReceivableAct = async req => {
                                     deptcode: opUser.u8_department_code
                                 })
                             }
-                            // if(rl.receipt_currency === 'USD') {
-                            //     receive_entry.push({
-                            //         cust_vendor_code: rl.receipt_from_u8_code,
-                            //         subjectcode: rd.fee_code,
-                            //         currency_name: '美元',
-                            //         currency_rate: 1,
-                            //         amount: new Decimal(rd.fee_amount).toNumber(),
-                            //         digest: rd.fee_digest,
-                            //         personcode: 'D-00001', // TODO personcode: user.u8_code,
-                            //         deptcode: opUser.u8_department_code
-                            //     })
-                            // } else {
-                            //     let rd_amount = await getReceiptAmount('USD', rd.fee_amount, rl.receipt_amount_rate)
-                            //     receive_entry.push({
-                            //         cust_vendor_code: rl.receipt_from_u8_code,
-                            //         subjectcode: rd.fee_code,
-                            //         currency_name: '先令',
-                            //         currency_rate: new Decimal(rl.receipt_amount_rate).toNumber(),
-                            //         amount: new Decimal(rd_amount.originalamount).toNumber(),
-                            //         natamount: new Decimal(rd_amount.natamount).toNumber(),
-                            //         digest: rd.fee_digest,
-                            //         personcode: 'D-00001', // TODO personcode: user.u8_code,
-                            //         deptcode: opUser.u8_department_code
-                            //     })
-                            // }
-                            
                         }
                     }
                     
-                    let oughtreceive = {}
+                    
                     let rl_amount = await getReceiptAmount(rl.receipt_currency, rl.receipt_amount, rl.receipt_amount_rate)
                     let receipt_amount = rl.receipt_amount
                     let natamount = rl_amount.natamount
                     let originalamount = rl_amount.originalamount
-                    if(rl.receipt_currency === 'USD') {
-                        oughtreceive = {
-                            code: rl.receipt_no, // 应收单号
-                            date: moment().format('YYYY-MM-DD'), // 单据日期
-                            cust_vendor_code: u8_customer_code, // 客商编码
-                            subjectcode: rl.parent_code,
-                            currency_name: '美元',
-                            currency_rate: 1,
-                            amount: new Decimal(rl.receipt_amount).toNumber(),
-                            operator: rl.operator_name, // 操作员
-                            digest: 'Receivable from consignee',
-                            entry: receive_entry,
-                            define2: rl.receipt_from_u8_alias
-                        }
-                    } else {
-                        oughtreceive = {
-                            code: rl.receipt_no, // 应收单号
-                            date: moment().format('YYYY-MM-DD'), // 单据日期
-                            cust_vendor_code: u8_customer_code, // 客商编码
-                            subjectcode: rl.parent_code,
-                            currency_name: '美元',
-                            currency_rate: 1,
-                            amount: new Decimal(natamount).toNumber(),
-                            operator: rl.operator_name, // 操作员
-                            digest: 'Receivable from consignee',
-                            entry: receive_entry,
-                            define2: rl.receipt_from_u8_alias
-                        }
+                    let bdebitcredit = 1 // 单据类型（0红单1蓝单，默认为1）
+                    let header_amount = new Decimal(rl.receipt_amount).toNumber()
+                    if(rl.receipt_currency !== 'USD') {
+                        header_amount = new Decimal(natamount).toNumber()
+                    }
+                    if(new Decimal(header_amount).cmp(new Decimal(0)) < 0) {
+                        bdebitcredit = 0
+                        header_amount = new Decimal(header_amount).abs().toNumber()
+                    }
+                    let oughtreceive = {
+                        code: rl.receipt_no, // 应收单号
+                        date: moment().format('YYYY-MM-DD'), // 单据日期
+                        bdebitcredit: bdebitcredit,
+                        cust_vendor_code: u8_customer_code, // 客商编码
+                        subjectcode: rl.parent_code,
+                        currency_name: '美元',
+                        currency_rate: 1,
+                        amount: header_amount,
+                        operator: rl.operator_name, // 操作员
+                        digest: 'Receivable from consignee',
+                        define14: rl.receipt_from_u8_alias,
+                        entry: receive_entry,
                     }
                     let receive_param = {
                         oughtreceive: oughtreceive
@@ -686,7 +653,7 @@ exports.submitReceivableAct = async req => {
             return common.error('u8_01')
         }
     }
-    if(errMessage && errMessage.length > 0) {
+    if(errMessage.length > 0) {
         returnData.code = '0'
         returnData.errMessage = errMessage.join(', ')
     } else {
@@ -758,7 +725,7 @@ exports.skip2ReceivedAct = async req => {
             }
         }
     }
-    if(errMessage && errMessage.length > 0) {
+    if(errMessage.length > 0) {
         returnData.code = '0'
         returnData.errMessage = errMessage.join(', ')
     } else {
@@ -849,7 +816,7 @@ exports.queryReceivedAct= async req => {
                             state: GLBConfig.ENABLE
                         }
                     })
-                    if(sc && receive_detail && receive_detail.length > 0) {
+                    if(sc && receive_detail.length > 0) {
                         r.received_digest = 'Received from ' + r.ought_receive_from_u8_alias + '/' + r.ought_receive_reference_no
                         for(let d of receive_detail) {
                             d.received_fee_code = sc.parent_code
@@ -879,7 +846,7 @@ exports.queryReceivedAct= async req => {
 }
 
 exports.submitReceivedBankInfoAct = async req => {
-    let doc = common.docValidate(req), user = req.user
+    let doc = common.docValidate(req)
     if(doc.received_list) {
         let submit_data = doc.submit_data
         if(submit_data.received_bank) {
@@ -925,6 +892,20 @@ exports.submitReceivedAct = async req => {
                     })
                     if(rd) {
                         let vouch_code = rd.received_no
+                        let header_vouchtype = '48'
+                        let header_currencyrate = 1
+                        let header_amount = new Decimal(rl.ought_receive_amount).toNumber()
+                        let header_originalamount = new Decimal(rl.ought_receive_amount).toNumber()
+                        if(rl.ought_receive_currency !== 'USD') {
+                            header_currencyrate = new Decimal(rl.ought_receive_currency_rate).toNumber()
+                            header_amount = new Decimal(rl.ought_receive_natamount).toNumber()
+                            header_originalamount = new Decimal(rl.ought_receive_original_amount).toNumber()
+                        }
+                        if(new Decimal(header_amount).cmp(new Decimal(0)) < 0) {
+                            header_vouchtype = '49'
+                            header_amount = new Decimal(header_amount).abs().toNumber()
+                            header_originalamount = new Decimal(header_originalamount).abs().toNumber()
+                        }
                         if(rl.ought_receive_bank === 'ROLLOVER') {
                             // 押金调整 固定科目2251 需要创建item
                             let u8Item = await this.addFItem(rd.ought_receive_no, rd.ought_receive_from_u8_alias, rd.ought_receive_object)
@@ -943,6 +924,9 @@ exports.submitReceivedAct = async req => {
                                 let accept_url = GLBConfig.U8_CONFIG.host + GLBConfig.U8_CONFIG.accept_add_api_url + `?from_account=${GLBConfig.U8_CONFIG.from_account}&to_account=${GLBConfig.U8_CONFIG.to_account}&app_key=${GLBConfig.U8_CONFIG.app_key}&token=${token}&biz_id=${biz_id}&sync=1` 
                                 let accept_entry = []
                                 if(rl.receive_detail && rl.receive_detail.length > 0) {
+                                    let merge_rate = 1
+                                    let merge_entry_amount = 0
+                                    let merge_entry_original_amount = 0
                                     for(let d of rl.receive_detail) {
                                         let entry_rate = 1
                                         let entry_amount = new Decimal(d.ought_receive_detail_amount).toNumber()
@@ -952,32 +936,39 @@ exports.submitReceivedAct = async req => {
                                             entry_amount = new Decimal(d.ought_receive_detail_natamount).toNumber()
                                             entry_original_amount = new Decimal(d.ought_receive_detail_original_amount).toNumber()
                                         }
-                                        accept_entry.push({
-                                            customercode: u8_customer_code,
-                                            itemcode: d.received_fee_code,
-                                            foreigncurrency: rl.ought_receive_currency,
-                                            currencyrate: entry_rate,
-                                            amount: entry_amount,
-                                            originalamount: entry_original_amount,
-                                            cmemo: 'Received from consignee',//d.received_fee_digest,
-                                            // type: 2,
-                                            projectclass: '00',
-                                            project: addSubFItem.citemcode,
-                                        })
+                                        merge_rate = entry_rate
+                                        merge_entry_amount = new Decimal(merge_entry_amount).plus(new Decimal(entry_amount)).toNumber()
+                                        merge_entry_original_amount = new Decimal(merge_entry_original_amount).plus(new Decimal(entry_original_amount)).toNumber()
                                     }
+                                    if(new Decimal(merge_entry_amount).cmp(new Decimal(0)) < 0) {
+                                        merge_entry_amount = new Decimal(merge_entry_amount).abs().toNumber()
+                                        merge_entry_original_amount = new Decimal(merge_entry_original_amount).abs().toNumber()
+                                    }
+                                    accept_entry.push({
+                                        customercode: u8_customer_code,
+                                        itemcode: d.received_fee_code,
+                                        foreigncurrency: rl.ought_receive_currency,
+                                        currencyrate: merge_rate,
+                                        amount: merge_entry_amount,
+                                        originalamount: merge_entry_original_amount,
+                                        cmemo: 'Received from consignee',//d.received_fee_digest,
+                                        // type: 2,
+                                        projectclass: '00',
+                                        project: addSubFItem.citemcode,
+                                    })
                                 }
                                 let accept = {
                                     vouchcode: vouch_code, // 应收单号
                                     vouchdate: moment().format('YYYY-MM-DD'), // 单据日期
                                     period: moment().format('M'), // 单据日期 月份
-                                    vouchtype: '48',
+                                    vouchtype: header_vouchtype,
                                     customercode: u8_customer_code, // 客商编码
                                     balanceitemcode: rl.parent_code,
                                     balancecode: '4',
                                     foreigncurrency: rl.ought_receive_currency,
-                                    currencyrate: rl.ought_receive_currency === 'USD' ? 1 : new Decimal(rl.ought_receive_currency_rate).toNumber(),
-                                    amount: rl.ought_receive_currency === 'USD' ? new Decimal(rl.ought_receive_amount).toNumber() : new Decimal(rl.ought_receive_natamount).toNumber(), //
-                                    originalamount: rl.ought_receive_currency === 'USD' ? new Decimal(rl.ought_receive_amount).toNumber() : new Decimal(rl.ought_receive_original_amount).toNumber(),
+                                    currencyrate: header_currencyrate,
+                                    amount: header_amount, //
+                                    originalamount: header_originalamount,
                                     operator: opUser.user_name, // 操作员
                                     digest: rl.received_digest,
                                     itemclasscode: '00',
@@ -1047,17 +1038,35 @@ exports.submitReceivedAct = async req => {
                             let accept_url = GLBConfig.U8_CONFIG.host + GLBConfig.U8_CONFIG.accept_add_api_url + `?from_account=${GLBConfig.U8_CONFIG.from_account}&to_account=${GLBConfig.U8_CONFIG.to_account}&app_key=${GLBConfig.U8_CONFIG.app_key}&token=${token}&biz_id=${biz_id}&sync=1` 
                             let accept_entry = []
                             if(rl.receive_detail && rl.receive_detail.length > 0) {
+                                let merge_rate = 1
+                                let merge_entry_amount = 0
+                                let merge_entry_original_amount = 0
                                 for(let d of rl.receive_detail) {
-                                    accept_entry.push({
-                                        customercode: u8_customer_code,
-                                        itemcode: d.received_fee_code,
-                                        foreigncurrency: rl.ought_receive_currency,
-                                        currencyrate: rl.ought_receive_currency === 'USD' ? 1 : new Decimal(rl.ought_receive_currency_rate).toNumber(),
-                                        amount: rl.ought_receive_currency === 'USD' ? new Decimal(d.ought_receive_detail_amount).toNumber() : new Decimal(d.ought_receive_detail_natamount).toNumber(),
-                                        originalamount: rl.ought_receive_currency === 'USD' ? new Decimal(d.ought_receive_detail_amount).toNumber() : new Decimal(d.ought_receive_detail_original_amount).toNumber(),
-                                        cmemo: 'Received from consignee'//d.received_fee_digest,
-                                    })
+                                    let entry_rate = 1
+                                    let entry_amount = new Decimal(d.ought_receive_detail_amount).toNumber()
+                                    let entry_original_amount = new Decimal(d.ought_receive_detail_amount).toNumber()
+                                    if(rl.ought_receive_currency === 'TZS') {
+                                        entry_rate = new Decimal(rl.ought_receive_currency_rate).toNumber()
+                                        entry_amount = new Decimal(d.ought_receive_detail_natamount).toNumber()
+                                        entry_original_amount = new Decimal(d.ought_receive_detail_original_amount).toNumber()
+                                    }
+                                    merge_rate = entry_rate
+                                    merge_entry_amount = new Decimal(merge_entry_amount).plus(new Decimal(entry_amount)).toNumber()
+                                    merge_entry_original_amount = new Decimal(merge_entry_original_amount).plus(new Decimal(entry_original_amount)).toNumber()
                                 }
+                                if(new Decimal(merge_entry_amount).cmp(new Decimal(0)) < 0) {
+                                    merge_entry_amount = new Decimal(merge_entry_amount).abs().toNumber()
+                                    merge_entry_original_amount = new Decimal(merge_entry_original_amount).abs().toNumber()
+                                }
+                                accept_entry.push({
+                                    customercode: u8_customer_code,
+                                    itemcode: d.received_fee_code,
+                                    foreigncurrency: rl.ought_receive_currency,
+                                    currencyrate: merge_rate,
+                                    amount: merge_entry_amount,
+                                    originalamount: merge_entry_original_amount,
+                                    cmemo: 'Received from consignee'//d.received_fee_digest,
+                                })
                             }
                             let balancecode = '1'
                             if(rl.ought_receive_balance_code === 'CHEQUE') {
@@ -1069,14 +1078,14 @@ exports.submitReceivedAct = async req => {
                                 vouchcode: vouch_code, // 应收单号
                                 vouchdate: moment().format('YYYY-MM-DD'), // 单据日期
                                 period: moment().format('M'), // 单据日期 月份
-                                vouchtype: '48',
+                                vouchtype: header_vouchtype,
                                 customercode: u8_customer_code, // 客商编码
                                 balanceitemcode: rl.parent_code,
                                 balancecode: balancecode,
                                 foreigncurrency: rl.ought_receive_currency,
-                                currencyrate: rl.ought_receive_currency === 'USD' ? 1 : new Decimal(rl.ought_receive_currency_rate).toNumber(),
-                                amount: rl.ought_receive_currency === 'USD' ? new Decimal(rl.ought_receive_amount).toNumber() : new Decimal(rl.ought_receive_natamount).toNumber(), //
-                                originalamount: rl.ought_receive_currency === 'USD' ? new Decimal(rl.ought_receive_amount).toNumber() : new Decimal(rl.ought_receive_original_amount).toNumber(),
+                                currencyrate: header_currencyrate,
+                                amount: header_amount, //
+                                originalamount: header_originalamount,
                                 operator: opUser.user_name, // 操作员
                                 digest: rl.received_digest,
                                 entry: accept_entry
@@ -1138,7 +1147,7 @@ exports.submitReceivedAct = async req => {
             errMessage.push('U8 system api token not exist')
         }
     }
-    if(errMessage && errMessage.length > 0) {
+    if(errMessage.length > 0) {
         returnData.code = '0'
         returnData.errMessage = errMessage.join(', ')
     } else {
@@ -1148,7 +1157,7 @@ exports.submitReceivedAct = async req => {
 }
 
 exports.watchU8ReceviableAct = async req => {
-    let doc = common.docValidate(req), user = req.user
+    let doc = common.docValidate(req)
     let rd = await tb_ought_receive.findOne({
         where: {
             ought_receive_id: doc.ought_receive_id,
@@ -1312,7 +1321,7 @@ exports.queryCompleteAct = async req => {
 }
 
 exports.watchU8ReceviedAct = async req => {
-    let doc = common.docValidate(req), user = req.user
+    let doc = common.docValidate(req)
     let rd = await tb_ought_receive.findOne({
         where: {
             ought_receive_id: doc.ought_receive_id,
@@ -1344,7 +1353,7 @@ exports.watchU8ReceviedAct = async req => {
 }
 
 exports.watchU8SplitReceviedAct = async req => {
-    let doc = common.docValidate(req), user = req.user
+    let doc = common.docValidate(req)
     let rs = await tb_receive_split.findOne({
         where: {
             receive_split_id: doc.receive_split_id,
@@ -1420,6 +1429,21 @@ exports.submitSplitReceivedAct = async req => {
                                         receive_split_reference_no: sd.split_reference_no
                                     })
                                 }
+                                let accept_vouchtype = '48'
+                                let accept_rate = 1
+                                let accept_amount = new Decimal(sd.split_amount).toNumber()
+                                let accept_original_amount = new Decimal(sd.split_amount).toNumber()
+                                if(sd.split_currency === 'TZS') {
+                                    accept_rate = new Decimal(srl.ought_receive_currency_rate).toNumber()
+                                    let accept_format_amount = await this.getReceiptAmount(sd.split_currency, sd.split_amount, srl.ought_receive_currency_rate)
+                                    accept_amount = new Decimal(accept_format_amount.natamount).toNumber()
+                                    accept_original_amount = new Decimal(accept_format_amount.originalamount).toNumber()
+                                }
+                                if(new Decimal(accept_amount).cmp(new Decimal(0)) < 0) {
+                                    accept_vouchtype = '49'
+                                    accept_amount = new Decimal(accept_amount).abs().toNumber()
+                                    accept_original_amount = new Decimal(accept_original_amount).abs().toNumber()
+                                }
                                 if(sd.custom_header_subject_code) {
                                     let custom_project = null
                                     if(sd.custom_header_project_code && sd.custom_header_project_name) {
@@ -1464,6 +1488,9 @@ exports.submitSplitReceivedAct = async req => {
                                     let accept_url = GLBConfig.U8_CONFIG.host + GLBConfig.U8_CONFIG.accept_add_api_url + `?from_account=${GLBConfig.U8_CONFIG.from_account}&to_account=${GLBConfig.U8_CONFIG.to_account}&app_key=${GLBConfig.U8_CONFIG.app_key}&token=${token}&biz_id=${biz_id}&sync=1` 
                                     let accept_entry = []
                                     if(sd.split_fees && sd.split_fees.length > 0) {
+                                        let merge_rate = 1
+                                        let merge_entry_amount = 0
+                                        let merge_entry_original_amount = 0
                                         for(let d of sd.split_fees) {
                                             let entry_rate = 1
                                             let entry_amount = new Decimal(d.split_detail_amount).toNumber()
@@ -1475,15 +1502,9 @@ exports.submitSplitReceivedAct = async req => {
                                                     entry_amount = new Decimal(entry_format_amount.natamount).toNumber()
                                                     entry_original_amount = new Decimal(entry_format_amount.originalamount).toNumber()
                                                 }
-                                                accept_entry.push({
-                                                    customercode: u8_customer_code,
-                                                    itemcode: entry_item_code,
-                                                    foreigncurrency: sd.split_currency,
-                                                    currencyrate: entry_rate,
-                                                    amount: entry_amount,
-                                                    originalamount: entry_original_amount,
-                                                    cmemo: 'Received from consignee'//d.received_fee_digest,
-                                                })
+                                                merge_rate = entry_rate
+                                                merge_entry_amount = new Decimal(merge_entry_amount).plus(new Decimal(entry_amount)).toNumber()
+                                                merge_entry_original_amount = new Decimal(merge_entry_original_amount).plus(new Decimal(entry_original_amount)).toNumber()
                                                 if(split_flg) {
                                                     await tb_receive_split_detail.create({
                                                         receive_split_id: rs_add.receive_split_id,
@@ -1498,6 +1519,19 @@ exports.submitSplitReceivedAct = async req => {
                                                 }
                                             }
                                         }
+                                        if(new Decimal(merge_entry_amount).cmp(new Decimal(0)) < 0) {
+                                            merge_entry_amount = new Decimal(merge_entry_amount).abs().toNumber()
+                                            merge_entry_original_amount = new Decimal(merge_entry_original_amount).abs().toNumber()
+                                        }
+                                        accept_entry.push({
+                                            customercode: u8_customer_code,
+                                            itemcode: entry_item_code,
+                                            foreigncurrency: sd.split_currency,
+                                            currencyrate: merge_rate,
+                                            amount: merge_entry_amount,
+                                            originalamount: merge_entry_original_amount,
+                                            cmemo: 'Received from consignee'//d.received_fee_digest,
+                                        })
                                     }
                                     if(accept_entry.length === 0) {
                                         continue second
@@ -1508,20 +1542,12 @@ exports.submitSplitReceivedAct = async req => {
                                     } else if(srl.ought_receive_balance_code === 'CASH') {
                                         balancecode = '3'
                                     } 
-                                    let accept_rate = 1
-                                    let accept_amount = new Decimal(sd.split_amount).toNumber()
-                                    let accept_original_amount = new Decimal(sd.split_amount).toNumber()
-                                    if(sd.split_currency === 'TZS') {
-                                        accept_rate = new Decimal(srl.ought_receive_currency_rate).toNumber()
-                                        let accept_format_amount = await this.getReceiptAmount(sd.split_currency, sd.split_amount, srl.ought_receive_currency_rate)
-                                        accept_amount = new Decimal(accept_format_amount.natamount).toNumber()
-                                        accept_original_amount = new Decimal(accept_format_amount.originalamount).toNumber()
-                                    }
+                                    
                                     let accept = {
                                         vouchcode: vouch_code, // 应收单号
                                         vouchdate: moment().format('YYYY-MM-DD'), // 单据日期
                                         period: moment().format('M'), // 单据日期 月份
-                                        vouchtype: '48',
+                                        vouchtype: accept_vouchtype,
                                         customercode: u8_customer_code, // 客商编码
                                         balanceitemcode: accept_item_code,
                                         balancecode: balancecode,
@@ -1645,6 +1671,9 @@ exports.submitSplitReceivedAct = async req => {
                                             let accept_url = GLBConfig.U8_CONFIG.host + GLBConfig.U8_CONFIG.accept_add_api_url + `?from_account=${GLBConfig.U8_CONFIG.from_account}&to_account=${GLBConfig.U8_CONFIG.to_account}&app_key=${GLBConfig.U8_CONFIG.app_key}&token=${token}&biz_id=${biz_id}&sync=1` 
                                             let accept_entry = []
                                             if(sd.split_fees && sd.split_fees.length > 0) {
+                                                let merge_rate = 1
+                                                let merge_entry_amount = 0
+                                                let merge_entry_original_amount = 0
                                                 for(let d of sd.split_fees) {
                                                     let entry_rate = 1
                                                     let entry_amount = new Decimal(d.split_detail_amount).toNumber()
@@ -1656,19 +1685,9 @@ exports.submitSplitReceivedAct = async req => {
                                                             entry_amount = new Decimal(entry_format_amount.natamount).toNumber()
                                                             entry_original_amount = new Decimal(entry_format_amount.originalamount).toNumber()
                                                         }
-                                                        accept_entry.push({
-                                                            customercode: u8_customer_code,
-                                                            itemcode: entry_item_code,
-                                                            foreigncurrency: sd.split_currency,
-                                                            currencyrate: entry_rate,
-                                                            amount: entry_amount,
-                                                            originalamount: entry_original_amount,
-                                                            cmemo: 'Received from consignee',//d.received_fee_digest,
-                                                            // type: 2,
-                                                            projectclass: '00',
-                                                            project: addSubFItem.citemcode,
-                                                        })
-    
+                                                        merge_rate = entry_rate
+                                                        merge_entry_amount = new Decimal(merge_entry_amount).plus(new Decimal(entry_amount)).toNumber()
+                                                        merge_entry_original_amount = new Decimal(merge_entry_original_amount).plus(new Decimal(entry_original_amount)).toNumber()
                                                         if(split_flg) {
                                                             await tb_receive_split_detail.create({
                                                                 receive_split_id: rs_add.receive_split_id,
@@ -1683,25 +1702,33 @@ exports.submitSplitReceivedAct = async req => {
                                                         }
                                                     }
                                                 }
+
+                                                if(new Decimal(merge_entry_amount).cmp(new Decimal(0)) < 0) {
+                                                    merge_entry_amount = new Decimal(merge_entry_amount).abs().toNumber()
+                                                    merge_entry_original_amount = new Decimal(merge_entry_original_amount).abs().toNumber()
+                                                }
+                                                accept_entry.push({
+                                                    customercode: u8_customer_code,
+                                                    itemcode: entry_item_code,
+                                                    foreigncurrency: sd.split_currency,
+                                                    currencyrate: merge_rate,
+                                                    amount: merge_entry_amount,
+                                                    originalamount: merge_entry_original_amount,
+                                                    cmemo: 'Received from consignee',//d.received_fee_digest,
+                                                    // type: 2,
+                                                    projectclass: '00',
+                                                    project: addSubFItem.citemcode,
+                                                })
                                             }
     
                                             if(accept_entry.length === 0) {
                                                 continue second
                                             }
-                                            let accept_rate = 1
-                                            let accept_amount = new Decimal(sd.split_amount).toNumber()
-                                            let accept_original_amount = new Decimal(sd.split_amount).toNumber()
-                                            if(sd.split_currency === 'TZS') {
-                                                accept_rate = new Decimal(srl.ought_receive_currency_rate).toNumber()
-                                                let accept_format_amount = await this.getReceiptAmount(sd.split_currency, sd.split_amount, srl.ought_receive_currency_rate)
-                                                accept_amount = new Decimal(accept_format_amount.natamount).toNumber()
-                                                accept_original_amount = new Decimal(accept_format_amount.originalamount).toNumber()
-                                            }
                                             let accept = {
                                                 vouchcode: vouch_code, // 应收单号
                                                 vouchdate: moment().format('YYYY-MM-DD'), // 单据日期
                                                 period: moment().format('M'), // 单据日期 月份
-                                                vouchtype: '48',
+                                                vouchtype: accept_vouchtype,
                                                 customercode: u8_customer_code, // 客商编码
                                                 balanceitemcode: accept_item_code,
                                                 balancecode: '4',
@@ -1821,6 +1848,9 @@ exports.submitSplitReceivedAct = async req => {
                                         let accept_url = GLBConfig.U8_CONFIG.host + GLBConfig.U8_CONFIG.accept_add_api_url + `?from_account=${GLBConfig.U8_CONFIG.from_account}&to_account=${GLBConfig.U8_CONFIG.to_account}&app_key=${GLBConfig.U8_CONFIG.app_key}&token=${token}&biz_id=${biz_id}&sync=1` 
                                         let accept_entry = []
                                         if(sd.split_fees && sd.split_fees.length > 0) {
+                                            let merge_rate = 1
+                                            let merge_entry_amount = 0
+                                            let merge_entry_original_amount = 0
                                             for(let d of sd.split_fees) {
                                                 let entry_rate = 1
                                                 let entry_amount = new Decimal(d.split_detail_amount).toNumber()
@@ -1832,15 +1862,9 @@ exports.submitSplitReceivedAct = async req => {
                                                         entry_amount = new Decimal(entry_format_amount.natamount).toNumber()
                                                         entry_original_amount = new Decimal(entry_format_amount.originalamount).toNumber()
                                                     }
-                                                    accept_entry.push({
-                                                        customercode: u8_customer_code,
-                                                        itemcode: entry_item_code,
-                                                        foreigncurrency: sd.split_currency,
-                                                        currencyrate: entry_rate,
-                                                        amount: entry_amount,
-                                                        originalamount: entry_original_amount,
-                                                        cmemo: 'Received from consignee'//d.received_fee_digest,
-                                                    })
+                                                    merge_rate = entry_rate
+                                                    merge_entry_amount = new Decimal(merge_entry_amount).plus(new Decimal(entry_amount)).toNumber()
+                                                    merge_entry_original_amount = new Decimal(merge_entry_original_amount).plus(new Decimal(entry_original_amount)).toNumber()
                                                     if(split_flg) {
                                                         await tb_receive_split_detail.create({
                                                             receive_split_id: rs_add.receive_split_id,
@@ -1855,6 +1879,19 @@ exports.submitSplitReceivedAct = async req => {
                                                     }
                                                 }
                                             }
+                                            if(new Decimal(merge_entry_amount).cmp(new Decimal(0)) < 0) {
+                                                merge_entry_amount = new Decimal(merge_entry_amount).abs().toNumber()
+                                                merge_entry_original_amount = new Decimal(merge_entry_original_amount).abs().toNumber()
+                                            }
+                                            accept_entry.push({
+                                                customercode: u8_customer_code,
+                                                itemcode: entry_item_code,
+                                                foreigncurrency: sd.split_currency,
+                                                currencyrate: merge_rate,
+                                                amount: merge_entry_amount,
+                                                originalamount: merge_entry_original_amount,
+                                                cmemo: 'Received from consignee'//d.received_fee_digest,
+                                            })
                                         }
                                         if(accept_entry.length === 0) {
                                             continue second
@@ -1865,20 +1902,11 @@ exports.submitSplitReceivedAct = async req => {
                                         } else if(srl.ought_receive_balance_code === 'CASH') {
                                             balancecode = '3'
                                         } 
-                                        let accept_rate = 1
-                                        let accept_amount = new Decimal(sd.split_amount).toNumber()
-                                        let accept_original_amount = new Decimal(sd.split_amount).toNumber()
-                                        if(sd.split_currency === 'TZS') {
-                                            accept_rate = new Decimal(srl.ought_receive_currency_rate).toNumber()
-                                            let accept_format_amount = await this.getReceiptAmount(sd.split_currency, sd.split_amount, srl.ought_receive_currency_rate)
-                                            accept_amount = new Decimal(accept_format_amount.natamount).toNumber()
-                                            accept_original_amount = new Decimal(accept_format_amount.originalamount).toNumber()
-                                        }
                                         let accept = {
                                             vouchcode: vouch_code, // 应收单号
                                             vouchdate: moment().format('YYYY-MM-DD'), // 单据日期
                                             period: moment().format('M'), // 单据日期 月份
-                                            vouchtype: '48',
+                                            vouchtype: accept_vouchtype,
                                             customercode: u8_customer_code, // 客商编码
                                             balanceitemcode: accept_item_code,
                                             balancecode: balancecode,
@@ -1973,7 +2001,7 @@ exports.submitSplitReceivedAct = async req => {
             errMessage.push('U8 system api token not exist')
         }
     }
-    if(errMessage && errMessage.length > 0) {
+    if(errMessage.length > 0) {
         returnData.code = '0'
         returnData.errMessage = errMessage.join(', ')
     } else {
@@ -2122,6 +2150,7 @@ exports.addU8FItem = async (citemcode, citemname) => {
             logger.error('addFItem', data)
             if(data.errcode === '0') {
                 u8Item = fitem
+
             }
         }
     }).catch(function (error) {
@@ -2396,7 +2425,7 @@ checkCan2SendReceivable = async item =>  {
             }
         }
     }
-    if(receivable_message && receivable_message.length > 0) {
+    if(receivable_message.length > 0) {
         result.message = receivable_message.join('\r\n')
     } else {
         result.code = true
