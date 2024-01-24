@@ -924,6 +924,7 @@ exports.submitReceivedAct = async req => {
                                 let accept_url = GLBConfig.U8_CONFIG.host + GLBConfig.U8_CONFIG.accept_add_api_url + `?from_account=${GLBConfig.U8_CONFIG.from_account}&to_account=${GLBConfig.U8_CONFIG.to_account}&app_key=${GLBConfig.U8_CONFIG.app_key}&token=${token}&biz_id=${biz_id}&sync=1` 
                                 let accept_entry = []
                                 if(rl.receive_detail && rl.receive_detail.length > 0) {
+                                    let merge_item_code = ''
                                     let merge_rate = 1
                                     let merge_entry_amount = 0
                                     let merge_entry_original_amount = 0
@@ -936,6 +937,7 @@ exports.submitReceivedAct = async req => {
                                             entry_amount = new Decimal(d.ought_receive_detail_natamount).toNumber()
                                             entry_original_amount = new Decimal(d.ought_receive_detail_original_amount).toNumber()
                                         }
+                                        merge_item_code = d.received_fee_code
                                         merge_rate = entry_rate
                                         merge_entry_amount = new Decimal(merge_entry_amount).plus(new Decimal(entry_amount)).toNumber()
                                         merge_entry_original_amount = new Decimal(merge_entry_original_amount).plus(new Decimal(entry_original_amount)).toNumber()
@@ -946,7 +948,7 @@ exports.submitReceivedAct = async req => {
                                     }
                                     accept_entry.push({
                                         customercode: u8_customer_code,
-                                        itemcode: d.received_fee_code,
+                                        itemcode: merge_item_code,
                                         foreigncurrency: rl.ought_receive_currency,
                                         currencyrate: merge_rate,
                                         amount: merge_entry_amount,
@@ -1038,6 +1040,7 @@ exports.submitReceivedAct = async req => {
                             let accept_url = GLBConfig.U8_CONFIG.host + GLBConfig.U8_CONFIG.accept_add_api_url + `?from_account=${GLBConfig.U8_CONFIG.from_account}&to_account=${GLBConfig.U8_CONFIG.to_account}&app_key=${GLBConfig.U8_CONFIG.app_key}&token=${token}&biz_id=${biz_id}&sync=1` 
                             let accept_entry = []
                             if(rl.receive_detail && rl.receive_detail.length > 0) {
+                                let merge_item_code = ''
                                 let merge_rate = 1
                                 let merge_entry_amount = 0
                                 let merge_entry_original_amount = 0
@@ -1050,6 +1053,7 @@ exports.submitReceivedAct = async req => {
                                         entry_amount = new Decimal(d.ought_receive_detail_natamount).toNumber()
                                         entry_original_amount = new Decimal(d.ought_receive_detail_original_amount).toNumber()
                                     }
+                                    merge_item_code = d.received_fee_code
                                     merge_rate = entry_rate
                                     merge_entry_amount = new Decimal(merge_entry_amount).plus(new Decimal(entry_amount)).toNumber()
                                     merge_entry_original_amount = new Decimal(merge_entry_original_amount).plus(new Decimal(entry_original_amount)).toNumber()
@@ -1060,7 +1064,7 @@ exports.submitReceivedAct = async req => {
                                 }
                                 accept_entry.push({
                                     customercode: u8_customer_code,
-                                    itemcode: d.received_fee_code,
+                                    itemcode: merge_item_code,
                                     foreigncurrency: rl.ought_receive_currency,
                                     currencyrate: merge_rate,
                                     amount: merge_entry_amount,
@@ -1447,7 +1451,7 @@ exports.submitSplitReceivedAct = async req => {
                                 if(sd.custom_header_subject_code) {
                                     let custom_project = null
                                     if(sd.custom_header_project_code && sd.custom_header_project_name) {
-                                        custom_project = await this.addU8FItem(d.custom_header_project_code, sd.custom_header_project_name)
+                                        custom_project = await this.addU8FItem(sd.custom_header_project_code, sd.custom_header_project_name)
                                         if(!custom_project) {
                                             errMessage.push(srl.ought_receive_no + ' project create error')
                                             continue second
