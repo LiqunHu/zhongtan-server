@@ -150,7 +150,7 @@ exports.receiptAct = async req => {
       unusual_invoice_id: doc.unusual_invoice_id
     }
   })
-  let receipt_no = await seq.genUnusualSeq()
+  let receipt_no = 'U' + await seq.genUnusualSeq()
   let renderData = {}
   renderData.unusual_receipt_no = receipt_no
   renderData.unusual_receipt_date = moment().format('MMM DD, YYYY')

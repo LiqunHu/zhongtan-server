@@ -34,7 +34,6 @@ exports.initAct = async req => {
        {value: 'OVERDUE-RECEIPT', name: 'Import Demurrage'},
        {value: 'SHIPMENT-RECEIPT', name: 'Export Receivable'},
        {value: 'MNR-RECEIPT', name: 'MNR Receivable'},
-       {value: 'UNUSUAL RECEIPT', name: 'UNUSUAL Receivable'},
        {value: 'FIXED-RECEIPT', name: 'Import Fixed'},
     ]
     returnData.RECEIPT_TYPES = RECEIPT_TYPES
@@ -61,7 +60,7 @@ exports.initAct = async req => {
 exports.queryReceivableAct = async req => {
     let doc = common.docValidate(req), user = req.user
     let returnData = {}
-    let queryStr = `SELECT u.* from tbl_zhongtan_uploadfile u WHERE state = 1 AND api_name IN ('RECEIPT-RECEIPT', 'OVERDUE-RECEIPT', 'SHIPMENT-RECEIPT', 'MNR-RECEIPT', 'UNUSUAL RECEIPT', 'FIXED-RECEIPT') 
+    let queryStr = `SELECT u.* from tbl_zhongtan_uploadfile u WHERE state = 1 AND api_name IN ('RECEIPT-RECEIPT', 'OVERDUE-RECEIPT', 'SHIPMENT-RECEIPT', 'MNR-RECEIPT', 'FIXED-RECEIPT') 
     AND uploadfile_amount != 0 AND u.uploadfile_id NOT IN (SELECT ought_receive_receipt_file_id FROM tbl_zhongtan_finance_ought_receive WHERE state = 1)`
     let replacements = []
     if(doc.search_data) {
@@ -2196,7 +2195,7 @@ exports.addSubFItem = async (reference_no) => {
     let regex = '/RPL\\s*([0-9]+)/i'
     let rollover_reference_no = common.valueFilter(reference_no, regex).trim()
     if(rollover_reference_no) {
-        let queryStr = `select * from tbl_zhongtan_uploadfile where state = '1' AND api_name IN ('RECEIPT-RECEIPT', 'OVERDUE-RECEIPT', 'SHIPMENT-RECEIPT', 'MNR-RECEIPT', 'UNUSUAL RECEIPT', 'FIXED-RECEIPT') and uploadfile_receipt_no like ? order by uploadfile_id desc limit 1`
+        let queryStr = `select * from tbl_zhongtan_uploadfile where state = '1' AND api_name IN ('RECEIPT-RECEIPT', 'OVERDUE-RECEIPT', 'SHIPMENT-RECEIPT', 'MNR-RECEIPT', 'FIXED-RECEIPT') and uploadfile_receipt_no like ? order by uploadfile_id desc limit 1`
         let replacements = [ '%' + rollover_reference_no]
         let receipt_files = await model.simpleSelect(queryStr, replacements)
         if(receipt_files && receipt_files.length === 1) {
