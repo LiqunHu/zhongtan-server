@@ -282,16 +282,46 @@ exports.exportDemurrageReportAct = async(req, res) => {
               if(moment(moment(rfile.created_at).format('YYYY-MM-DD')).isBetween(moment(doc.search_data.receipt_date[0]), moment(doc.search_data.receipt_date[1]), null, '[]')) {
                 retRow.receipt_date = moment(rfile.created_at).format('YYYY-MM-DD HH:mm')
                 retRow.receipt_no = rfile.uploadfile_receipt_no
-                retRow.bank_reference_no = rfile.uploadfile_bank_reference_no
-                retRow.check_no = rfile.uploadfile_check_no
+                retRow.bank = ''
+                if(rfile.uploadfile_bank_info) {
+                  retRow.bank = rfile.uploadfile_bank_info
+                  retRow.bank_reference_no = rfile.uploadfile_bank_reference_no
+                } else {
+                  if (rfile.uploadfile_check_cash === 'CASH') {
+                    retRow.bank = '1'
+                  } else if (rfile.uploadfile_check_cash === 'CHEQUE') {
+                    retRow.bank = '2'
+                    retRow.check_no = rfile.uploadfile_check_no
+                  } else if (rfile.uploadfile_check_cash === 'TRANSFER') {
+                    retRow.bank = '3'
+                    retRow.bank_reference_no = rfile.uploadfile_bank_reference_no
+                  }
+                }
+                // retRow.bank_reference_no = rfile.uploadfile_bank_reference_no
+                // retRow.check_no = rfile.uploadfile_check_no
               } else {
                 continue
               }
             } else {
               retRow.receipt_date = moment(rfile.created_at).format('YYYY-MM-DD HH:mm')
               retRow.receipt_no = rfile.uploadfile_receipt_no
-              retRow.bank_reference_no = rfile.uploadfile_bank_reference_no
-              retRow.check_no = rfile.uploadfile_check_no
+              retRow.bank = ''
+              if(rfile.uploadfile_bank_info) {
+                retRow.bank = rfile.uploadfile_bank_info
+                retRow.bank_reference_no = rfile.uploadfile_bank_reference_no
+              } else {
+                if (rfile.uploadfile_check_cash === 'CASH') {
+                  retRow.bank = '1'
+                } else if (rfile.uploadfile_check_cash === 'CHEQUE') {
+                  retRow.bank = '2'
+                  retRow.check_no = rfile.uploadfile_check_no
+                } else if (rfile.uploadfile_check_cash === 'TRANSFER') {
+                  retRow.bank = '3'
+                  retRow.bank_reference_no = rfile.uploadfile_bank_reference_no
+                }
+              }
+              // retRow.bank_reference_no = rfile.uploadfile_bank_reference_no
+              // retRow.check_no = rfile.uploadfile_check_no
             }
           }
         }
@@ -535,16 +565,47 @@ exports.exportDemurrageAdminReportAct = async(req, res) => {
               if(moment(moment(rfile.created_at).format('YYYY-MM-DD')).isBetween(moment(doc.search_data.receipt_date[0]), moment(doc.search_data.receipt_date[1]), null, '[]')) {
                 retRow.receipt_date = moment(rfile.created_at).format('YYYY-MM-DD HH:mm')
                 retRow.receipt_no = rfile.uploadfile_receipt_no
-                retRow.bank_reference_no = rfile.uploadfile_bank_reference_no
-                retRow.check_no = rfile.uploadfile_check_no
+                retRow.bank = ''
+                if(rfile.uploadfile_bank_info) {
+                  retRow.bank = rfile.uploadfile_bank_info
+                  retRow.bank_reference_no = rfile.uploadfile_bank_reference_no
+                } else {
+                  if (rfile.uploadfile_check_cash === 'CASH') {
+                    retRow.bank = '1'
+                  } else if (rfile.uploadfile_check_cash === 'CHEQUE') {
+                    retRow.bank = '2'
+                    retRow.check_no = rfile.uploadfile_check_no
+                  } else if (rfile.uploadfile_check_cash === 'TRANSFER') {
+                    retRow.bank = '3'
+                    retRow.bank_reference_no = rfile.uploadfile_bank_reference_no
+                  }
+                }
+                // retRow.bank_reference_no = rfile.uploadfile_bank_reference_no
+                // retRow.check_no = rfile.uploadfile_check_no
               } else {
                 continue
               }
             } else {
               retRow.receipt_date = moment(rfile.created_at).format('YYYY-MM-DD HH:mm')
               retRow.receipt_no = rfile.uploadfile_receipt_no
-              retRow.bank_reference_no = rfile.uploadfile_bank_reference_no
-              retRow.check_no = rfile.uploadfile_check_no
+              
+              retRow.bank = ''
+              if(rfile.uploadfile_bank_info) {
+                retRow.bank = rfile.uploadfile_bank_info
+                retRow.bank_reference_no = rfile.uploadfile_bank_reference_no
+              } else {
+                if (rfile.uploadfile_check_cash === 'CASH') {
+                  retRow.bank = '1'
+                } else if (rfile.uploadfile_check_cash === 'CHEQUE') {
+                  retRow.bank = '2'
+                  retRow.check_no = rfile.uploadfile_check_no
+                } else if (rfile.uploadfile_check_cash === 'TRANSFER') {
+                  retRow.bank = '3'
+                  retRow.bank_reference_no = rfile.uploadfile_bank_reference_no
+                }
+              }
+              // retRow.bank_reference_no = rfile.uploadfile_bank_reference_no
+              // retRow.check_no = rfile.uploadfile_check_no
             }
           }
         }

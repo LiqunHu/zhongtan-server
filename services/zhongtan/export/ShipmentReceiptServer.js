@@ -345,9 +345,26 @@ exports.exportCollectAct = async (req, res) => {
           }
           row.receipt_currency = f.uploadfile_currency
           row.receipt_amount = f.uploadfile_amount
-          row.check_bank = f.uploadfile_check_cash
-          row.bank = f.uploadfile_bank_reference_no
-          row.check = f.uploadfile_check_no
+          // row.check_bank = f.uploadfile_check_cash
+          // row.bank = f.uploadfile_bank_reference_no
+          // row.check = f.uploadfile_check_no
+          row.check_bank = ''
+          if(f.uploadfile_bank_info) {
+            row.check_bank = f.uploadfile_bank_info
+            row.bank = f.uploadfile_bank_reference_no
+          } else {
+            if (f.uploadfile_check_cash === 'CASH') {
+              row.check_bank = '1'
+            } else if (f.uploadfile_check_cash === 'CHEQUE') {
+              row.check_bank = '2'
+              row.check = f.uploadfile_check_no
+            } else if (f.uploadfile_check_cash === 'TRANSFER') {
+              row.check_bank = '3'
+              row.bank = f.uploadfile_bank_reference_no
+            }
+          }
+
+
           row.bank_detail = ''
           row.receipt_party = f.user_name
           row.receipt_bl = r.export_masterbl_bl

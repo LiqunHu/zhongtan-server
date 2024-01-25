@@ -23,6 +23,8 @@ module.exports = async (req, res) => {
       ret = await srv.queryCompleteAct(req)
     } else if (method === 'watchPayment') {
       ret = await srv.watchPaymentAct(req)
+    } else if (method === 'submitPayableVesselInfo') {
+      ret = await srv.submitPayableVesselInfoAct(req)
     }
     
     common.sendData(res, ret)

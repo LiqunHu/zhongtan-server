@@ -425,7 +425,7 @@ exports.uploadImportAct = async req => {
               invoice_containers_weight_unit: c['Weight Unit'] || '',
               invoice_containers_plug_reefer: c['Plug type of reefer'] || '',
               invoice_containers_min_temperature: c['Minimum Temperature'] || '',
-              invoice_containers_max_temperature: c['Maximum Temperature'] | ''
+              invoice_containers_max_temperature: c['Maximum Temperature'] || ''
             })
           }
         }
@@ -2279,7 +2279,7 @@ exports.changeblAct = async req => {
       })
       if(continers && continers.length > 0) {
         for(let con of continers) {
-          free_days = await cal_config_srv.queryContainerFreeDays(bl.invoice_masterbi_cargo_type, bl.invoice_masterbi_destination.substring(0, 2), bl.invoice_masterbi_carrier, con.invoice_containers_size, vessel.invoice_vessel_ata)
+          let free_days = await cal_config_srv.queryContainerFreeDays(bl.invoice_masterbi_cargo_type, bl.invoice_masterbi_destination.substring(0, 2), bl.invoice_masterbi_carrier, con.invoice_containers_size, vessel.invoice_vessel_ata)
           if(free_days > 0) {
             con.invoice_containers_current_overdue_days = free_days
             await con.save()
@@ -2580,7 +2580,6 @@ exports.createEditFile = async (commonUser, bl, customer, vessel, continers, edi
   ediData.carrierID = bl.invoice_masterbi_carrier
   ediData.vesselCallsign = vessel.invoice_vessel_call_sign
   ediData.vesselName = vessel.invoice_vessel_name
-  ediData.voyageNo = vessel.invoice_vessel_voyage
   ediData.deliveryPlace = bl.invoice_masterbi_delivery
   ediData.portFinalDestination = bl.invoice_masterbi_destination
   ediData.portOfLoading = bl.invoice_masterbi_loading
@@ -3031,7 +3030,7 @@ exports.changeCnAct = async req => {
           state: GLBConfig.ENABLE
         }
       })
-      free_days = await cal_config_srv.queryContainerFreeDays(bl.invoice_masterbi_cargo_type, bl.invoice_masterbi_destination.substring(0, 2), bl.invoice_masterbi_carrier, cn.invoice_containers_size, vessel.invoice_vessel_ata)
+      let free_days = await cal_config_srv.queryContainerFreeDays(bl.invoice_masterbi_cargo_type, bl.invoice_masterbi_destination.substring(0, 2), bl.invoice_masterbi_carrier, cn.invoice_containers_size, vessel.invoice_vessel_ata)
       if(free_days > 0) {
         cn.invoice_containers_current_overdue_days = free_days
       }

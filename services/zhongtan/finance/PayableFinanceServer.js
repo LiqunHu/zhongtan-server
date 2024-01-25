@@ -14,6 +14,7 @@ const tb_user = model.common_user
 const tb_upload_file = model.zhongtan_uploadfile
 const tb_finance_payable = model.zhongtan_finance_payable
 const tb_finance_item = model.zhongtan_finance_item
+const tb_payment_advice = model.zhongtan_payment_advice
 
 
 exports.initAct = async req => {
@@ -21,6 +22,51 @@ exports.initAct = async req => {
     queryStr = `SELECT payment_items_code, payment_items_name, payment_items_type FROM tbl_zhongtan_payment_items WHERE state = '1' and payment_items_type in ('1','2','3','4','5') ORDER BY payment_items_type, payment_items_code`
     replacements = []
     returnData.PAYMENT_ITEMS = await model.simpleSelect(queryStr, replacements)
+    returnData.PAYMENT_VESSEL_TYPE = GLBConfig.PAYMENT_VESSEL_TYPE
+
+    let VESSELS = []
+    queryStr = `SELECT invoice_vessel_name AS vessel_name, invoice_vessel_voyage AS voyage, invoice_vessel_eta, invoice_vessel_ata, invoice_vessel_atd FROM tbl_zhongtan_invoice_vessel WHERE state = 1 AND invoice_vessel_name IS NOT NULL AND invoice_vessel_voyage IS NOT NULL AND invoice_vessel_name <> '' AND invoice_vessel_voyage <> '' GROUP BY invoice_vessel_name, invoice_vessel_voyage;`
+    replacements = []
+    let imVs = await model.simpleSelect(queryStr, replacements)
+    if(imVs) {
+        for(let i of imVs) {
+            if(i.invoice_vessel_ata && moment(i.invoice_vessel_ata, 'DD/MM/YYYY').isValid()) {
+                i.vessel_date = i.invoice_vessel_ata
+            } else if(i.invoice_vessel_eta && moment(i.invoice_vessel_eta, 'DD/MM/YYYY').isValid()) {
+                i.vessel_date = i.invoice_vessel_eta
+            } else if(i.invoice_vessel_atd && moment(i.invoice_vessel_atd, 'DD/MM/YYYY').isValid()) {
+                i.vessel_date = i.invoice_vessel_atd
+            }
+            i.vessel_voyage = i.vessel_name +  '/' + i.voyage
+            if(i.vessel_date) {
+                VESSELS.push(i)
+            }
+        }
+    }
+    queryStr = `SELECT export_vessel_name AS vessel_name, export_vessel_voyage AS voyage, export_vessel_etd FROM tbl_zhongtan_export_vessel WHERE state = 1 AND export_vessel_name IS NOT NULL AND export_vessel_voyage IS NOT NULL AND export_vessel_name <> '' AND export_vessel_voyage <> '' AND STR_TO_DATE(export_vessel_etd, '%d/%m/%Y') IS NOT NULL GROUP BY export_vessel_name, export_vessel_voyage;`
+    replacements = []
+    let exVs = await model.simpleSelect(queryStr, replacements)
+    if(exVs) {
+        for(let e of exVs) {
+            let index = VESSELS.findIndex(item => item.vessel_name === e.vessel_name && item.voyage === e.voyage)
+            if(index === -1) {
+                if(e.export_vessel_etd && moment(e.export_vessel_etd, 'DD/MM/YYYY').isValid()) {
+                    e.vessel_date = e.export_vessel_etd
+                }
+                e.vessel_voyage = e.vessel_name +  '/' + e.voyage
+                VESSELS.push(e)
+            }
+        }
+    }
+    let INIT_VESSELS = []
+    for(let iv of VESSELS) {
+        INIT_VESSELS.push({
+            vessel_voyage: iv.vessel_voyage,
+            vessel_date: iv.vessel_date
+        })
+    }
+    let SORT_VESSELS = _.reverse(_.sortBy(INIT_VESSELS, [function(o) {return moment(o.vessel_date, 'DD/MM/YYYY').format('YYYY-MM-DD')}]))
+    returnData.VESSELS = SORT_VESSELS
     return common.success(returnData)
 }
 
@@ -952,6 +998,37 @@ exports.watchPaymentAct = async req => {
     } else {
         return common.error('u8_02')
     }
+}
+
+exports.submitPayableVesselInfoAct = async req => {
+    let doc = common.docValidate(req)
+    if(doc.payable_list) {
+        let submit_data = doc.submit_data
+        if(submit_data.payable_vessel_info || submit_data.payable_vessel_type) {
+            for(let pl of doc.payable_list) {
+                let pa = await tb_payment_advice.findOne({
+                    where: {
+                        payment_advice_id: pl.payment_advice_id,
+                        state: GLBConfig.ENABLE
+                    }
+                })
+                if(pa) {
+                    if(submit_data.payable_vessel_info && submit_data.payable_vessel_info.indexOf('/') >= 0) {
+                        let vessels = submit_data.payable_vessel_info.split('/')
+                        if(vessels && vessels.length === 2) {
+                            pa.payment_advice_vessel = vessels[0]
+                            pa.payment_advice_voyage = vessels[1]
+                        }
+                    }
+                    if(submit_data.payable_vessel_type) {
+                        pa.payment_vessel_type = submit_data.payable_vessel_type
+                    }
+                    await pa.save()
+                }
+            }
+        }
+    }
+    return common.success()
 }
 
 exports.getU8Token = async loginFlg => {
