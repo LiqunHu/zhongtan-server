@@ -326,8 +326,8 @@ exports.submitPayableAct = async req => {
                             continue
                         }
                     } else if(pl.payment_advice_items_type === '5') { 
-                        digest = 'Payable to ' + pl.payment_advice_beneficiary_u8_vendor_alias + '/' + pl.payment_advice_vessel + ' ' + pl.payment_advice_voyage
-                        entry_digest = 'Receivable from ' + pl.payment_advice_beneficiary_u8_vendor_alias + '/' + pl.payment_advice_vessel + ' ' + pl.payment_advice_voyage
+                        digest = 'Payable to ' + pl.payment_advice_beneficiary_u8_vendor_alias
+                        entry_digest = 'Receivable from ' + pl.payment_advice_remarks_u8_vendor_alias + '/' + pl.payment_advice_vessel + ' ' + pl.payment_advice_voyage
 
                         let itemcode = moment(pl.payment_advice_vessel_date, 'YYYY-MM-DD').format('YYYYMMDD') + '-' + await seq.genU8SystemOneSeq()
                         let itemname = pl.payment_advice_vessel + ' ' + pl.payment_advice_voyage
