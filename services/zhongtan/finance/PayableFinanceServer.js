@@ -158,7 +158,7 @@ exports.queryPayableAct = async req => {
         for(let r of rows) {
             let _disabled_message = []
             let item = JSON.parse(JSON.stringify(r))
-            item._disabled = true
+            item._disabled_payable = true
             if(r.payment_advice_amount) {
                 let amount = r.payment_advice_amount.replace(/,/g, '')
                 if(amount) {
@@ -253,7 +253,7 @@ exports.queryPayableAct = async req => {
             if(_disabled_message.length > 0) {
                 item._disabled_message = _disabled_message.join('\r\n')
             } else {
-                item._disabled = false
+                item._disabled_payable = false
             }
             payables.push(item)
         }
