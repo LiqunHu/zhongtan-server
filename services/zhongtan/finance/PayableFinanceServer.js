@@ -401,12 +401,12 @@ exports.submitPayableAct = async req => {
                         oughtpay: oughtpay
                     }
 
-                    logger.error('payable_url', biz_id, payable_url)
-                    logger.error('entry', biz_id, entry)
-                    logger.error('oughtpay', biz_id, oughtpay)
-                    logger.error('payable_param', biz_id, payable_param)
+                    logger.error('payable_url' + biz_id, payable_url)
+                    logger.error('entry' + biz_id, entry)
+                    logger.error('oughtpay' + biz_id, oughtpay)
+                    logger.error('payable_param' + biz_id, payable_param)
                     await axios.post(payable_url, payable_param).then(async response => {
-                        logger.error('payable_response', biz_id, response.data)
+                        logger.error('payable_response' + biz_id, response.data)
                         let data = response.data
                         if(data) {
                             if(data.errcode === '0') {
@@ -446,7 +446,7 @@ exports.submitPayableAct = async req => {
                             errMessage.push(pl.payment_advice_no + 'send error: no return')
                         }
                     }).catch(function (error) {
-                        logger.error('payable_error', biz_id, error)
+                        logger.error('payable_error' + biz_id, error)
                         errMessage.push(pl.payment_advice_no + 'send error: ' + error)
                     })
                 } catch(err) {
@@ -758,12 +758,12 @@ exports.submitPaymentAct = async req => {
                         let payment_param = {
                             pay: pay
                         }
-                        logger.error('payment_url', biz_id,  payment_url)
-                        logger.error('entry', biz_id, entry)
-                        logger.error('pay', biz_id, pay)
-                        logger.error('payment_param', biz_id, payment_param)
+                        logger.error('payment_url' + biz_id,  payment_url)
+                        logger.error('entry' + biz_id, entry)
+                        logger.error('pay' + biz_id, pay)
+                        logger.error('payment_param' + biz_id, payment_param)
                         await axios.post(payment_url, payment_param).then(async response => {
-                            logger.error('payment_response', biz_id, response.data)
+                            logger.error('payment_response' + biz_id, response.data)
                             let data = response.data
                             if(data) {
                                 if(data.errcode === '0') {
@@ -783,7 +783,7 @@ exports.submitPaymentAct = async req => {
                                 errMessage.push(pl.payment_advice_no + 'send error: no return')
                             }
                         }).catch(function (error) {
-                            logger.error('payment_error', biz_id, error)
+                            logger.error('payment_error' + biz_id, error)
                             errMessage.push(pl.payment_advice_no + 'send error: ' + error)
                         })
                     } catch(err) {
@@ -1144,11 +1144,11 @@ exports.addFItem = async (code, name, citemccode, citemcname) => {
     let item_param = {
         fitem: fitem
     }
-    logger.error('item_url', biz_id, item_url)
-    logger.error('item_param', biz_id, item_param)
+    logger.error('item_url' + biz_id, item_url)
+    logger.error('item_param' + biz_id, item_param)
     let u8Item = ''
     await axios.post(item_url, item_param).then(async response => {
-        logger.error('item_response', biz_id, response.data)
+        logger.error('item_response' + biz_id, response.data)
         let data = response.data
         if(data) {
             if(data.errcode === '0') {
@@ -1165,7 +1165,7 @@ exports.addFItem = async (code, name, citemccode, citemcname) => {
             }
         }
     }).catch(function (error) {
-        logger.error('item_error', biz_id, error)
+        logger.error('item_error' + biz_id, error)
     })
     return u8Item
 }
