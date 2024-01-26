@@ -9,6 +9,7 @@ const axios = require('axios')
 const redisClient = require('server-utils').redisClient
 const logger = require('../../../app/logger').createLogger(__filename)
 const seq = require('../../../util/Sequence')
+const opSrv = require('../../common/system/OperationPasswordServer')
 
 const tb_user = model.common_user
 const tb_upload_file = model.zhongtan_uploadfile
@@ -1027,6 +1028,47 @@ exports.submitPayableVesselInfoAct = async req => {
                 }
             }
         }
+    }
+    return common.success()
+}
+
+exports.checkPasswordAct = async req => {
+    let doc = common.docValidate(req)
+    let check = await opSrv.checkPassword(doc.action, doc.checkPassword)
+    if(check) {
+        return common.success()
+    } else {
+        return common.error('auth_24')
+    }
+}
+
+exports.removePayableAct = async req => {
+    let doc = common.docValidate(req)
+    let fp = await tb_finance_payable.findOne({
+        where: {
+            payment_advice_id: doc.payment_advice_id,
+            state: GLBConfig.ENABLE
+        }
+    })
+    if(fp) {
+        fp.state = GLBConfig.DISABLE
+        await fp.save()
+    }
+    return common.success()
+}
+
+exports.removePaymentAct = async req => {
+    let doc = common.docValidate(req)
+    let fp = await tb_finance_payable.findOne({
+        where: {
+            payment_advice_id: doc.payment_advice_id,
+            state: GLBConfig.ENABLE
+        }
+    })
+    if(fp) {
+        fp.finance_payment_order_no = null
+        fp.finance_payment_u8_id = null
+        await fp.save()
     }
     return common.success()
 }

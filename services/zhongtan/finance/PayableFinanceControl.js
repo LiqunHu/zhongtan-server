@@ -25,6 +25,12 @@ module.exports = async (req, res) => {
       ret = await srv.watchPaymentAct(req)
     } else if (method === 'submitPayableVesselInfo') {
       ret = await srv.submitPayableVesselInfoAct(req)
+    } else if (method === 'checkPassword') {
+      ret = await srv.checkPasswordAct(req)
+    } else if (method === 'removePayable') {
+      ret = await srv.removePayableAct(req)
+    } else if (method === 'removePayment') {
+      ret = await srv.removePaymentAct(req)
     }
     
     common.sendData(res, ret)

@@ -8,6 +8,7 @@ const axios = require('axios')
 const redisClient = require('server-utils').redisClient
 const logger = require('../../../app/logger').createLogger(__filename)
 const seq = require('../../../util/Sequence')
+const opSrv = require('../../common/system/OperationPasswordServer')
 
 const tb_bl = model.zhongtan_invoice_masterbl
 const tb_container = model.zhongtan_invoice_containers
@@ -1419,15 +1420,37 @@ exports.submitSplitReceivedAct = async req => {
                             }
                             second:
                             for(let sd of split_detail) {
+                                let vouch_code = null
                                 let rs_add = null
                                 if(split_flg) {
-                                    rs_add = await tb_receive_split.create({
-                                        ought_receive_id: rd.ought_receive_id,
-                                        receive_split_amount: sd.split_amount,
-                                        receive_split_bank: sd.split_bank,
-                                        receive_split_currency: sd.split_currency,
-                                        receive_split_reference_no: sd.split_reference_no
+                                    rs_add = await tb_receive_split.findOne({
+                                        where: {
+                                            ought_receive_id: rd.ought_receive_id,
+                                            receive_split_reference_no: sd.split_reference_no,
+                                            state: GLBConfig.ENABLE
+                                        }
                                     })
+                                    if(rs_add) {
+                                        vouch_code = rs_add.receive_split_received_no
+                                    } else {
+                                        vouch_code = await seq.genU8SystemSeq('RECEIVED')
+                                        rs_add = await tb_receive_split.create({
+                                            ought_receive_id: rd.ought_receive_id,
+                                            receive_split_amount: sd.split_amount,
+                                            receive_split_bank: sd.split_bank,
+                                            receive_split_currency: sd.split_currency,
+                                            receive_split_reference_no: sd.split_reference_no,
+                                            receive_split_received_no: vouch_code
+                                        })
+                                    }
+                                } else {
+                                    if(rd.received_no) {
+                                        vouch_code = rd.received_no
+                                    } else {
+                                        vouch_code = await seq.genU8SystemSeq('RECEIVED')
+                                    }
+                                    rd.received_no = vouch_code
+                                    await rd.save()
                                 }
                                 let accept_vouchtype = '48'
                                 let accept_rate = 1
@@ -1484,7 +1507,6 @@ exports.submitSplitReceivedAct = async req => {
                                     }
 
                                     let biz_id = await seq.genU8SystemSeq('BIZ')
-                                    let vouch_code = await seq.genU8SystemSeq('RECEIVED')
                                     let accept_url = GLBConfig.U8_CONFIG.host + GLBConfig.U8_CONFIG.accept_add_api_url + `?from_account=${GLBConfig.U8_CONFIG.from_account}&to_account=${GLBConfig.U8_CONFIG.to_account}&app_key=${GLBConfig.U8_CONFIG.app_key}&token=${token}&biz_id=${biz_id}&sync=1` 
                                     let accept_entry = []
                                     if(sd.split_fees && sd.split_fees.length > 0) {
@@ -1571,7 +1593,6 @@ exports.submitSplitReceivedAct = async req => {
                                         rs_add.receive_split_natamount = accept_amount
                                         rs_add.receive_split_original_amount = accept_original_amount
                                         rs_add.receive_split_subject_code = accept_item_code
-                                        rs_add.receive_split_received_no = vouch_code
                                     }
                                     logger.error('accept_split', accept)
                                     logger.error('accept_split_entry', accept_entry)
@@ -1588,14 +1609,12 @@ exports.submitSplitReceivedAct = async req => {
                                                     rs_add.receive_split_u8_biz_id = biz_id
                                                     await rs_add.save()
 
-                                                    rd.received_no = vouch_code
                                                     rd.accept_u8_id = data.id
                                                     rd.accept_trade_id = data.tradeid
                                                     rd.accept_u8_biz_id = biz_id
                                                     rd.accept_at = new Date()
                                                     await rd.save()
                                                 } else {
-                                                    rd.received_no = vouch_code
                                                     rd.accept_u8_id = data.id
                                                     rd.accept_trade_id = data.tradeid
                                                     rd.accept_u8_biz_id = biz_id
@@ -1667,7 +1686,7 @@ exports.submitSplitReceivedAct = async req => {
                                             }
                                             
                                             let biz_id = await seq.genU8SystemSeq('BIZ')
-                                            let vouch_code = await seq.genU8SystemSeq('RECEIVED')
+                                            // let vouch_code = await seq.genU8SystemSeq('RECEIVED')
                                             let accept_url = GLBConfig.U8_CONFIG.host + GLBConfig.U8_CONFIG.accept_add_api_url + `?from_account=${GLBConfig.U8_CONFIG.from_account}&to_account=${GLBConfig.U8_CONFIG.to_account}&app_key=${GLBConfig.U8_CONFIG.app_key}&token=${token}&biz_id=${biz_id}&sync=1` 
                                             let accept_entry = []
                                             if(sd.split_fees && sd.split_fees.length > 0) {
@@ -1764,14 +1783,12 @@ exports.submitSplitReceivedAct = async req => {
                                                             rs_add.receive_split_u8_biz_id = biz_id
                                                             await rs_add.save()
     
-                                                            rd.received_no = vouch_code
                                                             rd.accept_u8_id = data.id
                                                             rd.accept_trade_id = data.tradeid
                                                             rd.accept_u8_biz_id = biz_id
                                                             rd.accept_at = new Date()
                                                             await rd.save()
                                                         } else {
-                                                            rd.received_no = vouch_code
                                                             rd.accept_u8_id = data.id
                                                             rd.accept_trade_id = data.tradeid
                                                             rd.accept_u8_biz_id = biz_id
@@ -1841,7 +1858,7 @@ exports.submitSplitReceivedAct = async req => {
                                         }
     
                                         let biz_id = await seq.genU8SystemSeq('BIZ')
-                                        let vouch_code = await seq.genU8SystemSeq('RECEIVED')
+                                        // let vouch_code = await seq.genU8SystemSeq('RECEIVED')
                                         let accept_url = GLBConfig.U8_CONFIG.host + GLBConfig.U8_CONFIG.accept_add_api_url + `?from_account=${GLBConfig.U8_CONFIG.from_account}&to_account=${GLBConfig.U8_CONFIG.to_account}&app_key=${GLBConfig.U8_CONFIG.app_key}&token=${token}&biz_id=${biz_id}&sync=1` 
                                         let accept_entry = []
                                         if(sd.split_fees && sd.split_fees.length > 0) {
@@ -1940,14 +1957,12 @@ exports.submitSplitReceivedAct = async req => {
                                                         rs_add.receive_split_u8_biz_id = biz_id
                                                         await rs_add.save()
     
-                                                        rd.received_no = vouch_code
                                                         rd.accept_u8_id = data.id
                                                         rd.accept_trade_id = data.tradeid
                                                         rd.accept_u8_biz_id = biz_id
                                                         rd.accept_at = new Date()
                                                         await rd.save()
                                                     } else {
-                                                        rd.received_no = vouch_code
                                                         rd.accept_u8_id = data.id
                                                         rd.accept_trade_id = data.tradeid
                                                         rd.accept_u8_biz_id = biz_id
@@ -1992,7 +2007,8 @@ exports.submitSplitReceivedAct = async req => {
                     }
                 }
             } catch(err) {
-                console.error(err)
+                logger.error('send split accept error', err)
+                errMessage.push('send split accept error', err)
             }
         } else {
             errMessage.push('U8 system api token not exist')
@@ -2016,7 +2032,6 @@ exports.syncU8ReceivableAct= async req => {
     if(token) {
         let ought_receive = ''
         let get_url = GLBConfig.U8_CONFIG.host + GLBConfig.U8_CONFIG.oughtreceive_get_api_url + `?from_account=${GLBConfig.U8_CONFIG.from_account}&to_account=${GLBConfig.U8_CONFIG.to_account}&app_key=${GLBConfig.U8_CONFIG.app_key}&token=${token}&id=${rl.receipt_no}`
-        console.log('get_url', get_url)
         await axios.get(get_url).then(async response => {
             logger.error(response.data)
             let data = response.data
@@ -2085,6 +2100,87 @@ exports.syncU8ReceivableAct= async req => {
     }
 }
 
+exports.checkPasswordAct = async req => {
+    let doc = common.docValidate(req)
+    let check = await opSrv.checkPassword(doc.action, doc.checkPassword)
+    if(check) {
+        return common.success()
+    } else {
+        return common.error('auth_24')
+    }
+}
+
+exports.removeReceivableAct = async req => {
+    let doc = common.docValidate(req)
+    let rd = await tb_ought_receive.findOne({
+        where: {
+            ought_receive_id: doc.ought_receive_id,
+            state: GLBConfig.ENABLE
+        }
+    })
+    if(rd) {
+        rd.state = GLBConfig.DISABLE
+        await rd.save()
+        let details = await tb_ought_receive_detail.findAll({
+            where: {
+                ought_receive_id: rd.ought_receive_id,
+                state : GLBConfig.ENABLE
+            }
+        })
+        if(details && details.length > 0) {
+            for(let d of details) {
+                d.state = GLBConfig.DISABLE
+                await d.save()
+            }
+        }
+    }
+    return common.success()
+}
+
+exports.removeReceivedAct = async req => {
+    let doc = common.docValidate(req)
+    let rd = await tb_ought_receive.findOne({
+        where: {
+            ought_receive_id: doc.ought_receive_id,
+            state: GLBConfig.ENABLE
+        }
+    })
+    if(rd) {
+        if(rd.ought_received_split === GLBConfig.ENABLE) {
+            let splits = await tb_receive_split.findAll({
+                where: {
+                    ought_receive_id: rd.ought_receive_id,
+                    state : GLBConfig.ENABLE
+                }
+            })
+            if(splits && splits.length > 0) {
+                for(let s of splits) {
+                    s.state = GLBConfig.DISABLE
+                    await s.save()
+
+                    let split_details = await tb_receive_split_detail.findAll({
+                        where: {
+                            receive_split_id: s.receive_split_id,
+                            ought_receive_id: rd.ought_receive_id,
+                            state : GLBConfig.ENABLE
+                        }
+                    })
+                    if(split_details && split_details.length > 0) {
+                        for(let sd of split_details) {
+                            sd.state = GLBConfig.DISABLE
+                            await sd.save()
+                        }
+                    }
+                }
+            }
+        }
+        rd.ought_received_split = GLBConfig.DISABLE
+        rd.received_no = null
+        rd.accept_u8_id = null
+        await rd.save()
+    }
+    return common.success()
+}
 
 exports.getU8Token = async loginFlg => {
     if(!loginFlg) {
@@ -2115,7 +2211,6 @@ exports.getU8Token = async loginFlg => {
         }
     })
     .catch(error => {
-        console.error(error)
         return common.error('u8_01')
     })
 }

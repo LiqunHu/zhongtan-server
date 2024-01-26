@@ -33,6 +33,12 @@ module.exports = async (req, res) => {
       ret = await srv.submitSplitReceivedAct(req)
     } else if (method === 'syncU8Receivable') {
       ret = await srv.syncU8ReceivableAct(req)
+    } else if (method === 'checkPassword') {
+      ret = await srv.checkPasswordAct(req)
+    } else if (method === 'removeReceivable') {
+      ret = await srv.removeReceivableAct(req)
+    } else if (method === 'removeReceived') {
+      ret = await srv.removeReceivedAct(req)
     } 
     
     common.sendData(res, ret)
