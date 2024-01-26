@@ -199,18 +199,6 @@ exports.queryPayableAct = async req => {
                     _disabled_message.push('Payment remarks vendor not exist in U8 system.')
                 }
             }
-            if(item.payment_advice_items_type === '1' || item.payment_advice_items_type === '2' || item.payment_advice_items_type === '5') {
-                if(r.payment_advice_vessel && r.payment_advice_voyage) {
-                    let v_y = _.find(VESSELS, function(o) { return o.vessel_name === r.payment_advice_vessel && o.voyage === r.payment_advice_voyage })
-                    if(v_y) {
-                        item.payment_advice_vessel_date = v_y.vessel_date
-                    } else {
-                        _disabled_message.push('Payment vessel not exist.')
-                    }
-                } else {
-                    _disabled_message.push('Payment vessel not exist.')
-                }
-            }
             
             item.create_date = moment(r.created_at, 'YYYY-MM-DD hh:mm:ss').format('YYYY-MM-DD hh:mm:ss')
             let payment_file = await tb_upload_file.findOne({
@@ -251,6 +239,20 @@ exports.queryPayableAct = async req => {
             if(carrier_cr_spe) {
                 item.item_code_payable_credit = carrier_cr_spe.payment_item_code
             }
+
+            if(item.payment_advice_items_type === '1' || item.payment_advice_items_type === '2' || item.payment_advice_items_type === '5' || item.item_code_payable_debit === '224103') {
+                if(r.payment_advice_vessel && r.payment_advice_voyage) {
+                    let v_y = _.find(VESSELS, function(o) { return o.vessel_name === r.payment_advice_vessel && o.voyage === r.payment_advice_voyage })
+                    if(v_y) {
+                        item.payment_advice_vessel_date = v_y.vessel_date
+                    } else {
+                        _disabled_message.push('Payment vessel not exist.')
+                    }
+                } else {
+                    _disabled_message.push('Payment vessel not exist.')
+                }
+            }
+
             if(_disabled_message.length > 0) {
                 item._disabled_message = _disabled_message.join('\r\n')
             } else {
@@ -363,7 +365,26 @@ exports.submitPayableAct = async req => {
                         currency_rate: currency_rate,
                         digest: entry_digest
                     }
-                    if(item && pl.payment_advice_items_type === '1') {
+                    if(pl.item_code_payable_debit === '224103') {
+                        if(!item) {
+                            let itemcode = moment(pl.payment_advice_vessel_date, 'YYYY-MM-DD').format('YYYYMMDD') + '-' + await seq.genU8SystemOneSeq()
+                            let itemname = pl.payment_advice_vessel + ' ' + pl.payment_advice_voyage
+                            let citemccode = '01'
+                            let citemcname = 'CONTAINER VESSEL'
+                            if(pl.payment_vessel_type && pl.payment_vessel_type === '2') {
+                                // 散货
+                                citemccode = '02'
+                                citemcname = 'GENERAL VESSEL'
+                            }
+                            item = await this.addFItem(itemcode, itemname, citemccode, citemcname)
+                            if(!item) {
+                                errMessage.push(pl.payment_advice_no + 'send error: item create faied')
+                                continue
+                            }
+                        }
+                        entryitem.item_classcode = '97'
+                        entryitem.item_code = item.citemcode
+                    } else if(item && pl.payment_advice_items_type === '1') {
                         entryitem.item_classcode = '97'
                         entryitem.item_code = item.citemcode
                     }
