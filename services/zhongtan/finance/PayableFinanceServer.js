@@ -296,7 +296,7 @@ exports.submitPayableAct = async req => {
                     if(pl.payment_advice_items_type === '1') {
                         digest = 'MV ' + pl.payment_advice_vessel + ' ' + pl.payment_advice_voyage + ' ' + pl.payment_advice_items
                         entry_digest = 'Receivable from ' + pl.payment_advice_remarks_u8_vendor_alias
-                        let itemcode = moment(pl.payment_advice_vessel_date, 'YYYY-MM-DD').format('YYYYMMDD') + '-' + await seq.genU8SystemOneSeq()
+                        let itemcode = moment(pl.payment_advice_vessel_date, 'DD/MM/YYYY').format('YYYYMMDD') + '-' + await seq.genU8SystemOneSeq()
                         let itemname = pl.payment_advice_vessel + ' ' + pl.payment_advice_voyage
                         let citemccode = '01'
                         let citemcname = 'CONTAINER VESSEL'
@@ -332,7 +332,7 @@ exports.submitPayableAct = async req => {
                         digest = 'Payable to ' + pl.payment_advice_beneficiary_u8_vendor_alias
                         entry_digest = 'Receivable from ' + pl.payment_advice_remarks_u8_vendor_alias + '/' + pl.payment_advice_vessel + ' ' + pl.payment_advice_voyage
 
-                        let itemcode = moment(pl.payment_advice_vessel_date, 'YYYY-MM-DD').format('YYYYMMDD') + '-' + await seq.genU8SystemOneSeq()
+                        let itemcode = moment(pl.payment_advice_vessel_date, 'DD/MM/YYYY').format('YYYYMMDD') + '-' + await seq.genU8SystemOneSeq()
                         let itemname = pl.payment_advice_vessel + ' ' + pl.payment_advice_voyage
                         let citemccode = '01'
                         let citemcname = 'CONTAINER VESSEL'
@@ -367,7 +367,7 @@ exports.submitPayableAct = async req => {
                     }
                     if(pl.item_code_payable_debit === '224103') {
                         if(!item) {
-                            let itemcode = moment(pl.payment_advice_vessel_date, 'YYYY-MM-DD').format('YYYYMMDD') + '-' + await seq.genU8SystemOneSeq()
+                            let itemcode = moment(pl.payment_advice_vessel_date, 'DD/MM/YYYY').format('YYYYMMDD') + '-' + await seq.genU8SystemOneSeq()
                             let itemname = pl.payment_advice_vessel + ' ' + pl.payment_advice_voyage
                             let citemccode = '01'
                             let citemcname = 'CONTAINER VESSEL'
@@ -731,7 +731,7 @@ exports.submitPaymentAct = async req => {
                                 entryitem.projectclass = '97'
                                 entryitem.project = pl.finance_payable_item
                             } else {
-                                let itemcode = moment(pl.payment_advice_vessel_date, 'YYYY-MM-DD').format('YYYYMMDD') + '-' + await seq.genU8SystemOneSeq()
+                                let itemcode = moment(pl.payment_advice_vessel_date, 'DD/MM/YYYY').format('YYYYMMDD') + '-' + await seq.genU8SystemOneSeq()
                                 let itemname = pl.payment_advice_vessel + ' ' + pl.payment_advice_voyage
                                 let citemccode = '01'
                                 let citemcname = 'CONTAINER VESSEL'
