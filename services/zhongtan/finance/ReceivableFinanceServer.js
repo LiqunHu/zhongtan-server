@@ -574,7 +574,7 @@ exports.submitReceivableAct = async req => {
                         currency_name: '美元',
                         currency_rate: 1,
                         amount: header_amount,
-                        operator: rl.operator_name, // 操作员
+                        operator: opUser.u8_alias ? opUser.u8_alias : opUser.user_name, // 操作员
                         digest: 'Receivable from consignee',
                         define14: rl.receipt_from_u8_alias,
                         entry: receive_entry,
@@ -968,7 +968,7 @@ exports.submitReceivedAct = async req => {
                                     currencyrate: header_currencyrate,
                                     amount: header_amount, //
                                     originalamount: header_originalamount,
-                                    operator: opUser.user_name, // 操作员
+                                    operator: opUser.u8_alias ? opUser.u8_alias : opUser.user_name, // 操作员
                                     digest: rl.received_digest,
                                     itemclasscode: '00',
                                     itemcode: addSubFItem.citemcode,
@@ -1087,7 +1087,7 @@ exports.submitReceivedAct = async req => {
                                 currencyrate: header_currencyrate,
                                 amount: header_amount, //
                                 originalamount: header_originalamount,
-                                operator: opUser.user_name, // 操作员
+                                operator: opUser.u8_alias ? opUser.u8_alias : opUser.user_name, // 操作员
                                 digest: rl.received_digest,
                                 entry: accept_entry
                             }
@@ -1561,7 +1561,7 @@ exports.submitSplitReceivedAct = async req => {
                                         currencyrate: accept_rate,
                                         amount: accept_amount, //
                                         originalamount: accept_original_amount,
-                                        operator: opUser.user_name, // 操作员
+                                        operator: opUser.u8_alias ? opUser.u8_alias : opUser.user_name, // 操作员
                                         digest: 'Received from ' + srl.ought_receive_from_u8_alias + '/' + sd.split_reference_no,
                                         entry: accept_entry
                                     }
@@ -1736,7 +1736,7 @@ exports.submitSplitReceivedAct = async req => {
                                                 currencyrate: accept_rate,
                                                 amount:accept_amount, //
                                                 originalamount: accept_original_amount,
-                                                operator: opUser.user_name, // 操作员
+                                                operator: opUser.u8_alias ? opUser.u8_alias : opUser.user_name, // 操作员
                                                 digest: 'Received from ' + srl.ought_receive_from_u8_alias + '/' + sd.split_reference_no,
                                                 entry: accept_entry,
                                                 itemclasscode: '00',
@@ -1912,7 +1912,7 @@ exports.submitSplitReceivedAct = async req => {
                                             currencyrate: accept_rate,
                                             amount: accept_amount, //
                                             originalamount: accept_original_amount,
-                                            operator: opUser.user_name, // 操作员
+                                            operator: opUser.u8_alias ? opUser.u8_alias : opUser.user_name, // 操作员
                                             digest: 'Received from ' + srl.ought_receive_from_u8_alias + '/' + sd.split_reference_no,
                                             entry: accept_entry
                                         }
