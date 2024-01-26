@@ -552,7 +552,7 @@ exports.submitReceivableAct = async req => {
                     }
                     
                     
-                    let rl_amount = await getReceiptAmount(rl.receipt_currency, rl.receipt_amount, rl.receipt_amount_rate)
+                    let rl_amount = await this.getReceiptAmount(rl.receipt_currency, rl.receipt_amount, rl.receipt_amount_rate)
                     let receipt_amount = rl.receipt_amount
                     let natamount = rl_amount.natamount
                     let originalamount = rl_amount.originalamount
@@ -620,7 +620,7 @@ exports.submitReceivableAct = async req => {
                                 })
                                 if(rl_add && rl.receipt_detail && rl.receipt_detail.length > 0) {
                                     for(let rd of rl.receipt_detail) {
-                                        let rd_amount = await getReceiptAmount('USD', rd.fee_amount, rl.receipt_amount_rate)
+                                        let rd_amount = await this.getReceiptAmount('USD', rd.fee_amount, rl.receipt_amount_rate)
                                         await tb_ought_receive_detail.create({
                                             ought_receive_id: rl_add.ought_receive_id,
                                             ought_receive_detail_code: rd.fee_code,
@@ -675,7 +675,7 @@ exports.skip2ReceivedAct = async req => {
     if(doc.receivable_list) {
         for(let rl of doc.receivable_list) {
             try {
-                let rl_amount = await getReceiptAmount(rl.receipt_currency, rl.receipt_amount, rl.receipt_amount_rate)
+                let rl_amount = await this.getReceiptAmount(rl.receipt_currency, rl.receipt_amount, rl.receipt_amount_rate)
                 let receipt_amount = rl.receipt_amount
                 let natamount = rl_amount.natamount
                 let originalamount = rl_amount.originalamount
@@ -707,7 +707,7 @@ exports.skip2ReceivedAct = async req => {
                 })
                 if(rl_add && rl.receipt_detail && rl.receipt_detail.length > 0) {
                     for(let rd of rl.receipt_detail) {
-                        let rd_amount = await getReceiptAmount('USD', rd.fee_amount, rl.receipt_amount_rate)
+                        let rd_amount = await this.getReceiptAmount('USD', rd.fee_amount, rl.receipt_amount_rate)
                         await tb_ought_receive_detail.create({
                             ought_receive_id: rl_add.ought_receive_id,
                             ought_receive_detail_code: rd.fee_code,
@@ -2048,7 +2048,7 @@ exports.syncU8ReceivableAct= async req => {
                     state: GLBConfig.ENABLE
                 }
             })
-            let rl_amount = await getReceiptAmount(rl.receipt_currency, rl.receipt_amount, rl.receipt_amount_rate)
+            let rl_amount = await this.getReceiptAmount(rl.receipt_currency, rl.receipt_amount, rl.receipt_amount_rate)
             let receipt_amount = rl.receipt_amount
             let natamount = rl_amount.natamount
             let originalamount = rl_amount.originalamount
@@ -2079,7 +2079,7 @@ exports.syncU8ReceivableAct= async req => {
             })
             if(rl_add && rl.receipt_detail && rl.receipt_detail.length > 0) {
                 for(let rd of rl.receipt_detail) {
-                    let rd_amount = await getReceiptAmount('USD', rd.fee_amount, rl.receipt_amount_rate)
+                    let rd_amount = await this.getReceiptAmount('USD', rd.fee_amount, rl.receipt_amount_rate)
                     await tb_ought_receive_detail.create({
                         ought_receive_id: rl_add.ought_receive_id,
                         ought_receive_detail_code: rd.fee_code,
@@ -2525,7 +2525,7 @@ checkCan2SendReceivable = async item =>  {
     return result
 }
 
-getReceiptAmount = async (currency, amount, rate) =>  {
+exports.getReceiptAmount = async (currency, amount, rate) =>  {
     if(currency === 'USD') {
         let tzs_amount = new Decimal(amount).times(new Decimal(rate))
         return {
