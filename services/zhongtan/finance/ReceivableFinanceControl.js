@@ -39,6 +39,8 @@ module.exports = async (req, res) => {
       ret = await srv.removeReceivableAct(req)
     } else if (method === 'removeReceived') {
       ret = await srv.removeReceivedAct(req)
+    } else if (method === 'adminSend2Finance') {
+      ret = await srv.adminSend2FinanceAct(req)
     } 
     
     common.sendData(res, ret)
