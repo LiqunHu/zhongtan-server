@@ -1476,36 +1476,18 @@ exports.submitSplitReceivedAct = async req => {
                                             continue second
                                         }
                                     }
+                                    
                                     let u8_customer_code = GLBConfig.U8_CONFIG.u8_cosco_code
                                     if(rd.ought_receive_carrier === 'OOCL') {
                                         u8_customer_code = GLBConfig.U8_CONFIG.u8_oocl_code
                                     }
                                     let accept_item_code = sd.custom_header_subject_code
-                                    let entry_item_code = ''
-                                    let match_codes = await tb_match_code.findAll({
-                                        where: {
-                                            match_code_bill_type: 'accept',
-                                            match_code_fee_currency: sd.split_currency,
-                                            match_code_fee_bank: sd.split_bank,
-                                            state: GLBConfig.ENABLE
-                                        }
-                                    })
-                                    if(match_codes && match_codes.length === 1) {
-                                        let sc = await tb_subject_code.findOne({
-                                            where: {
-                                                subject_code: accept_item_code,
-                                                state: GLBConfig.ENABLE
-                                            }
-                                        })
-                                        if(sc) {
-                                            entry_item_code = sc.parent_code
-                                        }
-                                    }
+                                    let entry_item_code = '113102'
                                     if(!accept_item_code || !entry_item_code) {
                                         errMessage.push(srl.ought_receive_no + ' item code not exist')
                                         continue second
                                     }
-
+                                    
                                     let biz_id = await seq.genU8SystemSeq('BIZ')
                                     let accept_url = GLBConfig.U8_CONFIG.host + GLBConfig.U8_CONFIG.accept_add_api_url + `?from_account=${GLBConfig.U8_CONFIG.from_account}&to_account=${GLBConfig.U8_CONFIG.to_account}&app_key=${GLBConfig.U8_CONFIG.app_key}&token=${token}&biz_id=${biz_id}&sync=1` 
                                     let accept_entry = []
@@ -1555,9 +1537,11 @@ exports.submitSplitReceivedAct = async req => {
                                             cmemo: 'Received from consignee'//d.received_fee_digest,
                                         })
                                     }
+                                    
                                     if(accept_entry.length === 0) {
                                         continue second
                                     }
+                                    
                                     let balancecode = '1'
                                     if(srl.ought_receive_balance_code === 'CHEQUE') {
                                         balancecode = '2'
@@ -2242,7 +2226,6 @@ exports.addU8FItem = async (citemcode, citemname) => {
             logger.error('addFItem', data)
             if(data.errcode === '0') {
                 u8Item = fitem
-
             }
         }
     }).catch(function (error) {
