@@ -570,6 +570,9 @@ exports.queryPaymentAct= async req => {
             item._disabled = true
             if(r.payment_advice_amount) {
                 let amount = r.payment_advice_amount.replace(/,/g, '')
+                if(amount) {
+                    amount = amount.trim()
+                }
                 item.payment_advice_amount = new Decimal(amount).toNumber()
             }
             if(opUser && opUser.u8_code) {
@@ -938,6 +941,9 @@ exports.queryCompleteAct = async req => {
             let item = JSON.parse(JSON.stringify(r))
             if(r.payment_advice_amount) {
                 let amount = r.payment_advice_amount.replace(/,/g, '')
+                if(amount) {
+                    amount = amount.trim()
+                }
                 item.payment_advice_amount = new Decimal(amount).toNumber()
             }
             let i_i = _.find(PAYMENT_ITEMS, function(o) { return o.payment_items_code === r.payment_advice_items})
