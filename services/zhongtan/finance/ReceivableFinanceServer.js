@@ -55,6 +55,11 @@ exports.initAct = async req => {
     }
     returnData['BANK_INFOS'] = BANK_INFOS
     returnData['RECEIPT_CARRIER'] = GLBConfig.RECEIPT_TYPE_INFO
+
+    let queryStr = `SELECT ought_receive_operator_id AS operator_id, ought_receive_operator_name  AS operator_name FROM tbl_zhongtan_finance_ought_receive WHERE state = 1 GROUP BY ought_receive_operator_id`
+    let replacements = []
+    returnData.OPERATOR = await model.simpleSelect(queryStr, replacements)
+
     return common.success(returnData)
 }
 
@@ -594,6 +599,7 @@ exports.submitReceivableAct = async req => {
                                 let rl_add = await tb_ought_receive.create({
                                     ought_receive_receipt_file_id: rl.receipt_id,
                                     ought_receive_no: rl.receipt_no,
+                                    ought_receive_receipt_time: rl.receipt_date,
                                     ought_receive_type: rl.receipt_type,
                                     ought_receive_amount: receipt_amount,
                                     ought_receive_natamount: natamount,
@@ -683,6 +689,7 @@ exports.skip2ReceivedAct = async req => {
                 let rl_add = await tb_ought_receive.create({
                     ought_receive_receipt_file_id: rl.receipt_id,
                     ought_receive_no: rl.receipt_no,
+                    ought_receive_receipt_time: rl.receipt_date,
                     ought_receive_type: rl.receipt_type,
                     ought_receive_amount: receipt_amount,
                     ought_receive_natamount: natamount,
@@ -740,6 +747,13 @@ exports.queryReceivedAct= async req => {
     let queryStr = `SELECT u.* from tbl_zhongtan_finance_ought_receive u WHERE u.state = 1 AND u.ought_receive_u8_id IS NOT NULL AND accept_u8_id IS NULL `
     let replacements = []
     if(doc.search_data) {
+        if(doc.search_data.receipt_date && doc.search_data.receipt_date.length > 1 && doc.search_data.receipt_date[0]  && doc.search_data.receipt_date[1]) {
+            let start_date = doc.search_data.receipt_date[0]
+            let end_date = doc.search_data.receipt_date[1]
+            queryStr += ` AND ought_receive_receipt_time >= ? and ought_receive_receipt_time < ? `
+            replacements.push(start_date)
+            replacements.push(moment(end_date, 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
+        }
         if(doc.search_data.receivable_date && doc.search_data.receivable_date.length > 1 && doc.search_data.receivable_date[0]  && doc.search_data.receivable_date[1]) {
             let start_date = doc.search_data.receivable_date[0]
             let end_date = doc.search_data.receivable_date[1]
@@ -750,6 +764,10 @@ exports.queryReceivedAct= async req => {
         if(doc.search_data.receipt_carrier) {
             queryStr += ` AND ought_receive_no like ? `
             replacements.push(doc.search_data.receipt_carrier + '%')
+        }
+        if(doc.search_data.receivable_operator) {
+            queryStr += ` AND ought_receive_operator_id = ? `
+            replacements.push(doc.search_data.receivable_operator)
         }
     }
 
@@ -1195,6 +1213,13 @@ exports.queryCompleteAct = async req => {
     let queryStr = `SELECT u.* from tbl_zhongtan_finance_ought_receive u WHERE u.state = 1 AND u.ought_receive_u8_id IS NOT NULL AND accept_u8_id IS NOT NULL `
     let replacements = []
     if(doc.search_data) {
+        if(doc.search_data.receipt_date && doc.search_data.receipt_date.length > 1 && doc.search_data.receipt_date[0]  && doc.search_data.receipt_date[1]) {
+            let start_date = doc.search_data.receipt_date[0]
+            let end_date = doc.search_data.receipt_date[1]
+            queryStr += ` AND ought_receive_receipt_time >= ? and ought_receive_receipt_time < ? `
+            replacements.push(start_date)
+            replacements.push(moment(end_date, 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
+        }
         if(doc.search_data.receivable_date && doc.search_data.receivable_date.length > 1 && doc.search_data.receivable_date[0]  && doc.search_data.receivable_date[1]) {
             let start_date = doc.search_data.receivable_date[0]
             let end_date = doc.search_data.receivable_date[1]
@@ -1213,6 +1238,10 @@ exports.queryCompleteAct = async req => {
         if(doc.search_data.receipt_carrier) {
             queryStr += ` AND ought_receive_no like ? `
             replacements.push(doc.search_data.receipt_carrier + '%')
+        }
+        if(doc.search_data.receivable_operator) {
+            queryStr += ` AND ought_receive_operator_id = ? `
+            replacements.push(doc.search_data.receivable_operator)
         }
     }
 
@@ -2039,6 +2068,7 @@ exports.syncU8ReceivableAct= async req => {
             let rl_add = await tb_ought_receive.create({
                 ought_receive_receipt_file_id: rl.receipt_id,
                 ought_receive_no: rl.receipt_no,
+                ought_receive_receipt_time: rl.receipt_date,
                 ought_receive_type: rl.receipt_type,
                 ought_receive_amount: receipt_amount,
                 ought_receive_natamount: natamount,

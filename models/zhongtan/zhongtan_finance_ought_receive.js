@@ -178,4 +178,9 @@ module.exports = db.defineModel('tbl_zhongtan_finance_ought_receive', {
     allowNull: false,
     defaultValue: '0'
   },
+  ought_receive_receipt_time: {
+    // 收据时间
+    type: db.DATE,
+    allowNull: true
+  },
 })
