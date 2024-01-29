@@ -85,6 +85,10 @@ exports.queryReceivableAct = async req => {
             queryStr += ` AND uploadfile_receipt_no like ? `
             replacements.push(doc.search_data.receipt_carrier + '%')
         }
+        if(doc.search_data.receipt_no) {
+            queryStr += ` AND uploadfile_receipt_no = ? `
+            replacements.push(doc.search_data.receipt_no)
+        }
     }
 
     queryStr += ' ORDER BY uploadfile_id DESC'
@@ -769,6 +773,10 @@ exports.queryReceivedAct= async req => {
             queryStr += ` AND ought_receive_operator_id = ? `
             replacements.push(doc.search_data.receivable_operator)
         }
+        if(doc.search_data.receipt_no) {
+            queryStr += ` AND ought_receive_no = ? `
+            replacements.push(doc.search_data.receipt_no)
+        }
     }
 
     queryStr += ' ORDER BY ought_receive_id DESC'
@@ -1242,6 +1250,10 @@ exports.queryCompleteAct = async req => {
         if(doc.search_data.receivable_operator) {
             queryStr += ` AND ought_receive_operator_id = ? `
             replacements.push(doc.search_data.receivable_operator)
+        }
+        if(doc.search_data.receipt_no) {
+            queryStr += ` AND ought_receive_no = ? `
+            replacements.push(doc.search_data.receipt_no)
         }
     }
 
