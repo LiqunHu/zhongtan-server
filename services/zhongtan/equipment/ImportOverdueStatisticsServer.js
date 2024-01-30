@@ -89,7 +89,7 @@ exports.searchAct = async req => {
       if(doc.search_data.is_paid === '1') {
         queryStr += ` and (a.invoice_containers_empty_return_invoice_date is not null and a.invoice_containers_empty_return_receipt_date is not null ) `
       } else {
-        queryStr += ` and (a.invoice_containers_empty_return_invoice_date is null or a.invoice_containers_empty_return_receipt_date is null )  `
+        queryStr += ` and a.invoice_containers_type != 'S' and (a.invoice_containers_empty_return_invoice_date is null or a.invoice_containers_empty_return_receipt_date is null or (IFNULL(a.invoice_containers_empty_return_overdue_amount,0) > (IFNULL(a.invoice_containers_empty_return_overdue_amount_receipt,0) + IFNULL(a.invoice_containers_empty_return_overdue_deduction,0))))  `
       }
     }
 
@@ -220,7 +220,7 @@ exports.exportDataAct = async(req, res) => {
       if(doc.search_data.is_paid === '1') {
         queryStr += ` and (a.invoice_containers_empty_return_invoice_date is not null and a.invoice_containers_empty_return_receipt_date is not null ) `
       } else {
-        queryStr += ` and (a.invoice_containers_empty_return_invoice_date is null or a.invoice_containers_empty_return_receipt_date is null )  `
+        queryStr += ` and a.invoice_containers_type != 'S' and (a.invoice_containers_empty_return_invoice_date is null or a.invoice_containers_empty_return_receipt_date is null or (IFNULL(a.invoice_containers_empty_return_overdue_amount,0) > (IFNULL(a.invoice_containers_empty_return_overdue_amount_receipt,0) + IFNULL(a.invoice_containers_empty_return_overdue_deduction,0))))  `
       }
     }
     if (doc.search_data.is_overdue) {
