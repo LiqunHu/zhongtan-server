@@ -14,8 +14,9 @@ let sequelize = new Sequelize(config.mysql.normal.database, config.mysql.normal.
   dialect: 'mysql',
   timezone: '+03:00', //东三时区
   pool: {
-    max: 5, // max
+    max: 20, // max
     min: 0, // min
+    acquire: 30000,
     idle: 10000 //10 seconds
   },
   retry: {
@@ -201,8 +202,9 @@ if (!_.isEmpty(config.mysql.readonly)) {
     dialect: 'mysql',
     timezone: '+08:00', //东八时区
     pool: {
-      max: 5, // max
+      max: 20, // max
       min: 0, // min
+      acquire: 30000,
       idle: 10000 //10 seconds
     },
     retry: {
