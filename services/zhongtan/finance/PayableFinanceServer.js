@@ -295,7 +295,7 @@ exports.submitPayableAct = async req => {
                     let entry_cust_vendor_code = pl.payment_advice_beneficiary_u8_vendor_code
                     if(pl.payment_advice_items_type === '1') {
                         digest = 'MV ' + pl.payment_advice_vessel + ' ' + pl.payment_advice_voyage + ' ' + pl.payment_advice_items
-                        entry_digest = 'Receivable from ' + pl.payment_advice_remarks_u8_vendor_alias
+                        entry_digest = 'Receivable from ' + pl.payment_advice_remarks_u8_vendor_alias + '/' + pl.payment_advice_vessel + ' ' + pl.payment_advice_voyage
                         let itemcode = moment(pl.payment_advice_vessel_date, 'DD/MM/YYYY').format('YYYYMMDD') + '-' + await seq.genU8SystemOneSeq()
                         let itemname = pl.payment_advice_vessel + ' ' + pl.payment_advice_voyage
                         let citemccode = '01'
