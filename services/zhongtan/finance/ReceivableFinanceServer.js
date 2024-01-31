@@ -61,7 +61,7 @@ exports.initAct = async req => {
     returnData.OPERATOR = await model.simpleSelect(queryStr, replacements)
 
     return common.success(returnData)
-}
+}   
 
 exports.queryReceivableAct = async req => {
     let doc = common.docValidate(req), user = req.user
@@ -73,7 +73,7 @@ exports.queryReceivableAct = async req => {
         if(doc.search_data.receipt_date && doc.search_data.receipt_date.length > 1 && doc.search_data.receipt_date[0]  && doc.search_data.receipt_date[1]) {
             let start_date = doc.search_data.receipt_date[0]
             let end_date = doc.search_data.receipt_date[1]
-            queryStr += ` AND uploadfil_release_date >= ? and uploadfil_release_date < ? `
+            queryStr += ` AND u.created_at >= ? and u.created_at < ? `
             replacements.push(start_date)
             replacements.push(moment(end_date, 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
         }
