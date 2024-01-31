@@ -528,6 +528,7 @@ module.exports = {
     { id: '4', text: 'LOGISTIC' }, 
     { id: '5', text: 'AGENT' }, 
     { id: '6', text: 'ADMINSTRATION' }, 
+    { id: '9', text: 'OTHER' }, 
   ],
   PAYMENT_VESSEL_TYPE: [
     { id: '1', text: 'CONTAINER' },

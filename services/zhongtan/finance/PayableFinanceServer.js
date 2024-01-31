@@ -346,6 +346,9 @@ exports.submitPayableAct = async req => {
                             errMessage.push(pl.payment_advice_no + 'send error: item create faied')
                             continue
                         }
+                    } else if(pl.payment_advice_items_type === '9') { 
+                        digest = 'Payable to ' + pl.payment_advice_beneficiary_u8_vendor_alias
+                        entry_digest = 'Receivable from ' + pl.payment_advice_remarks_u8_vendor_alias + '/' + pl.payment_advice_vessel + ' ' + pl.payment_advice_voyage
                     }
                     
                     if(pl.payment_advice_currency === 'TZS') {
@@ -415,7 +418,7 @@ exports.submitPayableAct = async req => {
                         oughtpay.item_classcode = '97'
                         oughtpay.item_code = item.citemcode
                     }
-                    if(pl.item_code_payable_debit === '113106' || pl.item_code_payable_debit === '113107') {
+                    if(pl.item_code_payable_debit === '113106' || pl.item_code_payable_debit === '113108' || pl.item_code_payable_debit === '113107' || pl.item_code_payable_debit === '224103') {
                         oughtpay.define11 = pl.payment_advice_remarks_u8_vendor_alias
                     }
                     let payable_param = {
@@ -703,6 +706,9 @@ exports.submitPaymentAct = async req => {
                             digest = 'Paid to ' + pl.payment_advice_beneficiary_u8_vendor_alias + ' for logistic'
                             entry_digest = 'Paid to ' + pl.payment_advice_beneficiary_u8_vendor_alias + '-' + amount
                         } else if(pl.payment_advice_items_type === '5') { 
+                            digest = 'Paid to ' + pl.payment_advice_beneficiary_u8_vendor_alias + ' for Stv.'
+                            entry_digest = 'Paid to ' + pl.payment_advice_beneficiary_u8_vendor_alias + '/' + pl.payment_advice_vessel + ' ' + pl.payment_advice_voyage
+                        } else if(pl.payment_advice_items_type === '9') { 
                             digest = 'Paid to ' + pl.payment_advice_beneficiary_u8_vendor_alias + ' for Stv.'
                             entry_digest = 'Paid to ' + pl.payment_advice_beneficiary_u8_vendor_alias + '/' + pl.payment_advice_vessel + ' ' + pl.payment_advice_voyage
                         }
