@@ -49,7 +49,7 @@ module.exports = db.defineModel('tbl_zhongtan_finance_ought_receive', {
   },
   ought_receive_reference_no: {
     // 银行号
-    type: db.STRING(50),
+    type: db.STRING(200),
     allowNull: true
   },
   ought_receive_object_id: {
