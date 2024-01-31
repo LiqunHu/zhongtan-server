@@ -20,7 +20,7 @@ const tb_payment_advice = model.zhongtan_payment_advice
 
 exports.initAct = async req => {
     let returnData = {}
-    queryStr = `SELECT payment_items_code, payment_items_name, payment_items_type FROM tbl_zhongtan_payment_items WHERE state = '1' and payment_items_type in ('1','2','3','4','5') ORDER BY payment_items_type, payment_items_code`
+    queryStr = `SELECT payment_items_code, payment_items_name, payment_items_type FROM tbl_zhongtan_payment_items WHERE state = '1' and payment_items_type in ('1','2','3','4','5','9') ORDER BY payment_items_type, payment_items_code`
     replacements = []
     returnData.PAYMENT_ITEMS = await model.simpleSelect(queryStr, replacements)
     returnData.PAYMENT_VESSEL_TYPE = GLBConfig.PAYMENT_VESSEL_TYPE
@@ -80,7 +80,7 @@ exports.queryPayableAct = async req => {
         }
     })
     let returnData = {}
-    let queryStr = `SELECT pa.* from tbl_zhongtan_payment_advice pa left join tbl_zhongtan_payment_items pi on pa.payment_advice_items = pi.payment_items_code WHERE pa.state = 1 AND pi.payment_items_type in ('1','2','3','4','5') AND payment_advice_status = '2' AND payment_advice_id NOT IN (SELECT payment_advice_id FROM tbl_zhongtan_finance_payable WHERE state = '1')`
+    let queryStr = `SELECT pa.* from tbl_zhongtan_payment_advice pa left join tbl_zhongtan_payment_items pi on pa.payment_advice_items = pi.payment_items_code WHERE pa.state = 1 AND pi.payment_items_type in ('1','2','3','4','5','9') AND payment_advice_status = '2' AND payment_advice_id NOT IN (SELECT payment_advice_id FROM tbl_zhongtan_finance_payable WHERE state = '1')`
     let replacements = []
     if(doc.search_data) {
         if(doc.search_data.receipt_date && doc.search_data.receipt_date.length > 1 && doc.search_data.receipt_date[0]  && doc.search_data.receipt_date[1]) {
