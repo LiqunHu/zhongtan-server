@@ -1312,9 +1312,11 @@ exports.queryCompleteAct = async req => {
                         state : GLBConfig.ENABLE
                     }
                 })
+                let split_u8_id = []
                 if(splits && splits.length > 0) {
                     let split_detail = []
                     for(let s of splits) {
+                        split_u8_id.push(s.receive_split_u8_id)
                         let split_detail_fee = []
                         let sds = await tb_receive_split_detail.findAll({
                             where: {
@@ -1355,6 +1357,9 @@ exports.queryCompleteAct = async req => {
                     }
                     r.split_detail = split_detail
                 }
+                r.ought_receive_cocument_no = split_u8_id.join(',')
+            } else {
+                r.ought_receive_cocument_no = r.accept_u8_id
             }
         }
     }

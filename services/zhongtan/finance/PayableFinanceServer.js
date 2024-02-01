@@ -994,6 +994,7 @@ exports.queryCompleteAct = async req => {
                 item.payment_advice_file_id = payment_file.uploadfile_id
                 item.payment_advice_file_url = payment_file.uploadfile_url
             }
+            item.finance_payment_documnet_no = r.finance_payment_u8_id
             payables.push(item)
         }
     }
