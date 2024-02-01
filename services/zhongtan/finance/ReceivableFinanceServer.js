@@ -1542,30 +1542,32 @@ exports.submitSplitReceivedAct = async req => {
                                         let merge_entry_amount = 0
                                         let merge_entry_original_amount = 0
                                         for(let d of sd.split_fees) {
-                                            let entry_rate = 1
-                                            let entry_amount = new Decimal(d.split_detail_amount).toNumber()
-                                            if(entry_amount !== 0) {
-                                                let entry_original_amount = new Decimal(d.split_detail_amount).toNumber()
-                                                if(sd.split_currency === 'TZS') {
-                                                    entry_rate = new Decimal(srl.ought_receive_currency_rate).toNumber()
-                                                    let entry_format_amount = await this.getReceiptAmount(sd.split_currency, d.split_detail_amount, srl.ought_receive_currency_rate)
-                                                    entry_amount = new Decimal(entry_format_amount.natamount).toNumber()
-                                                    entry_original_amount = new Decimal(entry_format_amount.originalamount).toNumber()
-                                                }
-                                                merge_rate = entry_rate
-                                                merge_entry_amount = new Decimal(merge_entry_amount).plus(new Decimal(entry_amount)).toNumber()
-                                                merge_entry_original_amount = new Decimal(merge_entry_original_amount).plus(new Decimal(entry_original_amount)).toNumber()
-                                                if(split_flg) {
-                                                    await tb_receive_split_detail.create({
-                                                        receive_split_id: rs_add.receive_split_id,
-                                                        ought_receive_id: rs_add.ought_receive_id,
-                                                        split_detail_amount: d.split_detail_amount,
-                                                        split_detail_natamount: entry_amount,
-                                                        split_detail_original_amount: entry_original_amount,
-                                                        split_detail_code: entry_item_code,
-                                                        split_detail_fee_code: d.ought_receive_detail_fee_code,
-                                                        split_detail_fee_name: d.ought_receive_detail_fee_name
-                                                    })
+                                            if(d.split_detail_amount) {
+                                                let entry_rate = 1
+                                                let entry_amount = new Decimal(d.split_detail_amount).toNumber()
+                                                if(entry_amount !== 0) {
+                                                    let entry_original_amount = new Decimal(d.split_detail_amount).toNumber()
+                                                    if(sd.split_currency === 'TZS') {
+                                                        entry_rate = new Decimal(srl.ought_receive_currency_rate).toNumber()
+                                                        let entry_format_amount = await this.getReceiptAmount(sd.split_currency, d.split_detail_amount, srl.ought_receive_currency_rate)
+                                                        entry_amount = new Decimal(entry_format_amount.natamount).toNumber()
+                                                        entry_original_amount = new Decimal(entry_format_amount.originalamount).toNumber()
+                                                    }
+                                                    merge_rate = entry_rate
+                                                    merge_entry_amount = new Decimal(merge_entry_amount).plus(new Decimal(entry_amount)).toNumber()
+                                                    merge_entry_original_amount = new Decimal(merge_entry_original_amount).plus(new Decimal(entry_original_amount)).toNumber()
+                                                    if(split_flg) {
+                                                        await tb_receive_split_detail.create({
+                                                            receive_split_id: rs_add.receive_split_id,
+                                                            ought_receive_id: rs_add.ought_receive_id,
+                                                            split_detail_amount: d.split_detail_amount,
+                                                            split_detail_natamount: entry_amount,
+                                                            split_detail_original_amount: entry_original_amount,
+                                                            split_detail_code: entry_item_code,
+                                                            split_detail_fee_code: d.ought_receive_detail_fee_code,
+                                                            split_detail_fee_name: d.ought_receive_detail_fee_name
+                                                        })
+                                                    }
                                                 }
                                             }
                                         }
@@ -1724,30 +1726,32 @@ exports.submitSplitReceivedAct = async req => {
                                                 let merge_entry_amount = 0
                                                 let merge_entry_original_amount = 0
                                                 for(let d of sd.split_fees) {
-                                                    let entry_rate = 1
-                                                    let entry_amount = new Decimal(d.split_detail_amount).toNumber()
-                                                    if(entry_amount !== 0) {
-                                                        let entry_original_amount = new Decimal(d.split_detail_amount).toNumber()
-                                                        if(sd.split_currency === 'TZS') {
-                                                            entry_rate = new Decimal(srl.ought_receive_currency_rate).toNumber()
-                                                            let entry_format_amount = await this.getReceiptAmount(sd.split_currency, d.split_detail_amount, srl.ought_receive_currency_rate)
-                                                            entry_amount = new Decimal(entry_format_amount.natamount).toNumber()
-                                                            entry_original_amount = new Decimal(entry_format_amount.originalamount).toNumber()
-                                                        }
-                                                        merge_rate = entry_rate
-                                                        merge_entry_amount = new Decimal(merge_entry_amount).plus(new Decimal(entry_amount)).toNumber()
-                                                        merge_entry_original_amount = new Decimal(merge_entry_original_amount).plus(new Decimal(entry_original_amount)).toNumber()
-                                                        if(split_flg) {
-                                                            await tb_receive_split_detail.create({
-                                                                receive_split_id: rs_add.receive_split_id,
-                                                                ought_receive_id: rs_add.ought_receive_id,
-                                                                split_detail_amount: d.split_detail_amount,
-                                                                split_detail_natamount: entry_amount,
-                                                                split_detail_original_amount: entry_original_amount,
-                                                                split_detail_code: entry_item_code,
-                                                                split_detail_fee_code: d.ought_receive_detail_fee_code,
-                                                                split_detail_fee_name: d.ought_receive_detail_fee_name
-                                                            })
+                                                    if(d.split_detail_amount) {
+                                                        let entry_rate = 1
+                                                        let entry_amount = new Decimal(d.split_detail_amount).toNumber()
+                                                        if(entry_amount !== 0) {
+                                                            let entry_original_amount = new Decimal(d.split_detail_amount).toNumber()
+                                                            if(sd.split_currency === 'TZS') {
+                                                                entry_rate = new Decimal(srl.ought_receive_currency_rate).toNumber()
+                                                                let entry_format_amount = await this.getReceiptAmount(sd.split_currency, d.split_detail_amount, srl.ought_receive_currency_rate)
+                                                                entry_amount = new Decimal(entry_format_amount.natamount).toNumber()
+                                                                entry_original_amount = new Decimal(entry_format_amount.originalamount).toNumber()
+                                                            }
+                                                            merge_rate = entry_rate
+                                                            merge_entry_amount = new Decimal(merge_entry_amount).plus(new Decimal(entry_amount)).toNumber()
+                                                            merge_entry_original_amount = new Decimal(merge_entry_original_amount).plus(new Decimal(entry_original_amount)).toNumber()
+                                                            if(split_flg) {
+                                                                await tb_receive_split_detail.create({
+                                                                    receive_split_id: rs_add.receive_split_id,
+                                                                    ought_receive_id: rs_add.ought_receive_id,
+                                                                    split_detail_amount: d.split_detail_amount,
+                                                                    split_detail_natamount: entry_amount,
+                                                                    split_detail_original_amount: entry_original_amount,
+                                                                    split_detail_code: entry_item_code,
+                                                                    split_detail_fee_code: d.ought_receive_detail_fee_code,
+                                                                    split_detail_fee_name: d.ought_receive_detail_fee_name
+                                                                })
+                                                            }
                                                         }
                                                     }
                                                 }
@@ -1896,30 +1900,32 @@ exports.submitSplitReceivedAct = async req => {
                                             let merge_entry_amount = 0
                                             let merge_entry_original_amount = 0
                                             for(let d of sd.split_fees) {
-                                                let entry_rate = 1
-                                                let entry_amount = new Decimal(d.split_detail_amount).toNumber()
-                                                if(entry_amount !== 0) {
-                                                    let entry_original_amount = new Decimal(d.split_detail_amount).toNumber()
-                                                    if(sd.split_currency === 'TZS') {
-                                                        entry_rate = new Decimal(srl.ought_receive_currency_rate).toNumber()
-                                                        let entry_format_amount = await this.getReceiptAmount(sd.split_currency, d.split_detail_amount, srl.ought_receive_currency_rate)
-                                                        entry_amount = new Decimal(entry_format_amount.natamount).toNumber()
-                                                        entry_original_amount = new Decimal(entry_format_amount.originalamount).toNumber()
-                                                    }
-                                                    merge_rate = entry_rate
-                                                    merge_entry_amount = new Decimal(merge_entry_amount).plus(new Decimal(entry_amount)).toNumber()
-                                                    merge_entry_original_amount = new Decimal(merge_entry_original_amount).plus(new Decimal(entry_original_amount)).toNumber()
-                                                    if(split_flg) {
-                                                        await tb_receive_split_detail.create({
-                                                            receive_split_id: rs_add.receive_split_id,
-                                                            ought_receive_id: rs_add.ought_receive_id,
-                                                            split_detail_amount: d.split_detail_amount,
-                                                            split_detail_natamount: entry_amount,
-                                                            split_detail_original_amount: entry_original_amount,
-                                                            split_detail_code: entry_item_code,
-                                                            split_detail_fee_code: d.ought_receive_detail_fee_code,
-                                                            split_detail_fee_name: d.ought_receive_detail_fee_name
-                                                        })
+                                                if(d.split_detail_amount) {
+                                                    let entry_rate = 1
+                                                    let entry_amount = new Decimal(d.split_detail_amount).toNumber()
+                                                    if(entry_amount !== 0) {
+                                                        let entry_original_amount = new Decimal(d.split_detail_amount).toNumber()
+                                                        if(sd.split_currency === 'TZS') {
+                                                            entry_rate = new Decimal(srl.ought_receive_currency_rate).toNumber()
+                                                            let entry_format_amount = await this.getReceiptAmount(sd.split_currency, d.split_detail_amount, srl.ought_receive_currency_rate)
+                                                            entry_amount = new Decimal(entry_format_amount.natamount).toNumber()
+                                                            entry_original_amount = new Decimal(entry_format_amount.originalamount).toNumber()
+                                                        }
+                                                        merge_rate = entry_rate
+                                                        merge_entry_amount = new Decimal(merge_entry_amount).plus(new Decimal(entry_amount)).toNumber()
+                                                        merge_entry_original_amount = new Decimal(merge_entry_original_amount).plus(new Decimal(entry_original_amount)).toNumber()
+                                                        if(split_flg) {
+                                                            await tb_receive_split_detail.create({
+                                                                receive_split_id: rs_add.receive_split_id,
+                                                                ought_receive_id: rs_add.ought_receive_id,
+                                                                split_detail_amount: d.split_detail_amount,
+                                                                split_detail_natamount: entry_amount,
+                                                                split_detail_original_amount: entry_original_amount,
+                                                                split_detail_code: entry_item_code,
+                                                                split_detail_fee_code: d.ought_receive_detail_fee_code,
+                                                                split_detail_fee_name: d.ought_receive_detail_fee_name
+                                                            })
+                                                        }
                                                     }
                                                 }
                                             }
