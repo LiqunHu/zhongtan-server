@@ -20,6 +20,7 @@ const tb_container = model.zhongtan_invoice_containers
 const tb_invoice_container = model.zhongtan_overdue_invoice_containers
 const tb_uploadfile = model.zhongtan_uploadfile
 const tb_edi_depot = model.zhongtan_edi_depot
+const tb_demurrage_edit_record = model.zhongtan_demurrage_edit_record
 
 exports.initAct = async () => {
   let returnData = {}
@@ -208,7 +209,7 @@ exports.calculationAct = async req => {
 }
 
 exports.emptyReturnSaveAct = async req => {
-  let doc = common.docValidate(req)
+  let doc = common.docValidate(req), user = req.user
   let con = await tb_container.findOne({
     where: {
       invoice_containers_id: doc.invoice_containers_id
@@ -262,6 +263,44 @@ exports.emptyReturnSaveAct = async req => {
       }
       await con.save()
     } 
+
+    // 添加费用修改记录
+    let lastOne = await tb_demurrage_edit_record.findOne({
+      where: {
+        demurrage_container_id: con.invoice_containers_id,
+        demurrage_container_business_type: 'I',
+        demurrage_container_from: 'SAVE',
+        state: GLBConfig.ENABLE
+      },
+      order: [['demurrage_edit_record_id', 'DESC']]
+    })
+    let addReceord = true
+    if(lastOne) {
+      if(await common.equalsStr(con.invoice_containers_edi_discharge_date, lastOne.demurrage_container_out)
+        && await common.equalsStr(con.invoice_containers_empty_return_date, lastOne.demurrage_container_in)
+        && await common.equalsStr(con.invoice_containers_empty_return_overdue_free_days, lastOne.demurrage_container_free)
+        && await common.equalsStr(con.invoice_containers_empty_return_overdue_days, lastOne.demurrage_container_overdue)
+        && await common.equalsStr(con.invoice_containers_empty_return_overdue_amount, lastOne.demurrage_container_amount)) {
+        addReceord = false
+      }
+    }
+    if(addReceord) {
+      await tb_demurrage_edit_record.create({
+        demurrage_container_business_type: 'I',
+        demurrage_container_from: "SAVE",
+        demurrage_container_id: con.invoice_containers_id,
+        demurrage_container_bl: con.invoice_containers_bl,
+        demurrage_container_no: con.invoice_containers_no,
+        demurrage_container_out: con.invoice_containers_edi_discharge_date,
+        demurrage_container_in: con.invoice_containers_empty_return_date,
+        demurrage_container_use: doc.invoice_containers_empty_return_diff_days,
+        demurrage_container_free: con.invoice_containers_empty_return_overdue_free_days,
+        demurrage_container_overdue: con.invoice_containers_empty_return_overdue_days,
+        demurrage_container_amount: con.invoice_containers_empty_return_overdue_amount,
+        demurrage_container_operator: user.user_id
+      })
+    }
+
     if(old_free_days && doc.invoice_containers_empty_return_overdue_free_days && 
       parseInt(old_free_days) !== parseInt(doc.invoice_containers_empty_return_overdue_free_days)
       && !doc.free_days_single) {
@@ -291,6 +330,42 @@ exports.emptyReturnSaveAct = async req => {
                   oc.invoice_containers_empty_return_overdue_days = cal_result.overdue_days
                   oc.invoice_containers_empty_return_overdue_amount = cal_result.overdue_amount
                   oc.invoice_containers_empty_return_edit_flg = GLBConfig.ENABLE
+
+                  // 添加费用修改记录
+                  let otherOne = await tb_demurrage_edit_record.findOne({
+                    where: {
+                      demurrage_container_id: oc.invoice_containers_id,
+                      demurrage_container_business_type: 'I',
+                      demurrage_container_from: 'SAVE',
+                      state: GLBConfig.ENABLE
+                    },
+                    order: [['demurrage_edit_record_id', 'DESC']]
+                  })
+                  let otherReceord = true
+                  if(otherOne) {
+                    if(await common.equalsStr(oc_discharge_date, otherOne.demurrage_container_out)
+                      && await common.equalsStr(oc.invoice_containers_empty_return_date, otherOne.demurrage_container_in)
+                      && await common.equalsStr(oc.invoice_containers_empty_return_overdue_free_days, otherOne.demurrage_container_free)
+                      && await common.equalsStr(oc.invoice_containers_empty_return_overdue_days, otherOne.demurrage_container_overdue)
+                      && await common.equalsStr(oc.invoice_containers_empty_return_overdue_amount, otherOne.demurrage_container_amount)) {
+                        otherReceord = false
+                    }
+                  }
+                  if(otherReceord) {
+                    await tb_demurrage_edit_record.create({
+                      demurrage_container_business_type: 'I',
+                      demurrage_container_from: "SAVE",
+                      demurrage_container_id: oc.invoice_containers_id,
+                      demurrage_container_bl: oc.invoice_containers_bl,
+                      demurrage_container_no: oc.invoice_containers_no,
+                      demurrage_container_out: oc_discharge_date,
+                      demurrage_container_in: oc.invoice_containers_empty_return_date,
+                      demurrage_container_free: oc.invoice_containers_empty_return_overdue_free_days,
+                      demurrage_container_overdue: oc.invoice_containers_empty_return_overdue_days,
+                      demurrage_container_amount: oc.invoice_containers_empty_return_overdue_amount,
+                      demurrage_container_operator: user.user_id
+                    })
+                  }
                 }
               }
               if(oc.invoice_containers_actually_return_date) {
@@ -302,6 +377,7 @@ exports.emptyReturnSaveAct = async req => {
                 } 
               }
               await oc.save()
+              
               await customer_srv.importDemurrageCheck(oc.invoice_containers_customer_id)
             }
           } else {
@@ -320,7 +396,7 @@ exports.emptyReturnSaveAct = async req => {
 }
 
 exports.ediCalculationSaveAct = async req => {
-  let doc = common.docValidate(req)
+  let doc = common.docValidate(req),user = req.user
   let con = await tb_container.findOne({
     where: {
       invoice_containers_id: doc.invoice_containers_id
@@ -339,6 +415,43 @@ exports.ediCalculationSaveAct = async req => {
       con.invoice_containers_depot_name = doc.invoice_containers_actually_return_edi_depot_name
     }
     await con.save()
+
+    // 添加费用修改记录
+    let lastOne = await tb_demurrage_edit_record.findOne({
+      where: {
+        demurrage_container_id: con.invoice_containers_id,
+        demurrage_container_business_type: 'I',
+        demurrage_container_from: 'EDI',
+        state: GLBConfig.ENABLE
+      },
+      order: [['demurrage_edit_record_id', 'DESC']]
+    })
+    let addReceord = true
+    if(lastOne) {
+      if(await common.equalsStr(doc.invoice_containers_edi_discharge_date, lastOne.demurrage_container_out)
+        && await common.equalsStr(doc.invoice_containers_actually_return_date, lastOne.demurrage_container_in)
+        && await common.equalsStr(doc.invoice_containers_actually_return_overdue_days, lastOne.demurrage_container_overdue)
+        && await common.equalsStr(doc.invoice_containers_actually_return_overdue_amount, lastOne.demurrage_container_amount)) {
+        addReceord = false
+      }
+    }
+    if(addReceord) {
+      await tb_demurrage_edit_record.create({
+        demurrage_container_business_type: 'I',
+        demurrage_container_from: "EDI",
+        demurrage_container_id: con.invoice_containers_id,
+        demurrage_container_bl: con.invoice_containers_bl,
+        demurrage_container_no: con.invoice_containers_no,
+        demurrage_container_out: doc.invoice_containers_edi_discharge_date,
+        demurrage_container_in: doc.invoice_containers_actually_return_date,
+        demurrage_container_use: doc.invoice_containers_actually_return_diff_days,
+        demurrage_container_free: doc.invoice_containers_empty_return_overdue_free_days,
+        demurrage_container_overdue: doc.invoice_containers_actually_return_overdue_days,
+        demurrage_container_amount: doc.invoice_containers_actually_return_overdue_amount,
+        demurrage_container_operator: user.user_id
+      })
+    }
+
     if(doc.invoice_containers_edi_discharge_date || doc.invoice_containers_actually_return_date) {
       await freight_srv.updateShipmentEDI('I', con.invoice_containers_bl, con.invoice_containers_no, doc.invoice_containers_edi_discharge_date, doc.invoice_containers_actually_return_date)
     }
@@ -824,7 +937,7 @@ exports.checkPasswordAct = async req => {
 }
 
 exports.actuallyOverdueCopyAct = async req => {
-  let doc = common.docValidate(req)
+  let doc = common.docValidate(req),user = req.user
   let con = await tb_container.findOne({
     where: {
       invoice_containers_id: doc.invoice_containers_id
@@ -835,6 +948,41 @@ exports.actuallyOverdueCopyAct = async req => {
     con.invoice_containers_empty_return_overdue_days = con.invoice_containers_actually_return_overdue_days
     con.invoice_containers_empty_return_overdue_amount = con.invoice_containers_actually_return_overdue_amount
     await con.save()
+
+
+     // 添加费用修改记录
+    let lastOne = await tb_demurrage_edit_record.findOne({
+      where: {
+        demurrage_container_id: con.invoice_containers_id,
+        demurrage_container_business_type: 'I',
+        demurrage_container_from: 'COPY',
+        state: GLBConfig.ENABLE
+      },
+      order: [['demurrage_edit_record_id', 'DESC']]
+    })
+    let addReceord = true
+    if(lastOne) {
+      if(await common.equalsStr(con.invoice_containers_empty_return_date, lastOne.demurrage_container_in)
+        && await common.equalsStr(con.invoice_containers_empty_return_overdue_days, lastOne.demurrage_container_overdue)
+        && await common.equalsStr(con.invoice_containers_empty_return_overdue_amount, lastOne.demurrage_container_amount)) {
+        addReceord = false
+      }
+    }
+    if(addReceord) {
+      await tb_demurrage_edit_record.create({
+        demurrage_container_business_type: 'I',
+        demurrage_container_from: "COPY",
+        demurrage_container_id: con.invoice_containers_id,
+        demurrage_container_bl: con.invoice_containers_bl,
+        demurrage_container_no: con.invoice_containers_no,
+        demurrage_container_in: con.invoice_containers_empty_return_date,
+        demurrage_container_free: doc.invoice_containers_empty_return_overdue_free_days,
+        demurrage_container_overdue: con.invoice_containers_empty_return_overdue_days,
+        demurrage_container_amount: con.invoice_containers_empty_return_overdue_amount,
+        demurrage_container_operator: user.user_id
+      })
+    }
+
   }
   return common.success()
 }

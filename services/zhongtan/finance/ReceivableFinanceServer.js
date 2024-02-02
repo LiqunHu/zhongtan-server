@@ -574,9 +574,10 @@ exports.submitReceivableAct = async req => {
                         bdebitcredit = 0
                         header_amount = new Decimal(header_amount).abs().toNumber()
                     }
+                    let send_date = moment(rl.receipt_date, 'YYYY-MM-DD hh:mm:ss').format('YYYY-MM-DD')
                     let oughtreceive = {
                         code: rl.receipt_no, // 应收单号
-                        date: moment().format('YYYY-MM-DD'), // 单据日期
+                        date: send_date, // 单据日期
                         bdebitcredit: bdebitcredit,
                         cust_vendor_code: u8_customer_code, // 客商编码
                         subjectcode: rl.parent_code,
@@ -787,6 +788,7 @@ exports.queryReceivedAct= async req => {
         for(let r of rows) {
             r.operator_id = user.user_id
             r.operator_name = user.user_name
+            r.ought_receive_receipt_time = moment(r.ought_receive_receipt_time, 'YYYY-MM-DD hh:mm:ss').format('YYYY-MM-DD hh:mm:ss')
             r.created_at = moment(r.created_at, 'YYYY-MM-DD hh:mm:ss').format('YYYY-MM-DD hh:mm:ss')
             r.updated_at = moment(r.updated_at, 'YYYY-MM-DD hh:mm:ss').format('YYYY-MM-DD hh:mm:ss')
             if(r.ought_receive_receipt_file_id) {
@@ -875,7 +877,7 @@ exports.submitReceivedBankInfoAct = async req => {
     let doc = common.docValidate(req)
     if(doc.received_list) {
         let submit_data = doc.submit_data
-        if(submit_data.received_bank) {
+        if(submit_data.received_bank || submit_data.received_reference_no) {
             for(let rl of doc.received_list) {
                 let rd = await tb_ought_receive.findOne({
                     where: {
@@ -884,7 +886,12 @@ exports.submitReceivedBankInfoAct = async req => {
                     }
                 })
                 if(rd) {
-                    rd.ought_receive_bank = submit_data.received_bank
+                    if(submit_data.received_bank) {
+                        rd.ought_receive_bank = submit_data.received_bank
+                    }
+                    if(submit_data.received_reference_no) {
+                        rd.ought_receive_reference_no = submit_data.received_reference_no
+                    }
                     await rd.save()
                 }
             }
@@ -918,6 +925,8 @@ exports.submitReceivedAct = async req => {
                     })
                     if(rd) {
                         let vouch_code = rd.received_no
+                        let send_date = moment(rl.ought_receive_receipt_time, 'YYYY-MM-DD hh:mm:ss').format('YYYY-MM-DD')
+                        let send_date_m = moment(rl.ought_receive_receipt_time, 'YYYY-MM-DD hh:mm:ss').format('M')
                         let header_vouchtype = '48'
                         let header_currencyrate = 1
                         let header_amount = new Decimal(rl.ought_receive_amount).toNumber()
@@ -984,8 +993,8 @@ exports.submitReceivedAct = async req => {
                                 }
                                 let accept = {
                                     vouchcode: vouch_code, // 应收单号
-                                    vouchdate: moment().format('YYYY-MM-DD'), // 单据日期
-                                    period: moment().format('M'), // 单据日期 月份
+                                    vouchdate: send_date, // 单据日期
+                                    period: send_date_m, // 单据日期 月份
                                     vouchtype: header_vouchtype,
                                     customercode: u8_customer_code, // 客商编码
                                     balanceitemcode: rl.parent_code,
@@ -1103,8 +1112,8 @@ exports.submitReceivedAct = async req => {
                             } 
                             let accept = {
                                 vouchcode: vouch_code, // 应收单号
-                                vouchdate: moment().format('YYYY-MM-DD'), // 单据日期
-                                period: moment().format('M'), // 单据日期 月份
+                                vouchdate: send_date, // 单据日期
+                                period: send_date_m, // 单据日期 月份
                                 vouchtype: header_vouchtype,
                                 customercode: u8_customer_code, // 客商编码
                                 balanceitemcode: rl.parent_code,
@@ -1456,6 +1465,8 @@ exports.submitSplitReceivedAct = async req => {
                         }
                     })
                     if(rd) {
+                        let send_date = moment(srl.ought_receive_receipt_time, 'YYYY-MM-DD hh:mm:ss').format('YYYY-MM-DD')
+                        let send_date_m = moment(srl.ought_receive_receipt_time, 'YYYY-MM-DD hh:mm:ss').format('M')
                         let split_detail = srl.split_detail
                         if(split_detail && split_detail.length > 0) {
                             let split_flg = false
@@ -1599,8 +1610,8 @@ exports.submitSplitReceivedAct = async req => {
                                     
                                     let accept = {
                                         vouchcode: vouch_code, // 应收单号
-                                        vouchdate: moment().format('YYYY-MM-DD'), // 单据日期
-                                        period: moment().format('M'), // 单据日期 月份
+                                        vouchdate: send_date, // 单据日期
+                                        period: send_date_m, // 单据日期 月份
                                         vouchtype: accept_vouchtype,
                                         customercode: u8_customer_code, // 客商编码
                                         balanceitemcode: accept_item_code,
@@ -1776,8 +1787,8 @@ exports.submitSplitReceivedAct = async req => {
                                             }
                                             let accept = {
                                                 vouchcode: vouch_code, // 应收单号
-                                                vouchdate: moment().format('YYYY-MM-DD'), // 单据日期
-                                                period: moment().format('M'), // 单据日期 月份
+                                                vouchdate: send_date, // 单据日期
+                                                period: send_date_m, // 单据日期 月份
                                                 vouchtype: accept_vouchtype,
                                                 customercode: u8_customer_code, // 客商编码
                                                 balanceitemcode: accept_item_code,
@@ -1954,8 +1965,8 @@ exports.submitSplitReceivedAct = async req => {
                                         } 
                                         let accept = {
                                             vouchcode: vouch_code, // 应收单号
-                                            vouchdate: moment().format('YYYY-MM-DD'), // 单据日期
-                                            period: moment().format('M'), // 单据日期 月份
+                                            vouchdate: send_date, // 单据日期
+                                            period: send_date_m, // 单据日期 月份
                                             vouchtype: accept_vouchtype,
                                             customercode: u8_customer_code, // 客商编码
                                             balanceitemcode: accept_item_code,

@@ -14,6 +14,7 @@ const tb_uploadfile = model.zhongtan_uploadfile
 const tb_edi_depot = model.zhongtan_edi_depot
 const tb_verification = model.zhongtan_export_verification
 const tb_shipment_fee = model.zhongtan_export_shipment_fee
+const tb_demurrage_edit_record = model.zhongtan_demurrage_edit_record
 
 exports.initAct = async () => {
   let returnData = {}
@@ -208,6 +209,43 @@ exports.demurrageCalculationSaveAct = async req => {
     con.export_container_cal_demurrage_days = doc.export_container_cal_demurrage_days
     con.export_container_cal_demurrage_amount = doc.export_container_cal_demurrage_amount
     await con.save()
+
+    // 添加费用修改记录
+    let lastOne = await tb_demurrage_edit_record.findOne({
+      where: {
+        demurrage_container_id: con.export_container_id,
+        demurrage_container_business_type: 'E',
+        demurrage_container_from: 'SAVE',
+        state: GLBConfig.ENABLE
+      },
+      order: [['demurrage_edit_record_id', 'DESC']]
+    })
+    let addReceord = true
+    if(lastOne) {
+      if(await common.equalsStr(con.export_container_edi_depot_gate_out_date, lastOne.demurrage_container_out)
+        && await common.equalsStr(doc.export_container_edi_wharf_gate_in_date, lastOne.demurrage_container_in)
+        && await common.equalsStr(con.export_container_cal_free_days, lastOne.demurrage_container_free)
+        && await common.equalsStr(con.export_container_cal_demurrage_days, lastOne.demurrage_container_overdue)
+        && await common.equalsStr(con.export_container_cal_demurrage_amount, lastOne.demurrage_container_amount)) {
+        addReceord = false
+      }
+    }
+    if(addReceord) {
+      await tb_demurrage_edit_record.create({
+        demurrage_container_business_type: 'E',
+        demurrage_container_from: "SAVE",
+        demurrage_container_id: con.export_container_id,
+        demurrage_container_bl: con.export_container_bl,
+        demurrage_container_no: con.export_container_no,
+        demurrage_container_out: con.export_container_edi_depot_gate_out_date,
+        demurrage_container_in: doc.export_container_edi_wharf_gate_in_date,
+        demurrage_container_free: con.export_container_cal_free_days,
+        demurrage_container_overdue: con.export_container_cal_demurrage_days,
+        demurrage_container_amount: con.export_container_cal_demurrage_amount,
+        demurrage_container_operator: user.user_id
+      })
+    }
+
     let queryStr = ''
     let replacements = []
     if(old_free_days && doc.export_container_cal_free_days && 
@@ -244,6 +282,42 @@ exports.demurrageCalculationSaveAct = async req => {
               if(cal_result) {
                 oc.export_container_cal_demurrage_days = cal_result.overdue_days
                 oc.export_container_cal_demurrage_amount = cal_result.overdue_amount
+
+                // 添加费用修改记录
+                let otherOne = await tb_demurrage_edit_record.findOne({
+                  where: {
+                    demurrage_container_id: oc.export_container_id,
+                    demurrage_container_business_type: 'E',
+                    demurrage_container_from: 'SAVE',
+                    state: GLBConfig.ENABLE
+                  },
+                  order: [['demurrage_edit_record_id', 'DESC']]
+                })
+                let otherReceord = true
+                if(otherOne) {
+                  if(await common.equalsStr(oc.export_container_edi_depot_gate_out_date, otherOne.demurrage_container_out)
+                    && await common.equalsStr(oc.export_container_edi_wharf_gate_in_date, otherOne.demurrage_container_in)
+                    && await common.equalsStr(oc.export_container_cal_free_days, otherOne.demurrage_container_free)
+                    && await common.equalsStr(oc.export_container_cal_demurrage_days, otherOne.demurrage_container_overdue)
+                    && await common.equalsStr(oc.export_container_cal_demurrage_amount, otherOne.demurrage_container_amount)) {
+                      otherReceord = false
+                  }
+                }
+                if(otherReceord) {
+                  await tb_demurrage_edit_record.create({
+                    demurrage_container_business_type: 'E',
+                    demurrage_container_from: "SAVE",
+                    demurrage_container_id: oc.export_container_id,
+                    demurrage_container_bl: oc.export_container_bl,
+                    demurrage_container_no: oc.export_container_no,
+                    demurrage_container_out: oc.export_container_edi_depot_gate_out_date,
+                    demurrage_container_in: oc_loading_date,
+                    demurrage_container_free: oc.export_container_cal_free_days,
+                    demurrage_container_overdue: oc.export_container_cal_demurrage_days,
+                    demurrage_container_amount: oc.export_container_cal_demurrage_amount,
+                    demurrage_container_operator: user.user_id
+                  })
+                }
               }
               await oc.save()
             }

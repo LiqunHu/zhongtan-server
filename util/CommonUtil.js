@@ -223,6 +223,7 @@ async function ejs2Pdf(templateFile, renderData, bucket) {
   const page = await browser.newPage()
   await page.setContent(html)
   let filePath = path.join(process.cwd(), config.fileSys.filesDir, uuid.v4().replace(/-/g, '') + '.pdf')
+  console.log('filePath', filePath)
   await page.pdf({ path: filePath, format: 'A4', landscape: true })
   await page.close()
   let fileInfo = await fileUtil.fileSaveMongoByLocalPath(filePath, bucket, config.fileSys.bucket[bucket].baseUrl)
@@ -737,6 +738,23 @@ const fileSize2Str = async(size) => {
   return sizeStr
 }
 
+const equalsStr = async(str1, str2) => {
+  if(isNumber(str1)) {
+    str1 = str1.toString()
+  }
+  if(isNumber(str2)) {
+    str2 = str2.toString()
+  }
+  if(str1 && str2) {
+    return str1.toString() === str2.toString()
+  } else {
+    if((str1 === null || str1 === '') && (str2 === null || str2 === '')) {
+      return true
+    }
+  }
+  return false
+}
+
 module.exports = {
   docValidate: docValidate,
   reqTrans: reqTrans,
@@ -779,5 +797,6 @@ module.exports = {
   groupingJson: groupingJson,
   jsonFindOne: jsonFindOne,
   jsonFindAll: jsonFindAll,
-  fileSize2Str: fileSize2Str
+  fileSize2Str: fileSize2Str,
+  equalsStr: equalsStr
 }

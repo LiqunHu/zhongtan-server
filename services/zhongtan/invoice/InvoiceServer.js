@@ -24,6 +24,7 @@ const tb_icd = model.zhongtan_icd
 const tb_edi_depot = model.zhongtan_edi_depot
 const tb_shipment_list = model.zhongtan_logistics_shipment_list
 const tb_container_size = model.zhongtan_container_size
+const tb_masterbl_edit_record = model.zhongtan_invoice_masterbl_edit_record
 
 exports.initAct = async () => {
   let DELIVER = []
@@ -1320,8 +1321,53 @@ exports.depositDoAct = async req => {
   replacements.push(GLBConfig.ENABLE)
   let continers = await model.simpleSelect(queryStr, replacements)
 
+  // 添加费用修改记录
+  let lastOne = await tb_masterbl_edit_record.findOne({
+    where: {
+      invoice_masterbi_id: bl.invoice_masterbi_id,
+      state: GLBConfig.ENABLE
+    },
+    order: [['masterbl_edit_record_id', 'DESC']]
+  })
+  let addReceord = true
+  if(lastOne) {
+    if(await common.equalsStr(doc.invoice_masterbi_deposit, lastOne.invoice_masterbi_deposit)
+      && await common.equalsStr(doc.invoice_masterbi_do_fee, lastOne.invoice_masterbi_do_fee)
+      && await common.equalsStr(doc.invoice_masterbi_of, lastOne.invoice_masterbi_of)
+      && await common.equalsStr(doc.invoice_masterbi_bl_amendment, lastOne.invoice_masterbi_bl_amendment)
+      && await common.equalsStr(doc.invoice_masterbi_cod_charge, lastOne.invoice_masterbi_cod_charge)
+      && await common.equalsStr(doc.invoice_masterbi_transfer, lastOne.invoice_masterbi_transfer)
+      && await common.equalsStr(doc.invoice_masterbi_lolf, lastOne.invoice_masterbi_lolf)
+      && await common.equalsStr(doc.invoice_masterbi_lcl, lastOne.invoice_masterbi_lcl)
+      && await common.equalsStr(doc.invoice_masterbi_amendment, lastOne.invoice_masterbi_amendment)
+      && await common.equalsStr(doc.invoice_masterbi_tasac, lastOne.invoice_masterbi_tasac)
+      && await common.equalsStr(doc.invoice_masterbi_printing, lastOne.invoice_masterbi_printing)
+      && await common.equalsStr(doc.invoice_masterbi_others, lastOne.invoice_masterbi_others)) {
+      addReceord = false
+    }
+  }
+  if(addReceord) {
+    await tb_masterbl_edit_record.create({
+      invoice_masterbi_id: bl.invoice_masterbi_id,
+      invoice_masterbi_bl: bl.invoice_masterbi_bl,
+      invoice_masterbi_deposit: doc.invoice_masterbi_deposit,
+      invoice_masterbi_do_fee: doc.invoice_masterbi_do_fee,
+      invoice_masterbi_of: doc.invoice_masterbi_of,
+      invoice_masterbi_bl_amendment: doc.invoice_masterbi_bl_amendment,
+      invoice_masterbi_cod_charge: doc.invoice_masterbi_cod_charge,
+      invoice_masterbi_transfer: doc.invoice_masterbi_transfer,
+      invoice_masterbi_lolf: doc.invoice_masterbi_lolf,
+      invoice_masterbi_lcl: doc.invoice_masterbi_lcl,
+      invoice_masterbi_amendment: doc.invoice_masterbi_amendment,
+      invoice_masterbi_tasac: doc.invoice_masterbi_tasac,
+      invoice_masterbi_printing: doc.invoice_masterbi_printing,
+      invoice_masterbi_others: doc.invoice_masterbi_others,
+      edit_record_operator: user.user_id
+    })
+  }
+
   if (doc.depositType === 'Container Deposit') {
-    if(!doc.invoice_masterbi_deposit && doc.invoice_masterbi_deposit < 0) {
+    if(!doc.invoice_masterbi_deposit) {
       return common.error('deposit_01')
     }
     bl.invoice_masterbi_customer_id = doc.invoice_masterbi_customer_id

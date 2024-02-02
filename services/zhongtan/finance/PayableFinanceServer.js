@@ -284,6 +284,7 @@ exports.submitPayableAct = async req => {
                 try {
                     let biz_id = await seq.genU8SystemSeq('BIZ')
                     let payable_url = GLBConfig.U8_CONFIG.host + GLBConfig.U8_CONFIG.oughtpay_add_api_url + `?from_account=${GLBConfig.U8_CONFIG.from_account}&to_account=${GLBConfig.U8_CONFIG.to_account}&app_key=${GLBConfig.U8_CONFIG.app_key}&token=${token}&biz_id=${biz_id}&sync=1` 
+                    let send_date = moment(pl.create_date, 'YYYY-MM-DD hh:mm:ss').format('YYYY-MM-DD')
                     let amount = new Decimal(pl.payment_advice_amount).toNumber()
                     let natamount = new Decimal(pl.payment_advice_amount).toNumber()
                     let currency_name = '美元'
@@ -402,7 +403,7 @@ exports.submitPayableAct = async req => {
                     }
                     let oughtpay = {
                         code: pl.payment_advice_no,
-                        date: moment().format('YYYY-MM-DD'),
+                        date: send_date,
                         cust_vendor_code: cust_vendor_code,
                         bdebitcredit: header_bdebitcredit,
                         subjectcode: pl.item_code_payable_credit, // 应付贷
@@ -687,6 +688,8 @@ exports.submitPaymentAct = async req => {
                             await fp.save()
                         }
                         let payment_url = GLBConfig.U8_CONFIG.host + GLBConfig.U8_CONFIG.pay_add_api_url + `?from_account=${GLBConfig.U8_CONFIG.from_account}&to_account=${GLBConfig.U8_CONFIG.to_account}&app_key=${GLBConfig.U8_CONFIG.app_key}&token=${token}&biz_id=${biz_id}&sync=1` 
+                        let send_date = moment(pl.create_date, 'YYYY-MM-DD hh:mm:ss').format('YYYY-MM-DD')
+                        let send_date_m = moment(pl.create_date, 'YYYY-MM-DD hh:mm:ss').format('M')
                         let amount = new Decimal(pl.payment_advice_amount).toNumber()
                         let original_amount = new Decimal(pl.payment_advice_amount).toNumber()
                         let currency_name = 'USD'
@@ -771,8 +774,8 @@ exports.submitPaymentAct = async req => {
                         } 
                         let pay = {
                             vouchcode: vouch_code,
-                            vouchdate: moment().format('YYYY-MM-DD'),
-                            period: moment().format('M'), // 单据日期 月份
+                            vouchdate: send_date,
+                            period: send_date_m, // 单据日期 月份
                             vouchtype: header_vouchtype,
                             customercode: pl.payment_advice_beneficiary_u8_vendor_code,
                             balancecode: balancecode,
