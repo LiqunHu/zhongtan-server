@@ -47,6 +47,9 @@ module.exports = {
   billlading_02: 'billloading No in no stock',
   billlading_03: 'billloading not exist',
   customer_01: 'CUSTOMER Group Do not exist',
+  customer_02: 'username already exists',
+  customer_03: 'phone already exists',
+  customer_04: 'tin already exists',
   booking_01: 'Only Customer',
   booking_02: 'Only Employee',
   blconfig_01: 'This Range been used',
@@ -139,6 +142,6 @@ module.exports = {
   bank_01: 'Edit Bank Info do not exist',
   bank_02: 'Bank name or code already exists',
   u8_01: 'get token error',
-  u8_01: 'get oughtreceive error',
+  u8_02: 'get oughtreceive error',
   u8_09: 'sync receivable not exist',
 }

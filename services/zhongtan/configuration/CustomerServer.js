@@ -64,15 +64,29 @@ exports.addAct = async req => {
   })
 
   if (usergroup) {
-    let adduser = await tb_user.findOne({
-      where: {
-        state: GLBConfig.ENABLE,
-        [Op.or]: [{ user_phone: doc.user_phone }, { user_username: doc.user_username.trim() }, { user_name: doc.user_name.trim() }]
+    let adduser = null
+    if(doc.user_tin) {
+      adduser = await tb_user.findOne({
+        where: {
+          state: GLBConfig.ENABLE,
+          [Op.or]: [{ user_phone: doc.user_phone }, { user_username: doc.user_username.trim() }, { user_name: doc.user_name.trim() }, { user_tin: doc.user_tin.trim() }]
+        }
+      })
+      if (adduser) {
+        return common.error('operator_02')
       }
-    })
-    if (adduser) {
-      return common.error('operator_02')
+    } else {
+      adduser = await tb_user.findOne({
+        where: {
+          state: GLBConfig.ENABLE,
+          [Op.or]: [{ user_phone: doc.user_phone }, { user_username: doc.user_username.trim() }, { user_name: doc.user_name.trim() }]
+        }
+      })
+      if (adduser) {
+        return common.error('operator_02')
+      }
     }
+    
     adduser = await tb_user.create({
       user_type: GLBConfig.TYPE_CUSTOMER,
       user_username: doc.user_username.trim(),
@@ -114,7 +128,51 @@ exports.addAct = async req => {
 
 exports.modifyAct = async req => {
   let doc = common.docValidate(req)
-
+  let user_name = doc.new.user_name.trim()
+  let user_phone = doc.new.user_phone ? doc.new.user_phone.trim() : ''
+  let user_tin = doc.new.user_tin ? doc.new.user_tin.trim() : ''
+  if(user_name) {
+    let existUser = await tb_user.findOne({
+      where: {
+        user_name: user_name,
+        state: GLBConfig.ENABLE,
+        user_id: {
+          [Op.ne]: doc.old.user_id
+        }
+      }
+    })
+    if(existUser) {
+      return common.error('customer_02')
+    }
+  }
+  if(user_phone) {
+    let existUser = await tb_user.findOne({
+      where: {
+        user_phone: user_phone,
+        state: GLBConfig.ENABLE,
+        user_id: {
+          [Op.ne]: doc.old.user_id
+        }
+      }
+    })
+    if(existUser) {
+      return common.error('customer_03')
+    }
+  }
+  if(user_tin) {
+    let existUser = await tb_user.findOne({
+      where: {
+        user_tin: user_tin,
+        state: GLBConfig.ENABLE,
+        user_id: {
+          [Op.ne]: doc.old.user_id
+        }
+      }
+    })
+    if(existUser) {
+      return common.error('customer_04')
+    }
+  }
   let modiuser = await tb_user.findOne({
     where: {
       user_id: doc.old.user_id,
