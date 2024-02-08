@@ -80,6 +80,6 @@ module.exports = db.defineModel('tbl_zhongtan_payment_advice', {
   payment_vessel_type: {
     // 船类型
     type: db.STRING(5),
-    allowNull: false
+    allowNull: true
   }
 })
