@@ -142,16 +142,16 @@ exports.searchAct = async req => {
         d.export_container_cal_invoice = GLBConfig.DISABLE
       }
       d.end_date_title = 'Gatein'
-      if(d.export_masterbl_bl_carrier === 'OOCL' &&(d.export_container_edi_loading_date || d.export_container_edi_wharf_gate_in_date)) {
-        if(d.export_container_edi_loading_date && d.export_container_edi_wharf_gate_in_date) {
-          if(moment(d.export_container_edi_loading_date, 'DD/MM/YYYY').isBefore(moment('2022-08-20'))
-            && moment(d.export_container_edi_wharf_gate_in_date, 'DD/MM/YYYY').isBefore(moment('2022-08-20'))) {
-            d.end_date_title = 'Loading'
-          }
-        } else if(moment(d.export_container_edi_loading_date, 'DD/MM/YYYY').isBefore(moment('2022-08-20')) || moment(d.export_container_edi_wharf_gate_in_date, 'DD/MM/YYYY').isBefore(moment('2022-08-20'))) {
-          d.end_date_title = 'Loading'
-        }
-      }
+      // if(d.export_masterbl_bl_carrier === 'OOCL' &&(d.export_container_edi_loading_date || d.export_container_edi_wharf_gate_in_date)) {
+      //   if(d.export_container_edi_loading_date && d.export_container_edi_wharf_gate_in_date) {
+      //     if(moment(d.export_container_edi_loading_date, 'DD/MM/YYYY').isBefore(moment('2022-08-20'))
+      //       && moment(d.export_container_edi_wharf_gate_in_date, 'DD/MM/YYYY').isBefore(moment('2022-08-20'))) {
+      //       d.end_date_title = 'Loading'
+      //     }
+      //   } else if(moment(d.export_container_edi_loading_date, 'DD/MM/YYYY').isBefore(moment('2022-08-20')) || moment(d.export_container_edi_wharf_gate_in_date, 'DD/MM/YYYY').isBefore(moment('2022-08-20'))) {
+      //     d.end_date_title = 'Loading'
+      //   }
+      // }
     }
   }
   returnData.rows = result.data
@@ -191,17 +191,23 @@ exports.demurrageCalculationSaveAct = async req => {
     let old_free_days = con.export_container_cal_free_days ? con.export_container_cal_free_days : doc.export_container_cal_static_free_days
 
     // 保存计算箱子超期信息
-    if(doc.export_masterbl_bl_carrier === 'OOCL') {
-      if(moment(doc.export_container_edi_wharf_gate_in_date, 'DD/MM/YYYY').isBefore(moment('2022-08-20'))) {
-        con.export_container_edi_loading_date = doc.export_container_edi_wharf_gate_in_date
-      } else {
-        con.export_container_edi_wharf_gate_in_date = doc.export_container_edi_wharf_gate_in_date
-      }
-    } else {
-      if(doc.export_container_edi_wharf_gate_in_date) {
-        con.export_container_edi_wharf_gate_in_date = doc.export_container_edi_wharf_gate_in_date
-      }
+    if(doc.export_masterbl_bl_carrier === 'OOCL' && doc.export_container_edi_loading_date) {
+      con.export_container_edi_loading_date = doc.export_container_edi_loading_date
     }
+    if(doc.export_masterbl_bl_carrier === 'COSCO' && doc.export_container_edi_wharf_gate_in_date) {
+      con.export_container_edi_wharf_gate_in_date = doc.export_container_edi_wharf_gate_in_date
+    }
+    // if(doc.export_masterbl_bl_carrier === 'OOCL') {
+    //   if(moment(doc.export_container_edi_wharf_gate_in_date, 'DD/MM/YYYY').isBefore(moment('2022-08-20'))) {
+    //     con.export_container_edi_loading_date = doc.export_container_edi_wharf_gate_in_date
+    //   } else {
+    //     con.export_container_edi_wharf_gate_in_date = doc.export_container_edi_wharf_gate_in_date
+    //   }
+    // } else {
+    //   if(doc.export_container_edi_wharf_gate_in_date) {
+    //     con.export_container_edi_wharf_gate_in_date = doc.export_container_edi_wharf_gate_in_date
+    //   }
+    // }
     
    
     con.export_container_edi_depot_gate_out_date = gate_out_date
@@ -266,16 +272,19 @@ exports.demurrageCalculationSaveAct = async req => {
             })
             if(oc) {
               let oc_loading_date = doc.export_vessel_etd
-              if(doc.export_masterbl_bl_carrier === 'OOCL' && con.export_container_edi_loading_date) {
-                if(moment(con.export_container_edi_loading_date, 'DD/MM/YYYY').isBefore(moment('2022-08-20'))) {
-                  oc_loading_date = oc.export_container_edi_loading_date
-                } else {
-                  oc_loading_date = oc.export_container_edi_wharf_gate_in_date
-                }
+              if(oc.export_container_edi_loading_date) {
+                oc_loading_date = oc.export_container_edi_loading_date
               }
-              if(doc.export_masterbl_bl_carrier === 'COSCO' && con.export_container_edi_wharf_gate_in_date) {
-                oc_loading_date = oc.export_container_edi_wharf_gate_in_date
-              }
+              // if(doc.export_masterbl_bl_carrier === 'OOCL' && con.export_container_edi_loading_date) {
+              //   if(moment(con.export_container_edi_loading_date, 'DD/MM/YYYY').isBefore(moment('2022-08-20'))) {
+              //     oc_loading_date = oc.export_container_edi_loading_date
+              //   } else {
+              //     oc_loading_date = oc.export_container_edi_wharf_gate_in_date
+              //   }
+              // }
+              // if(doc.export_masterbl_bl_carrier === 'COSCO' && con.export_container_edi_wharf_gate_in_date) {
+              //   oc_loading_date = oc.export_container_edi_wharf_gate_in_date
+              // }
               oc.export_container_cal_free_days = doc.export_container_cal_free_days
               let cal_result = await cal_config_srv.demurrageCalculation(oc.export_container_cal_free_days, oc.export_container_edi_depot_gate_out_date, oc_loading_date, 
                 doc.export_masterbl_cargo_type, null, charge_carrier, oc.export_container_size_type, doc.export_vessel_etd, 'E')
@@ -744,11 +753,12 @@ exports.calculationDemurrage2Shipment = async (export_vessel_id, export_containe
     if(vessel && vessel.export_vessel_etd && bl) {
       let loading_date = vessel.export_vessel_etd
       if(bl.export_masterbl_bl_carrier === 'OOCL' && con.export_container_edi_loading_date) {
-        if(moment(con.export_container_edi_loading_date, 'DD/MM/YYYY').isBefore(moment('2022-08-20'))) {
-          loading_date = con.export_container_edi_loading_date
-        } else {
-          loading_date = con.export_container_edi_wharf_gate_in_date
-        }
+        loading_date = con.export_container_edi_loading_date
+        // if(moment(con.export_container_edi_loading_date, 'DD/MM/YYYY').isBefore(moment('2022-08-20'))) {
+        //   loading_date = con.export_container_edi_loading_date
+        // } else {
+        //   loading_date = con.export_container_edi_wharf_gate_in_date
+        // }
       }
       if(bl.export_masterbl_bl_carrier === 'COSCO' && con.export_container_edi_wharf_gate_in_date) {
         loading_date = con.export_container_edi_wharf_gate_in_date
