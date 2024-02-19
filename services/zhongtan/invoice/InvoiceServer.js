@@ -3027,7 +3027,10 @@ exports.changeCnAct = async req => {
       edit_json['invoice_containers_max_temperature'] = edit_json['invoice_containers_max_temperature'] ? edit_json['invoice_containers_max_temperature'] + 1 : 1
       edit_flg = true
     }
-    
+    if(c.invoice_containers_auction && cn.invoice_containers_auction !== c.invoice_containers_auction) {
+      edit_json['invoice_containers_auction'] = edit_json['invoice_containers_auction'] ? edit_json['invoice_containers_auction'] + 1 : 1
+      edit_flg = true
+    }
     if(edit_flg) {
       edit_json['invoice_containers_bl'] = edit_json['invoice_containers_bl'] ? edit_json['invoice_containers_bl'] + 1 : 1
       let bl = await tb_bl.findOne({
@@ -3063,6 +3066,7 @@ exports.changeCnAct = async req => {
     cn.invoice_containers_plug_reefer = c.invoice_containers_plug_reefer
     cn.invoice_containers_min_temperature = c.invoice_containers_min_temperature
     cn.invoice_containers_max_temperature = c.invoice_containers_max_temperature
+    cn.invoice_containers_auction = c.invoice_containers_auction
     if(count_flg) {
       let vessel = await tb_vessel.findOne({
         where: {
@@ -3125,6 +3129,18 @@ exports.changeContainersTypeAct = async req => {
     }
   })
   con.invoice_containers_type = doc.invoice_containers_type
+  await con.save()
+  return common.success()
+}
+
+exports.changeContainersAuctionAct = async req => {
+  let doc = common.docValidate(req)
+  let con = await tb_container.findOne({
+    where: {
+      invoice_containers_id: doc.invoice_containers_id
+    }
+  })
+  con.invoice_containers_auction = doc.invoice_containers_auction
   await con.save()
   return common.success()
 }

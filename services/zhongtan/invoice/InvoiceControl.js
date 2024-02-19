@@ -61,7 +61,9 @@ module.exports = async (req, res) => {
       ret = await srv.changeNominationAct(req)
     } else if (method === 'saveBulkFiles') {
       ret = await srv.saveBulkFilesAct(req)
-    }
+    } else if (method === 'changeContainersAuction') {
+      ret = await srv.changeContainersAuctionAct(req)
+    } 
     
     common.sendData(res, ret)
   } catch (error) {

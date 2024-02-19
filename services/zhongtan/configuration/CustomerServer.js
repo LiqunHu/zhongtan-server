@@ -40,6 +40,18 @@ exports.searchAct = async req => {
     replacements.push(search_text)
     replacements.push(search_text)
   }
+  if (doc.search_tin) {
+    queryStr += ' and user_tin like ? '
+    replacements.push('%' + doc.search_tin + '%')
+  }
+  if (doc.search_finance) {
+    queryStr += ' and (u8_code like ? or u8_alias like ? or u8_vendor_code like ? or u8_vendor_alias like ?) '
+    let search_finance = '%' + doc.search_finance + '%'
+    replacements.push(search_finance)
+    replacements.push(search_finance)
+    replacements.push(search_finance)
+    replacements.push(search_finance)
+  }
   queryStr += ' order by user_blacklist desc, user_username'
   let result = await model.queryWithCount(doc, queryStr, replacements)
 
@@ -366,8 +378,8 @@ exports.importDemurrageCheck = async user_id => {
               check_flg = true
             }
           }
-          if(r.invoice_containers_type === 'S') {
-            // SOC箱不判断
+          if(r.invoice_containers_type === 'S' || r.invoice_containers_auction === '1') {
+            // SOC箱不判断 拍卖箱不判断
             check_flg = false
           }
           if(check_flg) {
