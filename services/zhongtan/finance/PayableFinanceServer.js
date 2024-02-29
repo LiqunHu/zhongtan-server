@@ -388,7 +388,7 @@ exports.submitPayableAct = async req => {
                         }
                         entryitem.item_classcode = '97'
                         entryitem.item_code = item.citemcode
-                    } else if(item && pl.payment_advice_items_type === '1') {
+                    } else if(item && (pl.payment_advice_items_type === '1' || pl.payment_advice_items_type === '4')) {
                         entryitem.item_classcode = '97'
                         entryitem.item_code = item.citemcode
                     }
@@ -415,7 +415,7 @@ exports.submitPayableAct = async req => {
                         digest: digest,
                         entry: entry
                     }
-                    if(item) {
+                    if(item && pl.payment_advice_items_type !== '4') {
                         oughtpay.item_classcode = '97'
                         oughtpay.item_code = item.citemcode
                     }
