@@ -316,7 +316,7 @@ exports.submitPayableAct = async req => {
                         entry_digest = 'Receivable from ' + pl.payment_advice_remarks_u8_vendor_alias + '/' + pl.payment_advice_vessel + ' ' + pl.payment_advice_voyage
                     } else if(pl.payment_advice_items_type === '3') {
                         digest = 'Payable to ' + pl.payment_advice_beneficiary_u8_vendor_alias + ' for ' + pl.payment_advice_items + '/' +  pl.payment_advice_inv_cntrl
-                        entry_digest = 'Receivable from ' + pl.payment_advice_remarks_u8_vendor_alias + ' for depot-' + amount
+                        entry_digest = 'Receivable from ' + pl.payment_advice_remarks_u8_vendor_alias + ' for depot-' + pl.payment_advice_inv_cntrl
                     } else if(pl.payment_advice_items_type === '4') {
                         digest = 'Payable to ' + pl.payment_advice_beneficiary_u8_vendor_alias + '-' + amount
                         entry_digest = 'Receivable from ' + pl.payment_advice_remarks_u8_vendor_alias + ' for logistic/' +  pl.payment_advice_inv_cntrl
