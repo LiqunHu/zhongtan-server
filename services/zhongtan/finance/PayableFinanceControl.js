@@ -31,7 +31,9 @@ module.exports = async (req, res) => {
       ret = await srv.removePayableAct(req)
     } else if (method === 'removePayment') {
       ret = await srv.removePaymentAct(req)
-    }
+    } else if (method === 'submitPaymentInfo') {
+      ret = await srv.submitPaymentInfoAct(req)
+    } 
     
     common.sendData(res, ret)
   } catch (error) {

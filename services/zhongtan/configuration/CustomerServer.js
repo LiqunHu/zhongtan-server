@@ -1,5 +1,6 @@
 const redisClient = require('server-utils').redisClient
 
+const _ = require('lodash')
 const common = require('../../../util/CommonUtil')
 const moment = require('moment')
 const GLBConfig = require('../../../util/GLBConfig')
@@ -98,6 +99,28 @@ exports.addAct = async req => {
         return common.error('operator_02')
       }
     }
+    if(doc.payment_atta_files && doc.payment_atta_files.length > 0) {
+      for(let f of doc.payment_atta_files) {
+        let fileInfo = await common.fileSaveMongo(f.response.info.path, 'zhongtan')
+        await tb_uploadfile.create({
+          api_name: 'PAYMENT ADVICE ATTACHMENT',
+          user_id: user.user_id,
+          uploadfile_index1: obj.payment_advice_id,
+          uploadfile_name: fileInfo.name,
+          uploadfile_url: fileInfo.url,
+          uploadfile_state: 'AP',
+          uploadfile_amount: doc.payment_advice_amount,
+          uploadfile_currency: doc.payment_advice_currency
+        })
+      }
+    }
+    let customer_files = []
+    if(doc.customer_atta_files && doc.customer_atta_files.length > 0) {
+      for(let f of doc.customer_atta_files) {
+        let fileInfo = await common.fileSaveMongo(f.response.info.path, 'zhongtan')
+        customer_files.push(fileInfo.url)
+      }
+    }
     
     adduser = await tb_user.create({
       user_type: GLBConfig.TYPE_CUSTOMER,
@@ -121,7 +144,8 @@ exports.addAct = async req => {
       u8_code: doc.u8_code,
       u8_alias: doc.u8_alias,
       u8_vendor_code: doc.u8_vendor_code,
-      u8_vendor_alias: doc.u8_vendor_alias
+      u8_vendor_alias: doc.u8_vendor_alias,
+      user_attachment: customer_files
     })
 
     await tb_user_groups.create({
@@ -213,6 +237,17 @@ exports.modifyAct = async req => {
     modiuser.u8_alias = doc.new.u8_alias
     modiuser.u8_vendor_code = doc.new.u8_vendor_code
     modiuser.u8_vendor_alias = doc.new.u8_vendor_alias
+    let user_attachment = []
+    if(doc.new.customer_atta_files && doc.new.customer_atta_files.length > 0) {
+      if(modiuser.user_attachment && modiuser.user_attachment.length > 0) {
+        user_attachment = modiuser.user_attachment
+      }
+      for(let f of doc.new.customer_atta_files) {
+        let fileInfo = await common.fileSaveMongo(f.response.info.path, 'zhongtan')
+        user_attachment.push(fileInfo.url)
+      }
+    }
+    modiuser.user_attachment = user_attachment
     await modiuser.save()
 
     let returnData = JSON.parse(JSON.stringify(modiuser))
@@ -469,4 +504,25 @@ exports.importDemurrageCheck = async user_id => {
       }
     }
   }
+}
+
+exports.uploadAct = async req => {
+  let fileInfo = await common.fileSaveTemp(req)
+  return common.success(fileInfo)
+}
+
+exports.removeAttachmentAct = async req => {
+  let doc = common.docValidate(req)
+  let modiuser = await tb_user.findOne({
+    where: {
+      user_id: doc.user_id,
+      state: GLBConfig.ENABLE
+    }
+  })
+  if(modiuser) {
+    modiuser.user_attachment = _.remove(modiuser.user_attachment, doc.atta_path)
+    await modiuser.save()
+    return common.success(modiuser)
+  }
+  return common.success()
 }

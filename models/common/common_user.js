@@ -178,4 +178,9 @@ module.exports = db.defineModel('tbl_common_user', {
     type: db.STRING(100),
     allowNull: true
   },
+  user_attachment: {
+    // U8系统供应商别名
+    type: db.JSON,
+    allowNull: true
+  },
 })

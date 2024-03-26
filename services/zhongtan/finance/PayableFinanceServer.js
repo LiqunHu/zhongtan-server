@@ -500,7 +500,7 @@ exports.queryPaymentAct= async req => {
         }
     })
     let returnData = {}
-    let queryStr = `SELECT pa.*, fp.finance_payable_id, fp.finance_payable_u8_id, fp.finance_payable_u8_trade_id from tbl_zhongtan_payment_advice pa right join tbl_zhongtan_finance_payable fp on pa.payment_advice_id = fp.payment_advice_id  WHERE pa.state = 1 AND fp.state = 1 AND pa.payment_advice_status = '2' AND fp.finance_payable_u8_id IS NOT NULL AND fp.finance_payment_u8_id IS NULL`
+    let queryStr = `SELECT pa.*, fp.finance_payable_id, fp.finance_payable_u8_id, fp.finance_payable_u8_trade_id, fp.finance_payment_date from tbl_zhongtan_payment_advice pa right join tbl_zhongtan_finance_payable fp on pa.payment_advice_id = fp.payment_advice_id  WHERE pa.state = 1 AND fp.state = 1 AND pa.payment_advice_status = '2' AND fp.finance_payable_u8_id IS NOT NULL AND fp.finance_payment_u8_id IS NULL`
     let replacements = []
     if(doc.search_data) {
         if(doc.search_data.payable_date && doc.search_data.payable_date.length > 1 && doc.search_data.payable_date[0]  && doc.search_data.payable_date[1]) {
@@ -626,6 +626,11 @@ exports.queryPaymentAct= async req => {
                 }
             }
             item.create_date = moment(r.created_at, 'YYYY-MM-DD hh:mm:ss').format('YYYY-MM-DD hh:mm:ss')
+            if(r.finance_payment_date) {
+                item.finance_payment_date = moment(r.finance_payment_date, 'YYYY-MM-DD').format('YYYY-MM-DD')
+            } else {
+                item.finance_payment_date = moment(r.created_at, 'YYYY-MM-DD').format('YYYY-MM-DD')
+            }
             let payment_file = await tb_upload_file.findOne({
                 where: {
                     uploadfile_index1: item.payment_advice_id,
@@ -688,8 +693,8 @@ exports.submitPaymentAct = async req => {
                             await fp.save()
                         }
                         let payment_url = GLBConfig.U8_CONFIG.host + GLBConfig.U8_CONFIG.pay_add_api_url + `?from_account=${GLBConfig.U8_CONFIG.from_account}&to_account=${GLBConfig.U8_CONFIG.to_account}&app_key=${GLBConfig.U8_CONFIG.app_key}&token=${token}&biz_id=${biz_id}&sync=1` 
-                        let send_date = moment(pl.create_date, 'YYYY-MM-DD hh:mm:ss').format('YYYY-MM-DD')
-                        let send_date_m = moment(pl.create_date, 'YYYY-MM-DD hh:mm:ss').format('M')
+                        let send_date = moment(pl.finance_payment_date, 'YYYY-MM-DD hh:mm:ss').format('YYYY-MM-DD')
+                        let send_date_m = moment(pl.finance_payment_date, 'YYYY-MM-DD hh:mm:ss').format('M')
                         let amount = new Decimal(pl.payment_advice_amount).toNumber()
                         let original_amount = new Decimal(pl.payment_advice_amount).toNumber()
                         let currency_name = 'USD'
@@ -1106,6 +1111,28 @@ exports.removePaymentAct = async req => {
         fp.finance_payment_order_no = null
         fp.finance_payment_u8_id = null
         await fp.save()
+    }
+    return common.success()
+}
+
+exports.submitPaymentInfoAct = async req => {
+    let doc = common.docValidate(req)
+    if(doc.payment_list) {
+        let submit_data = doc.submit_data
+        if(submit_data.finance_payment_date) {
+            for(let pl of doc.payment_list) {
+                let fp = await tb_finance_payable.findOne({
+                    where: {
+                        finance_payable_id: pl.finance_payable_id,
+                        state: GLBConfig.ENABLE
+                    }
+                })
+                if(fp) {
+                    fp.finance_payment_date = submit_data.finance_payment_date
+                    await fp.save()
+                }
+            }
+        }
     }
     return common.success()
 }

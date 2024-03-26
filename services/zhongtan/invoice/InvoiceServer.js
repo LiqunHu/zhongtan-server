@@ -1188,6 +1188,191 @@ exports.downloadDoAct = async req => {
   return common.success({ url: fileInfo.url })
 }
 
+exports.downloadDo2Act = async req => {
+  let doc = common.docValidate(req),
+    user = req.user
+  let bl = await tb_bl.findOne({
+    where: {
+      invoice_masterbi_id: doc.invoice_masterbi_id
+    }
+  })
+  if(!doc.invoice_masterbi_delivery_to || !doc.invoice_masterbi_valid_to) {
+    return common.error('do_01')
+  }
+  let dc = await tb_user.findOne({
+    where: {
+      user_name: doc.invoice_masterbi_delivery_to,
+      state: GLBConfig.ENABLE,
+      user_type: GLBConfig.TYPE_CUSTOMER
+    }
+  })
+  if(!dc) {
+    return common.error('do_02')
+  }
+  if(dc.user_customer_type == GLBConfig.USER_CUSTOMER_TYPE_CONSIGNEE && dc.user_name != bl.invoice_masterbi_consignee_name) {
+    // Delivery To 是收货人，必须与舱单收货人名称一致
+    return common.error('do_03')
+  }
+  if(bl.invoice_masterbi_bl.indexOf('OOLU') === 0 && doc.invoice_masterbi_do_return_depot === 'AFICD') {
+    // 临时限制，OOLU开头的提单不能选择AFICD堆场
+    return common.error('do_06')
+  }
+  if(!doc.doDeliverToEdit) {
+    // 无权限D/O 判断代理是否开过收据
+    let queryStr = `SELECT * FROM tbl_zhongtan_uploadfile WHERE state = ? AND uploadfile_index1 = ? AND api_name IN (?) ORDER BY uploadfile_id DESC`
+    let replacements = [GLBConfig.ENABLE, bl.invoice_masterbi_id, ['RECEIPT-DEPOSIT', 'RECEIPT-RECEIPT']]
+    let deposits = await model.simpleSelect(queryStr, replacements)
+    if(deposits && deposits.length > 0) {
+      if(deposits[0].api_name === 'RECEIPT-DEPOSIT') {
+        let deliveryFlg = false
+        for(let d of deposits) {
+          if(d.api_name === 'RECEIPT-RECEIPT' && d.uploadfile_received_from === doc.invoice_masterbi_delivery_to) {
+            deliveryFlg = true
+          }
+        }
+        if(!deliveryFlg) {
+          return common.error('do_07')
+        }
+      }
+    }
+  }
+  let delivery_order_no = ('000000000000000' + bl.invoice_masterbi_id).slice(-8)
+  bl.invoice_masterbi_delivery_to = doc.invoice_masterbi_delivery_to
+  bl.invoice_masterbi_do_date = moment().format('YYYY-MM-DD')
+  if(doc.invoice_masterbi_valid_to) {
+    if(doc.invoice_masterbi_valid_to.indexOf('T') >= 0) {
+      bl.invoice_masterbi_valid_to = moment(moment.utc(doc.invoice_masterbi_valid_to).toDate()).format('YYYY-MM-DD')
+    } else {
+      bl.invoice_masterbi_valid_to = moment(doc.invoice_masterbi_valid_to, 'YYYY-MM-DD').format('YYYY-MM-DD')
+    }
+  } else {
+    bl.invoice_masterbi_valid_to = null
+  }
+  bl.invoice_masterbi_do_delivery_order_no = delivery_order_no
+  bl.invoice_masterbi_do_fcl = doc.invoice_masterbi_do_fcl
+  bl.invoice_masterbi_do_icd = doc.invoice_masterbi_do_icd
+  bl.invoice_masterbi_do_return_depot = doc.invoice_masterbi_do_return_depot
+  bl.invoice_masterbi_do_release_date = new Date()
+  await bl.save()
+
+  let vessel = await tb_vessel.findOne({
+    where: {
+      invoice_vessel_id: bl.invoice_vessel_id
+    }
+  })
+
+  let continers = await tb_container.findAll({
+    where: {
+      invoice_vessel_id: bl.invoice_vessel_id,
+      invoice_containers_bl: bl.invoice_masterbi_bl
+    }
+  })
+  
+  let commonUser = await tb_user.findOne({
+    where: {
+      user_id: user.user_id
+    }
+  })
+
+  let renderData = JSON.parse(JSON.stringify(bl))
+  renderData.print_date = moment().format('DD/MM/YYYY')
+  renderData.delivery_order_no = delivery_order_no
+  renderData.invoice_vessel_name = vessel.invoice_vessel_name
+  renderData.invoice_vessel_voyage = vessel.invoice_vessel_voyage
+  renderData.vessel_eta = vessel.invoice_vessel_eta ? moment(vessel.invoice_vessel_eta, 'DD-MM-YYYY').format('DD/MM/YYYY') : ''
+  renderData.vessel_atd = vessel.invoice_vessel_atd ? moment(vessel.invoice_vessel_atd, 'DD-MM-YYYY').format('DD/MM/YYYY') : ''
+  renderData.do_date = bl.invoice_masterbi_do_date ? moment(bl.invoice_masterbi_do_date).format('DD/MM/YYYY') : ''
+  renderData.valid_to = bl.invoice_masterbi_valid_to ? moment(bl.invoice_masterbi_valid_to).format('DD/MM/YYYY') : ''
+  renderData.delivery_to = bl.invoice_masterbi_do_icd
+  renderData.fcl = bl.invoice_masterbi_do_fcl
+  renderData.depot = bl.invoice_masterbi_do_return_depot
+  if(bl.invoice_masterbi_do_return_depot) {
+    let depot = await tb_edi_depot.findOne({
+      where: {
+        state : GLBConfig.ENABLE,
+        edi_depot_name: bl.invoice_masterbi_do_return_depot
+      }
+    })
+    if(depot) {
+      renderData.depot_address = depot.edi_depot_address
+    }
+  }
+  let carrier = 'COSCO'
+  if(bl.invoice_masterbi_bl.indexOf('COS') >= 0) {
+    carrier  = 'COSCO'
+  } else if(bl.invoice_masterbi_bl.indexOf('OOLU') >= 0) {
+    carrier  = 'OOCL'
+  }
+  renderData.carrier = carrier
+  renderData.user_name = commonUser.user_name
+  renderData.user_phone = commonUser.user_phone
+  renderData.user_email = commonUser.user_email
+  renderData.bl_packages = bl.invoice_masterbi_package_no + ' ' + bl.invoice_masterbi_package_unit
+  // 生成二维码
+  let qr_text = 'Vessel:' + renderData.invoice_vessel_name + '_Voyage:' + renderData.invoice_vessel_voyage + '_BL:' + bl.invoice_masterbi_bl
+  let qrCode = await common.generateQRCode(qr_text)
+  if(qrCode) {
+    renderData.qr_path = qrCode
+  }
+  let fileInfo = {}
+  if(vessel.invoice_vessel_type && vessel.invoice_vessel_type === 'Bulk') {
+    fileInfo = await common.ejs2Pdf('doBulk2.ejs', renderData, 'zhongtan')
+  } else {
+    renderData.containers = JSON.parse(JSON.stringify(continers))
+    let cSize = []
+    for (let i = 0; i < renderData.containers.length; i++) {
+      // renderData.containers[i].invoice_containers_tare = common.getContainerTare(renderData.containers[i].invoice_containers_size)
+      if(renderData.containers[i].invoice_containers_type === 'S') {
+        renderData.containers[i].invoice_containers_soc = 'SOC'
+      } else {
+        renderData.containers[i].invoice_containers_soc = ''
+      }
+      if (cSize.indexOf(renderData.containers[i].invoice_containers_size) < 0) {
+        cSize.push(renderData.containers[i].invoice_containers_size)
+      }
+    }
+    renderData.container_count = bl.invoice_masterbi_container_no + 'X' + cSize.join(' ')
+    fileInfo = await common.ejs2Pdf('do2.ejs', renderData, 'zhongtan')
+  }
+  
+  await tb_uploadfile.create({
+    api_name: 'RECEIPT-DO',
+    user_id: user.user_id,
+    uploadfile_index1: bl.invoice_masterbi_id,
+    uploadfile_name: fileInfo.name,
+    uploadfile_url: fileInfo.url,
+    uploadfil_release_date: new Date(),
+    uploadfil_release_user_id: user.user_id
+  })
+
+  if(vessel.invoice_vessel_type && vessel.invoice_vessel_type === 'Bulk') {
+    let icd = await tb_icd.findOne({
+      where: {
+        state : GLBConfig.ENABLE,
+        icd_name: 'TPA TERMINAL'
+      }
+    })
+    if(icd && icd.icd_email) {
+      // this.createDepotEdiFile(icd.icd_email, bl)
+    }
+  } else {
+    if(bl.invoice_masterbi_do_return_depot) {
+      let depot = await tb_edi_depot.findOne({
+        where: {
+          state : GLBConfig.ENABLE,
+          edi_depot_name: bl.invoice_masterbi_do_return_depot
+        }
+      })
+      if(depot && depot.edi_depot_send_edi && depot.edi_depot_send_edi === GLBConfig.ENABLE && depot.edi_depot_send_edi_email) {
+        // D/O后发送EDI文件
+        // this.createDepotEdiFile(depot.edi_depot_send_edi_email, bl)
+      }
+    }
+  }
+  
+  return common.success({ url: fileInfo.url })
+}
+
 exports.doReleaseAct = async req => {
   let doc = common.docValidate(req),
     user = req.user

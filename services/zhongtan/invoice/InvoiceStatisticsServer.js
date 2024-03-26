@@ -64,6 +64,10 @@ exports.searchAct = async req => {
     queryStr += ' and a.invoice_vessel_id = ? '
     replacements.push(doc.invoice_vessel_id)
   }
+  if (doc.invoice_carrier) {
+    queryStr += 'invoice_masterbi_carrier = ? '
+    replacements.push(doc.invoice_carrier)
+  }
   let customer = {}
   if(doc.invoice_customer_id) {
     customer = await tb_user.findOne({

@@ -108,4 +108,9 @@ module.exports = db.defineModel('tbl_zhongtan_finance_payable', {
     type: db.STRING(50),
     allowNull: true
   },
+  finance_payment_date: {
+    // 实际付款日期
+    type: db.STRING(20),
+    allowNull: true
+  },
 })

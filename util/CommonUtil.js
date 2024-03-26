@@ -16,6 +16,14 @@ const Error = require('./Error')
 const GLBConfig = require('./GLBConfig')
 const logger = require('../app/logger').createLogger(__filename)
 
+const qrcode = require('qrcode')
+const qrcode_opts = {
+  errorCorrectionLevel: 'H',
+  type: 'image/png',
+  quality: 0.92,
+  margin: 1,
+};
+
 Date.prototype.Format = function(fmt) {
   //author: meizz
   var o = {
@@ -223,9 +231,9 @@ async function ejs2Pdf(templateFile, renderData, bucket) {
   const page = await browser.newPage()
   await page.setContent(html)
   let filePath = path.join(process.cwd(), config.fileSys.filesDir, uuid.v4().replace(/-/g, '') + '.pdf')
-  console.log('filePath', filePath)
   await page.pdf({ path: filePath, format: 'A4', landscape: true })
   await page.close()
+  console.log('filePath', filePath)
   let fileInfo = await fileUtil.fileSaveMongoByLocalPath(filePath, bucket, config.fileSys.bucket[bucket].baseUrl)
   return fileInfo
 }
@@ -755,6 +763,21 @@ const equalsStr = async(str1, str2) => {
   return false
 }
 
+const generateQRCode = async(text) => {
+  let qr_path = ''
+  let promise = new Promise((resolve, reject) => {
+    qrcode.toDataURL(text, qrcode_opts).then(url => {
+      resolve(url)
+    }).catch(err => {
+      reject(err)
+    })
+  })
+  await promise.then((data) => {
+    qr_path = data
+  })
+  return qr_path
+}
+
 module.exports = {
   docValidate: docValidate,
   reqTrans: reqTrans,
@@ -798,5 +821,6 @@ module.exports = {
   jsonFindOne: jsonFindOne,
   jsonFindAll: jsonFindAll,
   fileSize2Str: fileSize2Str,
-  equalsStr: equalsStr
+  equalsStr: equalsStr,
+  generateQRCode: generateQRCode
 }

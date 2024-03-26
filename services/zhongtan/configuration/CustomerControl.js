@@ -25,7 +25,11 @@ module.exports = async (req, res) => {
       ret = await srv.changeRateAct(req)
     } else if (method === 'checkPassword') {
       ret = await srv.checkPasswordAct(req)
-    } 
+    } else if (method === 'upload') {
+      ret = await srv.uploadAct(req)
+    } else if (method === 'removeAttachment') {
+      ret = await srv.removeAttachmentAct(req)
+    }
     common.sendData(res, ret)
   } catch (error) {
     common.sendFault(res, error)
