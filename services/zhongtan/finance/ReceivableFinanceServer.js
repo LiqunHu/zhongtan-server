@@ -256,47 +256,47 @@ exports.queryReceivableAct = async req => {
                                 item.receipt_detail_total = Decimal.isDecimal(fee_total) ? fee_total.toNumber() : fee_total
                             }
                         } else {
-                            if(bl.invoice_masterbi_of) {
+                            if(bl.invoice_masterbi_of && new Decimal(bl.invoice_masterbi_of).toNumber() != 0) {
                                 fees.push({'fee_name': 'OCEAN FREIGHT', 'fee_amount': bl.invoice_masterbi_of})
                                 fee_total = new Decimal(fee_total).plus(new Decimal(bl.invoice_masterbi_of))
                             }
-                            if(bl.invoice_masterbi_bl_amendment) {
+                            if(bl.invoice_masterbi_bl_amendment && new Decimal(bl.invoice_masterbi_bl_amendment).toNumber() != 0) {
                                 fees.push({'fee_name': 'B/L AMENDMENT', 'fee_amount': bl.invoice_masterbi_bl_amendment})
                                 fee_total = new Decimal(fee_total).plus(new Decimal(bl.invoice_masterbi_bl_amendment))
                             }
-                            if(bl.invoice_masterbi_cod_charge) {
+                            if(bl.invoice_masterbi_cod_charge && new Decimal(bl.invoice_masterbi_cod_charge).toNumber() != 0) {
                                 fees.push({'fee_name': 'COD CHARGE', 'fee_amount': bl.invoice_masterbi_cod_charge})
                                 fee_total = new Decimal(fee_total).plus(new Decimal(bl.invoice_masterbi_cod_charge))
                             }
-                            if(bl.invoice_masterbi_transfer) {
+                            if(bl.invoice_masterbi_transfer && new Decimal(bl.invoice_masterbi_transfer).toNumber() != 0) {
                                 fees.push({'fee_name': 'CONTAINER TRANSFER', 'fee_amount': bl.invoice_masterbi_transfer})
                                 fee_total = new Decimal(fee_total).plus(new Decimal(bl.invoice_masterbi_transfer))
                             }
-                            if(bl.invoice_masterbi_lolf) {
+                            if(bl.invoice_masterbi_lolf && new Decimal(bl.invoice_masterbi_lolf).toNumber() != 0) {
                                 fees.push({'fee_name': 'LIFT ON LIFT OFF', 'fee_amount': bl.invoice_masterbi_lolf})
                                 fee_total = new Decimal(fee_total).plus(new Decimal(bl.invoice_masterbi_lolf))
                             }
-                            if(bl.invoice_masterbi_lcl) {
+                            if(bl.invoice_masterbi_lcl && new Decimal(bl.invoice_masterbi_lcl).toNumber() != 0) {
                                 fees.push({'fee_name': 'LCL FEE', 'fee_amount': bl.invoice_masterbi_lcl})
                                 fee_total = new Decimal(fee_total).plus(new Decimal(bl.invoice_masterbi_lcl))
                             }
-                            if(bl.invoice_masterbi_amendment) {
+                            if(bl.invoice_masterbi_amendment && new Decimal(bl.invoice_masterbi_amendment).toNumber() != 0) {
                                 fees.push({'fee_name': 'AMENDMENT FEE', 'fee_amount': bl.invoice_masterbi_amendment})
                                 fee_total = new Decimal(fee_total).plus(new Decimal(bl.invoice_masterbi_amendment))
                             }
-                            if(bl.invoice_masterbi_printing) {
+                            if(bl.invoice_masterbi_printing && new Decimal(bl.invoice_masterbi_printing).toNumber() != 0) {
                                 fees.push({'fee_name': 'B/L PRINTING FEE', 'fee_amount': bl.invoice_masterbi_printing})
                                 fee_total = new Decimal(fee_total).plus(new Decimal(bl.invoice_masterbi_printing))
                             }
-                            if(bl.invoice_masterbi_others) {
+                            if(bl.invoice_masterbi_others && new Decimal(bl.invoice_masterbi_others).toNumber() != 0) {
                                 fees.push({'fee_name': 'OTHERS', 'fee_amount': bl.invoice_masterbi_others})
                                 fee_total = new Decimal(fee_total).plus(new Decimal(bl.invoice_masterbi_others))
                             }
-                            if(bl.invoice_masterbi_tasac) {
+                            if(bl.invoice_masterbi_tasac && new Decimal(bl.invoice_masterbi_tasac).toNumber() != 0) {
                                 fees.push({'fee_name': 'TASAC FEE', 'fee_amount': bl.invoice_masterbi_tasac})
                                 fee_total = new Decimal(fee_total).plus(new Decimal(bl.invoice_masterbi_tasac))
                             }
-                            if(bl.invoice_masterbi_do_fee) {
+                            if(bl.invoice_masterbi_do_fee && new Decimal(bl.invoice_masterbi_do_fee).toNumber() != 0) {
                                 fees.push({'fee_name': 'DO FEE', 'fee_amount': bl.invoice_masterbi_do_fee})
                                 fee_total = new Decimal(fee_total).plus(new Decimal(bl.invoice_masterbi_do_fee))
                             }
