@@ -1,0 +1,346 @@
+<!DOCTYPE  html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<style type="text/css">
+			 @page {
+				size: A4 portrait;
+				margin: 0;
+			}
+			* {margin:0; padding:0; text-indent:0; }
+			 h1 { color: black; font-style: normal; font-weight: bold; text-decoration: none; font-size: 14pt; }
+			 .s1 { color: black; font-style: normal; font-weight: normal; text-decoration: none; font-size: 8pt; }
+			 .s2 { color: black; font-style: normal; font-weight: bold; text-decoration: none; font-size: 12pt; }
+			 .s3 { color: black; font-style: normal; font-weight: normal; text-decoration: none; font-size: 8pt; }
+			 .s4 { color: black; font-style: normal; font-weight: bold; text-decoration: none; font-size: 8pt; }
+			 .s5 { color: black; font-style: normal; font-weight: bold; text-decoration: none; font-size: 9pt; }
+			 .s6 { color: black; font-style: normal; font-weight: normal; text-decoration: none; font-size: 7.5pt; }
+			 .s7 { color: black; font-style: normal; font-weight: normal; text-decoration: none; font-size: 8pt; }
+			 p { color: black; font-style: normal; font-weight: normal; text-decoration: none; font-size: 6pt; margin:0pt; }
+			 table, tbody {vertical-align: top; overflow: visible; }
+			 .td-left-center-100 {
+				text-align: left; /* 文字居右 */
+				vertical-align: middle; /* 文字垂直居中 */
+				height: 100px; /* 设置td的高度 */
+				display: table-cell; /* 让td表现得像表格单元格 */
+			}
+
+			 .td-right-center-100 {
+				text-align: right; /* 文字居右 */
+				vertical-align: middle; /* 文字垂直居中 */
+				height: 100px; /* 设置td的高度 */
+				display: table-cell; /* 让td表现得像表格单元格 */
+			}
+
+			.row {
+				display: flex;
+				flex-wrap: wrap;
+				justify-content: space-between;
+			}
+		</style>
+	</head>
+	<body>
+	<div style="size: A4 portrait; padding: 0px 30px; page-break-before: always">
+	
+	  <table border="0" cellspacing="0" cellpadding="0" width="100%">
+	  <tr>
+	  <td class="td-left-center-100">
+		<div>
+			<h1 style="padding-top: 3pt;padding-left: 6pt;text-indent: 0pt;text-align: left;">CHINESE TANZANIAN JOINT SHIPPING COMPANY</h1>
+			<p class="s1" style="padding-left: 6pt;text-indent: 0pt;line-height: 11pt;text-align: left;">31 kisutu Street , P.O. Box 696, Dar es Salaam, Tanzania</p>
+		</div>
+	  </td>
+	  <td width="60" class="td-right-center-100">
+	  	<img width="60" height="60" src="data:image/png;base64,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" />
+	  </td>
+	  </tr>
+	  </table>
+	  	<table style="border-collapse:collapse; margin-top: 10px; width: 100%; table-layout: fixed;" cellspacing="0">
+			<tr>
+				<td colspan="32" style="vertical-align: middle;">
+					<hr style="border: 0.5px solid #7F7F7F;"/>
+				</td>
+				<td colspan="11" style="border: 1px solid #7F7F7F;">
+					<p class="s2" style="text-align: center;">DELIVERY ORDER</p>
+				</td>
+				<td colspan="5" style="vertical-align: middle;">
+					<hr style="border: 0.5px solid #7F7F7F;"/>
+				</td>
+			</tr>
+		</table>
+		<table style="border-collapse:collapse; margin-top: 10px; width: 100%; table-layout: fixed;" cellspacing="0">
+			<tr>
+				<td rowspan="3" colspan="20">
+					<table>
+						<tr>
+							<td>
+								<p class="s3" style="text-indent: 0pt;line-height: 10pt;text-align: left;">To ICD/Terminal:</p>
+							</td>
+							<td>
+								<p class="s4" style="text-indent: 0pt;line-height: 10pt;text-align: left;">
+									<% if (ejsData.delivery_to) { %>
+										<%=ejsData.delivery_to%>
+									<% } else { %>
+										TICTS TERMINAL
+									<% } %>
+								</p>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<p class="s3" style="text-indent: 0pt;line-height: 10pt;text-align: left;">Cargo Release To:</p>
+							</td>
+							<td>
+								<p class="s3" style="text-indent: 0pt;line-height: 10pt;text-align: left;">
+									<%=ejsData.invoice_masterbi_delivery_to%>
+								</p>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td rowspan="3" colspan="12" style="text-align: right;">
+					<div style="font-size: 24px;font-weight: bold; transform:rotate(-36deg); color: #DCDCDC; position: relative; bottom: 14px;">
+						SINOTASHIP
+					  </div>
+				</td>
+				<td colspan="7" style="background-color:#D2D2D2; border-left: 1px solid #7F7F7F; border-top: 1px solid #7F7F7F; " >
+					<p class="s3" style="padding-left: 4pt;text-indent: 0pt;text-align: left;">D/Order No:</p>
+				</td>
+				<td colspan="9" style="border-top: 1px solid #7F7F7F; border-right: 1px solid #7F7F7F; " >
+					<p class="s3" style="padding-left: 4pt;text-indent: 0pt;text-align: left;">
+						<%=ejsData.delivery_order_no%>
+					</p>
+				</td>
+			</tr>
+			<tr>
+				<td colspan="7" style="background-color:#D2D2D2; border-left: 1px solid #7F7F7F; border-top: 1px solid #7F7F7F; " >
+					<p class="s3" style="padding-left: 4pt;text-indent: 0pt;text-align: left;">D/Order Date:</p>
+				</td>
+				<td colspan="9" style="border-top: 1px solid #7F7F7F; border-right: 1px solid #7F7F7F; ">
+					<p class="s3" style="padding-left: 4pt;text-indent: 0pt;text-align: left;">
+						<%=ejsData.do_date%>
+					</p>
+				</td>
+			</tr>
+			<tr>
+				<td colspan="7" style="background-color:#D2D2D2; border-left: 1px solid #7F7F7F; border-top: 1px solid #7F7F7F; border-bottom: 1px solid #7F7F7F; " >
+					<p class="s3" style="padding-left: 4pt;text-indent: 0pt;text-align: left;">D/O Valid Till:</p>
+				</td>
+				<td colspan="9" style="border-top: 1px solid #7F7F7F; border-right: 1px solid #7F7F7F; border-bottom: 1px solid #7F7F7F;">
+					<p class="s3" style="padding-left: 4pt;text-indent: 0pt;text-align: left;">
+						<%=ejsData.valid_to%>
+					</p>
+				</td>
+			</tr>
+			<tr>
+				<td rowspan="5" colspan="18" style="border: 1px solid #7F7F7F;">
+					<table>
+						<tr>
+							<td>
+								<p class="s3" style="padding-left: 4pt;text-indent: 0pt;text-align: left;">Consignee:</p>
+							</td>
+							<td>
+								<p class="s3" style="padding-left: 7pt;text-indent: 0pt;line-height: 10pt;text-align: left;">
+									<%=ejsData.invoice_masterbi_consignee_name%>
+								</p>
+							</td>
+						</tr>
+						<tr>
+							<td>
+							</td>
+							<td>
+								<p class="s3" style="padding-left: 7pt;text-indent: 0pt;line-height: 10pt;text-align: left;">
+									<%=ejsData.invoice_masterbi_consignee_address%>
+								</p>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td colspan="3" style="background-color:#D2D2D2; border-top: 1px solid #7F7F7F; border-bottom: 1px solid #7F7F7F;">
+					<p class="s3" style="padding-top: 1pt;padding-left: 4pt;text-indent: 0pt;text-align: left;">Vessel:</p>
+				</td>
+				<td colspan="11" style="border-top: 1px solid #7F7F7F; border-bottom: 1px solid #7F7F7F; border-right: 1px solid #7F7F7F;">
+					<p class="s3" style="padding-top: 1pt;padding-left: 4pt;text-indent: 0pt;text-align: left;">
+						<%=ejsData.invoice_vessel_name%>
+					</p>
+				</td>
+				<td colspan="3" style="background-color:#D2D2D2; border-top: 1px solid #7F7F7F; border-bottom: 1px solid #7F7F7F;">
+					<p class="s3" style="padding-top: 1pt;padding-left: 4pt;text-indent: 0pt;text-align: left;">Voyage:</p>
+				</td>
+				<td colspan="5" style="border-top: 1px solid #7F7F7F; border-bottom: 1px solid #7F7F7F; border-right: 1px solid #7F7F7F;">
+					<p class="s3" style="padding-top: 1pt;padding-left: 4pt;text-indent: 0pt;text-align: left;">
+						<%=ejsData.invoice_vessel_voyage%>
+					</p>
+				</td>
+				<td colspan="3" style="background-color:#D2D2D2; border-top: 1px solid #7F7F7F; border-bottom: 1px solid #7F7F7F;">
+					<p class="s3" style="padding-top: 1pt;padding-left: 4pt;text-indent: 0pt;text-align: left;">ETA:</p>
+				</td>
+				<td colspan="5" style="border-top: 1px solid #7F7F7F; border-bottom: 1px solid #7F7F7F; border-right: 1px solid #7F7F7F;">
+					<p class="s3" style="padding-top: 1pt;padding-left: 4pt;text-indent: 0pt;text-align: left;">
+						<%=ejsData.vessel_eta%>
+					</p>
+				</td>
+			</tr>
+			<tr>
+				<td colspan="10" style="background-color:#D2D2D2; border-top: 1px solid #7F7F7F; border-bottom: 1px solid #7F7F7F; border-right: 1px solid #7F7F7F;">
+					<p class="s3" style="padding-top: 1pt;padding-left: 4pt;text-indent: 0pt;text-align: left;">Port of Discharge:</p>
+				</td>
+				<td colspan="10" style="background-color:#D2D2D2; border-top: 1px solid #7F7F7F; border-bottom: 1px solid #7F7F7F; border-right: 1px solid #7F7F7F;">
+					<p class="s3" style="padding-top: 1pt;padding-left: 4pt;text-indent: 0pt;text-align: left;">Place of Delivery:</p>
+				</td>
+				<td colspan="10" style="background-color:#D2D2D2; border-top: 1px solid #7F7F7F; border-bottom: 1px solid #7F7F7F; border-right: 1px solid #7F7F7F;">
+					<p class="s3" style="padding-top: 1pt;padding-left: 4pt;text-indent: 0pt;text-align: left;">Place of Destination:</p>
+				</td>
+			</tr>
+			<tr>
+				<td colspan="10" style="border-top: 1px solid #7F7F7F; border-bottom: 1px solid #7F7F7F; border-right: 1px solid #7F7F7F;">
+					<p class="s3" style="padding-top: 3pt;padding-left: 4pt;text-indent: 0pt;text-align: left;">TZDAR</p>
+				</td>
+				<td colspan="10" style="border-top: 1px solid #7F7F7F; border-bottom: 1px solid #7F7F7F; border-right: 1px solid #7F7F7F;">
+					<p class="s3" style="padding-top: 3pt;padding-left: 4pt;text-indent: 0pt;text-align: left;"><%=ejsData.invoice_masterbi_delivery%></p>
+				</td>
+				<td colspan="10" style="border-top: 1px solid #7F7F7F; border-bottom: 1px solid #7F7F7F; border-right: 1px solid #7F7F7F;">
+					<p class="s3" style="padding-top: 3pt;padding-left: 4pt;text-indent: 0pt;text-align: left;"><%=ejsData.invoice_masterbi_destination%></p>
+				</td>
+			</tr>
+			<tr>
+				<td colspan="6" style="background-color:#D2D2D2; border-top: 1px solid #7F7F7F; border-bottom: 1px solid #7F7F7F;">
+					<p class="s3" style="padding-top: 1pt;padding-left: 4pt;text-indent: 0pt;text-align: left;">B/L No:</p>
+				</td>
+				<td colspan="8" style="border-top: 1px solid #7F7F7F; border-bottom: 1px solid #7F7F7F; border-right: 1px solid #7F7F7F;">
+					<p class="s4" style="padding-top: 1pt;padding-left: 4pt;text-indent: 0pt;text-align: left;">
+						<%=ejsData.invoice_masterbi_bl%>
+					</p>
+				</td>
+				<td colspan="7" style="background-color:#D2D2D2; border-top: 1px solid #7F7F7F; border-bottom: 1px solid #7F7F7F;">
+					<p class="s3" style="padding-top: 1pt;padding-left: 4pt;text-indent: 0pt;text-align: left;">Nature:</p>
+				</td>
+				<td colspan="9" style="border-top: 1px solid #7F7F7F; border-bottom: 1px solid #7F7F7F; border-right: 1px solid #7F7F7F;">
+					<p class="s3" style="padding-top: 1pt;padding-left: 4pt;text-indent: 0pt;text-align: left;">
+						<%=ejsData.invoice_masterbi_cargo_type%>
+					</p>
+				</td>
+			</tr>
+			<tr>
+				<td colspan="6" style="background-color:#D2D2D2; border-top: 1px solid #7F7F7F; border-bottom: 1px solid #7F7F7F;">
+					<p class="s3" style="padding-top: 1pt;padding-left: 4pt;text-indent: 0pt;text-align: left;">Weight (Kgs):</p>
+				</td>
+				<td colspan="8" style="border-top: 1px solid #7F7F7F; border-bottom: 1px solid #7F7F7F; border-right: 1px solid #7F7F7F;">
+					<p class="s3" style="padding-top: 1pt;padding-left: 4pt;text-indent: 0pt;text-align: left;">
+						<%= ejsData.invoice_masterbi_net_weight %>
+					</p>
+				</td>
+				<td colspan="7" style="background-color:#D2D2D2; border-top: 1px solid #7F7F7F; border-bottom: 1px solid #7F7F7F;">
+					<p class="s3" style="padding-top: 1pt;padding-left: 4pt;text-indent: 0pt;text-align: left;">Volume (cbm):</p>
+				</td>
+				<td colspan="9" style="border-top: 1px solid #7F7F7F; border-bottom: 1px solid #7F7F7F; border-right: 1px solid #7F7F7F;">
+					<p class="s3" style="padding-top: 1pt;padding-left: 4pt;text-indent: 0pt;text-align: left;">
+						<%= ejsData.invoice_masterbi_gross_volume %>
+					</p>
+				</td>
+			</tr>
+		</table>
+		<table style="border-collapse:collapse; margin-top: 7px; width: 100%; height: auto; table-layout: fixed;" cellspacing="0">
+			<tr style="background-color:#D2D2D2; border: 1px solid #7F7F7F;" >
+				<td colspan="18" style="border-right: 1px solid #7F7F7F;">
+					<p class="s3" style="padding-top: 1pt;padding-left: 4pt;text-indent: 0pt;text-align: left;">Marks &amp; Numbers</p>
+				</td>
+				<td colspan="5" style="border-right: 1px solid #7F7F7F;">
+					<p class="s3" style="padding-top: 1pt;text-indent: 0pt;text-align: center;">No of Pkgs</p>
+				</td>
+				<td colspan="5" style="border-right: 1px solid #7F7F7F;">
+					<p class="s3" style="padding-top: 1pt;text-indent: 0pt;text-align: center;">Units</p>
+				</td>
+				<td colspan="20">
+					<p class="s3" style="padding-top: 1pt;padding-left: 4pt;text-indent: 0pt;text-align: left;">Description of Goods</p>
+				</td>
+			</tr>
+			<tr style="border-left: 1px solid #7F7F7F; border-right: 1px solid #7F7F7F; height: 340px;" >
+				<td colspan="18" style="border-right: 1px solid #7F7F7F;">
+					<p class="s7" style="padding-top: 1pt;padding-left: 3pt;text-indent: 0pt;text-align: left;">
+            <%= ejsData.invoice_masterbi_shipping_mark %>
+          </p>
+				</td>
+				<td colspan="5" style="border-right: 1px solid #7F7F7F;">
+					<p class="s3" style="padding-top: 7pt;text-indent: 0pt;line-height: 11pt;text-align: center;">
+						<%= ejsData.bl_packages %>
+					</p>
+				</td>
+				<td colspan="5" style="border-right: 1px solid #7F7F7F;">
+					<p class="s3" style="padding-top: 7pt;text-indent: 0pt;text-align: center;">
+						<%= ejsData.container_count %>
+					</p>
+				</td>
+				<td colspan="20">
+					<p class="s3" style="padding-left: 3pt;padding-top: 7pt;text-indent: 0pt;text-align: left;">
+						<%= ejsData.invoice_masterbi_goods_description %>
+					</p>
+				</td>
+			</tr>
+			<tr style="border-left: 1px solid #7F7F7F; border-bottom: 1px solid #7F7F7F; border-right: 1px solid #7F7F7F;">
+				<td colspan="18" style="border-right: 1px solid #7F7F7F;">
+					<p class="s3" style="text-indent: 0pt;text-align: center;">**Release on Payment of Landing Charges**</p>
+				</td>
+				<td colspan="5" style="border-right: 1px solid #7F7F7F;"></td>
+        <td colspan="5" style="border-right: 1px solid #7F7F7F;"></td>
+        <td colspan="20"></td>
+			</tr>
+		</table>
+		<table style="border-collapse:collapse; margin-top: 20px; width: 100%; height: auto; table-layout: fixed;" cellspacing="0">
+			<tr>
+				<td colspan="32">
+					<p class="s3" style="padding-top: 3pt;padding-left: 6pt;text-indent: 0pt;text-align: left;">This Delivery Order is issued subject to safe arrival of the vessel at the port of discharge, and to the terms and conditions,liberties and exceptions of the relative Bill of Lading and any clauses written or stamped thereon.</p>
+					<p class="s3" style="padding-left: 6pt;text-indent: 0pt;text-align: justify;">&quot;The receiver hereby accepts that CHINESE TANZANIAN JOINT SHIPPING COMPANY as carriers agent is not liablities of short lading / late delivery / damages and / or any liablities of the carrier and undertakes not to bring any legal action against CHINESE TANZANIAN JOINT SHIPPING COMPANY as carriers agent relevant to the same&quot;.</p>
+					<p class="s3" style="padding-left: 6pt;text-indent: 0pt;text-align: left;">No withdrawal and refund of charges is allowed once Delivery Order is issued for cargo/container cleared from the port.</p>
+					<p class="s3" style="padding-left: 6pt;text-indent: 0pt;text-align: left;">Uncleared cargo – withdrawal is accepted subject to demurrage settlement till the date of the request and no refund for the charges paid.</p>
+				</td>
+				<td colspan="4"></td>
+				<td colspan="12">
+					<p class="s1" style="text-indent: 0pt;text-align: right;">For <b>CHINESE TANZANIAN JOINT SHIPPING COMPANY</b></p>
+					<br />
+					<br />
+					<p class="s1" style="text-indent: 0pt;text-align: right;">As Agents Only</p>
+				</td>
+			</tr>
+		</table>
+		<table style="border-collapse:collapse; margin-top: 20px; width: 100%; height: auto; table-layout: fixed;" cellspacing="0">
+			<tr>
+				<td colspan="24">
+					<% if (ejsData.qr_path) { %>
+						<img src="<%= ejsData.qr_path %>" style="width: 128px; height: 128px;" />
+					<% } %>
+				</td>
+				<td colspan="4" style="vertical-align: bottom;">
+					<p class="s3" style="padding-left: 3pt;text-indent: 0pt;line-height: 10pt;text-align: left;">
+						Issued By:
+					</p>
+				</td>
+				<td colspan="8" style="vertical-align: bottom;">
+					<p class="s3" style="padding-left: 3pt;text-indent: 0pt;line-height: 10pt;text-align: left;">
+						<%= ejsData.user_name %>
+					</p>
+				</td>
+				<td colspan="8" style="vertical-align: bottom;">
+					<p class="s3" style="padding-left: 3pt;text-indent: 0pt;line-height: 10pt;text-align: left;">
+						<% if (ejsData.user_phone) { %>
+						Tel: <%=ejsData.user_phone%>
+						<% } %>
+					</p>
+				</td>
+			</tr>
+			<tr>
+				<td colspan="28">
+					<p class="s3" style="padding-left: 3pt;text-indent: 0pt;line-height: 10pt;text-align: left;">
+						Printed Date: <%=ejsData.print_date%>
+					</p>
+				</td>
+				<td colspan="16">
+					<p class="s3" style="padding-left: 3pt;text-indent: 0pt;line-height: 10pt;text-align: left;">
+						<a href="<%=ejsData.user_email%>"><%=ejsData.user_email%></a>
+					</p>
+				</td>
+			</tr>
+		</table>
+		</div>
+	</body>
+</html>
