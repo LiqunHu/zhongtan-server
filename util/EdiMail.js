@@ -109,10 +109,19 @@ const readNewMail = async () => {
 const parserMailAttachment = async (ediDepots, parserData) => {
   let edi = ''
   if(ediDepots && ediDepots.length > 0) {
-    for(let e of ediDepots) {
-      if(e.edi_depot_sender_email.indexOf(parserData.from) >= 0) {
-        edi = JSON.parse(JSON.stringify(e))
-        break
+    eidLoop: for(let e of ediDepots) {
+      if(e.edi_depot_sender_email) 
+      {
+        let senderEmails = e.edi_depot_sender_email.split(';')
+        if(senderEmails && senderEmails.length > 0) 
+        {
+          for(let se of senderEmails) {
+            if(se.indexOf(parserData.from) >= 0 || parserData.from.indexOf(se) >= 0){
+              edi = JSON.parse(JSON.stringify(e))
+              break eidLoop
+            }
+          }
+        }
       }
     }
   }
@@ -247,7 +256,7 @@ const parserMailAttachment = async (ediDepots, parserData) => {
           indexs.push(i)
         } 
       }
-      if(indexs) {
+      if(indexs && indexs.length > 0) {
         let ediContainers = []
         if(indexs.length === 1) {
           let item = datas.slice(indexs[0]).join('`')
