@@ -1319,7 +1319,8 @@ exports.downloadDo2Act = async req => {
     fileInfo = await common.ejs2Pdf('doBulk2.ejs', renderData, 'zhongtan')
   } else {
     renderData.containers = JSON.parse(JSON.stringify(continers))
-    let cSize = []
+    // let cSize = []
+    let cMap = new Map()
     for (let i = 0; i < renderData.containers.length; i++) {
       // renderData.containers[i].invoice_containers_tare = common.getContainerTare(renderData.containers[i].invoice_containers_size)
       if(renderData.containers[i].invoice_containers_type === 'S') {
@@ -1327,11 +1328,20 @@ exports.downloadDo2Act = async req => {
       } else {
         renderData.containers[i].invoice_containers_soc = ''
       }
-      if (cSize.indexOf(renderData.containers[i].invoice_containers_size) < 0) {
-        cSize.push(renderData.containers[i].invoice_containers_size)
+      // if (cSize.indexOf(renderData.containers[i].invoice_containers_size) < 0) {
+      //   cSize.push(renderData.containers[i].invoice_containers_size)
+      // }
+      if (cMap.get(renderData.containers[i].invoice_containers_size)) {
+        cMap.set(renderData.containers[i].invoice_containers_size, cMap.get(renderData.containers[i].invoice_containers_size) + 1)
+      } else {
+        cMap.set(renderData.containers[i].invoice_containers_size, 1)
       }
     }
-    renderData.container_count = bl.invoice_masterbi_container_no + 'X' + cSize.join(' ')
+    let container_count = ''
+    for (var [k, v] of cMap) {
+      container_count += v + 'X' + k + '    '
+    }
+    renderData.container_count = container_count
     fileInfo = await common.ejs2Pdf('do2.ejs', renderData, 'zhongtan')
   }
   
