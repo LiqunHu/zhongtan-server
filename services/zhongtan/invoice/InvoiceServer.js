@@ -1339,7 +1339,7 @@ exports.downloadDo2Act = async req => {
     }
     let container_count = ''
     for (var [k, v] of cMap) {
-      container_count += v + 'X' + k + '    '
+      container_count += v + 'X' + k + '\n'
     }
     renderData.container_count = container_count
     fileInfo = await common.ejs2Pdf('do2.ejs', renderData, 'zhongtan')
