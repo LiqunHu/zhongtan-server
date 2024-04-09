@@ -191,8 +191,8 @@ exports.demurrageCalculationSaveAct = async req => {
     let old_free_days = con.export_container_cal_free_days ? con.export_container_cal_free_days : doc.export_container_cal_static_free_days
 
     // 保存计算箱子超期信息
-    if(doc.export_masterbl_bl_carrier === 'OOCL' && doc.export_container_edi_loading_date) {
-      con.export_container_edi_loading_date = doc.export_container_edi_loading_date
+    if(doc.export_masterbl_bl_carrier === 'OOCL' && doc.export_container_edi_wharf_gate_in_date) {
+      con.export_container_edi_loading_date = doc.export_container_edi_wharf_gate_in_date
     }
     if(doc.export_masterbl_bl_carrier === 'COSCO' && doc.export_container_edi_wharf_gate_in_date) {
       con.export_container_edi_wharf_gate_in_date = doc.export_container_edi_wharf_gate_in_date
