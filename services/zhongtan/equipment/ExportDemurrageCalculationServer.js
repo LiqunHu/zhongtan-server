@@ -142,6 +142,9 @@ exports.searchAct = async req => {
         d.export_container_cal_invoice = GLBConfig.DISABLE
       }
       d.end_date_title = 'Gatein'
+      if(d.export_masterbl_bl_carrier === 'OOCL') {
+        d.end_date_title = 'Loading'
+      }
       // if(d.export_masterbl_bl_carrier === 'OOCL' &&(d.export_container_edi_loading_date || d.export_container_edi_wharf_gate_in_date)) {
       //   if(d.export_container_edi_loading_date && d.export_container_edi_wharf_gate_in_date) {
       //     if(moment(d.export_container_edi_loading_date, 'DD/MM/YYYY').isBefore(moment('2022-08-20'))
