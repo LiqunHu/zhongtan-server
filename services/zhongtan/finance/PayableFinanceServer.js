@@ -712,7 +712,7 @@ exports.submitPaymentAct = async req => {
                             entry_digest = 'Payable to ' + pl.payment_advice_beneficiary_u8_vendor_alias + ' for ' + pl.payment_advice_inv_cntrl
                         } else if(pl.payment_advice_items_type === '4') {
                             digest = 'Paid to ' + pl.payment_advice_beneficiary_u8_vendor_alias + ' for logistic'
-                            entry_digest = 'Paid to ' + pl.payment_advice_beneficiary_u8_vendor_alias + '-' + amount
+                            entry_digest = 'Paid to ' + pl.payment_advice_beneficiary_u8_vendor_alias + '-' + pl.payment_advice_inv_cntrl
                         } else if(pl.payment_advice_items_type === '5') { 
                             digest = 'Paid to ' + pl.payment_advice_beneficiary_u8_vendor_alias + ' for Stv.'
                             entry_digest = 'Paid to ' + pl.payment_advice_beneficiary_u8_vendor_alias + '/' + pl.payment_advice_vessel + ' ' + pl.payment_advice_voyage
