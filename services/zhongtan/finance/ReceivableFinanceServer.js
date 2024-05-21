@@ -391,8 +391,13 @@ exports.queryReceivableAct = async req => {
                         let fees = []
                         let fee_total = 0
                         for(let sf of shipment_fees) {
-                            fees.push({'fee_type': sf.fee_data_code, 'fee_amount': sf.shipment_fee_amount})
-                            fee_total = new Decimal(fee_total).plus(new Decimal(sf.shipment_fee_amount))
+                            if(sf.shipment_fee_amount) {
+                                let amount = new Decimal(sf.shipment_fee_amount).toNumber()
+                                if(amount !== 0) {
+                                    fees.push({'fee_type': sf.fee_data_code, 'fee_amount': sf.shipment_fee_amount})
+                                    fee_total = new Decimal(fee_total).plus(new Decimal(sf.shipment_fee_amount))
+                                }
+                            }
                         }
                         item.receipt_detail = fees
                         if(item.receipt_currency === 'TZS') {
