@@ -2387,7 +2387,7 @@ exports.addFItem = async (receipt_no, customer_alias, bill_no) => {
 }
 
 exports.addSubFItem = async (reference_no) => {
-    let regex = '/RPL\\s*([0-9]+)/i'
+    let regex = '/RPL\\s*([0-9-_]+)/i'
     let rollover_reference_no = common.valueFilter(reference_no, regex).trim()
     if(rollover_reference_no) {
         let queryStr = `select * from tbl_zhongtan_uploadfile where state = '1' AND api_name IN ('RECEIPT-RECEIPT', 'OVERDUE-RECEIPT', 'SHIPMENT-RECEIPT', 'MNR-RECEIPT', 'FIXED-RECEIPT', 'UNUSUAL RECEIPT') and uploadfile_receipt_no like ? order by uploadfile_id desc limit 1`
