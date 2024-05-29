@@ -634,6 +634,10 @@ exports.downloadCollectAct = async (req, res) => {
     replacements.push(doc.receipt_date[0])
     replacements.push(moment(doc.receipt_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
   }
+  if(doc.invoice_vessel_id) {
+    queryStr = queryStr + ` AND v.invoice_vessel_id = ? `
+    replacements.push(doc.invoice_vessel_id)
+  }
   queryStr = queryStr + ` order by v.invoice_vessel_id desc, a.invoice_masterbi_bl`
   let result = await model.simpleSelect(queryStr, replacements)
   let renderData = []
