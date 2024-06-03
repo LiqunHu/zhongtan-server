@@ -15,7 +15,7 @@ module.exports = db.defineModel('tbl_zhongtan_export_proforma_vessel', {
   },
   export_vessel_name: {
     // 船名
-    type: db.STRING(20),
+    type: db.STRING(50),
     defaultValue: '',
     allowNull: false
   },

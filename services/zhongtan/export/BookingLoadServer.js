@@ -876,6 +876,14 @@ exports.searchVesselAct = async req => {
   let doc = common.docValidate(req)
   let etd_start_date = doc.etd_start_date
   let etd_end_date = doc.etd_end_date
+  if(!etd_start_date || !etd_end_date) {
+    if(doc.date_range && doc.date_range.length == 2) {
+      if(doc.date_range[0] && doc.date_range[1]) {
+        etd_start_date = doc.date_range[0]
+        etd_end_date = doc.date_range[1]
+      }
+    }
+  }
   let vessel_id = doc.vessel_id
   let masterbi_bl = doc.masterbi_bl
   let firm_booking = doc.firm_booking
