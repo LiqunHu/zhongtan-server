@@ -152,7 +152,7 @@ let genMNRReceiptSeq = async (charge_carrier) => {
     let queryRst = await sequelize.query("select nextval('" + seq_name + "') num", {
       type: sequelize.QueryTypes.SELECT
     }) 
-    let currentIndex = charge_carrier + moment().format('YYYYMMDD') + '-' + ('0000' + queryRst[0].num).slice(-6)
+    let currentIndex = charge_carrier + moment().format('YYYYMMDD') + '-' + ('0000' + queryRst[0].num).slice(-4)
     return currentIndex
   } catch (error) {
     logger.error(error)
