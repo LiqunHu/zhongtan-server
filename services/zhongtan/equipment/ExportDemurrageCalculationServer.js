@@ -811,10 +811,17 @@ exports.demurrageExporttAct = async (req, res) => {
       queryStr += ' and a.export_vessel_id = ? '
       replacements.push(doc.search_data.export_vessel_id)
     }
-    if (doc.search_data.loading_date && doc.search_data.loading_date.length > 1 && doc.search_data.loading_date[0] && doc.search_data.loading_date[1]) {
+    // if (doc.search_data.loading_date && doc.search_data.loading_date.length > 1 && doc.search_data.loading_date[0] && doc.search_data.loading_date[1]) {
+    //   let start_date = doc.search_data.loading_date[0]
+    //   let end_date = doc.search_data.loading_date[1]
+    //   queryStr += ` AND a.export_container_edi_loading_date >= ? and a.export_container_edi_loading_date < ? `
+    //   replacements.push(start_date)
+    //   replacements.push(moment(end_date, 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
+    // }
+    if (doc.search_data.etd_date && doc.search_data.etd_date.length > 1 && doc.search_data.etd_date[0] && doc.search_data.etd_date[1]) {
       let start_date = doc.search_data.loading_date[0]
       let end_date = doc.search_data.loading_date[1]
-      queryStr += ` AND a.export_container_edi_loading_date >= ? and a.export_container_edi_loading_date < ? `
+      queryStr += ` AND STR_TO_DATE(b.export_vessel_etd, "%d/%m/%Y") >= ? AND STR_TO_DATE(b.export_vessel_etd, "%d/%m/%Y") < ? `
       replacements.push(start_date)
       replacements.push(moment(end_date, 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
     }
