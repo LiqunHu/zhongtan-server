@@ -386,7 +386,7 @@ exports.importDemurrageCheck = async user_id => {
   let user = await tb_user.findOne({
     where: {
       user_id: user_id,
-      blacklist_from: GLBConfig.DISABLE,
+      // blacklist_from: GLBConfig.DISABLE,
       state: GLBConfig.ENABLE
     }
   })
