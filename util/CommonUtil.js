@@ -747,10 +747,10 @@ const fileSize2Str = async(size) => {
 }
 
 const equalsStr = async(str1, str2) => {
-  if(isNumber(str1)) {
+  if(isNumber(str1) && str1) {
     str1 = str1.toString()
   }
-  if(isNumber(str2)) {
+  if(isNumber(str2) && str2) {
     str2 = str2.toString()
   }
   if(str1 && str2) {
