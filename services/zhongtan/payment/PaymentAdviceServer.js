@@ -467,6 +467,13 @@ exports.exportAct = async (req, res) => {
   }
   queryStr += ' order by payment_advice_id desc'
   let result = await model.simpleSelect(queryStr, replacements)
+  if(result && result.length > 0) {
+    for(let r of result) {
+      if(r.payment_advice_vessel && r.payment_advice_voyage) {
+        r.payment_advice_vessel_voyage = r.payment_advice_vessel + '/' + r.payment_advice_voyage
+      }
+    }
+  }
   let filepath = await common.ejs2xlsx('PaymentAdvice.xlsx', result)
   res.sendFile(filepath)
 }
@@ -513,6 +520,13 @@ exports.exportAdminAct = async (req, res) => {
   }
   queryStr += ' order by payment_advice_id desc'
   let result = await model.simpleSelect(queryStr, replacements)
+  if(result && result.length > 0) {
+    for(let r of result) {
+      if(r.payment_advice_vessel && r.payment_advice_voyage) {
+        r.payment_advice_vessel_voyage = r.payment_advice_vessel + '/' + r.payment_advice_voyage
+      }
+    }
+  }
   let filepath = await common.ejs2xlsx('PaymentAdvice.xlsx', result)
   res.sendFile(filepath)
 }

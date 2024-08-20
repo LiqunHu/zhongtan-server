@@ -220,12 +220,12 @@ exports.exportDataAct = async(req, res) => {
       if(doc.search_data.is_paid === '1') {
         queryStr += ` and (a.invoice_containers_empty_return_invoice_date is not null and a.invoice_containers_empty_return_receipt_date is not null ) `
       } else {
-        queryStr += ` and a.invoice_containers_type != 'S' and (a.invoice_containers_empty_return_invoice_date is null or a.invoice_containers_empty_return_receipt_date is null or (IFNULL(a.invoice_containers_empty_return_overdue_amount,0) > (IFNULL(a.invoice_containers_empty_return_overdue_amount_receipt,0) + IFNULL(a.invoice_containers_empty_return_overdue_deduction,0))))  `
+        queryStr += ` and a.invoice_containers_type != 'S' and (a.invoice_containers_empty_return_invoice_date is null or a.invoice_containers_empty_return_receipt_date is null or a.invoice_containers_actually_return_date IS NULL or (IFNULL(a.invoice_containers_empty_return_overdue_amount,0) > (IFNULL(a.invoice_containers_empty_return_overdue_amount_receipt,0) + IFNULL(a.invoice_containers_empty_return_overdue_deduction,0))))  `
       }
     }
     if (doc.search_data.is_overdue) {
       if(doc.search_data.is_overdue === '1') {
-        queryStr += ` AND CASE WHEN a.invoice_containers_empty_return_overdue_free_days IS NOT NULL AND a.invoice_containers_empty_return_overdue_free_days != '' THEN TIMESTAMPDIFF(DAY, STR_TO_DATE(IFNULL(a.invoice_containers_edi_discharge_date, b.invoice_vessel_ata), "%d/%m/%Y"), STR_TO_DATE(IFNULL(a.invoice_containers_empty_return_date, DATE_FORMAT(NOW(), '%d/%m/%Y')), "%d/%m/%Y")) > a.invoice_containers_empty_return_overdue_free_days+0 ELSE TIMESTAMPDIFF(DAY, STR_TO_DATE(IFNULL(a.invoice_containers_edi_discharge_date, b.invoice_vessel_ata), "%d/%m/%Y"), STR_TO_DATE(IFNULL(a.invoice_containers_empty_return_date, DATE_FORMAT(NOW(), '%d/%m/%Y')), "%d/%m/%Y")) > (SELECT overdue_charge_max_day
+        queryStr += ` AND CASE WHEN a.invoice_containers_empty_return_overdue_free_days IS NOT NULL AND a.invoice_containers_empty_return_overdue_free_days != '' THEN TIMESTAMPDIFF(DAY, STR_TO_DATE(IFNULL(a.invoice_containers_edi_discharge_date, b.invoice_vessel_ata), "%d/%m/%Y"), STR_TO_DATE(IFNULL(a.invoice_containers_empty_return_date, DATE_FORMAT(NOW(), '%d/%m/%Y')), "%d/%m/%Y")) + 1 > a.invoice_containers_empty_return_overdue_free_days+0 ELSE TIMESTAMPDIFF(DAY, STR_TO_DATE(IFNULL(a.invoice_containers_edi_discharge_date, b.invoice_vessel_ata), "%d/%m/%Y"), STR_TO_DATE(IFNULL(a.invoice_containers_empty_return_date, DATE_FORMAT(NOW(), '%d/%m/%Y')), "%d/%m/%Y")) + 1 > (SELECT overdue_charge_max_day
           FROM tbl_zhongtan_overdue_charge_rule
           WHERE overdue_charge_business_type = 'I' and overdue_charge_cargo_type = c.invoice_masterbi_cargo_type
           AND overdue_charge_discharge_port = SUBSTR(c.invoice_masterbi_destination, 1, 2)
@@ -238,7 +238,7 @@ exports.exportDataAct = async(req, res) => {
           )
           AND ((overdue_charge_enabled_date IS NOT NULL AND STR_TO_DATE(overdue_charge_enabled_date, '%Y-%m-%d') <= STR_TO_DATE(b.invoice_vessel_ata, "%d/%m/%Y")) OR (overdue_charge_enabled_date IS NULL)) ORDER BY overdue_charge_enabled_date DESC LIMIT 1) END  `
       } else {
-        queryStr += ` AND CASE WHEN a.invoice_containers_empty_return_overdue_free_days IS NOT NULL AND a.invoice_containers_empty_return_overdue_free_days != '' THEN TIMESTAMPDIFF(DAY, STR_TO_DATE(IFNULL(a.invoice_containers_edi_discharge_date, b.invoice_vessel_ata), "%d/%m/%Y"), STR_TO_DATE(IFNULL(a.invoice_containers_empty_return_date, DATE_FORMAT(NOW(), '%d/%m/%Y')), "%d/%m/%Y")) <= a.invoice_containers_empty_return_overdue_free_days+0 ELSE TIMESTAMPDIFF(DAY, STR_TO_DATE(IFNULL(a.invoice_containers_edi_discharge_date, b.invoice_vessel_ata), "%d/%m/%Y"), STR_TO_DATE(IFNULL(a.invoice_containers_empty_return_date, DATE_FORMAT(NOW(), '%d/%m/%Y')), "%d/%m/%Y")) <= (SELECT overdue_charge_max_day
+        queryStr += ` AND CASE WHEN a.invoice_containers_empty_return_overdue_free_days IS NOT NULL AND a.invoice_containers_empty_return_overdue_free_days != '' THEN TIMESTAMPDIFF(DAY, STR_TO_DATE(IFNULL(a.invoice_containers_edi_discharge_date, b.invoice_vessel_ata), "%d/%m/%Y"), STR_TO_DATE(IFNULL(a.invoice_containers_empty_return_date, DATE_FORMAT(NOW(), '%d/%m/%Y')), "%d/%m/%Y")) + 1 <= a.invoice_containers_empty_return_overdue_free_days+0 ELSE TIMESTAMPDIFF(DAY, STR_TO_DATE(IFNULL(a.invoice_containers_edi_discharge_date, b.invoice_vessel_ata), "%d/%m/%Y"), STR_TO_DATE(IFNULL(a.invoice_containers_empty_return_date, DATE_FORMAT(NOW(), '%d/%m/%Y')), "%d/%m/%Y")) + 1 <= (SELECT overdue_charge_max_day
           FROM tbl_zhongtan_overdue_charge_rule
           WHERE overdue_charge_business_type = 'I' and overdue_charge_cargo_type = c.invoice_masterbi_cargo_type
           AND overdue_charge_discharge_port = SUBSTR(c.invoice_masterbi_destination, 1, 2)
@@ -258,6 +258,14 @@ exports.exportDataAct = async(req, res) => {
       } else {
         queryStr += ` and (a.invoice_containers_empty_return_invoice_date is null and a.invoice_containers_empty_return_receipt_date is null )  `
       }
+    }
+    if (doc.search_data.invoice_no) {
+      queryStr += ` and a.invoice_containers_id IN (SELECT overdue_invoice_containers_invoice_containers_id FROM tbl_zhongtan_overdue_invoice_containers ic LEFT JOIN tbl_zhongtan_uploadfile uf ON ic.overdue_invoice_containers_invoice_uploadfile_id = uf.uploadfile_id WHERE ic.state = 1 AND uf.state = 1 AND uf.api_name = 'OVERDUE-INVOICE' AND uf.uploadfile_invoice_no LIKE ?) `
+      replacements.push('%' + doc.search_data.invoice_no + '%')
+    }
+    if (doc.search_data.receipt_no) {
+      queryStr += ` and a.invoice_containers_id IN (SELECT overdue_invoice_containers_invoice_containers_id FROM tbl_zhongtan_overdue_invoice_containers ic LEFT JOIN tbl_zhongtan_uploadfile uf ON ic.overdue_invoice_containers_invoice_uploadfile_id = uf.uploadfile_id WHERE ic.state = 1 AND uf.state = 1 AND uf.api_name = 'OVERDUE-INVOICE' AND uf.uploadfile_receipt_no LIKE ?) `
+      replacements.push('%' + doc.search_data.receipt_no + '%')
     }
     if (doc.search_data.consignee) {
       queryStr += ` and c.invoice_masterbi_consignee_name = ?`
@@ -327,6 +335,8 @@ exports.exportDataAct = async(req, res) => {
     }
     if(r.invoice_containers_type === 'S') {
       r.invoice_masterbi_demurrage_party = 'SOC'
+    } else if(r.invoice_containers_auction === '1') {
+      r.invoice_masterbi_demurrage_party = 'AUCTIONED'
     }
     renderData.push(r)
   }
