@@ -364,7 +364,7 @@ module.exports = {
   EDI_EMAIL_SENDER: 'EDI@SINOTASHIP.COM AS COSCO/OOCL',
   EDI_EMAIL_CARBON_COPY: 'EDI@SINOTASHIP.COM;WNyonyi@ticts.com',
   EDI_EMAIL_BLIND_CARBON_COPY: '540301291@qq.com',
-  EDI_EMAIL_RECEIVER: 'EDI@TICTS.COM',
+  EDI_EMAIL_RECEIVER: 'edi@teagtl.com',
   INVOICE_CARGO_TYPE: [
     { id: 'IM', text: 'IMPORT' },
     { id: 'TR', text: 'TRANSIT' }
