@@ -209,7 +209,7 @@ exports.searchAdminAct = async req => {
     }
   }
 
-  queryStr += ' order by payment_advice_id desc'
+  queryStr += ' order by pa.payment_advice_id desc'
   let result = await model.queryWithCount(doc, queryStr, replacements)
 
   returnData.total = result.count
