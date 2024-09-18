@@ -319,7 +319,7 @@ exports.searchContainerAct = async req => {
 exports.searchCustomerAct = async req => {
   let doc = common.docValidate(req)
   let search_text = '%' + doc.search_text + '%'
-  let queryStr = `SELECT user_id, user_name from tbl_common_user WHERE user_type = '${GLBConfig.TYPE_CUSTOMER}' AND user_name LIKE ? GROUP BY user_name ORDER BY user_name LIMIT 10 `
+  let queryStr = `SELECT user_id, user_name from tbl_common_user WHERE state = 1 and user_type = '${GLBConfig.TYPE_CUSTOMER}' AND user_name LIKE ? GROUP BY user_name ORDER BY user_name LIMIT 10 `
   let replacements = [search_text]
   let result = await model.simpleSelect(queryStr, replacements)
   if(result && result.length > 0) {
