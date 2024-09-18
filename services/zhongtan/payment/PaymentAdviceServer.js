@@ -150,12 +150,13 @@ exports.searchAdminAct = async req => {
   let doc = common.docValidate(req)
   let returnData = {}
 
-  let queryStr = `select pa.*, CONCAT(pa.payment_advice_vessel, '/', pa.payment_advice_voyage) AS payment_advice_vessel_voyage, cb.user_name as payment_advice_beneficiary_name, cr.user_name as payment_advice_remarks_name, pi.payment_items_name as payment_advice_items_name, cu.user_name as payment_advice_create_by_name
+  let queryStr = `select pa.*, CONCAT(pa.payment_advice_vessel, '/', pa.payment_advice_voyage) AS payment_advice_vessel_voyage, cb.user_name as payment_advice_beneficiary_name, cr.user_name as payment_advice_remarks_name, pi.payment_items_name as payment_advice_items_name, cu.user_name as payment_advice_create_by_name, pv.last_time
                   from tbl_zhongtan_payment_advice pa 
                   left join tbl_common_user cb on pa.payment_advice_beneficiary = cb.user_id 
                   left join tbl_common_user cr on pa.payment_advice_remarks = cr.user_id
                   left join tbl_zhongtan_payment_items pi on pa.payment_advice_items = pi.payment_items_code
                   left join tbl_common_user cu on pa.create_by = cu.user_id
+                  LEFT JOIN (SELECT payment_advice_id, GREATEST(IFNULL(payment_verification_business_time, '1970-01-01 00:00:00'), IFNULL(payment_verification_manager_time, '1970-01-01 00:00:00'), IFNULL(payment_verification_undo_time, '1970-01-01 00:00:00'), IFNULL(payment_verification_section_time, '1970-01-01 00:00:00'), IFNULL(payment_verification_shipping_time, '1970-01-01 00:00:00')) last_time FROM tbl_zhongtan_payment_verification WHERE state = 1) pv ON pv.payment_advice_id = pa.payment_advice_id
                   where pa.state = '1' `
   let replacements = []
 
@@ -199,6 +200,12 @@ exports.searchAdminAct = async req => {
         replacements.push(payment_advice_vessel)
         replacements.push(payment_advice_voyage)
       }
+    }
+
+    if (doc.search_data.payment_date && doc.search_data.payment_date.length > 1 && doc.search_data.payment_date[0] && doc.search_data.payment_date[1]) {
+      queryStr += ' and pv.last_time >= ? and pv.last_time < ? '
+      replacements.push(doc.search_data.payment_date[0])
+      replacements.push(moment(doc.search_data.payment_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
     }
   }
 
