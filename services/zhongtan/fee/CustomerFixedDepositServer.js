@@ -135,13 +135,17 @@ exports.createAct = async req => {
   })
   if(doc.fixed_deposit_type === 'GU' && doc.deposit_guarantee_letter_list && doc.deposit_guarantee_letter_list.length > 0) {
     // save file to mongo
-    await tb_uploadfile.destroy({
-      where: {
-        api_name: 'GUARANTEE-LETTER',
-        uploadfile_index1: newDeposits.fixed_deposit_id
-      }
-    })
+    // await tb_uploadfile.destroy({
+    //   where: {
+    //     api_name: 'GUARANTEE-LETTER',
+    //     uploadfile_index1: newDeposits.fixed_deposit_id
+    //   }
+    // })
     
+    let replacements = ['GUARANTEE-LETTER', newDeposits.fixed_deposit_id]
+    let delFileStr = `UPDATE tbl_zhongtan_uploadfile SET state = 0 WHERE api_name = ? AND uploadfile_index1 = ?;`
+    await model.simpleUpdate(delFileStr, replacements)
+
     for(let letter of doc.deposit_guarantee_letter_list) {
       let fileInfo = await common.fileSaveMongo(letter.response.info.path, 'zhongtan')
       await tb_uploadfile.create({
@@ -183,13 +187,17 @@ exports.updateAct = async req => {
     } else {
       updateDeposit.deposit_guarantee_letter_no = doc.deposit_guarantee_letter_no
 
-      await tb_uploadfile.destroy({
-        where: {
-          api_name: 'GUARANTEE-LETTER',
-          uploadfile_index1: updateDeposit.fixed_deposit_id
-        }
-      })
+      // await tb_uploadfile.destroy({
+      //   where: {
+      //     api_name: 'GUARANTEE-LETTER',
+      //     uploadfile_index1: updateDeposit.fixed_deposit_id
+      //   }
+      // })
       
+      let replacements = ['GUARANTEE-LETTER', updateDeposit.fixed_deposit_id]
+      let delFileStr = `UPDATE tbl_zhongtan_uploadfile SET state = 0 WHERE api_name = ? AND uploadfile_index1 = ?;`
+      await model.simpleUpdate(delFileStr, replacements)
+
       for(let letter of doc.deposit_guarantee_letter_list) {
         let fileInfo = await common.fileSaveMongo(letter.response.info.path, 'zhongtan')
         await tb_uploadfile.create({
@@ -272,12 +280,17 @@ exports.invoiceAct = async req => {
   try {
     let fileInfo = await common.ejs2Pdf('fixedInvoice.ejs', renderData, 'zhongtan')
     await theDeposit.save()
-    await tb_uploadfile.destroy({
-      where: {
-        api_name: 'FIXED-INVOICE',
-        uploadfile_index1: theDeposit.fixed_deposit_id
-      }
-    })
+    // await tb_uploadfile.destroy({
+    //   where: {
+    //     api_name: 'FIXED-INVOICE',
+    //     uploadfile_index1: theDeposit.fixed_deposit_id
+    //   }
+    // })
+
+    let replacements = ['FIXED-INVOICE', theDeposit.fixed_deposit_id]
+    let delFileStr = `UPDATE tbl_zhongtan_uploadfile SET state = 0 WHERE api_name = ? AND uploadfile_index1 = ?;`
+    await model.simpleUpdate(delFileStr, replacements)
+
     await tb_uploadfile.create({
       api_name: 'FIXED-INVOICE',
       user_id: user.user_id,

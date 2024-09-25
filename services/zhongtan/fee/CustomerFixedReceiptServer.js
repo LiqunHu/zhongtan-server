@@ -191,12 +191,17 @@ exports.receiptAct = async req => {
   try {
     let fileInfo = await common.ejs2Pdf('fixedReceipt.ejs', renderData, 'zhongtan')
     await theDeposit.save()
-    await tb_uploadfile.destroy({
-      where: {
-        api_name: 'FIXED-RECEIPT',
-        uploadfile_index1: theDeposit.fixed_deposit_id
-      }
-    })
+    // await tb_uploadfile.destroy({
+    //   where: {
+    //     api_name: 'FIXED-RECEIPT',
+    //     uploadfile_index1: theDeposit.fixed_deposit_id
+    //   }
+    // })
+
+    let replacements = ['FIXED-RECEIPT', theDeposit.fixed_deposit_id]
+    let delFileStr = `UPDATE tbl_zhongtan_uploadfile SET state = 0 WHERE api_name = ? AND uploadfile_index1 = ?;`
+    await model.simpleUpdate(delFileStr, replacements)
+
     await tb_uploadfile.create({
       api_name: 'FIXED-RECEIPT',
       user_id: user.user_id,

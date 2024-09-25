@@ -1643,12 +1643,17 @@ exports.depositDoAct = async req => {
     }
     let fileInfo = await common.ejs2Pdf('deposit.ejs', renderData, 'zhongtan')
     if(!bl.invoice_masterbi_deposit_receipt_date) {
-      await tb_uploadfile.destroy({
-        where: {
-          api_name: 'RECEIPT-DEPOSIT',
-          uploadfile_index1: bl.invoice_masterbi_id
-        }
-      })
+      // await tb_uploadfile.destroy({
+      //   where: {
+      //     api_name: 'RECEIPT-DEPOSIT',
+      //     uploadfile_index1: bl.invoice_masterbi_id
+      //   }
+      // })
+
+      let replacements = ['RECEIPT-DEPOSIT', bl.invoice_masterbi_id]
+      let delFileStr = `UPDATE tbl_zhongtan_uploadfile SET state = 0 WHERE api_name = ? AND uploadfile_index1 = ?;`
+      await model.simpleUpdate(delFileStr, replacements)
+
     }
     let uploadfile_state = 'PB' // TODO state PM => PB
     let uploadfil_release_date = null
@@ -1721,13 +1726,18 @@ exports.depositDoAct = async req => {
       renderData.user_phone = commonUser.user_phone
       renderData.user_email = commonUser.user_email
       let fileInfo = await common.ejs2Pdf('receipta.ejs', renderData, 'zhongtan')
-      await tb_uploadfile.destroy({
-        where: {
-          api_name: 'RECEIPT-RECEIPT',
-          uploadfile_index1: bl.invoice_masterbi_id,
-          uploadfile_acttype: doc.checkType
-        }
-      })
+      // await tb_uploadfile.destroy({
+      //   where: {
+      //     api_name: 'RECEIPT-RECEIPT',
+      //     uploadfile_index1: bl.invoice_masterbi_id,
+      //     uploadfile_acttype: doc.checkType
+      //   }
+      // })
+
+      let replacements = ['RECEIPT-RECEIPT', bl.invoice_masterbi_id, doc.checkType]
+      let delFileStr = `UPDATE tbl_zhongtan_uploadfile SET state = 0 WHERE api_name = ? AND uploadfile_index1 = ? AND uploadfile_acttype = ?;`
+      await model.simpleUpdate(delFileStr, replacements)
+
       await tb_uploadfile.create({
         api_name: 'RECEIPT-RECEIPT',
         user_id: user.user_id,
@@ -2129,13 +2139,18 @@ exports.depositDoAct = async req => {
     renderData.sum_fee = formatCurrency(renderData.sum_fee)
     let fileInfo = await common.ejs2Pdf('fee.ejs', renderData, 'zhongtan')
     if(!bl.invoice_masterbi_invoice_receipt_date) {
-      await tb_uploadfile.destroy({
-        where: {
-          api_name: 'RECEIPT-FEE',
-          uploadfile_index1: bl.invoice_masterbi_id
-        }
-      })
+      // await tb_uploadfile.destroy({
+      //   where: {
+      //     api_name: 'RECEIPT-FEE',
+      //     uploadfile_index1: bl.invoice_masterbi_id
+      //   }
+      // })
+
+      let replacements = ['RECEIPT-FEE', bl.invoice_masterbi_id]
+      let delFileStr = `UPDATE tbl_zhongtan_uploadfile SET state = 0 WHERE api_name = ? AND uploadfile_index1 = ?;`
+      await model.simpleUpdate(delFileStr, replacements)
     }
+
     await tb_uploadfile.create({
       api_name: 'RECEIPT-FEE',
       user_id: user.user_id,
@@ -2185,12 +2200,16 @@ exports.depositDoAct = async req => {
 
     let fileInfo = await common.ejs2Pdf('fee.ejs', renderData, 'zhongtan')
 
-    await tb_uploadfile.destroy({
-      where: {
-        api_name: 'RECEIPT-OF',
-        uploadfile_index1: bl.invoice_masterbi_id
-      }
-    })
+    // await tb_uploadfile.destroy({
+    //   where: {
+    //     api_name: 'RECEIPT-OF',
+    //     uploadfile_index1: bl.invoice_masterbi_id
+    //   }
+    // })
+
+    let replacements = ['RECEIPT-OF', bl.invoice_masterbi_id]
+    let delFileStr = `UPDATE tbl_zhongtan_uploadfile SET state = 0 WHERE api_name = ? AND uploadfile_index1 = ?;`
+    await model.simpleUpdate(delFileStr, replacements)
 
     await tb_uploadfile.create({
       api_name: 'RECEIPT-OF',

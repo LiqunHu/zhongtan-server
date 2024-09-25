@@ -195,12 +195,17 @@ exports.updateAct = async req => {
     }
     await mnr.save()
     if(doc.mnr_attachments){
-      await tb_uploadfile.destroy({
-        where: {
-          api_name: 'MNR-LEDGER',
-          uploadfile_index1: mnr.container_mnr_ledger_id
-        }
-      })
+      // await tb_uploadfile.destroy({
+      //   where: {
+      //     api_name: 'MNR-LEDGER',
+      //     uploadfile_index1: mnr.container_mnr_ledger_id
+      //   }
+      // })
+
+      let replacements = ['MNR-LEDGER', mnr.container_mnr_ledger_id]
+      let delFileStr = `UPDATE tbl_zhongtan_uploadfile SET state = 0 WHERE api_name = ? AND uploadfile_index1 = ?;`
+      await model.simpleUpdate(delFileStr, replacements)
+
       for(let att of doc.mnr_attachments) {
         let fileInfo = await common.fileSaveMongo(att.response.info.path, 'zhongtan')
         await tb_uploadfile.create({
@@ -265,12 +270,17 @@ exports.invoiceAct = async req => {
     renderData.user_email = commonUser.user_email
     try {
       let fileInfo = await common.ejs2Pdf('mnrInvoice.ejs', renderData, 'zhongtan')
-      await tb_uploadfile.destroy({
-        where: {
-          api_name: 'MNR-INVOICE',
-          uploadfile_index1: mnr.container_mnr_ledger_id
-        }
-      })
+      // await tb_uploadfile.destroy({
+      //   where: {
+      //     api_name: 'MNR-INVOICE',
+      //     uploadfile_index1: mnr.container_mnr_ledger_id
+      //   }
+      // })
+
+      let replacements = ['MNR-INVOICE', mnr.container_mnr_ledger_id]
+      let delFileStr = `UPDATE tbl_zhongtan_uploadfile SET state = 0 WHERE api_name = ? AND uploadfile_index1 = ?;`
+      await model.simpleUpdate(delFileStr, replacements)
+
       await tb_uploadfile.create({
         api_name: 'MNR-INVOICE',
         user_id: user.user_id,
