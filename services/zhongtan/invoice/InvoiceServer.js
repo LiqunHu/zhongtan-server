@@ -307,6 +307,9 @@ exports.uploadImportAct = async req => {
               masterbi_freight = 'COLLECT'
             }
           }
+          if(!masterbi_freight) {
+            return common.error('import_15')
+          }
           let freight_charge = m['Freight Charge'] || ''
           if(freight_charge && isNaN(Number(freight_charge))) {
             return common.error('import_11')
@@ -1763,6 +1766,10 @@ exports.depositDoAct = async req => {
         || doc.invoice_masterbi_tasac || doc.invoice_masterbi_printing || doc.invoice_masterbi_others)) {
           return common.error('deposit_02')
         }
+    }
+
+    if(bl.invoice_masterbi_freight_charge && !doc.invoice_masterbi_of) {
+      return common.error('deposit_05')
     }
     if(!bl.invoice_masterbi_customer_id) {
       bl.invoice_masterbi_customer_id = doc.invoice_masterbi_customer_id
@@ -3294,24 +3301,35 @@ exports.deleteMasterblAct = async req => {
     }
   })
 
-  await tb_container.destroy({
-    where: {
-      invoice_vessel_id: bl.invoice_vessel_id,
-      invoice_containers_bl: bl.invoice_masterbi_bl
-    }
-  })
+  // await tb_container.destroy({
+  //   where: {
+  //     invoice_vessel_id: bl.invoice_vessel_id,
+  //     invoice_containers_bl: bl.invoice_masterbi_bl
+  //   }
+  // })
 
-  await tb_uploadfile.destroy({
-    where: {
-      uploadfile_index1: bl.invoice_masterbi_id
-    }
-  })
+  // await tb_uploadfile.destroy({
+  //   where: {
+  //     uploadfile_index1: bl.invoice_masterbi_id
+  //   }
+  // })
 
-  await tb_bl.destroy({
-    where: {
-      invoice_masterbi_id: bl.invoice_masterbi_id
-    }
-  })
+  // await tb_bl.destroy({
+  //   where: {
+  //     invoice_masterbi_id: bl.invoice_masterbi_id
+  //   }
+  // })
+
+  let replacementsCon = [bl.invoice_vessel_id, bl.invoice_masterbi_bl]
+  let delConStr = `UPDATE tbl_zhongtan_invoice_containers SET state = 0 WHERE invoice_vessel_id = ? AND invoice_containers_bl = ?;`
+  await model.simpleUpdate(delConStr, replacementsCon)
+
+  let replacements = [bl.invoice_masterbi_id]
+  let delFileStr = `UPDATE tbl_zhongtan_uploadfile SET state = 0 WHERE uploadfile_index1 = ?;`
+  await model.simpleUpdate(delFileStr, replacements)
+
+  let delBlStr = `UPDATE tbl_zhongtan_invoice_masterbl SET state = 0 WHERE invoice_masterbi_id = ?;`
+  await model.simpleUpdate(delBlStr, replacements)
 
   return common.success()
 }
