@@ -320,14 +320,27 @@ exports.getInvoiceDataAct = async req => {
     }
     for(let c of collectionList) {
       // 根据默认客户计算费用
-      let freight = await freightSrv.countShipmentFreight(invoice_customer, c.shipment_list_business_type, c.shipment_list_cargo_type, 
-        c.shipment_list_business_type === 'I' ? 'TZDAR' : c.shipment_list_port_of_loading, c.shipment_list_business_type === 'I' ? c.shipment_list_port_of_destination : 'TZDAR', 
-        c.shipment_list_cntr_owner, c.shipment_list_size_type, c.shipment_list_business_type === 'I' ? c.shipment_list_discharge_date : c.shipment_list_loading_date, 'R')
-      if(freight && freight.freight_config_amount) {
-        c.shipment_list_receivable_freight = freight.freight_config_amount
-        invoice_amount = new Decimal(invoice_amount).plus(freight.freight_config_amount)
-      } else {
-        invoice_disabled = true
+      let usePaymentAmount = false
+      if(c.shipment_list_customer === '14e84cf0-4421-11eb-a23b-a72bc46e4173' && (c.shipment_list_total_freight || c.shipment_list_receivable_freight)) {
+        if(c.shipment_list_receivable_freight) {
+          invoice_amount = new Decimal(invoice_amount).plus(c.shipment_list_receivable_freight)
+          usePaymentAmount = true
+        } else if(c.shipment_list_total_freight) {
+          c.shipment_list_receivable_freight = c.shipment_list_total_freight
+          invoice_amount = new Decimal(invoice_amount).plus(c.shipment_list_total_freight)
+          usePaymentAmount = true
+        }
+      }
+      if(!usePaymentAmount) {
+        let freight = await freightSrv.countShipmentFreight(invoice_customer, c.shipment_list_business_type, c.shipment_list_cargo_type, 
+          c.shipment_list_business_type === 'I' ? 'TZDAR' : c.shipment_list_port_of_loading, c.shipment_list_business_type === 'I' ? c.shipment_list_port_of_destination : 'TZDAR', 
+          c.shipment_list_cntr_owner, c.shipment_list_size_type, c.shipment_list_business_type === 'I' ? c.shipment_list_discharge_date : c.shipment_list_loading_date, 'R')
+        if(freight && freight.freight_config_amount) {
+          c.shipment_list_receivable_freight = freight.freight_config_amount
+          invoice_amount = new Decimal(invoice_amount).plus(freight.freight_config_amount)
+        } else {
+          invoice_disabled = true
+        }
       }
     }
     let retData = {
@@ -362,15 +375,30 @@ exports.calculationInvoiceAct = async req => {
         }
       })
       if(dbc) {
-        let freight = await freightSrv.countShipmentFreight(invoice_customer, dbc.shipment_list_business_type, dbc.shipment_list_cargo_type, 
-          dbc.shipment_list_business_type === 'I' ? 'TZDAR' : dbc.shipment_list_port_of_loading, dbc.shipment_list_business_type === 'I' ? dbc.shipment_list_port_of_destination : 'TZDAR', 
-          dbc.shipment_list_cntr_owner, dbc.shipment_list_size_type, dbc.shipment_list_business_type === 'I' ? dbc.shipment_list_discharge_date : dbc.shipment_list_loading_date, 'R')
-        if(freight && freight.freight_config_amount) {
-          dbc.shipment_list_receivable_freight = freight.freight_config_amount
-          total_invoice_amount = new Decimal(total_invoice_amount).plus(freight.freight_config_amount)
-          retData.invoice_list.push(JSON.parse(JSON.stringify(dbc)))
-        } else {
-          return common.error('logistics_09')
+        let usePaymentAmount = false
+        if(dbc.shipment_list_customer === '14e84cf0-4421-11eb-a23b-a72bc46e4173' && (dbc.shipment_list_total_freight || dbc.shipment_list_receivable_freight)) {
+          if(dbc.shipment_list_receivable_freight) {
+            total_invoice_amount = new Decimal(total_invoice_amount).plus(dbc.shipment_list_receivable_freight)
+            retData.invoice_list.push(JSON.parse(JSON.stringify(dbc)))
+            usePaymentAmount = true
+          } else if(dbc.shipment_list_total_freight) {
+            dbc.shipment_list_receivable_freight = dbc.shipment_list_total_freight
+            total_invoice_amount = new Decimal(total_invoice_amount).plus(dbc.shipment_list_total_freight)
+            retData.invoice_list.push(JSON.parse(JSON.stringify(dbc)))
+            usePaymentAmount = true
+          }
+        }
+        if(!usePaymentAmount) {
+          let freight = await freightSrv.countShipmentFreight(invoice_customer, dbc.shipment_list_business_type, dbc.shipment_list_cargo_type, 
+            dbc.shipment_list_business_type === 'I' ? 'TZDAR' : dbc.shipment_list_port_of_loading, dbc.shipment_list_business_type === 'I' ? dbc.shipment_list_port_of_destination : 'TZDAR', 
+            dbc.shipment_list_cntr_owner, dbc.shipment_list_size_type, dbc.shipment_list_business_type === 'I' ? dbc.shipment_list_discharge_date : dbc.shipment_list_loading_date, 'R')
+          if(freight && freight.freight_config_amount) {
+            dbc.shipment_list_receivable_freight = freight.freight_config_amount
+            total_invoice_amount = new Decimal(total_invoice_amount).plus(freight.freight_config_amount)
+            retData.invoice_list.push(JSON.parse(JSON.stringify(dbc)))
+          } else {
+            return common.error('logistics_09')
+          }
         }
       } else {
         return common.error('logistics_09')
@@ -730,6 +758,10 @@ exports.editFreightAct = async req => {
         }
       })
       s.shipment_list_customer = shipment_list_customer
+      if(shipment_list_customer === '14e84cf0-4421-11eb-a23b-a72bc46e4173' && s.shipment_list_total_freight) {
+        // 客户为COSCO SHIPPING LINES时,COSCO的应收金额等于应付金额
+        s.shipment_list_receivable_freight = s.shipment_list_total_freight
+      }
       await s.save()
     }
   }
