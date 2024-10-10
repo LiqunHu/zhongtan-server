@@ -322,6 +322,12 @@ exports.submitPayableAct = async req => {
                         entry_digest = 'Receivable from ' + pl.payment_advice_remarks_u8_vendor_alias + ' for logistic/' +  pl.payment_advice_inv_cntrl
                         let itemcode = moment().format('YYYY') + '-' + await seq.genU8SystemOneSeq()
                         let itemname = pl.payment_advice_inv_cntrl
+                        if(itemname && itemname.startsWith('COSU') && itemname.indexOf('/') > 0) {
+                            itemname = itemname.substring(0, itemname.indexOf('/'))
+                            if(itemname) {
+                                itemname = itemname.trim()
+                            }
+                        }
                         let citemccode = '03'
                         let citemcname = 'LOGISTIC BL'
                         item = await this.addFItem(itemcode, itemname, citemccode, citemcname)
