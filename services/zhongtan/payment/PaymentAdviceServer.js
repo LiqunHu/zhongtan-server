@@ -9,6 +9,7 @@ const Op = model.Op
 const tb_payment_advice = model.zhongtan_payment_advice
 const tb_payment_verification = model.zhongtan_payment_verification
 const tb_uploadfile = model.zhongtan_uploadfile
+const tb_finance_payable = model.zhongtan_finance_payable
 
 exports.initAct = async () => {
   let returnData = {}
@@ -138,6 +139,17 @@ exports.searchAct = async req => {
           state: GLBConfig.ENABLE
         }
       })
+      let fp = await tb_finance_payable.findOne({
+        where: {
+          payment_advice_id: d.payment_advice_id,
+          state: GLBConfig.ENABLE
+        }
+      })
+      if(fp) {
+        d.transfer_flg = '1'
+      } else {
+        d.transfer_flg = '0'
+      }
       rows.push(d)
     }
   }
@@ -263,6 +275,18 @@ exports.searchAdminAct = async req => {
         }
       })
       d.payment_advice_create_at = moment(d.created_at).format('YYYY-MM-DD HH:mm')
+
+      let fp = await tb_finance_payable.findOne({
+        where: {
+          payment_advice_id: d.payment_advice_id,
+          state: GLBConfig.ENABLE
+        }
+      })
+      if(fp) {
+        d.transfer_flg = '1'
+      } else {
+        d.transfer_flg = '0'
+      }
       rows.push(d)
     }
   }
@@ -299,6 +323,7 @@ exports.addAct = async req => {
     payment_advice_method: doc.payment_advice_method,
     payment_advice_items: doc.payment_advice_items,
     payment_advice_inv_cntrl: doc.payment_advice_inv_cntrl,
+    payment_advice_container_no: doc.payment_advice_container_no,
     payment_advice_beneficiary: doc.payment_advice_beneficiary,
     payment_advice_amount: doc.payment_advice_amount,
     payment_advice_currency: doc.payment_advice_currency,
@@ -372,6 +397,7 @@ exports.modifyAct = async req => {
     obj.payment_advice_method = doc.new.payment_advice_method
     obj.payment_advice_items = doc.new.payment_advice_items
     obj.payment_advice_inv_cntrl = doc.new.payment_advice_inv_cntrl
+    obj.payment_advice_container_no = doc.new.payment_advice_container_no
     obj.payment_advice_beneficiary = doc.new.payment_advice_beneficiary
     obj.payment_advice_amount = doc.new.payment_advice_amount
     obj.payment_advice_currency = doc.new.payment_advice_currency

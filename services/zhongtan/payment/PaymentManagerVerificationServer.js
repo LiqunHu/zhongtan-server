@@ -150,6 +150,7 @@ exports.approveAct = async req => {
       renderData.payment_advice_vessel_name_voyage = (advice.payment_advice_vessel ? advice.payment_advice_vessel + ' / ' : '') +  (advice.payment_advice_voyage ? advice.payment_advice_voyage : '')
       renderData.payment_advice_items_name = items ? items.payment_items_name : ''
       renderData.payment_advice_inv_cntrl = advice.payment_advice_inv_cntrl
+      renderData.payment_advice_container_no = advice.payment_advice_container_no
       renderData.payment_advice_beneficiary_name = beneficiary ? beneficiary.user_name : ''
       renderData.payment_advice_bank_account = advice.payment_advice_bank_account
       renderData.payment_advice_currency = advice.payment_advice_currency

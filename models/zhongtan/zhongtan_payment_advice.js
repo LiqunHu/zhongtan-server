@@ -27,6 +27,11 @@ module.exports = db.defineModel('tbl_zhongtan_payment_advice', {
     type: db.STRING(20),
     allowNull: false
   },
+  payment_advice_container_no: {
+    // 箱号
+    type: db.STRING(20),
+    allowNull: true
+  },
   payment_advice_beneficiary: {
     // 收款方
     type: db.STRING(20),
