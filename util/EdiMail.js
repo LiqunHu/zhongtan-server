@@ -13,6 +13,8 @@ const cal_demurrage_srv = require('../services/zhongtan/equipment/ExportDemurrag
 const freight_srv = require('../services/zhongtan/logistics/ShipmentListServer')
 const customer_srv = require('../services/zhongtan/configuration/CustomerServer')
 
+const logger = require('../app/logger').createLogger(__filename)
+
 const tb_invoice_containers = model.zhongtan_invoice_containers
 const tb_vessel = model.zhongtan_invoice_vessel
 const tb_bl = model.zhongtan_invoice_masterbl
@@ -24,8 +26,13 @@ const tb_email = model.zhongtan_edi_mail
 
 const imap = new Imap(config.sysEdiMailConfig)
 const readEdiMail = async (ediDepots) => {
+
+  logger.error("开始读取EDI邮件吧:" + ediDepots)
+  logger.error(config.sysEdiMailConfig)
+
   let mailData = await readNewMail()
   if(mailData && mailData.length > 0) {
+    logger.error("我读到EDI邮件了")
     let f = imap.fetch(mailData, { bodies: ''})
     if(f) {
       f.on('message', function(msg) {
@@ -53,6 +60,7 @@ const readEdiMail = async (ediDepots) => {
                   if(fs.existsSync(filePath)) {
                     let ediStr = fs.readFileSync(filePath, 'utf8')
                     parserData.attachmentContent = ediStr
+                    logger.error("我读到EDI邮件: " + parserData)
                     await parserMailAttachment(ediDepots, parserData)
                   }
                 })
@@ -331,6 +339,7 @@ const parserMailAttachment = async (ediDepots, parserData) => {
                 carrier: carrier,
                 billNo: billNo
               }
+              logger.error("EDI邮件解析成功: " + ediData)
               await updateContainerEdi(ediData)
               await updateContainerEmptyStock(ediData)
               await updateShipmentList(ediData)
@@ -350,6 +359,7 @@ const parserMailAttachment = async (ediDepots, parserData) => {
               })
             } finally {
               //
+              logger.error("EDI邮件解析失败")
             }
           }
         }
