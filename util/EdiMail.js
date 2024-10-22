@@ -60,7 +60,7 @@ const readEdiMail = async (ediDepots) => {
                   if(fs.existsSync(filePath)) {
                     let ediStr = fs.readFileSync(filePath, 'utf8')
                     parserData.attachmentContent = ediStr
-                    logger.error("我读到EDI邮件: " + parserData)
+                    logger.error("我读到EDI邮件: " + JSON.stringify(parserData))
                     await parserMailAttachment(ediDepots, parserData)
                   }
                 })
@@ -227,6 +227,7 @@ const parserMailAttachment = async (ediDepots, parserData) => {
                 containerNo: containerNo,
                 ediDate: returnDate,
               }
+              logger.error("EDI邮件解析成功: " + JSON.stringify(ediData))
               await updateContainerEdi(ediData)
               await updateContainerEmptyStock(ediData)
               await updateShipmentList(ediData)
@@ -246,6 +247,7 @@ const parserMailAttachment = async (ediDepots, parserData) => {
               })
             } finally {
               //
+              logger.error("EDI邮件解析失败")
             }
           }
         }
@@ -339,7 +341,7 @@ const parserMailAttachment = async (ediDepots, parserData) => {
                 carrier: carrier,
                 billNo: billNo
               }
-              logger.error("EDI邮件解析成功: " + ediData)
+              logger.error("EDI邮件解析成功: " + JSON.stringify(ediData))
               await updateContainerEdi(ediData)
               await updateContainerEmptyStock(ediData)
               await updateShipmentList(ediData)
