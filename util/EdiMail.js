@@ -245,9 +245,10 @@ const parserMailAttachment = async (ediDepots, parserData) => {
                 mail_edi_container_no: containerNo,
                 mail_edi_time: returnDate
               })
+            } catch(eee) {
+              logger.error("EDI邮件解析失败: " + eee)
             } finally {
               //
-              logger.error("EDI邮件解析失败")
             }
           }
         }
@@ -359,9 +360,10 @@ const parserMailAttachment = async (ediDepots, parserData) => {
                 mail_edi_container_no: containerNo,
                 mail_edi_time: returnDate
               })
+            } catch(eee) {
+              logger.error("EDI邮件解析失败: " + eee)
             } finally {
               //
-              logger.error("EDI邮件解析失败")
             }
           }
         }
