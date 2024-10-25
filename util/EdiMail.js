@@ -27,12 +27,11 @@ const tb_email = model.zhongtan_edi_mail
 const imap = new Imap(config.sysEdiMailConfig)
 const readEdiMail = async (ediDepots) => {
 
-  logger.error("开始读取EDI邮件吧:" + ediDepots)
-  logger.error(config.sysEdiMailConfig)
+  logger.error("开始读取EDI邮件吧:" + config.sysEdiMailConfig)
 
   let mailData = await readNewMail()
   if(mailData && mailData.length > 0) {
-    logger.error("我读到EDI邮件了")
+    logger.error("我读到EDI邮件了: " + mailData.length)
     let f = imap.fetch(mailData, { bodies: ''})
     if(f) {
       f.on('message', function(msg) {
@@ -70,6 +69,8 @@ const readEdiMail = async (ediDepots) => {
         })
       })
     }
+  } else {
+    logger.error("我没有读到EDI邮件了")
   }
 }
 
