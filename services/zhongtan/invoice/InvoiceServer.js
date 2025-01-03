@@ -299,23 +299,25 @@ exports.uploadImportAct = async req => {
         return common.error('import_01')
       } else {
         for (let m of masterBIJS) {
-          let masterbi_freight = m['Freight Terms'] || ''
-          if(masterbi_freight) {
-            if(masterbi_freight.toUpperCase().indexOf('PREPAID') != -1) {
-              masterbi_freight = 'PREPAID'
-            } else if(masterbi_freight.toUpperCase().indexOf('COLLECT') != -1) {
-              masterbi_freight = 'COLLECT'
+          if(m['#M B/L No']) {
+            let masterbi_freight = m['Freight Terms'] || ''
+            if(masterbi_freight) {
+              if(masterbi_freight.toUpperCase().indexOf('PREPAID') != -1) {
+                masterbi_freight = 'PREPAID'
+              } else if(masterbi_freight.toUpperCase().indexOf('COLLECT') != -1) {
+                masterbi_freight = 'COLLECT'
+              }
             }
-          }
-          if(!masterbi_freight) {
-            return common.error('import_15')
-          }
-          let freight_charge = m['Freight Charge'] || ''
-          if(freight_charge && isNaN(Number(freight_charge))) {
-            return common.error('import_11')
-          }
-          if(masterbi_freight === 'COLLECT' && !freight_charge) {
-            return common.error('import_10')
+            if(!masterbi_freight) {
+              return common.error('import_15')
+            }
+            let freight_charge = m['Freight Charge'] || ''
+            if(freight_charge && isNaN(Number(freight_charge))) {
+              return common.error('import_11')
+            }
+            if(masterbi_freight === 'COLLECT' && !freight_charge) {
+              return common.error('import_10')
+            }
           }
         }
 
