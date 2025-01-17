@@ -778,7 +778,7 @@ exports.exportMBLAct = async (req, res) => {
     row.tin1 = ''
     if(row.tin0 && row.tin0 === 'TIN') {
       let tinReg = /[^\d](\d{9})[^\d]/g
-      let tinStr = row.import_billlading_consignee.replace(/\s/g, '').replace(/-/g, '')
+      let tinStr = row.import_billlading_consignee.replace(/\s/g, '').replace(/-/g, '') + '$'
       let tinGt = tinReg.exec(tinStr)
       if(tinGt && tinGt.length > 1) {
         row.tin1 = tinGt[1]
