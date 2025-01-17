@@ -758,14 +758,32 @@ exports.exportMBLAct = async (req, res) => {
             .join(' ')
             .replace(/\r\n/g, '')
         : ''
-    let cary = row.import_billlading_consignee.split('<br/>')
-    row.ca0 = cary.length > 0 ? cary[0].replace(/\r\n/g, '') : ''
-    row.ca1 =
-      cary.length > 1
-        ? _.takeRight(cary, cary.length - 1)
-            .join(' ')
-            .replace(/\r\n/g, '')
-        : ''
+
+    let ca0Reg = /(.*)(LTD|LIMITED|SARL)/gi
+    let ca0Matchs = ca0Reg.exec(row.import_billlading_consignee)
+    if(ca0Matchs && ca0Matchs.length > 1) {
+      row.ca0 = ca0Matchs[0].replace(/\r\n/g, ' ').replace(/<br\/>/g, ' ')
+      row.ca1 = row.import_billlading_consignee.replace(ca0Matchs[0], '').replace(/\r\n/g, ' ').replace(/<br\/>/g, ' ')
+    } else {
+      let cary = row.import_billlading_consignee.split('<br/>')
+      row.ca0 = cary.length > 0 ? cary[0].replace(/\r\n/g, '') : ''
+      row.ca1 =
+        cary.length > 1
+          ? _.takeRight(cary, cary.length - 1)
+              .join(' ')
+              .replace(/\r\n/g, '')
+          : ''
+    }
+    row.tin0 = row.import_billlading_consignee.indexOf('TIN') >= 0 ? 'TIN' : ''
+    row.tin1 = ''
+    if(row.tin0 && row.tin0 === 'TIN') {
+      let tinReg = /[^\d](\d{9})[^\d]/g
+      let tinStr = row.import_billlading_consignee.replace(/\s/g, '').replace(/-/g, '')
+      let tinGt = tinReg.exec(tinStr)
+      if(tinGt && tinGt.length > 1) {
+        row.tin1 = tinGt[1]
+      }
+    }
     let nary = row.import_billlading_notify_party.split('<br/>')
     row.na0 = nary.length > 0 ? nary[0].replace(/\r\n/g, '') : ''
     row.na1 =
