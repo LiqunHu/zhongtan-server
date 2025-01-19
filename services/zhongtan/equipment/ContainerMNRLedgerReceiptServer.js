@@ -5,6 +5,7 @@ const common = require('../../../util/CommonUtil')
 const GLBConfig = require('../../../util/GLBConfig')
 const model = require('../../../app/model')
 const seq = require('../../../util/Sequence')
+const customer_srv = require('../../zhongtan/configuration/CustomerServer')
 
 const tb_mnr_ledger = model.zhongtan_container_mnr_ledger
 const tb_uploadfile = model.zhongtan_uploadfile
@@ -220,6 +221,9 @@ exports.receiptAct = async req => {
     mnr.mnr_ledger_bank_reference_no = doc.mnr_invoice_bank_reference_no
     mnr.mnr_ledger_bank_info = doc.receipt_bank_info
     mnr.save()
+
+
+    await customer_srv.importDemurrageCheck(mnr.mnr_ledger_corresponding_payer_id)
     return common.success({ url: fileInfo.url })
   } catch(e) {
     return common.error('generate_file_01')

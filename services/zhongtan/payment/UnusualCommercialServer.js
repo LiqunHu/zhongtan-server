@@ -87,7 +87,6 @@ exports.approveAct = async req => {
         }
       })
       let party = await tb_user.findOne({
-        attributes: ['user_id', 'user_name', 'user_address', 'user_tin'],
         where: {
           user_id: invoice.unusual_invoice_party
         }
@@ -137,6 +136,10 @@ exports.approveAct = async req => {
         uploadfil_release_date: curDate,
         uploadfil_release_user_id: user.user_id
       })
+      // 开票后拉入黑名单
+      party.user_blacklist = GLBConfig.ENABLE
+      party.blacklist_order = 'UNUSUAL_' + invoice.unusual_invoice_id
+      await party.save()
     }
    }
   return common.success()

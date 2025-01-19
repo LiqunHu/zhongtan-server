@@ -58,6 +58,13 @@ exports.searchAct = async req => {
       queryStr += ' and mnr_ledger_container_no like ? '
       replacements.push('%' + doc.search_data.container_no + '%')
     }
+     if (doc.search_data.is_paid) {
+      if(doc.search_data.is_paid === '1') {
+        queryStr += ' and mnr_ledger_receipt_no IS NOT NULL '
+      } else {
+        queryStr += ' and mnr_ledger_receipt_no IS NULL '
+      }
+    }
   }
   queryStr += ' ORDER BY container_mnr_ledger_id DESC'
   let result = await model.queryWithCount(doc, queryStr, replacements)
@@ -297,6 +304,10 @@ exports.invoiceAct = async req => {
       mnr.mnr_ledger_invoice_date = moment().format('YYYY-MM-DD HH:mm:ss')
       mnr.mnr_ledger_invoice_no = invoiceNo
       await mnr.save()
+      // 修箱费开票后拉入黑名单
+      customer.user_blacklist = GLBConfig.ENABLE
+      customer.blacklist_order = 'NMR_' + mnr.container_mnr_ledger_id
+      await customer.save()
       return common.success()
     } catch(e) {
       return common.error('generate_file_01')

@@ -101,6 +101,24 @@ exports.searchAct = async req => {
   let result = await model.queryWithCount(doc, queryStr, replacements)
   returnData.total = result.count
   returnData.rows = result.data
+
+  queryStr = `SELECT freight_place_code as id FROM tbl_zhongtan_freight_place WHERE state = ? ORDER BY freight_place_code`
+  replacements = [GLBConfig.ENABLE]
+  let pods = await model.simpleSelect(queryStr, replacements)
+  if(returnData.rows && returnData.rows.length > 0) {
+    for(let r of returnData.rows) {
+      r.shipment_list_port_of_loading_edit = '0'
+      r.selected_pol_list = []
+      if(pods && pods.length > 0) {
+        for(let p of pods) {
+          r.selected_pol_list.push(p.id)
+        }
+      }
+      if(r.shipment_list_port_of_loading && !r.selected_pol_list.includes(r.shipment_list_port_of_loading)) {
+        r.selected_pol_list.unshift(r.shipment_list_port_of_loading)
+      }
+    }
+  }
   return common.success(returnData)
 }
 
@@ -324,6 +342,14 @@ exports.exportAct = async (req, res) => {
   let replacements = [GLBConfig.ENABLE]
   let searchPara = doc.searchPara
   if(searchPara) {
+    if(searchPara.currentTab) {
+      queryStr = queryStr + ' AND s.shipment_list_business_type = ? '
+      if(searchPara.currentTab === 'Import') {
+        replacements.push("I")
+      } else {
+        replacements.push("E")
+      }
+    }
     if(searchPara.shipment_list_bill_no) {
       queryStr = queryStr + ' and s.shipment_list_bill_no like ? '
       replacements.push('%' + searchPara.shipment_list_bill_no + '%')

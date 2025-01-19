@@ -6,6 +6,7 @@ const model = require('../../../app/model')
 const opSrv = require('../../common/system/OperationPasswordServer')
 const seq = require('../../../util/Sequence')
 const numberToText = require('number2text')
+const customer_srv = require('../../zhongtan/configuration/CustomerServer')
 
 const tb_unusual_invoice = model.zhongtan_unusual_invoice
 const tb_uploadfile = model.zhongtan_uploadfile
@@ -77,9 +78,23 @@ exports.searchAct = async req => {
       queryStr += ' and unusual_invoice_no like ?'
       replacements.push('%' + search_data.unusual_invoice_no + '%')
     }
+    if(search_data.unusual_invoice_date && search_data.unusual_invoice_date.length == 2) {
+      if(search_data.unusual_invoice_date[0] && search_data.unusual_invoice_date[1]) {
+        queryStr += ` and DATE_FORMAT(ui.unusual_invoice_date, '%Y-%m-%d') >= ? and DATE_FORMAT(ui.unusual_invoice_date, '%Y-%m-%d') < ? `
+        replacements.push(doc.search_data.unusual_invoice_date[0])
+        replacements.push(moment(doc.search_data.unusual_invoice_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
+      }
+    }
     if (search_data.unusual_receipt_no) {
       queryStr += ' and unusual_receipt_no like ?'
       replacements.push('%' + search_data.unusual_receipt_no + '%')
+    }
+    if(search_data.unusual_receipt_date && search_data.unusual_receipt_date.length == 2) {
+      if(search_data.unusual_receipt_date[0] && search_data.unusual_receipt_date[1]) {
+        queryStr += ` and DATE_FORMAT(ui.unusual_receipt_date, '%Y-%m-%d') >= ? and DATE_FORMAT(ui.unusual_receipt_date, '%Y-%m-%d') < ? `
+        replacements.push(doc.search_data.unusual_receipt_date[0])
+        replacements.push(moment(doc.search_data.unusual_receipt_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
+      }
     }
     if (search_data.unusual_invoice_bl) {
       queryStr += ' and unusual_invoice_bl like ?'
@@ -199,6 +214,7 @@ exports.receiptAct = async req => {
     unusal.unusual_receipt_no = receipt_no
     unusal.unusual_receipt_date = moment().format('YYYY/MM/DD HH:mm:ss')
     await unusal.save()
+    await customer_srv.importDemurrageCheck(unusal.unusual_invoice_party)
     return common.success({ url: fileInfo.url })
   } catch(e) {
     return common.error('generate_file_01')
@@ -230,9 +246,23 @@ exports.exportAct = async (req, res) => {
       queryStr += ' and unusual_invoice_no like ?'
       replacements.push('%' + search_data.unusual_invoice_no + '%')
     }
+    if(search_data.unusual_invoice_date && search_data.unusual_invoice_date.length == 2) {
+      if(search_data.unusual_invoice_date[0] && search_data.unusual_invoice_date[1]) {
+        queryStr += ` and DATE_FORMAT(ui.unusual_invoice_date, '%Y-%m-%d') >= ? and DATE_FORMAT(ui.unusual_invoice_date, '%Y-%m-%d') < ? `
+        replacements.push(doc.search_data.unusual_invoice_date[0])
+        replacements.push(moment(doc.search_data.unusual_invoice_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
+      }
+    }
     if (search_data.unusual_receipt_no) {
       queryStr += ' and unusual_receipt_no like ?'
       replacements.push('%' + search_data.unusual_receipt_no + '%')
+    }
+    if(search_data.unusual_receipt_date && search_data.unusual_receipt_date.length == 2) {
+      if(search_data.unusual_receipt_date[0] && search_data.unusual_receipt_date[1]) {
+        queryStr += ` and DATE_FORMAT(ui.unusual_receipt_date, '%Y-%m-%d') >= ? and DATE_FORMAT(ui.unusual_receipt_date, '%Y-%m-%d') < ? `
+        replacements.push(doc.search_data.unusual_receipt_date[0])
+        replacements.push(moment(doc.search_data.unusual_receipt_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
+      }
     }
     if (search_data.unusual_invoice_bl) {
       queryStr += ' and unusual_invoice_bl like ?'

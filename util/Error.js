@@ -109,6 +109,7 @@ module.exports = {
   export_06: 'Already receipted the same B/L#',
   export_07: 'RELEASE Date must be before ETD',
   export_08: 'Please upload the OOCL BOOKING ACKNOWLEDGEMENT',
+  export_09: 'BOOKING File Formate is not correct',
   allot_depot_01: 'allot rule do not exist',
   allot_depot_02: 'allot rule can not be same enabled date',
   bk_cancellation_fee_01: 'Bk cancellation Fee has receipt',

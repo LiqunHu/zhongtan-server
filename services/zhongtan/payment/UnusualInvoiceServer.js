@@ -1,4 +1,5 @@
 const common = require('../../../util/CommonUtil')
+const moment = require('moment')
 const GLBConfig = require('../../../util/GLBConfig')
 const model = require('../../../app/model')
 const opSrv = require('../../common/system/OperationPasswordServer')
@@ -55,7 +56,13 @@ exports.searchAct = async req => {
       queryStr += ' and unusual_invoice_no like ?'
       replacements.push('%' + search_data.unusual_invoice_no + '%')
     }
-
+    if(search_data.unusual_invoice_date && search_data.unusual_invoice_date.length == 2) {
+      if(search_data.unusual_invoice_date[0] && search_data.unusual_invoice_date[1]) {
+        queryStr += ` and DATE_FORMAT(ui.unusual_invoice_date, '%Y-%m-%d') >= ? and DATE_FORMAT(ui.unusual_invoice_date, '%Y-%m-%d') < ? `
+        replacements.push(doc.search_data.unusual_invoice_date[0])
+        replacements.push(moment(doc.search_data.unusual_invoice_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
+      }
+    }
     if (search_data.unusual_invoice_bl) {
       queryStr += ' and unusual_invoice_bl like ?'
       replacements.push('%' + search_data.unusual_invoice_bl + '%')
@@ -285,6 +292,13 @@ exports.exportAct = async (req, res) => {
       replacements.push('%' + search_data.unusual_invoice_no + '%')
     }
 
+    if(search_data.unusual_invoice_date && search_data.unusual_invoice_date.length == 2) {
+      if(search_data.unusual_invoice_date[0] && search_data.unusual_invoice_date[1]) {
+        queryStr += ` and DATE_FORMAT(ui.unusual_invoice_date, '%Y-%m-%d') >= ? and ui.unusual_invoice_date < ? `
+        replacements.push(doc.search_data.unusual_invoice_date[0])
+        replacements.push(moment(doc.search_data.unusual_invoice_date[1], 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
+      }
+    }
     if (search_data.unusual_invoice_bl) {
       queryStr += ' and unusual_invoice_bl like ?'
       replacements.push('%' + search_data.unusual_invoice_bl + '%')
