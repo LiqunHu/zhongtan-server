@@ -334,7 +334,7 @@ exports.getInvoiceDataAct = async req => {
       if(!usePaymentAmount) {
         let freight = await freightSrv.countShipmentFreight(invoice_customer, c.shipment_list_business_type, c.shipment_list_cargo_type, 
           c.shipment_list_business_type === 'I' ? 'TZDAR' : c.shipment_list_port_of_loading, c.shipment_list_business_type === 'I' ? c.shipment_list_port_of_destination : 'TZDAR', 
-          c.shipment_list_cntr_owner, c.shipment_list_size_type, c.shipment_list_business_type === 'I' ? c.shipment_list_discharge_date : c.shipment_list_loading_date, 'R')
+          c.shipment_list_cntr_owner, c.shipment_list_size_type, c.shipment_list_business_type === 'I' ? c.shipment_list_discharge_date : c.shipment_list_vessel_etd, 'R')
         if(freight && freight.freight_config_amount) {
           c.shipment_list_receivable_freight = freight.freight_config_amount
           invoice_amount = new Decimal(invoice_amount).plus(freight.freight_config_amount)
