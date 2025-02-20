@@ -52,7 +52,7 @@ exports.uploadBookingAct = async req => {
 exports.importBookingPdf = async (path, sizeConfig) => {
   let pdfData = await pdf2jsonParser(path)
   if(pdfData) {
-    if(pdfData.indexOf('OOCL Lite') >= 0) {
+    if(pdfData.indexOf('OOCL Center') >= 0) {
       let regex = ''
       let bookingNumber = '' //提单号，自动加前缀
       let tracfficMode = '' // FCL/FCL
@@ -557,7 +557,7 @@ exports.importBookingPdf = async (path, sizeConfig) => {
       //   })
       // }
       // await createBooking('OOCL', vesJson, blJson, conJson)
-    } else {
+    } else if(pdfData.indexOf('COSU') >= 0) {
       // COSCO
       let regex = ''
       let bookingNumber = '' //提单号，自动加前缀
@@ -851,6 +851,8 @@ exports.importBookingPdf = async (path, sizeConfig) => {
         }
       }
       await createBooking('COSCO', vesJson, blJson, conJson)
+    } else {
+      return common.error('export_09')
     }
   }
 }
