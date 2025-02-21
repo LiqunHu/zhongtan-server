@@ -396,6 +396,7 @@ const updateContainerEdi = async (ediData) => {
       let excon = ''
       let proexcon = ''
       if(billNo && (billNo.indexOf('COSU') >= 0 || billNo.indexOf('OOLU') >= 0 ) && ediData.containerNo) {
+        logger.error("---------------------EDI邮件 updateContainerEdi------------------: " + JSON.stringify(ediData))
         // 舱单
         excon = await tb_export_containers.findOne({
           where: {
@@ -432,7 +433,7 @@ const updateContainerEdi = async (ediData) => {
           order: [['export_container_id', 'DESC']]
         }) 
       } else if(ediData.containerNo) {
-        logger.error("EDI邮件 updateContainerEdi: " + JSON.stringify(ediData))
+        logger.error("===================EDI邮件 updateContainerEdi:================ " + JSON.stringify(ediData))
         let queryStr = `select * from tbl_zhongtan_export_container where state = '1' and export_container_no = ? and created_at > ? order by export_container_id DESC limit 1`
         let replacements = [ediData.containerNo, moment().subtract(3, 'months').format('YYYY-MM-DD HH:mm:ss')]
         let loadingCon = await model.simpleSelect(queryStr, replacements)
