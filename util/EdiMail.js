@@ -386,23 +386,18 @@ const updateContainerEdi = async (ediData) => {
       let billNo = ''
       if(ediData.billNo) {
         if(common.isNumber(ediData.billNo)) {
-          logger.error("##############EDI邮件 updateContainerEdi#############1: " + billNo)
           if(ediData.carrier && 'COSCO'.indexOf(ediData.carrier) >= 0) {
             billNo = 'COSU' + ediData.billNo
-            logger.error("##############EDI邮件 updateContainerEdi#############2: " + billNo)
           } else {
             billNo = 'OOLU' + ediData.billNo
-            logger.error("##############EDI邮件 updateContainerEdi#############3: " + billNo)
           }
         } else {
           billNo = ediData.billNo
-          logger.error("##############EDI邮件 updateContainerEdi#############4: " + billNo)
         }
       }
       let excon = ''
       let proexcon = ''
       if(billNo && (billNo.indexOf('COSU') >= 0 || billNo.indexOf('OOLU') >= 0 ) && ediData.containerNo) {
-        logger.error("---------------------EDI邮件 updateContainerEdi------------------: " + JSON.stringify(ediData))
         // 舱单
         excon = await tb_export_containers.findOne({
           where: {
@@ -439,7 +434,6 @@ const updateContainerEdi = async (ediData) => {
           order: [['export_container_id', 'DESC']]
         }) 
       } else if(ediData.containerNo) {
-        logger.error("===================EDI邮件 updateContainerEdi:================ " + JSON.stringify(ediData))
         let queryStr = `select * from tbl_zhongtan_export_container where state = '1' and export_container_no = ? and created_at > ? order by export_container_id DESC limit 1`
         let replacements = [ediData.containerNo, moment().subtract(3, 'months').format('YYYY-MM-DD HH:mm:ss')]
         let loadingCon = await model.simpleSelect(queryStr, replacements)
