@@ -384,18 +384,20 @@ const updateContainerEdi = async (ediData) => {
     if(ediType === '34' || ediType === '46') {
       // 出口记录码头进场和装船时间
       let billNo = ''
-      if(common.isNumber(ediData.billNo)) {
-        logger.error("##############EDI邮件 updateContainerEdi#############1: " + billNo)
-        if(ediData.carrier && 'COSCO'.indexOf(ediData.carrier) >= 0) {
-          billNo = 'COSU' + ediData.billNo
-          logger.error("##############EDI邮件 updateContainerEdi#############2: " + billNo)
+      if(ediData.billNo) {
+        if(common.isNumber(ediData.billNo)) {
+          logger.error("##############EDI邮件 updateContainerEdi#############1: " + billNo)
+          if(ediData.carrier && 'COSCO'.indexOf(ediData.carrier) >= 0) {
+            billNo = 'COSU' + ediData.billNo
+            logger.error("##############EDI邮件 updateContainerEdi#############2: " + billNo)
+          } else {
+            billNo = 'OOLU' + ediData.billNo
+            logger.error("##############EDI邮件 updateContainerEdi#############3: " + billNo)
+          }
         } else {
-          billNo = 'OOLU' + ediData.billNo
-          logger.error("##############EDI邮件 updateContainerEdi#############3: " + billNo)
+          billNo = ediData.billNo
+          logger.error("##############EDI邮件 updateContainerEdi#############4: " + billNo)
         }
-      } else {
-        billNo = ediData.billNo
-        logger.error("##############EDI邮件 updateContainerEdi#############4: " + billNo)
       }
       let excon = ''
       let proexcon = ''
