@@ -433,7 +433,7 @@ const updateContainerEdi = async (ediData) => {
         }) 
       } else if(ediData.containerNo) {
         let queryStr = `select * from tbl_zhongtan_export_container where state = '1' and export_container_no = ? and created_at > ? order by export_container_id DESC limit 1`
-        let replacements = [ediData.containerNo, moment().subtract(1, 'months').format('YYYY-MM-DD HH:mm:ss')]
+        let replacements = [ediData.containerNo, moment().subtract(3, 'months').format('YYYY-MM-DD HH:mm:ss')]
         let loadingCon = await model.simpleSelect(queryStr, replacements)
         if(loadingCon && loadingCon.length > 0) {
           excon = await tb_export_containers.findOne({
@@ -445,7 +445,7 @@ const updateContainerEdi = async (ediData) => {
         }
 
         queryStr = `select * from tbl_zhongtan_export_proforma_container where state = '1' and export_container_no = ? and created_at > ? order by export_container_id DESC limit 1`
-        replacements = [ediData.containerNo, moment().subtract(1, 'months').format('YYYY-MM-DD HH:mm:ss')]
+        replacements = [ediData.containerNo, moment().subtract(3, 'months').format('YYYY-MM-DD HH:mm:ss')]
         let loadingCon2 = await model.simpleSelect(queryStr, replacements)
         if(loadingCon2 && loadingCon2.length > 0) {
           proexcon = await tb_export_proforma_containers.findOne({
