@@ -105,6 +105,7 @@ exports.searchAct = async req => {
   queryStr = `SELECT freight_place_code as id FROM tbl_zhongtan_freight_place WHERE state = ? ORDER BY freight_place_code`
   replacements = [GLBConfig.ENABLE]
   let pods = await model.simpleSelect(queryStr, replacements)
+
   if(returnData.rows && returnData.rows.length > 0) {
     for(let r of returnData.rows) {
       r.shipment_list_port_of_loading_edit = '0'
@@ -116,6 +117,16 @@ exports.searchAct = async req => {
       }
       if(r.shipment_list_port_of_loading && !r.selected_pol_list.includes(r.shipment_list_port_of_loading)) {
         r.selected_pol_list.unshift(r.shipment_list_port_of_loading)
+      }
+
+      r.selected_pod_list = []
+      if(pods && pods.length > 0) {
+        for(let p of pods) {
+          r.selected_pod_list.push(p.id)
+        }
+      }
+      if(r.shipment_list_port_of_destination && !r.selected_pod_list.includes(r.shipment_list_port_of_destination)) {
+        r.selected_pod_list.unshift(r.shipment_list_port_of_destination)
       }
     }
   }
