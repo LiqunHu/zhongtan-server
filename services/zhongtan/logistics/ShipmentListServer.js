@@ -152,6 +152,7 @@ exports.searchShipmentListAct = async req => {
     total = total + ret_import.length
     for(let d of ret_import) {
       let r = {}
+      r.shipment_list_relation_id = d.invoice_containers_id
       r.shipment_list_business_type = 'I'
       r.shipment_list_bill_no = d.invoice_containers_bl
       if(d.invoice_containers_bl.indexOf('COSU') >= 0){
@@ -173,6 +174,9 @@ exports.searchShipmentListAct = async req => {
       r.shipment_list_vessel_name = d.invoice_vessel_name
       r.shipment_list_vessel_voyage = d.invoice_vessel_voyage
       r.shipment_list_vessel_ata = d.invoice_vessel_ata ? moment(d.invoice_vessel_ata, 'DD/MM/YYYY').format('YYYY-MM-DD') : ''
+      r.shipment_list_exporter_name = d.invoice_masterbi_exporter_name
+      r.shipment_list_consignee_name = d.invoice_masterbi_consignee_name
+      r.shipment_list_notify_name = d.invoice_masterbi_notify_name
       r._checked = false
       rows.push(r)
     }
@@ -192,6 +196,7 @@ exports.searchShipmentListAct = async req => {
     let sameExportMasterblId = []
     for(let d of ret_export) {
       let r = {}
+      r.shipment_list_relation_id = d.export_container_id
       r.shipment_list_business_type = 'E'
       r.shipment_list_bill_no = d.export_container_bl
       if(d.export_container_bl.indexOf('COSU') >= 0){
@@ -270,7 +275,11 @@ exports.addAct = async req => {
         shipment_list_vessel_voyage: d.shipment_list_vessel_voyage,
         shipment_list_vessel_ata: d.shipment_list_vessel_ata,
         shipment_list_vessel_etd: d.shipment_list_vessel_etd,
-        shipment_list_customer: shipment_list_customer
+        shipment_list_customer: shipment_list_customer,
+        shipment_list_exporter_name: d.shipment_list_exporter_name,
+        shipment_list_consignee_name: d.shipment_list_consignee_name,
+        shipment_list_notify_name: d.shipment_list_notify_name,
+        shipment_list_relation_id: d.shipment_list_relation_id
       })
     }
   }

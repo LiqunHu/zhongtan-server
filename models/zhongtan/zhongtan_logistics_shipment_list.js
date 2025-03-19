@@ -266,5 +266,25 @@ module.exports = db.defineModel('tbl_zhongtan_logistics_shipment_list', {
     type: db.STRING(10),
     allowNull: true,
     defaultValue: '0'
+  },
+  shipment_list_exporter_name: {
+    // 发货人
+    type: db.STRING(1000),
+    allowNull: true
+  },
+  shipment_list_consignee_name: {
+    // 收货人
+    type: db.STRING(100),
+    allowNull: true
+  },
+  shipment_list_notify_name: {
+    // 通知人
+    type: db.STRING(500),
+    allowNull: true
+  },
+  shipment_list_relation_id: {
+    // 关联ID
+    type: db.STRING(20),
+    allowNull: true
   }
 })
