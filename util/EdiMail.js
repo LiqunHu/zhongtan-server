@@ -58,6 +58,7 @@ const readEdiMail = async (ediDepots) => {
                 writeStream.on('finish', async () => {
                   if(fs.existsSync(filePath)) {
                     let ediStr = fs.readFileSync(filePath, 'utf8')
+                    ediStr = ediStr.replace(/\r\n/g, '')
                     parserData.attachmentContent = ediStr
                     logger.error("我读到EDI邮件: " + JSON.stringify(parserData))
                     await parserMailAttachment(ediDepots, parserData)
