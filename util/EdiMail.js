@@ -137,7 +137,9 @@ const parserMailAttachment = async (ediDepots, parserData) => {
   }
   if(edi) {
     let ediStr = parserData.attachmentContent
+    logger.error("EDI邮件解析内容: " + ediStr)
     if(edi.edi_depot_is_wharf === GLBConfig.ENABLE) {
+      logger.error("码头EDI邮件解析内容: " + ediStr)
       // 码头邮件，包括装卸船和进出场
       let datas = ediStr.split('\'')
       let indexs = []
@@ -256,6 +258,7 @@ const parserMailAttachment = async (ediDepots, parserData) => {
         }
       }
     } else {
+      logger.error("堆场EDI邮件解析内容: " + ediStr)
       let gate = ''
       let regGate = eval(edi.edi_depot_gate_in_out_regex)
       let gt = regGate.exec(ediStr)
@@ -265,10 +268,11 @@ const parserMailAttachment = async (ediDepots, parserData) => {
       let datas = ediStr.split('\'')
       let indexs = []
       for(let i = 0; i < datas.length; i++) {
-        if(datas[i].indexOf('TDT+20') >= 0) {
+        if(datas[i].indexOf('TDT+20') >= 0 || datas[i].indexOf('TDT+1') >= 0) {
           indexs.push(i)
         } 
       }
+      logger.error("堆场EDI邮件解析内容--indexs: " + indexs)
       if(indexs && indexs.length > 0) {
         let ediContainers = []
         if(indexs.length === 1) {
