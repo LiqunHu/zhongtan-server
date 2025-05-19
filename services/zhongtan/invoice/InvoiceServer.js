@@ -238,8 +238,9 @@ exports.uploadImportAct = async req => {
           await tb_bl.create({
             invoice_vessel_id: vessel.invoice_vessel_id,
             invoice_masterbi_bl: m['B/L Nr.'],
+            invoice_masterbi_destination: m['DESTINATION'],
             invoice_masterbi_loading: m['Loading Port'],
-            invoice_masterbi_destination: m['Discharge Port'],
+            invoice_masterbi_discharge: m['Discharge Port'],
             invoice_masterbi_delivery: m['Delivery'],
             invoice_masterbi_cargo_type: m['Cargo Classification'],
             invoice_masterbi_exporter_name: m['SHIPPER'] || '',
@@ -368,6 +369,7 @@ exports.uploadImportAct = async req => {
               invoice_masterbi_carrier: masterbi_carrier,
               invoice_masterbi_cargo_type: m['Cargo Classification'] ? m['Cargo Classification'].trim() : '',
               invoice_masterbi_bl_type: m['*B/L Type'],
+              invoice_masterbi_discharge: m['Place of Discharge'] ?  m['Place of Discharge'].trim() : 'TZDAR',
               invoice_masterbi_destination: m['Place of Destination'] ?  m['Place of Destination'].trim() : '',
               invoice_masterbi_delivery: m['Place of Delivery'] ? m['Place of Delivery'].trim() : '',
               invoice_masterbi_freight: masterbi_freight,
@@ -1291,6 +1293,11 @@ exports.downloadDo2Act = async req => {
   renderData.delivery_to = bl.invoice_masterbi_do_icd
   renderData.fcl = bl.invoice_masterbi_do_fcl
   renderData.depot = bl.invoice_masterbi_do_return_depot
+
+  if(!bl.invoice_masterbi_discharge) {
+    renderData.invoice_masterbi_discharge = 'TZDAR'
+  }
+
   if(bl.invoice_masterbi_do_return_depot) {
     let depot = await tb_edi_depot.findOne({
       where: {
@@ -2309,6 +2316,11 @@ exports.changeblAct = async req => {
       edit_json['invoice_masterbi_loading'] = edit_json['invoice_masterbi_loading'] ? edit_json['invoice_masterbi_loading'] + 1 : 1
       edit_flg = true
     }
+    if(b.invoice_masterbi_discharge && bl.invoice_masterbi_discharge !== b.invoice_masterbi_discharge) {
+      edit_json['invoice_masterbi_discharge'] = edit_json['invoice_masterbi_discharge'] ? edit_json['invoice_masterbi_discharge'] + 1 : 1
+      edit_flg = true
+      count_flg = true
+    }
     if(b.invoice_masterbi_cargo_type && bl.invoice_masterbi_cargo_type !== b.invoice_masterbi_cargo_type) {
       edit_json['invoice_masterbi_cargo_type'] = edit_json['invoice_masterbi_cargo_type'] ? edit_json['invoice_masterbi_cargo_type'] + 1 : 1
       edit_flg = true
@@ -2498,6 +2510,7 @@ exports.changeblAct = async req => {
     bl.invoice_masterbi_destination = b.invoice_masterbi_destination
     bl.invoice_masterbi_delivery = b.invoice_masterbi_delivery
     bl.invoice_masterbi_loading = b.invoice_masterbi_loading
+    bl.invoice_masterbi_discharge = b.invoice_masterbi_discharge
     bl.invoice_masterbi_container_no = b.invoice_masterbi_container_no
     bl.invoice_masterbi_goods_description = b.invoice_masterbi_goods_description
     bl.invoice_masterbi_package_no = b.invoice_masterbi_package_no

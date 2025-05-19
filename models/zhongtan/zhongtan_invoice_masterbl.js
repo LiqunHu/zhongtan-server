@@ -42,6 +42,12 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_masterbl', {
     defaultValue: '',
     allowNull: false
   },
+  invoice_masterbi_discharge: {
+    // Port of Discharge
+    type: db.STRING(50),
+    defaultValue: 'TZDAR',
+    allowNull: false
+  },
   invoice_masterbi_destination: {
     // Place of Destination
     type: db.STRING(50),
