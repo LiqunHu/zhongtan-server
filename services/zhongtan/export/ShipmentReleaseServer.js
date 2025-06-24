@@ -1127,7 +1127,7 @@ exports.invoiceShipmentAct = async req => {
           renderData.user_email = commonUser.user_email
 
           renderData.rate_currency = 'TZS'
-          let rate = await rateSrv.getCurrentExchangeRateTZS(renderData.totalReceivable)
+          let rate = await rateSrv.getCurrentExchangeRateTZS(renderData.totalReceivable + '')
           renderData.current_rate = common.formatAmountCurrency(rate.rate)
           renderData.rate_amount = common.formatAmountCurrency(rate.amount)
 
