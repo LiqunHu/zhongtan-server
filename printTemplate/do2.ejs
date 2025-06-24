@@ -321,11 +321,13 @@
 			</tr>
 			<tr style="border-left: 1px solid #7F7F7F; border-top: 1px solid #7F7F7F; border-bottom: 1px solid #7F7F7F; border-right: 1px solid #7F7F7F;">
 				<td colspan="48" style="text-align: center; color:red; font-weight:bold;">
+					<% if (ejsData.invoice_containers_soc != 'SOC') { %>
 					DESIGNATED EMPTY CONTAINER RETURN DEPOT: <font style="font-size: 36px; "><%= ejsData.depot %></font></br>
 					<% if (ejsData.depot_address) { %>
 						DEPOT ADDRESS: <%= ejsData.depot_address %> </br>
 					<% } %>
 					UNDER STOCK OF: <%= ejsData.carrier %>
+					<% } %>
 				</td>
 			</tr>
 			<tr style="border-left: 1px solid #7F7F7F; border-bottom: 1px solid #7F7F7F; border-right: 1px solid #7F7F7F;">

@@ -416,8 +416,8 @@ exports.modifyAct = async req => {
           uploadfile_name: fileInfo.name,
           uploadfile_url: fileInfo.url,
           uploadfile_state: 'AP',
-          uploadfile_amount: doc.payment_advice_amount,
-          uploadfile_currency: doc.payment_advice_currency
+          uploadfile_amount: doc.new.payment_advice_amount,
+          uploadfile_currency: doc.new.payment_advice_currency
         })
       }
     }

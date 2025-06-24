@@ -87,9 +87,9 @@ exports.getCurrentExchangeRateTZS = async usdAmount => {
     if(rate_item.rate_tzs) {
       rate_amount = new Decimal(usdAmount).times(new Decimal(rate_item.rate_tzs))
     }
-    return {amount: Decimal.isDecimal(rate_amount) ? rate_amount.toNumber() : rate_amount, rate: new Decimal(rate_item.rate_tzs).toNumber()}
+    return {source: Decimal.isDecimal(usdAmount) ? usdAmount.toNumber() : usdAmount, amount: Decimal.isDecimal(rate_amount) ? rate_amount.toNumber() : rate_amount, rate: new Decimal(rate_item.rate_tzs).toNumber()}
   } else {
-    return {amount: usdAmount, rate: 1}
+    return {source: Decimal.isDecimal(usdAmount) ? usdAmount.toNumber() : usdAmount, amount: Decimal.isDecimal(usdAmount) ? usdAmount.toNumber() : usdAmount, rate: 1}
   }
 }
 
@@ -104,8 +104,8 @@ exports.getCurrentExchangeRateUSD = async tzsAmount => {
     if(rate_item.rate_tzs) {
       rate_amount = new Decimal(tzsAmount).div(new Decimal(rate_item.rate_usd))
     }
-    return {amount: Decimal.isDecimal(rate_amount) ? rate_amount.toNumber() : rate_amount, rate: new Decimal(rate_item.rate_usd).toNumber()}
+    return {source: Decimal.isDecimal(tzsAmount) ? tzsAmount.toNumber() : tzsAmount, amount: Decimal.isDecimal(rate_amount) ? rate_amount.toNumber() : rate_amount, rate: new Decimal(rate_item.rate_usd).toNumber()}
   } else {
-    return {amount: tzsAmount, rate: 1}
+    return {source: Decimal.isDecimal(tzsAmount) ? tzsAmount.toNumber() : tzsAmount, amount: Decimal.isDecimal(tzsAmount) ? tzsAmount.toNumber() : tzsAmount, rate: 1}
   }
 }

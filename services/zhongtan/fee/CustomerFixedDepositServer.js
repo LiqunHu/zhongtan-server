@@ -3,6 +3,7 @@ const GLBConfig = require('../../../util/GLBConfig')
 const common = require('../../../util/CommonUtil')
 const model = require('../../../app/model')
 const seq = require('../../../util/Sequence')
+const rateSrv = require('../configuration/ExchangeRateConfigServer')
 
 const tb_user = model.common_user
 const tb_fixed_deposit = model.zhongtan_customer_fixed_deposit
@@ -277,6 +278,19 @@ exports.invoiceAct = async req => {
   renderData.fixed_deposit_currency = theDeposit.deposit_currency
   renderData.user_name = user.user_name
   renderData.user_email = user.user_email
+
+  if(renderData.fixed_deposit_currency !== 'TZS') {
+    renderData.rate_currency = 'TZS'
+    let rate = await rateSrv.getCurrentExchangeRateTZS(renderData.fixed_deposit_amount)
+    renderData.current_rate =  common.formatAmountCurrency(rate.rate)
+    renderData.rate_amount =  common.formatAmountCurrency(rate.amount)
+  } else {
+    renderData.rate_currency = 'USD'
+    let rate = await rateSrv.getCurrentExchangeRateUSD(renderData.fixed_deposit_amount)
+    renderData.current_rate =  common.formatAmountCurrency(rate.rate)
+    renderData.rate_amount =  common.formatAmountCurrency(rate.amount)
+  }
+
   try {
     let fileInfo = await common.ejs2Pdf('fixedInvoice.ejs', renderData, 'zhongtan')
     await theDeposit.save()
@@ -299,7 +313,8 @@ exports.invoiceAct = async req => {
       uploadfile_url: fileInfo.url,
       uploadfile_currency: theDeposit.deposit_currency,
       uploadfile_state: 'PB',
-      uploadfile_invoice_no: 'CTS/' + renderData.fixed_deposit_carrier + '/' + renderData.fixed_deposit_number + '/' + renderData.fixed_deposit_invoice_no
+      uploadfile_invoice_no: 'CTS/' + renderData.fixed_deposit_carrier + '/' + renderData.fixed_deposit_number + '/' + renderData.fixed_deposit_invoice_no,
+      uploadfile_amount_rate: renderData.current_rate
     })
     return common.success()
   } catch(e) {

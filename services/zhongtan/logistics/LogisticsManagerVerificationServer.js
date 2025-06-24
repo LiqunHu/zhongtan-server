@@ -5,6 +5,7 @@ const common = require('../../../util/CommonUtil')
 const model = require('../../../app/model')
 const seq = require('../../../util/Sequence')
 const numberToText = require('number2text')
+const rateSrv = require('../configuration/ExchangeRateConfigServer')
 
 const tb_user = model.common_user
 const tb_verification = model.zhongtan_logistics_verification
@@ -279,6 +280,12 @@ exports.approveAct = async req => {
         renderData.payment_no = payment_no
         renderData.payment_total = formatCurrency(ver.logistics_verification_amount)
         renderData.payment_total_str = numberToText(ver.logistics_verification_amount, 'english')
+
+        renderData.rate_currency = 'TZS'
+        let rate = await rateSrv.getCurrentExchangeRateTZS(ver.logistics_verification_amount)
+        renderData.current_rate =  common.formatAmountCurrency(rate.rate)
+        renderData.rate_amount =  common.formatAmountCurrency(rate.amount)
+
         if(ver.logistics_verification_create_user) {
           let prepared = await tb_user.findOne({
             where: {
@@ -338,6 +345,7 @@ exports.approveAct = async req => {
           }
           renderData.payment_list = payment_list
           renderData.advance_percent = advance_percent
+
           let fileInfo = await common.ejs2Pdf('paymentAdvance.ejs', renderData, 'zhongtan')
           await tb_uploadfile.create({
             api_name: 'PAYMENT ADVANCE',
@@ -352,7 +360,8 @@ exports.approveAct = async req => {
             uploadfile_customer_id: vendor.vendor_id,
             uploadfile_invoice_no: payment_no,
             uploadfil_release_date: curDate,
-            uploadfil_release_user_id: user.user_id
+            uploadfil_release_user_id: user.user_id,
+            uploadfile_amount_rate: renderData.current_rate
           })
         } else if(ver.logistics_verification_api_name === 'PAYMENT BALANCE') {
           let payment_list = []
@@ -366,6 +375,7 @@ exports.approveAct = async req => {
             })
           }
           renderData.payment_list = payment_list
+
           let fileInfo = await common.ejs2Pdf('paymentBalance.ejs', renderData, 'zhongtan')
           await tb_uploadfile.create({
             api_name: 'PAYMENT BALANCE',
@@ -380,7 +390,8 @@ exports.approveAct = async req => {
             uploadfile_customer_id: vendor.vendor_id,
             uploadfile_invoice_no: payment_no,
             uploadfil_release_date: curDate,
-            uploadfil_release_user_id: user.user_id
+            uploadfil_release_user_id: user.user_id,
+            uploadfile_amount_rate: renderData.current_rate
           })
         } else if(ver.logistics_verification_api_name === 'PAYMENT FULL') {
           let payment_list = []
@@ -408,7 +419,8 @@ exports.approveAct = async req => {
             uploadfile_customer_id: vendor.vendor_id,
             uploadfile_invoice_no: payment_no,
             uploadfil_release_date: curDate,
-            uploadfil_release_user_id: user.user_id
+            uploadfil_release_user_id: user.user_id,
+            uploadfile_amount_rate: renderData.current_rate
           })
         } else if(ver.logistics_verification_api_name === 'PAYMENT EXTRA') {
           let payment_list = []
@@ -422,6 +434,19 @@ exports.approveAct = async req => {
           }
           renderData.payment_list = payment_list
           renderData.extra_currency = extra_currency
+
+          if(renderData.extra_currency !== 'TZS') {
+            renderData.rate_currency = 'TZS'
+            let rate = await rateSrv.getCurrentExchangeRateTZS(ver.logistics_verification_amount)
+            renderData.current_rate =  common.formatAmountCurrency(rate.rate)
+            renderData.rate_amount =  common.formatAmountCurrency(rate.amount)
+          } else {
+            renderData.rate_currency = 'USD'
+            let rate = await rateSrv.getCurrentExchangeRateUSD(ver.logistics_verification_amount)
+            renderData.current_rate =  common.formatAmountCurrency(rate.rate)
+            renderData.rate_amount =  common.formatAmountCurrency(rate.amount)
+          }
+
           let fileInfo = await common.ejs2Pdf('paymentExtra.ejs', renderData, 'zhongtan')
           await tb_uploadfile.create({
             api_name: 'PAYMENT EXTRA',
@@ -436,7 +461,8 @@ exports.approveAct = async req => {
             uploadfile_customer_id: vendor.vendor_id,
             uploadfile_invoice_no: payment_no,
             uploadfil_release_date: curDate,
-            uploadfil_release_user_id: user.user_id
+            uploadfil_release_user_id: user.user_id,
+            uploadfile_amount_rate: renderData.current_rate
           })
         }
       } else if(ver.logistics_verification_api_name === 'FREIGHT INVOICE') {
@@ -489,6 +515,12 @@ exports.approveAct = async req => {
           })
         }
         renderData.freight_list = freight_list
+
+        renderData.rate_currency = 'TZS'
+        let rate = await rateSrv.getCurrentExchangeRateTZS(renderData.freight_total)
+        renderData.current_rate =  common.formatAmountCurrency(rate.rate)
+        renderData.rate_amount =  common.formatAmountCurrency(rate.amount)
+
         let fileInfo = await common.ejs2Pdf('freightInvoice.ejs', renderData, 'zhongtan')
         await tb_uploadfile.create({
           api_name: 'FREIGHT INVOICE',
@@ -503,7 +535,8 @@ exports.approveAct = async req => {
           uploadfile_customer_id: customer.user_id,
           uploadfile_invoice_no: freight_no,
           uploadfil_release_date: curDate,
-          uploadfil_release_user_id: user.user_id
+          uploadfil_release_user_id: user.user_id,
+          uploadfile_amount_rate: renderData.current_rate
         })
       } else if(ver.logistics_verification_api_name === 'EXTRA INVOICE') {
         let customer = await tb_user.findOne({
@@ -539,6 +572,19 @@ exports.approveAct = async req => {
         }
         renderData.freight_list = freight_list
         renderData.extra_currency = extra_currency
+
+        if(renderData.extra_currency !== 'TZS') {
+          renderData.rate_currency = 'TZS'
+          let rate = await rateSrv.getCurrentExchangeRateTZS(renderData.freight_total)
+          renderData.current_rate =  common.formatAmountCurrency(rate.rate)
+          renderData.rate_amount =  common.formatAmountCurrency(rate.amount)
+        } else {
+          renderData.rate_currency = 'USD'
+          let rate = await rateSrv.getCurrentExchangeRateUSD(renderData.freight_total)
+          renderData.current_rate =  common.formatAmountCurrency(rate.rate)
+          renderData.rate_amount =  common.formatAmountCurrency(rate.amount)
+        }
+
         let fileInfo = await common.ejs2Pdf('freightExtra.ejs', renderData, 'zhongtan')
         await tb_uploadfile.create({
           api_name: 'EXTRA INVOICE',
@@ -553,7 +599,8 @@ exports.approveAct = async req => {
           uploadfile_customer_id: customer.user_id,
           uploadfile_invoice_no: freight_no,
           uploadfil_release_date: curDate,
-          uploadfil_release_user_id: user.user_id
+          uploadfil_release_user_id: user.user_id,
+          uploadfile_amount_rate: renderData.current_rate
         })
       }
     }

@@ -82,8 +82,13 @@ exports.searchAct = async req => {
       replacements.push('%' + doc.search_data.invoice_no + '%')
     }
     if (doc.search_data.receipt_no) {
-      queryStr += ` and a.invoice_containers_id IN (SELECT overdue_invoice_containers_invoice_containers_id FROM tbl_zhongtan_overdue_invoice_containers ic LEFT JOIN tbl_zhongtan_uploadfile uf ON ic.overdue_invoice_containers_invoice_uploadfile_id = uf.uploadfile_id WHERE ic.state = 1 AND uf.state = 1 AND uf.api_name = 'OVERDUE-INVOICE' AND uf.uploadfile_receipt_no LIKE ?) `
+      queryStr += ` and a.invoice_containers_id IN (SELECT overdue_invoice_containers_invoice_containers_id FROM tbl_zhongtan_overdue_invoice_containers ic LEFT JOIN tbl_zhongtan_uploadfile uf ON ic.overdue_invoice_containers_invoice_masterbi_id = uf.uploadfile_index1 WHERE ic.state = 1 AND uf.state = 1 AND uf.api_name = 'OVERDUE-RECEIPT' AND uf.uploadfile_receipt_no LIKE ?) `
       replacements.push('%' + doc.search_data.receipt_no + '%')
+    }
+    if (doc.search_data.reference_no) {
+      queryStr += ` and a.invoice_containers_id IN (SELECT overdue_invoice_containers_invoice_containers_id FROM tbl_zhongtan_overdue_invoice_containers ic LEFT JOIN tbl_zhongtan_uploadfile uf ON ic.overdue_invoice_containers_invoice_masterbi_id = uf.uploadfile_index1 WHERE ic.state = 1 AND uf.state = 1 AND uf.api_name = 'OVERDUE-RECEIPT' AND ((uf.uploadfile_check_cash = 'CHEQUE' AND uf.uploadfile_check_no LIKE ?) OR (uf.uploadfile_check_cash != 'CHEQUE' AND uf.uploadfile_bank_reference_no LIKE ?))) `
+      replacements.push('%' + doc.search_data.reference_no + '%')
+      replacements.push('%' + doc.search_data.reference_no + '%')
     }
   }
   queryStr += ' ORDER BY b.invoice_vessel_id DESC, a.invoice_containers_bl, a.invoice_containers_no'

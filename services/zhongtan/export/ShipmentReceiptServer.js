@@ -53,6 +53,7 @@ exports.searchVesselAct = async req => {
   let masterbi_bl = doc.masterbi_bl
   let invoice_no = doc.invoice_no
   let receipt_no = doc.receipt_no
+  let reference_no = doc.reference_no
   let queryStr =  `SELECT * FROM tbl_zhongtan_export_proforma_vessel v WHERE v.state = '1'`
   let replacements = []
   if(masterbi_bl) {
@@ -66,6 +67,11 @@ exports.searchVesselAct = async req => {
   if(receipt_no) {
     queryStr = queryStr + ` AND v.export_vessel_id IN (SELECT export_vessel_id FROM tbl_zhongtan_export_proforma_masterbl WHERE export_masterbl_id IN (SELECT DISTINCT(export_masterbl_id) FROM tbl_zhongtan_export_shipment_fee WHERE state = '1' AND shipment_fee_receipt_no LIKE ?))`
     replacements.push('%' + receipt_no + '%')
+  }
+  if(reference_no) {
+    queryStr = queryStr + ` AND v.export_vessel_id IN (SELECT export_vessel_id FROM tbl_zhongtan_export_proforma_masterbl WHERE export_masterbl_id IN (SELECT uploadfile_index1 FROM tbl_zhongtan_uploadfile WHERE state =1 AND api_name = 'SHIPMENT-RECEIPT' AND ((uploadfile_check_cash = 'CHEQUE' AND uploadfile_check_no LIKE ?) OR (uploadfile_check_cash != 'CHEQUE' AND uploadfile_bank_reference_no LIKE ?)) ))`
+    replacements.push('%' + reference_no + '%')
+    replacements.push('%' + reference_no + '%')
   }
   if(etd_start_date && etd_end_date) {
     queryStr = queryStr + ` AND STR_TO_DATE(v.export_vessel_etd, "%d/%m/%Y") >= ? AND STR_TO_DATE(v.export_vessel_etd, "%d/%m/%Y") <= ? `
@@ -106,6 +112,7 @@ exports.searchBlAct = async req => {
   let masterbi_bl = doc.masterbi_bl
   let invoice_no = doc.invoice_no
   let receipt_no = doc.receipt_no
+  let reference_no = doc.reference_no
   let queryStr =  `select * from tbl_zhongtan_export_proforma_masterbl b WHERE b.export_vessel_id = ? AND b.state = ?`
   let replacements = [export_vessel_id, GLBConfig.ENABLE]
   if(masterbi_bl) {
@@ -119,6 +126,11 @@ exports.searchBlAct = async req => {
   if(receipt_no) {
     queryStr = queryStr + ` AND b.export_masterbl_id IN (SELECT DISTINCT(export_masterbl_id) FROM tbl_zhongtan_export_shipment_fee WHERE state = '1' AND shipment_fee_receipt_no LIKE ?)`
     replacements.push('%' + receipt_no + '%')
+  }
+  if(reference_no) {
+    queryStr = queryStr + ` AND b.export_masterbl_id IN (SELECT uploadfile_index1 FROM tbl_zhongtan_uploadfile WHERE state =1 AND api_name = 'SHIPMENT-RECEIPT' AND ((uploadfile_check_cash = 'CHEQUE' AND uploadfile_check_no LIKE ?) OR (uploadfile_check_cash != 'CHEQUE' AND uploadfile_bank_reference_no LIKE ?)))`
+    replacements.push('%' + reference_no + '%')
+    replacements.push('%' + reference_no + '%')
   }
   let bls = await model.queryWithCount(doc, queryStr, replacements)
   returnData.total = bls.count

@@ -6,6 +6,7 @@ const GLBConfig = require('../../../util/GLBConfig')
 const model = require('../../../app/model')
 const seq = require('../../../util/Sequence')
 const opSrv = require('../../common/system/OperationPasswordServer')
+const rateSrv = require('../configuration/ExchangeRateConfigServer')
 
 const tb_mnr_ledger = model.zhongtan_container_mnr_ledger
 const tb_uploadfile = model.zhongtan_uploadfile
@@ -275,6 +276,12 @@ exports.invoiceAct = async req => {
     renderData.user_name = commonUser.user_name
     renderData.user_phone = commonUser.user_phone
     renderData.user_email = commonUser.user_email
+
+    renderData.rate_currency = 'TZS'
+    let rate = await rateSrv.getCurrentExchangeRateTZS(renderData.mnrTotal)
+    renderData.current_rate =  common.formatAmountCurrency(rate.rate)
+    renderData.rate_amount =  common.formatAmountCurrency(rate.amount)
+
     try {
       let fileInfo = await common.ejs2Pdf('mnrInvoice.ejs', renderData, 'zhongtan')
       // await tb_uploadfile.destroy({
@@ -298,7 +305,8 @@ exports.invoiceAct = async req => {
         uploadfile_state: 'PB', // TODO state PM => PB
         uploadfile_amount: mnr.mnr_ledger_actual_charge_amount,
         uploadfile_customer_id: customer.user_id,
-        uploadfile_invoice_no: invoiceNo
+        uploadfile_invoice_no: invoiceNo,
+        uploadfile_amount_rate: renderData.current_rate
       })
       mnr.mnr_ledger_reedit_flg = GLBConfig.DISABLE
       mnr.mnr_ledger_invoice_date = moment().format('YYYY-MM-DD HH:mm:ss')

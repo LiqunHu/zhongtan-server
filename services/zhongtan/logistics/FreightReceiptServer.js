@@ -201,6 +201,16 @@ const queryWhereJoin = async (param) => {
       replacements.push(like_receipt_no)
       replacements.push(like_receipt_no)
     }
+
+    if(searchPara.shipment_list_receipt_date && searchPara.shipment_list_receipt_date.length > 1) {
+      // 收据时间
+      queryStr = queryStr + ` and (s.shipment_list_id IN (SELECT lv.shipment_list_id FROM tbl_zhongtan_logistics_verification_freight lv LEFT JOIN tbl_zhongtan_uploadfile u ON lv.logistics_verification_id = u.uploadfile_index1 WHERE lv.state = 1 AND lv.logistics_freight_state = 'AP' AND u.api_name = 'FREIGHT RECEIPT' AND u.state = 1 AND u.created_at >= ? and u.created_at <= ?) 
+                OR s.shipment_list_id IN (SELECT lpe.payment_extra_shipment_id FROM tbl_zhongtan_logistics_payment_extra lpe LEFT JOIN tbl_zhongtan_logistics_verification_freight vf ON lpe.payment_extra_id = vf.shipment_list_id WHERE lpe.state = 1 AND lpe.payment_extra_type = 'R' AND lpe.payment_extra_status = '6' AND vf.state = 1 AND vf.logistics_freight_state = 'AP' AND vf.logistics_verification_id IN (SELECT uploadfile_index1 FROM tbl_zhongtan_uploadfile WHERE state = 1 AND api_name = 'EXTRA RECEIPT' AND u.created_at >= ? and u.created_at <= ?))) `
+      replacements.push(searchPara.shipment_list_receipt_date[0])
+      replacements.push(searchPara.shipment_list_receipt_date[1])
+      replacements.push(searchPara.shipment_list_receipt_date[0])
+      replacements.push(searchPara.shipment_list_receipt_date[1])
+    }
   }
   return {
     queryStr: queryStr,

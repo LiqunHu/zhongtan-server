@@ -11,6 +11,7 @@ const cal_config_srv = require('../equipment/OverdueCalculationConfigServer')
 const opSrv = require('../../common/system/OperationPasswordServer')
 const adsSrv = require('../configuration/AllotDepotServer')
 const freight_srv = require('../logistics/ShipmentListServer')
+const rateSrv = require('../configuration/ExchangeRateConfigServer')
 const Op = model.Op
 
 const tb_user = model.common_user
@@ -1337,6 +1338,7 @@ exports.downloadDo2Act = async req => {
       // renderData.containers[i].invoice_containers_tare = common.getContainerTare(renderData.containers[i].invoice_containers_size)
       if(renderData.containers[i].invoice_containers_type === 'S') {
         renderData.containers[i].invoice_containers_soc = 'SOC'
+        renderData.invoice_containers_soc = 'SOC'
       } else {
         renderData.containers[i].invoice_containers_soc = ''
       }
@@ -1650,6 +1652,17 @@ exports.depositDoAct = async req => {
         }
       }
     }
+    if(renderData.invoice_deposit_currency !== 'TZS') {
+      renderData.rate_currency = 'TZS'
+      let rate = await rateSrv.getCurrentExchangeRateTZS(renderData.invoice_masterbi_deposit)
+      renderData.current_rate = formatCurrency(rate.rate)
+      renderData.rate_amount = formatCurrency(rate.amount)
+    } else {
+      renderData.rate_currency = 'USD'
+      let rate = await rateSrv.getCurrentExchangeRateUSD(renderData.invoice_masterbi_deposit)
+      renderData.current_rate = formatCurrency(rate.rate)
+      renderData.rate_amount = formatCurrency(rate.amount)
+    }
     let fileInfo = await common.ejs2Pdf('deposit.ejs', renderData, 'zhongtan')
     if(!bl.invoice_masterbi_deposit_receipt_date) {
       // await tb_uploadfile.destroy({
@@ -1691,6 +1704,8 @@ exports.depositDoAct = async req => {
       uploadfile_index1: bl.invoice_masterbi_id,
       uploadfile_name: fileInfo.name,
       uploadfile_url: fileInfo.url,
+      uploadfile_acttype: 'depost',
+      uploadfile_amount: renderData.invoice_masterbi_deposit,
       uploadfile_currency: doc.invoice_container_deposit_currency,
       uploadfile_state: uploadfile_state, 
       uploadfile_amount_comment: doc.invoice_masterbi_deposit_comment,
@@ -1698,7 +1713,8 @@ exports.depositDoAct = async req => {
       uploadfil_release_user_id: uploadfil_release_user_id,
       uploadfile_received_from: customer.user_name,
       uploadfile_customer_id: customer.user_id,
-      uploadfile_invoice_no: 'CTS/' + renderData.invoice_masterbi_carrier + '/' + renderData.voyage_number + '/' + renderData.receipt_no
+      uploadfile_invoice_no: 'CTS/' + renderData.invoice_masterbi_carrier + '/' + renderData.voyage_number + '/' + renderData.receipt_no,
+      uploadfile_amount_rate: renderData.current_rate
     })
     if((doc.invoice_masterbi_deposit_fixed && doc.invoice_masterbi_deposit_fixed === '1' && doc.invoice_masterbi_deposit_fixed_id && !doc.depositEdit) || allSoc) {
       bl.invoice_masterbi_receipt_amount = bl.invoice_masterbi_deposit
@@ -1966,7 +1982,17 @@ exports.depositDoAct = async req => {
           cnty_type: 'CNT',
           standard: 'DEPOSIT'
         })
-        
+        if(renderDataDeposit.invoice_deposit_currency !== 'TZS') {
+          renderDataDeposit.rate_currency = 'TZS'
+          let rate = await rateSrv.getCurrentExchangeRateTZS(renderDataDeposit.invoice_masterbi_deposit)
+          renderDataDeposit.current_rate = formatCurrency(rate.rate)
+          renderDataDeposit.rate_amount = formatCurrency(rate.amount)
+        } else {
+          renderDataDeposit.rate_currency = 'USD'
+          let rate = await rateSrv.getCurrentExchangeRateUSD(renderDataDeposit.invoice_masterbi_deposit)
+          renderDataDeposit.current_rate = formatCurrency(rate.rate)
+          renderDataDeposit.rate_amount = formatCurrency(rate.amount)
+        }
         let fileInfoDeposit = await common.ejs2Pdf('deposit.ejs', renderDataDeposit, 'zhongtan')
         await tb_uploadfile.create({
           api_name: 'RECEIPT-DEPOSIT',
@@ -1974,6 +2000,8 @@ exports.depositDoAct = async req => {
           uploadfile_index1: bl.invoice_masterbi_id,
           uploadfile_name: fileInfoDeposit.name,
           uploadfile_url: fileInfoDeposit.url,
+          uploadfile_acttype: 'depost',
+          uploadfile_amount: renderDataDeposit.invoice_masterbi_deposit,
           uploadfile_currency: 'USD',
           uploadfile_state: 'AP', 
           uploadfile_amount_comment: doc.invoice_masterbi_deposit_comment,
@@ -1981,7 +2009,8 @@ exports.depositDoAct = async req => {
           uploadfil_release_user_id: user.user_id,
           uploadfile_received_from: customer.user_name,
           uploadfile_customer_id: customer.user_id,
-          uploadfile_invoice_no: 'CTS/' + renderDataDeposit.invoice_masterbi_carrier + '/' + renderDataDeposit.voyage_number + '/' + renderDataDeposit.receipt_no
+          uploadfile_invoice_no: 'CTS/' + renderDataDeposit.invoice_masterbi_carrier + '/' + renderDataDeposit.voyage_number + '/' + renderDataDeposit.receipt_no,
+          uploadfile_amount_rate: renderDataDeposit.current_rate
         })
       }
     }
@@ -2146,6 +2175,18 @@ exports.depositDoAct = async req => {
     }
 
     renderData.sum_fee = formatCurrency(renderData.sum_fee)
+    if(renderData.fee_currency !== 'TZS') {
+      renderData.rate_currency = 'TZS'
+      let rate = await rateSrv.getCurrentExchangeRateTZS(renderData.sum_fee)
+      renderData.current_rate = formatCurrency(rate.rate)
+      renderData.rate_amount = formatCurrency(rate.amount)
+    } else {
+      renderData.rate_currency = 'USD'
+      let rate = await rateSrv.getCurrentExchangeRateUSD(renderData.sum_fee)
+      renderData.current_rate = formatCurrency(rate.rate)
+      renderData.rate_amount = formatCurrency(rate.amount)
+    }
+
     let fileInfo = await common.ejs2Pdf('fee.ejs', renderData, 'zhongtan')
     if(!bl.invoice_masterbi_invoice_receipt_date) {
       // await tb_uploadfile.destroy({
@@ -2166,12 +2207,15 @@ exports.depositDoAct = async req => {
       uploadfile_index1: bl.invoice_masterbi_id,
       uploadfile_name: fileInfo.name,
       uploadfile_url: fileInfo.url,
+      uploadfile_acttype: 'fee',
+      uploadfile_amount: renderData.sum_fee,
       uploadfile_currency: doc.invoice_fee_currency,
       uploadfile_state: 'PB', // TODO state PM => PB
       uploadfile_amount_comment: doc.invoice_fee_comment,
       uploadfile_received_from: customer.user_name,
       uploadfile_customer_id: customer.user_id,
-      uploadfile_invoice_no: 'CTS/' + renderData.invoice_masterbi_carrier + '/' + renderData.voyage_number + '/' + renderData.receipt_no
+      uploadfile_invoice_no: 'CTS/' + renderData.invoice_masterbi_carrier + '/' + renderData.voyage_number + '/' + renderData.receipt_no,
+      uploadfile_amount_rate: renderData.current_rate
     })
     await bl.save()
     return common.success({ url: fileInfo.url })
@@ -2206,6 +2250,17 @@ exports.depositDoAct = async req => {
     renderData.sum_fee += parseFloat(bl.invoice_masterbi_of)
 
     renderData.sum_fee = formatCurrency(renderData.sum_fee)
+    if(renderData.fee_currency !== 'TZS') {
+      renderData.rate_currency = 'TZS'
+      let rate = await rateSrv.getCurrentExchangeRateTZS(renderData.sum_fee)
+      renderData.current_rate = formatCurrency(rate.rate)
+      renderData.rate_amount = formatCurrency(rate.amount)
+    } else {
+      renderData.rate_currency = 'USD'
+      let rate = await rateSrv.getCurrentExchangeRateUSD(renderData.sum_fee)
+      renderData.current_rate = formatCurrency(rate.rate)
+      renderData.rate_amount = formatCurrency(rate.amount)
+    }
 
     let fileInfo = await common.ejs2Pdf('fee.ejs', renderData, 'zhongtan')
 
@@ -2226,12 +2281,15 @@ exports.depositDoAct = async req => {
       uploadfile_index1: bl.invoice_masterbi_id,
       uploadfile_name: fileInfo.name,
       uploadfile_url: fileInfo.url,
+      uploadfile_acttype: 'fee',
+      uploadfile_amount: renderData.sum_fee,
       uploadfile_currency: doc.invoice_masterbi_of_currency,
       uploadfile_state: 'PB', // TODO state PM => PB
       uploadfile_amount_comment: doc.invoice_masterbi_of_comment,
       uploadfile_received_from: customer.user_name,
       uploadfile_customer_id: customer.user_id,
-      uploadfile_invoice_no: 'CTS/' + renderData.invoice_masterbi_carrier + '/' + renderData.voyage_number + '/' + renderData.receipt_no
+      uploadfile_invoice_no: 'CTS/' + renderData.invoice_masterbi_carrier + '/' + renderData.voyage_number + '/' + renderData.receipt_no,
+      uploadfile_amount_rate: renderData.current_rate
     })
 
     return common.success({ url: fileInfo.url })

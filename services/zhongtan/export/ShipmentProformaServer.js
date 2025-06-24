@@ -25,7 +25,7 @@ const tb_export_verification = model.zhongtan_export_verification
 exports.initAct = async () => {
   let returnData = {}
   let queryStr = `select * from tbl_common_user where state = '1' and user_type = ? and (user_code is not null or user_code <> '')`
-  replacements = [GLBConfig.TYPE_DEFAULT]
+  let replacements = [GLBConfig.TYPE_DEFAULT]
   returnData['SALES_CODE'] = await model.simpleSelect(queryStr, replacements)
   return common.success(returnData)
 }
@@ -1093,9 +1093,10 @@ exports.searchVesselAct = async req => {
   let masterbi_bl = doc.masterbi_bl
   let shipper_company = doc.shipper_company
   let consignee_company = doc.consignee_company
+  let bl_carrier = doc.bl_carrier
   let queryStr =  `SELECT * FROM tbl_zhongtan_export_proforma_vessel v WHERE v.state = '1' AND EXISTS (SELECT 1 FROM tbl_zhongtan_export_proforma_masterbl b WHERE v.export_vessel_id = b.export_vessel_id AND b.state = 1 AND b.bk_cancellation_status <> 1)`
   let replacements = []
-  if(masterbi_bl || shipper_company || consignee_company) {
+  if(masterbi_bl || shipper_company || consignee_company || bl_carrier) {
     queryStr = queryStr + ` AND EXISTS (SELECT 1 FROM tbl_zhongtan_export_proforma_masterbl b WHERE v.export_vessel_id = b.export_vessel_id AND b.state = 1 `
     if(masterbi_bl) {
       queryStr = queryStr + ` AND export_masterbl_bl like ? `
@@ -1108,6 +1109,10 @@ exports.searchVesselAct = async req => {
     if(consignee_company) {
       queryStr = queryStr + ` AND export_masterbl_consignee_company like ? `
       replacements.push('%' + consignee_company + '%')
+    }
+    if(bl_carrier) {
+      queryStr = queryStr + ` AND export_masterbl_bl_carrier = ? `
+      replacements.push(bl_carrier)
     }
     queryStr = queryStr + `)`
   }
@@ -1156,6 +1161,7 @@ exports.searchBlAct = async req => {
   let masterbi_bl = doc.masterbi_bl
   let shipper_company = doc.shipper_company
   let consignee_company = doc.consignee_company
+  let bl_carrier = doc.bl_carrier
   let queryStr =  `select * from tbl_zhongtan_export_proforma_masterbl b WHERE b.export_vessel_id = ? AND b.state = ? AND b.bk_cancellation_status <> ? `
   let replacements = [export_vessel_id, GLBConfig.ENABLE, GLBConfig.ENABLE]
   if(masterbi_bl) {
@@ -1169,6 +1175,10 @@ exports.searchBlAct = async req => {
   if(consignee_company) {
     queryStr = queryStr + ` AND export_masterbl_consignee_company like ? `
     replacements.push('%' + consignee_company + '%')
+  }
+  if(bl_carrier) {
+    queryStr = queryStr + ` AND export_masterbl_bl_carrier = ? `
+    replacements.push(bl_carrier)
   }
   let bls = await model.queryWithCount(doc, queryStr, replacements)
   returnData.total = bls.count

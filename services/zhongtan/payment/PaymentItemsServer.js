@@ -11,8 +11,8 @@ const tb_payment_code_carrier = model.zhongtan_payment_item_code_carrier
 exports.initAct = async () => {
   let returnData = {}
   returnData.PAYMENT_ITEM_TYPE = GLBConfig.PAYMENT_ITEM_TYPE
-  queryStr = `SELECT user_id, user_name, user_bank_account_usd, user_bank_account_tzs FROM tbl_common_user WHERE state = '1' AND user_type = ? ORDER BY user_name`
-  replacements = [GLBConfig.TYPE_CUSTOMER]
+  let queryStr = `SELECT user_id, user_name, user_bank_account_usd, user_bank_account_tzs FROM tbl_common_user WHERE state = '1' AND user_type = ? ORDER BY user_name`
+  let replacements = [GLBConfig.TYPE_CUSTOMER]
   returnData.COMMON_CUSTOMER = await model.simpleSelect(queryStr, replacements)
   return common.success(returnData)
 }

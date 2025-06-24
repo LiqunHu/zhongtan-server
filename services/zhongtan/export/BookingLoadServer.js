@@ -1068,6 +1068,7 @@ exports.searchVesselAct = async req => {
   let forwarder = doc.forwarder
   let shipper = doc.shipper
   let consignee = doc.consignee
+  let bl_carrier = doc.bl_carrier
   let queryStr =  `SELECT * FROM tbl_zhongtan_export_vessel v WHERE v.state = '1'`
   let replacements = []
   if(masterbi_bl) {
@@ -1090,6 +1091,10 @@ exports.searchVesselAct = async req => {
   if(consignee) {
     queryStr = queryStr + ` AND v.export_vessel_id IN (SELECT export_vessel_id from tbl_zhongtan_export_masterbl WHERE state = '1' AND export_masterbl_consignee_company LIKE ? )`
     replacements.push('%' + consignee + '%')
+  }
+  if(bl_carrier) {
+    queryStr = queryStr + ` AND v.export_vessel_id IN (SELECT export_vessel_id from tbl_zhongtan_export_masterbl WHERE state = '1' AND export_masterbl_bl_carrier = ? )`
+    replacements.push(bl_carrier)
   }
   if(etd_start_date && etd_end_date) {
     queryStr = queryStr + ` AND STR_TO_DATE(v.export_vessel_etd, "%d/%m/%Y") >= ? AND STR_TO_DATE(v.export_vessel_etd, "%d/%m/%Y") <= ? `
@@ -1138,6 +1143,7 @@ exports.searchBlAct = async req => {
   let forwarder = doc.forwarder
   let shipper = doc.shipper
   let consignee = doc.consignee
+  let bl_carrier = doc.bl_carrier
   let queryStr =  `select * from tbl_zhongtan_export_masterbl b WHERE b.export_vessel_id = ? AND b.state = ?`
   let replacements = [export_vessel_id, GLBConfig.ENABLE]
   if(masterbi_bl) {
@@ -1159,6 +1165,10 @@ exports.searchBlAct = async req => {
   if(consignee) {
     queryStr = queryStr + ` AND b.export_masterbl_consignee_company LIKE ?`
     replacements.push('%' + consignee + '%')
+  }
+  if(bl_carrier) {
+    queryStr = queryStr + ` AND b.export_masterbl_bl_carrier = ?`
+    replacements.push(bl_carrier)
   }
   let bls = await model.queryWithCount(doc, queryStr, replacements)
   returnData.total = bls.count

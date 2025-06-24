@@ -65,7 +65,7 @@ exports.searchAct = async req => {
     replacements.push(doc.invoice_vessel_id)
   }
   if (doc.invoice_carrier) {
-    queryStr += 'invoice_masterbi_carrier = ? '
+    queryStr += 'and a.invoice_masterbi_carrier = ? '
     replacements.push(doc.invoice_carrier)
   }
   let customer = {}

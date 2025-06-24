@@ -56,6 +56,10 @@ exports.searchAct = async req => {
       whereStr += ' and b.export_masterbl_bl like ? '
       replacements.push('%' + doc.search_data.masterbl_bl + '%')
     }
+    if (doc.search_data.bl_carrier) {
+      whereStr += ' and b.export_masterbl_bl_carrier = ? '
+      replacements.push(doc.search_data.bl_carrier)
+    }
     if (doc.search_data.vessel_id) {
       whereStr += ' and v.export_vessel_id = ? '
       replacements.push(doc.search_data.vessel_id)

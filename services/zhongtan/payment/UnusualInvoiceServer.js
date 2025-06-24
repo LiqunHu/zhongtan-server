@@ -100,6 +100,13 @@ exports.searchAct = async req => {
           }
         })
       }
+      d.atta_files = await tb_uploadfile.findAll({
+        where: {
+          uploadfile_index1: d.unusual_invoice_id,
+          api_name: 'UNUSUAL INVOICE ATTACHMENT',
+          state: GLBConfig.ENABLE
+        }
+      })
       rows.push(d)
     }
   }
@@ -138,6 +145,23 @@ exports.addAct = async req => {
     unusual_invoice_voyaga: unusual_invoice_voyaga,
     unusual_invoice_status: '1'
   })
+
+  if(doc.unusual_atta_files && doc.unusual_atta_files.length > 0) {
+    for(let f of doc.unusual_atta_files) {
+      let fileInfo = await common.fileSaveMongo(f.response.info.path, 'zhongtan')
+      await tb_uploadfile.create({
+        api_name: 'UNUSUAL INVOICE ATTACHMENT',
+        user_id: user.user_id,
+        uploadfile_index1: obj.unusual_invoice_id,
+        uploadfile_name: fileInfo.name,
+        uploadfile_url: fileInfo.url,
+        uploadfile_state: 'AP',
+        uploadfile_amount: doc.unusual_invoice_amount,
+        uploadfile_currency: 'USD'
+      })
+    }
+  }
+
   await tb_unusual_verification.create({
     unusual_invoice_id: obj.unusual_invoice_id,
     unusual_verification_state: 'PC',
@@ -147,7 +171,7 @@ exports.addAct = async req => {
 }
 
 exports.modifyAct = async req => {
-  let doc = common.docValidate(req)
+  let doc = common.docValidate(req), user = req.user
   let obj = await tb_unusual_invoice.findOne({
     where: {
       unusual_invoice_id: doc.old.unusual_invoice_id,
@@ -193,6 +217,22 @@ exports.modifyAct = async req => {
     obj.unusual_invoice_bl = doc.new.unusual_invoice_bl
     obj.unusual_invoice_vessel = unusual_invoice_vessel
     obj.unusual_invoice_voyaga = unusual_invoice_voyaga
+
+    if(doc.new.unusual_atta_files && doc.new.unusual_atta_files.length > 0) {
+      for(let f of doc.new.unusual_atta_files) {
+        let fileInfo = await common.fileSaveMongo(f.response.info.path, 'zhongtan')
+        await tb_uploadfile.create({
+          api_name: 'UNUSUAL INVOICE ATTACHMENT',
+          user_id: user.user_id,
+          uploadfile_index1: obj.unusual_invoice_id,
+          uploadfile_name: fileInfo.name,
+          uploadfile_url: fileInfo.url,
+          uploadfile_state: 'AP',
+          uploadfile_amount: doc.new.unusual_invoice_amount,
+          uploadfile_currency: 'USD'
+        })
+      }
+    }
     await obj.save()
     if(ver) {
       ver.unusual_verification_state = 'PC'
@@ -323,4 +363,34 @@ exports.exportAct = async (req, res) => {
   let result = await model.simpleSelect(queryStr, replacements)
   let filepath = await common.ejs2xlsx('UnusualInvoice.xlsx', result)
   res.sendFile(filepath)
+}
+
+exports.uploadAct = async req => {
+  let fileInfo = await common.fileSaveTemp(req)
+  return common.success(fileInfo)
+}
+
+exports.removeAttachmentAct = async req => {
+  let doc = common.docValidate(req)
+  let file = await tb_uploadfile.findOne({
+    where: {
+      uploadfile_id: doc.uploadfile_id
+    }
+  })
+  if(file) {
+    file.state = GLBConfig.DISABLE
+    await file.save()
+  }
+
+  let atta_files = await tb_uploadfile.findAll({
+    where: {
+      uploadfile_index1: doc.uploadfile_index1,
+      api_name: 'UNUSUAL INVOICE ATTACHMENT',
+      state: GLBConfig.ENABLE
+    }
+  })
+  let ret = {
+    atta_files: atta_files
+  }
+  return common.success(ret)
 }

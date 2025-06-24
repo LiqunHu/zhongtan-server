@@ -10,6 +10,7 @@ const cal_config_srv = require('./OverdueCalculationConfigServer')
 const opSrv = require('../../common/system/OperationPasswordServer')
 const freight_srv = require('../logistics/ShipmentListServer')
 const customer_srv = require('../../zhongtan/configuration/CustomerServer')
+const rateSrv = require('../configuration/ExchangeRateConfigServer')
 const Op = model.Op
 
 const tb_user = model.common_user
@@ -659,6 +660,12 @@ exports.emptyInvoiceAct = async req => {
     }
     renderData.demurrageTotal = formatCurrency(demurrageTotal)
     renderData.demurrageTotalStr = numberToText(demurrageTotal, 'english')
+
+    renderData.rate_currency = 'TZS'
+    let rate = await rateSrv.getCurrentExchangeRateTZS(renderData.demurrageTotal)
+    renderData.current_rate =  common.formatAmountCurrency(rate.rate)
+    renderData.rate_amount =  common.formatAmountCurrency(rate.amount)
+
     try {
       let fileInfo = await common.ejs2Pdf('demurrage.ejs', renderData, 'zhongtan')
       let invoice_file = await tb_uploadfile.create({
@@ -671,7 +678,8 @@ exports.emptyInvoiceAct = async req => {
         uploadfile_state: 'PB', // TODO state PM => PB
         uploadfile_amount: demurrageTotal,
         uploadfile_customer_id: customer.user_id,
-        uploadfile_invoice_no: invoiceNo
+        uploadfile_invoice_no: invoiceNo,
+        uploadfile_amount_rate: renderData.current_rate
       })
       
       for(let s of selection) {
@@ -882,6 +890,12 @@ exports.emptyReInvoiceAct = async req => {
     }
     renderData.demurrageTotal = formatCurrency(demurrageTotal)
     renderData.demurrageTotalStr = numberToText(demurrageTotal, 'english')
+
+    renderData.rate_currency = 'TZS'
+    let rate = await rateSrv.getCurrentExchangeRateTZS(renderData.demurrageTotal)
+    renderData.current_rate =  common.formatAmountCurrency(rate.rate)
+    renderData.rate_amount =  common.formatAmountCurrency(rate.amount)
+
     try {
       let fileInfo = await common.ejs2Pdf('demurrage.ejs', renderData, 'zhongtan')
       let invoice_file = await tb_uploadfile.create({
@@ -894,7 +908,8 @@ exports.emptyReInvoiceAct = async req => {
         uploadfile_state: 'PB', // TODO state PM => PB
         uploadfile_amount: demurrageTotal,
         uploadfile_customer_id: customer.user_id,
-        uploadfile_invoice_no: invoiceNo
+        uploadfile_invoice_no: invoiceNo,
+        uploadfile_amount_rate: renderData.current_rate
       })
       
       for(let s of selection) {

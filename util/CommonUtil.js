@@ -777,6 +777,21 @@ const generateQRCode = async(text) => {
   })
   return qr_path
 }
+const formatAmountCurrency = (num) => {
+  num = num.toString().replace(/[^\d.-]/g, '') //转成字符串并去掉其中除数字, . 和 - 之外的其它字符。
+  if (isNaN(num)) num = '0' //是否非数字值
+  let sign = num == (num = Math.abs(num))
+  num = Math.floor(num * 100 + 0.50000000001) //下舍入
+  let cents = num % 100 //求余 余数 = 被除数 - 除数 * 商
+  cents = cents < 10 ? '0' + cents : cents //小于2位数就补齐
+  num = Math.floor(num / 100).toString()
+  for (let i = 0; i < Math.floor((num.length - (1 + i)) / 3); i++) {
+    //每隔三位小数分始开隔
+    //4 ==> 三位小数加一个分隔符，
+    num = num.substring(0, num.length - (4 * i + 3)) + ',' + num.substring(num.length - (4 * i + 3))
+  }
+  return (sign ? '' : '-') + num + '.' + cents
+}
 
 module.exports = {
   docValidate: docValidate,
@@ -822,5 +837,6 @@ module.exports = {
   jsonFindAll: jsonFindAll,
   fileSize2Str: fileSize2Str,
   equalsStr: equalsStr,
-  generateQRCode: generateQRCode
+  generateQRCode: generateQRCode,
+  formatAmountCurrency: formatAmountCurrency
 }

@@ -4,6 +4,7 @@ const common = require('../../../util/CommonUtil')
 const model = require('../../../app/model')
 const seq = require('../../../util/Sequence')
 const numberToText = require('number2text')
+const rateSrv = require('../configuration/ExchangeRateConfigServer')
 
 const tb_unusual_invoice = model.zhongtan_unusual_invoice
 const tb_verification = model.zhongtan_unusual_verification
@@ -49,6 +50,14 @@ exports.searchAct = async req => {
     for(let d of result.data) {
       let dd = JSON.parse(JSON.stringify(d))
       dd.created_at = moment(d.created_at).format('YYYY-MM-DD HH:mm:ss')
+
+      dd.atta_files = await tb_uploadfile.findAll({
+        where: {
+          uploadfile_index1: dd.unusual_invoice_id,
+          api_name: 'UNUSUAL INVOICE ATTACHMENT',
+          state: GLBConfig.ENABLE
+        }
+      })
       rows.push(dd)
     }
   }
@@ -117,6 +126,12 @@ exports.approveAct = async req => {
       renderData.user_name = created ? created.user_name : ''
       renderData.user_phone = created ? created.user_phone : ''
       renderData.user_email = created ? created.user_email : ''
+
+      renderData.rate_currency = 'TZS'
+      let rate = await rateSrv.getCurrentExchangeRateTZS(renderData.unusualAmount)
+      renderData.current_rate =  common.formatAmountCurrency(rate.rate)
+      renderData.rate_amount =  common.formatAmountCurrency(rate.amount)
+
       let fileInfo = await common.ejs2Pdf('unusualInvoice.ejs', renderData, 'zhongtan')
       await ver.save()
       await invoice.save()
@@ -134,7 +149,8 @@ exports.approveAct = async req => {
         uploadfile_customer_id: invoice.unusual_invoice_party,
         uploadfile_invoice_no: invoice_no,
         uploadfil_release_date: curDate,
-        uploadfil_release_user_id: user.user_id
+        uploadfil_release_user_id: user.user_id,
+        uploadfile_amount_rate: renderData.current_rate
       })
       // 开票后拉入黑名单
       party.user_blacklist = GLBConfig.ENABLE

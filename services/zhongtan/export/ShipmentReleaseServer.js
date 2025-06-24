@@ -8,6 +8,7 @@ const model = require('../../../app/model')
 const seq = require('../../../util/Sequence')
 const opSrv = require('../../common/system/OperationPasswordServer')
 const cal_demurrage_srv = require('../equipment/ExportDemurrageCalculationServer')
+const rateSrv = require('../configuration/ExchangeRateConfigServer')
 
 const tb_user = model.common_user
 const tb_vessel = model.zhongtan_export_proforma_vessel
@@ -1124,6 +1125,12 @@ exports.invoiceShipmentAct = async req => {
           renderData.user_name = commonUser.user_name
           renderData.user_phone = commonUser.user_phone
           renderData.user_email = commonUser.user_email
+
+          renderData.rate_currency = 'TZS'
+          let rate = await rateSrv.getCurrentExchangeRateTZS(renderData.totalReceivable)
+          renderData.current_rate = common.formatAmountCurrency(rate.rate)
+          renderData.rate_amount = common.formatAmountCurrency(rate.amount)
+
           try {
             let fileInfo = await common.ejs2Pdf(bl.bk_cancellation_status === GLBConfig.ENABLE ? 'cancellationInvoice.ejs' : 'shipmentInvoice.ejs', renderData, 'zhongtan')
             let invoice_file = await tb_uploadfile.create({
@@ -1138,7 +1145,8 @@ exports.invoiceShipmentAct = async req => {
               uploadfile_customer_id: invoices[0].shipment_fee_party,
               uploadfile_invoice_no: invoiceNo,
               uploadfil_release_date: curDate,
-              uploadfil_release_user_id: user.user_id
+              uploadfil_release_user_id: user.user_id,
+              uploadfile_amount_rate: renderData.current_rate
             })
             for(let i of invoices) {
               let sf = await tb_shipment_fee.findOne({

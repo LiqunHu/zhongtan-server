@@ -23,6 +23,10 @@ module.exports = async (req, res) => {
       return await srv.exportAct(req, res)
     } else if (method === 'deleteInvoice') {
       ret = await srv.deleteInvoiceAct(req)
+    } else if (method === 'upload') {
+      ret = await srv.uploadAct(req)
+    } else if (method === 'removeAttachment') {
+      ret = await srv.removeAttachmentAct(req)
     }
     common.sendData(res, ret)
   } catch (error) {
