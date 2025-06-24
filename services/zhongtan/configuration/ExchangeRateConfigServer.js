@@ -80,6 +80,7 @@ exports.getCurrentExchangeRateTZS = async usdAmount => {
   let queryStr = `select * from tbl_zhongtan_exchange_rate where state = 1 and STR_TO_DATE(enable_date, '%d/%m/%Y') <= STR_TO_DATE(DATE_FORMAT(NOW(), '%d/%m/%Y'), '%d/%m/%Y') order by STR_TO_DATE(enable_date, '%d/%m/%Y') desc, rate_id desc limit 1`
   let replacements = []
   let rate_rows = await model.simpleSelect(queryStr, replacements)
+  usdAmount = String(usdAmount)
   usdAmount = usdAmount.replace(/,/g, '')
   if(rate_rows && rate_rows.length > 0) {
     let rate_item = rate_rows[0]
@@ -97,6 +98,7 @@ exports.getCurrentExchangeRateUSD = async tzsAmount => {
   let queryStr = `select * from tbl_zhongtan_exchange_rate where state = 1 and STR_TO_DATE(enable_date, '%d/%m/%Y') <= STR_TO_DATE(DATE_FORMAT(NOW(), '%d/%m/%Y'), '%d/%m/%Y') order by STR_TO_DATE(enable_date, '%d/%m/%Y') desc, rate_id desc limit 1`
   let replacements = []
   let rate_rows = await model.simpleSelect(queryStr, replacements)
+  tzsAmount = String(tzsAmount)
   tzsAmount = tzsAmount.replace(/,/g, '')
   if(rate_rows && rate_rows.length > 0) {
     let rate_item = rate_rows[0]

@@ -2319,17 +2319,9 @@ exports.changeCollectAct = async req => {
   if(!doc.collet_change_password) {
     return common.error('auth_18')
   } else {
-    let adminUser = await tb_user.findOne({
-      where: {
-        user_username: 'admin'
-      }
-    })
-    if(adminUser) {
-      if(adminUser.user_password !== doc.collet_change_password) {
-        return common.error('auth_24')
-      }
-    } else {
-      return common.error('auth_18')
+    let check = await opSrv.checkPassword('IMPORT_SOC_EDIT', doc.collet_change_password)
+    if(!check) {
+      return common.error('auth_24')
     }
   }
 
