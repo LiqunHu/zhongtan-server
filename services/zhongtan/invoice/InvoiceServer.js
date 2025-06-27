@@ -2180,7 +2180,7 @@ exports.depositDoAct = async req => {
       renderData.current_rate = formatCurrency(rate.rate)
       renderData.rate_amount = formatCurrency(rate.amount)
     }
-    let fee_template_version = 'V1'
+    let fee_template_version = 'V2'
     let file_invoice_masterbi_do_fee = ''
     let file_invoice_masterbi_of = ''
     let file_invoice_masterbi_bl_amendment = ''
@@ -2197,7 +2197,7 @@ exports.depositDoAct = async req => {
         file_invoice_masterbi_do_fee = fee_detail.amount
       } else if(fee_detail.type === 'OCEAN FREIGHT') {
         file_invoice_masterbi_of = fee_detail.amount
-        fee_template_version = 'V2'
+        fee_template_version = 'V1'
       } else if(fee_detail.type === 'B/L AMENDMENT') {
         file_invoice_masterbi_bl_amendment = fee_detail.amount
       } else if(fee_detail.type === 'COD CHARGE') {
