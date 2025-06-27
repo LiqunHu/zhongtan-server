@@ -26,6 +26,7 @@ const tb_edi_depot = model.zhongtan_edi_depot
 const tb_shipment_list = model.zhongtan_logistics_shipment_list
 const tb_container_size = model.zhongtan_container_size
 const tb_masterbl_edit_record = model.zhongtan_invoice_masterbl_edit_record
+const tb_invoice_masterbl_fee = model.zhongtan_invoice_masterbl_fee
 
 exports.initAct = async () => {
   let DELIVER = []
@@ -1751,13 +1752,6 @@ exports.depositDoAct = async req => {
       renderData.user_phone = commonUser.user_phone
       renderData.user_email = commonUser.user_email
       let fileInfo = await common.ejs2Pdf('receipta.ejs', renderData, 'zhongtan')
-      // await tb_uploadfile.destroy({
-      //   where: {
-      //     api_name: 'RECEIPT-RECEIPT',
-      //     uploadfile_index1: bl.invoice_masterbi_id,
-      //     uploadfile_acttype: doc.checkType
-      //   }
-      // })
 
       let replacements = ['RECEIPT-RECEIPT', bl.invoice_masterbi_id, doc.checkType]
       let delFileStr = `UPDATE tbl_zhongtan_uploadfile SET state = 0 WHERE api_name = ? AND uploadfile_index1 = ? AND uploadfile_acttype = ?;`
@@ -2186,22 +2180,58 @@ exports.depositDoAct = async req => {
       renderData.current_rate = formatCurrency(rate.rate)
       renderData.rate_amount = formatCurrency(rate.amount)
     }
+    let fee_template_version = 'V1'
+    let file_invoice_masterbi_do_fee = ''
+    let file_invoice_masterbi_of = ''
+    let file_invoice_masterbi_bl_amendment = ''
+    let file_invoice_masterbi_cod_charge = ''
+    let file_invoice_masterbi_transfer = ''
+    let file_invoice_masterbi_lolf = ''
+    let file_invoice_masterbi_lcl = ''
+    let file_invoice_masterbi_amendment = ''
+    let file_invoice_masterbi_tasac = ''
+    let file_invoice_masterbi_printing = ''
+    let file_invoice_masterbi_others = ''
+    for (let fee_detail of renderData.fee) {
+      if(fee_detail.type === 'DO FEE') {
+        file_invoice_masterbi_do_fee = fee_detail.amount
+      } else if(fee_detail.type === 'OCEAN FREIGHT') {
+        file_invoice_masterbi_of = fee_detail.amount
+        fee_template_version = 'V2'
+      } else if(fee_detail.type === 'B/L AMENDMENT') {
+        file_invoice_masterbi_bl_amendment = fee_detail.amount
+      } else if(fee_detail.type === 'COD CHARGE') {
+        file_invoice_masterbi_cod_charge = fee_detail.amount
+      } else if(fee_detail.type === 'CONTAINER TRANSFER') {
+        file_invoice_masterbi_transfer = fee_detail.amount
+      } else if(fee_detail.type === 'LIFT ON LIFT OFF') {
+        file_invoice_masterbi_lolf = fee_detail.amount
+      } else if(fee_detail.type === 'LCL FEE') {
+        file_invoice_masterbi_lcl = fee_detail.amount
+      } else if(fee_detail.type === 'AMENDMENT FEE') {
+        file_invoice_masterbi_amendment = fee_detail.amount
+      } else if(fee_detail.type === 'TASAC FEE') {
+        file_invoice_masterbi_tasac = fee_detail.amount
+      } else if(fee_detail.type === 'B/L PRINTING FEE') {
+        file_invoice_masterbi_printing = fee_detail.amount
+      } else if(fee_detail.type === 'OTHERS') {
+        file_invoice_masterbi_others = fee_detail.amount
+      }
+    }
+    
+    let fee_template = "fee.ejs"
+    if(fee_template_version === 'V2') {
+      fee_template = 'feeRate.ejs'
+    }
 
-    let fileInfo = await common.ejs2Pdf('fee.ejs', renderData, 'zhongtan')
+    let fileInfo = await common.ejs2Pdf(fee_template, renderData, 'zhongtan')
     if(!bl.invoice_masterbi_invoice_receipt_date) {
-      // await tb_uploadfile.destroy({
-      //   where: {
-      //     api_name: 'RECEIPT-FEE',
-      //     uploadfile_index1: bl.invoice_masterbi_id
-      //   }
-      // })
-
       let replacements = ['RECEIPT-FEE', bl.invoice_masterbi_id]
       let delFileStr = `UPDATE tbl_zhongtan_uploadfile SET state = 0 WHERE api_name = ? AND uploadfile_index1 = ?;`
       await model.simpleUpdate(delFileStr, replacements)
     }
 
-    await tb_uploadfile.create({
+    let fee_file = await tb_uploadfile.create({
       api_name: 'RECEIPT-FEE',
       user_id: user.user_id,
       uploadfile_index1: bl.invoice_masterbi_id,
@@ -2217,6 +2247,28 @@ exports.depositDoAct = async req => {
       uploadfile_invoice_no: 'CTS/' + renderData.invoice_masterbi_carrier + '/' + renderData.voyage_number + '/' + renderData.receipt_no,
       uploadfile_amount_rate: renderData.current_rate
     })
+
+    await tb_invoice_masterbl_fee.create({
+      invoice_masterbi_id: bl.invoice_masterbi_id,
+      invoice_masterbi_do_fee: file_invoice_masterbi_do_fee,
+      invoice_masterbi_of: file_invoice_masterbi_of,
+      invoice_masterbi_bl_amendment: file_invoice_masterbi_bl_amendment,
+      invoice_masterbi_cod_charge: file_invoice_masterbi_cod_charge,
+      invoice_masterbi_transfer: file_invoice_masterbi_transfer,
+      invoice_masterbi_lolf: file_invoice_masterbi_lolf,
+      invoice_masterbi_lcl: file_invoice_masterbi_lcl,
+      invoice_masterbi_amendment: file_invoice_masterbi_amendment,
+      invoice_masterbi_tasac: file_invoice_masterbi_tasac,
+      invoice_masterbi_printing: file_invoice_masterbi_printing,
+      invoice_masterbi_others: file_invoice_masterbi_others,
+      invoice_masterbi_invoice_version: fee_template_version,
+      invoice_masterbi_fee_total: renderData.sum_fee,
+      invoice_masterbi_fee_currency: doc.invoice_fee_currency,
+      invoice_masterbi_fee_rate: renderData.current_rate,
+      invoice_masterbi_invoice_id: fee_file.uploadfile_id
+    })
+
+
     await bl.save()
     return common.success({ url: fileInfo.url })
   } else if (doc.depositType === 'Ocean Freight') {
@@ -2263,13 +2315,6 @@ exports.depositDoAct = async req => {
     }
 
     let fileInfo = await common.ejs2Pdf('fee.ejs', renderData, 'zhongtan')
-
-    // await tb_uploadfile.destroy({
-    //   where: {
-    //     api_name: 'RECEIPT-OF',
-    //     uploadfile_index1: bl.invoice_masterbi_id
-    //   }
-    // })
 
     let replacements = ['RECEIPT-OF', bl.invoice_masterbi_id]
     let delFileStr = `UPDATE tbl_zhongtan_uploadfile SET state = 0 WHERE api_name = ? AND uploadfile_index1 = ?;`

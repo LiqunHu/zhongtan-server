@@ -1,4 +1,5 @@
 const moment = require('moment')
+const Decimal = require('decimal.js')
 const numberToText = require('number2text')
 const logger = require('../../../app/logger').createLogger(__filename)
 const GLBConfig = require('../../../util/GLBConfig')
@@ -14,6 +15,7 @@ const tb_bl = model.zhongtan_invoice_masterbl
 const tb_vessel = model.zhongtan_invoice_vessel
 const tb_uploadfile = model.zhongtan_uploadfile
 const tb_bank_info = model.zhongtan_bank_info
+const tb_invoice_masterbl_fee = model.zhongtan_invoice_masterbl_fee
 
 exports.initAct = async () => {
   let VESSEL_VOYAGE = []
@@ -566,7 +568,33 @@ exports.downloadReceiptAct = async req => {
   try {
     let fileInfo = await common.ejs2Pdf('receipta.ejs', renderData, 'zhongtan')
     let amount_rate = await rateSrv.getCurrentExchangeRateTZS(doc.invoice_masterbi_receipt_amount)
-    await tb_uploadfile.create({
+    let invoce_rate = amount_rate.rate
+    let invoiceFee = ''
+    if(receipt_type === 'INVOICE FEE') {
+      let lastReceiptFee = await tb_uploadfile.findOne({
+        where: {
+          state: GLBConfig.ENABLE,
+          uploadfile_index1: doc.invoice_masterbi_id,
+          uploadfile_acttype: 'fee',
+          uploadfile_state: 'AP'
+        },
+        order: [['created_at', 'DESC']]
+      })
+      if(lastReceiptFee) {
+        invoiceFee = await tb_invoice_masterbl_fee.findOne({
+          where: {
+            state: GLBConfig.ENABLE,
+            invoice_masterbi_id: doc.invoice_masterbi_id,
+            invoice_masterbi_invoice_id: lastReceiptFee.uploadfile_id
+          },
+          order: [['invoice_masterbl_fee_id', 'DESC']]
+        })
+        if(invoiceFee && invoiceFee.invoice_masterbi_fee_rate) {
+          invoce_rate = invoiceFee.invoice_masterbi_fee_rate
+        }
+      }
+    }
+    let receiptFile = await tb_uploadfile.create({
       api_name: 'RECEIPT-RECEIPT',
       user_id: user.user_id,
       uploadfile_index1: bl.invoice_masterbi_id,
@@ -574,7 +602,7 @@ exports.downloadReceiptAct = async req => {
       uploadfile_url: fileInfo.url,
       uploadfile_acttype: doc.checkType,
       uploadfile_amount: doc.invoice_masterbi_receipt_amount_rate,
-      uploadfile_amount_rate: amount_rate.rate,
+      uploadfile_amount_rate: invoce_rate,
       uploadfile_currency: doc.invoice_masterbi_receipt_currency,
       uploadfile_check_cash: doc.invoice_masterbi_check_cash,
       uploadfile_check_no: doc.invoice_masterbi_check_no,
@@ -585,6 +613,10 @@ exports.downloadReceiptAct = async req => {
       uploadfile_bank_reference_no: doc.invoice_masterbi_bank_reference_no,
       uploadfile_bank_info: doc.receipt_bank_info
     })
+    if(invoiceFee) {
+      invoiceFee.invoice_masterbi_receipt_id = receiptFile.uploadfile_id
+      await invoiceFee.save()
+    }
     await bl.save()
     return common.success({ url: fileInfo.url })
   } catch(e) {
@@ -905,6 +937,51 @@ exports.checkPasswordAct = async req => {
 
 exports.changeReceiptCurrencyAct = async req => {
   let doc = common.docValidate(req)
-  let result = await rateSrv.getCurrentExchangeRateTZS(doc.usd_amount)
-  return common.success(result.amount)
+  if(doc.checkType) {
+    if(doc.checkType == 'fee') {
+      let lastReceiptFee = await tb_uploadfile.findOne({
+        where: {
+          state: GLBConfig.ENABLE,
+          uploadfile_index1: doc.invoice_masterbi_id,
+          uploadfile_acttype: 'fee',
+          uploadfile_state: 'AP'
+        },
+        order: [['created_at', 'DESC']]
+      })
+      if(lastReceiptFee) {
+        let invoiceFee = await tb_invoice_masterbl_fee.findOne({
+          where: {
+            state: GLBConfig.ENABLE,
+            invoice_masterbi_id: doc.invoice_masterbi_id,
+            invoice_masterbi_invoice_id: lastReceiptFee.uploadfile_id
+          },
+          order: [['invoice_masterbl_fee_id', 'DESC']]
+        })
+        if(invoiceFee && invoiceFee.invoice_masterbi_invoice_version === 'V2') {
+          let invoce_rate = invoiceFee.invoice_masterbi_fee_rate
+          if(invoce_rate) {
+            let invoceAmountStr = String(doc.usd_amount)
+            invoceAmountStr = invoceAmountStr.replace(/,/g, '')
+            let invoceRateStr = String(invoce_rate)
+            invoceRateStr = invoceRateStr.replace(/,/g, '')
+            let invoceAmountTZS = new Decimal(invoceAmountStr).times(new Decimal(invoceRateStr))
+            return common.success(invoceAmountTZS)
+          } else {
+            return common.error('receipt_01')
+          }
+        } else {
+          let result = await rateSrv.getCurrentExchangeRateTZS(doc.usd_amount)
+          return common.success(result.amount)
+        }
+      } else {
+        return common.error('receipt_02')
+      }
+    } else {
+      let result = await rateSrv.getCurrentExchangeRateTZS(doc.usd_amount)
+      return common.success(result.amount)
+    }
+  } else {
+    return common.error('receipt_01')
+  }
+  
 }

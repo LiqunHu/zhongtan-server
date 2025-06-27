@@ -80,6 +80,7 @@ module.exports = {
   deposit_04: 'TR, Freight collect must have Ocean Freight',
   deposit_05: 'Freight Charge is not empty, must have Ocean Freight',
   receipt_01: 'The Rate OF Invoice Fee Is Empty, Cannot Receipt',
+  receipt_02: 'Not Have Invoice Can Be Receipt',
   icd_01: 'Edit ICD do not exist',
   icd_02: 'ICD name or code already exists',
   do_01: 'D/O delivery or valid must be input',

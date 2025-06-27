@@ -1,7 +1,6 @@
 const common = require('../../../util/CommonUtil')
 const Decimal = require('decimal.js')
 const GLBConfig = require('../../../util/GLBConfig')
-const logger = require('../../../app/logger').createLogger(__filename)
 const model = require('../../../app/model')
 
 const tb_rate = model.zhongtan_exchange_rate
