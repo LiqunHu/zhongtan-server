@@ -578,7 +578,6 @@ exports.downloadReceiptAct = async req => {
           state: GLBConfig.ENABLE,
           uploadfile_index1: doc.invoice_masterbi_id,
           api_name: 'RECEIPT-FEE',
-          uploadfile_acttype: 'fee',
           uploadfile_state: 'AP'
         },
         order: [['created_at', 'DESC']]
@@ -947,7 +946,6 @@ exports.changeReceiptCurrencyAct = async req => {
           state: GLBConfig.ENABLE,
           uploadfile_index1: doc.invoice_masterbi_id,
           api_name: 'RECEIPT-FEE',
-          uploadfile_acttype: 'fee',
           uploadfile_state: 'AP'
         },
         order: [['created_at', 'DESC']]
