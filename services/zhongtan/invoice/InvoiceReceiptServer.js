@@ -315,6 +315,7 @@ exports.getMasterbiFiles = async d => {
     where: {
       state: GLBConfig.ENABLE,
       uploadfile_index1: d.invoice_masterbi_id,
+      api_name: 'RECEIPT-RECEIPT',
       uploadfile_acttype: 'deposit'
     },
     order: [['created_at', 'DESC']]
@@ -323,6 +324,7 @@ exports.getMasterbiFiles = async d => {
     where: {
       state: GLBConfig.ENABLE,
       uploadfile_index1: d.invoice_masterbi_id,
+      api_name: 'RECEIPT-RECEIPT',
       uploadfile_acttype: 'fee'
     },
     order: [['created_at', 'DESC']]
@@ -575,6 +577,7 @@ exports.downloadReceiptAct = async req => {
         where: {
           state: GLBConfig.ENABLE,
           uploadfile_index1: doc.invoice_masterbi_id,
+          api_name: 'RECEIPT-FEE',
           uploadfile_acttype: 'fee',
           uploadfile_state: 'AP'
         },
@@ -943,6 +946,7 @@ exports.changeReceiptCurrencyAct = async req => {
         where: {
           state: GLBConfig.ENABLE,
           uploadfile_index1: doc.invoice_masterbi_id,
+          api_name: 'RECEIPT-FEE',
           uploadfile_acttype: 'fee',
           uploadfile_state: 'AP'
         },
