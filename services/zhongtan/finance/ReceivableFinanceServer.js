@@ -153,7 +153,7 @@ exports.queryReceivableAct = async req => {
                         if(bl.invoice_masterbi_tasac_receipt || bl.invoice_masterbi_do_fee_receipt) {
                             let receipt_usd = item.receipt_amount
                             if(item.receipt_currency === 'TZS') {
-                                receipt_usd = new Decimal(item.receipt_amount).div(new Decimal(item.receipt_amount_rate)).toNumber()
+                                receipt_usd = new Decimal(item.receipt_amount.replace(/,/g, '')).div(new Decimal(item.receipt_amount_rate.replace(/,/g, ''))).toNumber()
                             }
                             let tasac_usd = 0
                             if(bl.invoice_masterbi_tasac) {
