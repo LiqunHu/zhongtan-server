@@ -937,7 +937,7 @@ exports.submitReceivedAct = async req => {
                         let header_amount = new Decimal(rl.ought_receive_amount).toNumber()
                         let header_originalamount = new Decimal(rl.ought_receive_amount).toNumber()
                         if(rl.ought_receive_currency !== 'USD') {
-                            header_currencyrate = new Decimal(rl.ought_receive_currency_rate).toNumber()
+                            header_currencyrate = new Decimal(String(rl.ought_receive_currency_rate).replace(/,/g, '')).toNumber()
                             header_amount = new Decimal(rl.ought_receive_natamount).toNumber()
                             header_originalamount = new Decimal(rl.ought_receive_original_amount).toNumber()
                         }
@@ -973,7 +973,7 @@ exports.submitReceivedAct = async req => {
                                         let entry_amount = new Decimal(d.ought_receive_detail_amount).toNumber()
                                         let entry_original_amount = new Decimal(d.ought_receive_detail_amount).toNumber()
                                         if(rl.ought_receive_currency === 'TZS') {
-                                            entry_rate = new Decimal(rl.ought_receive_currency_rate).toNumber()
+                                            entry_rate = new Decimal(String(rl.ought_receive_currency_rate).replace(/,/g, '')).toNumber()
                                             entry_amount = new Decimal(d.ought_receive_detail_natamount).toNumber()
                                             entry_original_amount = new Decimal(d.ought_receive_detail_original_amount).toNumber()
                                         }
@@ -1086,7 +1086,7 @@ exports.submitReceivedAct = async req => {
                                     let entry_amount = new Decimal(d.ought_receive_detail_amount).toNumber()
                                     let entry_original_amount = new Decimal(d.ought_receive_detail_amount).toNumber()
                                     if(rl.ought_receive_currency === 'TZS') {
-                                        entry_rate = new Decimal(rl.ought_receive_currency_rate).toNumber()
+                                        entry_rate = new Decimal(String(rl.ought_receive_currency_rate).replace(/,/g, '')).toNumber()
                                         entry_amount = new Decimal(d.ought_receive_detail_natamount).toNumber()
                                         entry_original_amount = new Decimal(d.ought_receive_detail_original_amount).toNumber()
                                     }
@@ -1519,7 +1519,7 @@ exports.submitSplitReceivedAct = async req => {
                                 let accept_amount = new Decimal(sd.split_amount).toNumber()
                                 let accept_original_amount = new Decimal(sd.split_amount).toNumber()
                                 if(sd.split_currency === 'TZS') {
-                                    accept_rate = new Decimal(srl.ought_receive_currency_rate).toNumber()
+                                    accept_rate = new Decimal(String(srl.ought_receive_currency_rate).replace(/,/g, '')).toNumber()
                                     let accept_format_amount = await this.getReceiptAmount(sd.split_currency, sd.split_amount, srl.ought_receive_currency_rate)
                                     accept_amount = new Decimal(accept_format_amount.natamount).toNumber()
                                     accept_original_amount = new Decimal(accept_format_amount.originalamount).toNumber()
@@ -1564,7 +1564,7 @@ exports.submitSplitReceivedAct = async req => {
                                                 if(entry_amount !== 0) {
                                                     let entry_original_amount = new Decimal(d.split_detail_amount).toNumber()
                                                     if(sd.split_currency === 'TZS') {
-                                                        entry_rate = new Decimal(srl.ought_receive_currency_rate).toNumber()
+                                                        entry_rate = new Decimal(String(srl.ought_receive_currency_rate).replace(/,/g, '')).toNumber()
                                                         let entry_format_amount = await this.getReceiptAmount(sd.split_currency, d.split_detail_amount, srl.ought_receive_currency_rate)
                                                         entry_amount = new Decimal(entry_format_amount.natamount).toNumber()
                                                         entry_original_amount = new Decimal(entry_format_amount.originalamount).toNumber()
@@ -1748,7 +1748,7 @@ exports.submitSplitReceivedAct = async req => {
                                                         if(entry_amount !== 0) {
                                                             let entry_original_amount = new Decimal(d.split_detail_amount).toNumber()
                                                             if(sd.split_currency === 'TZS') {
-                                                                entry_rate = new Decimal(srl.ought_receive_currency_rate).toNumber()
+                                                                entry_rate = new Decimal(String(srl.ought_receive_currency_rate).replace(/,/g, '')).toNumber()
                                                                 let entry_format_amount = await this.getReceiptAmount(sd.split_currency, d.split_detail_amount, srl.ought_receive_currency_rate)
                                                                 entry_amount = new Decimal(entry_format_amount.natamount).toNumber()
                                                                 entry_original_amount = new Decimal(entry_format_amount.originalamount).toNumber()
@@ -1922,7 +1922,7 @@ exports.submitSplitReceivedAct = async req => {
                                                     if(entry_amount !== 0) {
                                                         let entry_original_amount = new Decimal(d.split_detail_amount).toNumber()
                                                         if(sd.split_currency === 'TZS') {
-                                                            entry_rate = new Decimal(srl.ought_receive_currency_rate).toNumber()
+                                                            entry_rate = new Decimal(String(srl.ought_receive_currency_rate).replace(/,/g, '')).toNumber()
                                                             let entry_format_amount = await this.getReceiptAmount(sd.split_currency, d.split_detail_amount, srl.ought_receive_currency_rate)
                                                             entry_amount = new Decimal(entry_format_amount.natamount).toNumber()
                                                             entry_original_amount = new Decimal(entry_format_amount.originalamount).toNumber()

@@ -362,7 +362,7 @@ exports.submitPayableAct = async req => {
                         let format_amount = await this.getNatAmount(pl.payment_advice_currency, pl.payment_advice_amount, pl.payment_advice_rate)
                         natamount = format_amount.natamount
                         currency_name = 'TZS'
-                        currency_rate = new Decimal(pl.payment_advice_rate).toNumber()
+                        currency_rate = new Decimal(String(pl.payment_advice_rate).replace(/,/g, '')).toNumber()
                     }
 
                     let entryitem = {
@@ -731,7 +731,7 @@ exports.submitPaymentAct = async req => {
                             amount = format_amount.natamount
                             original_amount = format_amount.originalamount
                             currency_name = 'TZS'
-                            currency_rate = new Decimal(pl.payment_advice_rate).toNumber()
+                            currency_rate = new Decimal(String(pl.payment_advice_rate).replace(/,/g, '')).toNumber()
                         }
                         let header_vouchtype = '49' // 单据类型(48=收款单;49=付款单)
                         if(new Decimal(amount).cmp(new Decimal(0)) < 0) {
@@ -1242,13 +1242,13 @@ exports.addFItem = async (code, name, citemccode, citemcname) => {
 
 exports.getNatAmount = async (currency, amount, rate) =>  {
     if(currency === 'USD') {
-        let tzs_amount = new Decimal(amount).times(new Decimal(rate))
+        let tzs_amount = new Decimal(amount).times(new Decimal(String(rate).replace(/,/g, '')))
         return {
             natamount: new Decimal(amount),
             originalamount: new Decimal(tzs_amount).toNumber()
         }
     } else {
-        let usd_amount = new Decimal(amount).div(new Decimal(rate)).toFixed(2, Decimal.ROUND_HALF_UP)
+        let usd_amount = new Decimal(amount).div(new Decimal(String(rate).replace(/,/g, ''))).toFixed(2, Decimal.ROUND_HALF_UP)
         return {
             natamount: new Decimal(usd_amount).toNumber(),
             originalamount: new Decimal(amount).toNumber()
