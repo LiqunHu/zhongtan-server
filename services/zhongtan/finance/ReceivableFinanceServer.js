@@ -250,7 +250,7 @@ exports.queryReceivableAct = async req => {
                             }
                             item.receipt_detail = fees
                             if(item.receipt_currency === 'TZS') {
-                                let tzs_amount = new Decimal(fee_total).times(new Decimal(item.receipt_amount_rate))
+                                let tzs_amount = new Decimal(fee_total).times(new Decimal(String(item.receipt_amount_rate).replace(/,/g, '')))
                                 item.receipt_detail_total = Decimal.isDecimal(tzs_amount) ? tzs_amount.toNumber() : tzs_amount
                             } else {
                                 item.receipt_detail_total = Decimal.isDecimal(fee_total) ? fee_total.toNumber() : fee_total
@@ -302,7 +302,7 @@ exports.queryReceivableAct = async req => {
                             }
                             item.receipt_detail = fees
                             if(item.receipt_currency === 'TZS') {
-                                let tzs_amount = new Decimal(fee_total).times(new Decimal(item.receipt_amount_rate))
+                                let tzs_amount = new Decimal(fee_total).times(new Decimal(String(item.receipt_amount_rate).replace(/,/g, '')))
                                 item.receipt_detail_total = Decimal.isDecimal(tzs_amount) ? tzs_amount.toNumber() : tzs_amount
                             } else {
                                 item.receipt_detail_total = Decimal.isDecimal(fee_total) ? fee_total.toNumber() : fee_total
@@ -319,7 +319,7 @@ exports.queryReceivableAct = async req => {
                         }
                         item.receipt_detail = fees
                         if(item.receipt_currency === 'TZS') {
-                            let tzs_amount = new Decimal(item.receipt_detail_total).times(new Decimal(item.receipt_amount_rate))
+                            let tzs_amount = new Decimal(item.receipt_detail_total).times(new Decimal(String(item.receipt_amount_rate).replace(/,/g, '')))
                             item.receipt_detail_total = Decimal.isDecimal(tzs_amount) ? tzs_amount.toNumber() : tzs_amount
                         } else {
                             item.receipt_detail_total = Decimal.isDecimal(item.receipt_detail_total) ? item.receipt_detail_total.toNumber() : item.receipt_detail_total
@@ -362,7 +362,7 @@ exports.queryReceivableAct = async req => {
                         }
                         item.receipt_detail = fees
                         if(item.receipt_currency === 'TZS') {
-                            let tzs_amount = new Decimal(fee_total).times(new Decimal(item.receipt_amount_rate))
+                            let tzs_amount = new Decimal(fee_total).times(new Decimal(String(item.receipt_amount_rate).replace(/,/g, '')))
                             item.receipt_detail_total = Decimal.isDecimal(tzs_amount) ? tzs_amount.toNumber() : tzs_amount
                         } else {
                             item.receipt_detail_total = Decimal.isDecimal(fee_total) ? fee_total.toNumber() : fee_total
@@ -401,7 +401,7 @@ exports.queryReceivableAct = async req => {
                         }
                         item.receipt_detail = fees
                         if(item.receipt_currency === 'TZS') {
-                            let tzs_amount = new Decimal(fee_total).times(new Decimal(item.receipt_amount_rate))
+                            let tzs_amount = new Decimal(fee_total).times(new Decimal(String(item.receipt_amount_rate).replace(/,/g, '')))
                             item.receipt_detail_total = Decimal.isDecimal(tzs_amount) ? tzs_amount.toNumber() : tzs_amount
                         } else {
                             item.receipt_detail_total = Decimal.isDecimal(fee_total) ? fee_total.toNumber() : fee_total
@@ -431,7 +431,7 @@ exports.queryReceivableAct = async req => {
                     item.receipt_detail_total = new Decimal(mnr.mnr_ledger_receipt_amount).toNumber()
                     item.receipt_detail = fees
                     if(item.receipt_currency === 'TZS') {
-                        let tzs_amount = new Decimal(item.receipt_detail_total).times(new Decimal(item.receipt_amount_rate))
+                        let tzs_amount = new Decimal(item.receipt_detail_total).times(new Decimal(String(item.receipt_amount_rate).replace(/,/g, '')))
                         item.receipt_detail_total = Decimal.isDecimal(tzs_amount) ? tzs_amount.toNumber() : tzs_amount
                     } else {
                         item.receipt_detail_total = Decimal.isDecimal(item.receipt_detail_total) ? item.receipt_detail_total.toNumber() : item.receipt_detail_total
@@ -460,7 +460,7 @@ exports.queryReceivableAct = async req => {
                     item.receipt_detail_total = new Decimal(unusual.unusual_invoice_amount).toNumber()
                     item.receipt_detail = fees
                     if(item.receipt_currency === 'TZS') {
-                        let tzs_amount = new Decimal(item.receipt_detail_total).times(new Decimal(item.receipt_amount_rate))
+                        let tzs_amount = new Decimal(item.receipt_detail_total).times(new Decimal(String(item.receipt_amount_rate).replace(/,/g, '')))
                         item.receipt_detail_total = Decimal.isDecimal(tzs_amount) ? tzs_amount.toNumber() : tzs_amount
                     } else {
                         item.receipt_detail_total = Decimal.isDecimal(item.receipt_detail_total) ? item.receipt_detail_total.toNumber() : item.receipt_detail_total
@@ -483,7 +483,7 @@ exports.queryReceivableAct = async req => {
                     item.receipt_detail_total = new Decimal(fixed.deposit_amount).toNumber()
                     item.receipt_detail = fees
                     if(item.receipt_currency === 'TZS') {
-                        let tzs_amount = new Decimal(item.receipt_detail_total).times(new Decimal(item.receipt_amount_rate))
+                        let tzs_amount = new Decimal(item.receipt_detail_total).times(new Decimal(String(item.receipt_amount_rate).replace(/,/g, '')))
                         item.receipt_detail_total = Decimal.isDecimal(tzs_amount) ? tzs_amount.toNumber() : tzs_amount
                     } else {
                         item.receipt_detail_total = Decimal.isDecimal(item.receipt_detail_total) ? item.receipt_detail_total.toNumber() : item.receipt_detail_total
@@ -2627,13 +2627,13 @@ checkCan2SendReceivable = async item =>  {
 
 exports.getReceiptAmount = async (currency, amount, rate) =>  {
     if(currency === 'USD') {
-        let tzs_amount = new Decimal(amount).times(new Decimal(rate))
+        let tzs_amount = new Decimal(amount).times(new Decimal(String(rate).replace(/,/g, '')))
         return {
             natamount: new Decimal(amount).toNumber(),
             originalamount: new Decimal(tzs_amount).toNumber()
         }
     } else {
-        let usd_amount = new Decimal(amount).div(new Decimal(rate)).toFixed(2, Decimal.ROUND_HALF_UP)
+        let usd_amount = new Decimal(amount).div(new Decimal(String(rate).replace(/,/g, ''))).toFixed(2, Decimal.ROUND_HALF_UP)
         return {
             natamount: new Decimal(usd_amount).toNumber(),
             originalamount: new Decimal(amount).toNumber()
