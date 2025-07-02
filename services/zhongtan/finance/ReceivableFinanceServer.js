@@ -491,7 +491,7 @@ exports.queryReceivableAct = async req => {
                 }
             }
             item._disabled = true
-            let ck = await checkCan2SendReceivable(item)
+            let ck = await this.checkCan2SendReceivable(item)
             if(ck.code) {
                 item._disabled = false
             } else {
