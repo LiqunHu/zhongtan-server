@@ -2468,13 +2468,15 @@ exports.addSubFItem = async (reference_no) => {
                     return subItem
                 }
             }
+        } else {
+            logger.error('addSubFItem_error-- 没有对应项目收据--' + rollover_reference_no)
         }
-    }
+    } 
     return null
 }
 
 
-checkCan2SendReceivable = async item =>  {
+exports.checkCan2SendReceivable = async item =>  {
     let result = {
         code: false,
         message: ''

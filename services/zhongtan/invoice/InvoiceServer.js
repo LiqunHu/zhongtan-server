@@ -1335,13 +1335,14 @@ exports.downloadDo2Act = async req => {
     renderData.containers = JSON.parse(JSON.stringify(continers))
     // let cSize = []
     let cMap = new Map()
+    renderData.invoice_containers_soc = 'SOC'
     for (let i = 0; i < renderData.containers.length; i++) {
       // renderData.containers[i].invoice_containers_tare = common.getContainerTare(renderData.containers[i].invoice_containers_size)
       if(renderData.containers[i].invoice_containers_type === 'S') {
         renderData.containers[i].invoice_containers_soc = 'SOC'
-        renderData.invoice_containers_soc = 'SOC'
       } else {
         renderData.containers[i].invoice_containers_soc = ''
+        renderData.invoice_containers_soc = ''
       }
       // if (cSize.indexOf(renderData.containers[i].invoice_containers_size) < 0) {
       //   cSize.push(renderData.containers[i].invoice_containers_size)
