@@ -29,6 +29,10 @@ exports.initAct = async () => {
   queryStr = `SELECT user_id, user_name FROM tbl_common_user WHERE state = 1 AND user_type = '${GLBConfig.TYPE_CUSTOMER}' ORDER BY user_name`
   replacements = []
   returnData['CUSTOMER'] = await model.simpleSelect(queryStr, replacements)
+
+  queryStr = `SELECT freight_place_code as id FROM tbl_zhongtan_freight_place WHERE state = ? ORDER BY freight_place_code`
+  replacements = [GLBConfig.ENABLE]
+  returnData['POD'] =  await model.simpleSelect(queryStr, replacements)
   return common.success(returnData)
 }
 
@@ -70,6 +74,10 @@ exports.searchAct = async req => {
       replacements.push(doc.search_data.customer_id)
       replacements.push(doc.search_data.customer_id)
     }
+    if (doc.search_data.invoice_pod) {
+    queryStr += 'and c.invoice_masterbi_destination = ? '
+    replacements.push(doc.search_data.invoice_pod)
+  }
     if (doc.search_data.free_days_range) {
       let ranges = doc.search_data.free_days_range.split('-')
       if(ranges) {

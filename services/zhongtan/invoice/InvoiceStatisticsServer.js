@@ -29,6 +29,14 @@ exports.initAct = async () => {
     }
   }
 
+  let POD = []
+  queryStr = `SELECT freight_place_code as id FROM tbl_zhongtan_freight_place WHERE state = ? ORDER BY freight_place_code`
+  replacements = [GLBConfig.ENABLE]
+  let pods = await model.simpleSelect(queryStr, replacements)
+  if(pods) {
+    POD = pods
+  }
+
   let returnData = {
     TFINFO: GLBConfig.TFINFO,
     RECEIPT_TYPE_INFO: GLBConfig.RECEIPT_TYPE_INFO,
@@ -37,7 +45,8 @@ exports.initAct = async () => {
     RECEIPT_CURRENCY: GLBConfig.RECEIPT_CURRENCY,
     UPLOAD_STATE: GLBConfig.UPLOAD_STATE,
     VESSEL_VOYAGE: VESSEL_VOYAGE,
-    CUSTOMER: CUSTOMER
+    CUSTOMER: CUSTOMER,
+    POD: POD
   }
 
   return common.success(returnData)
@@ -67,6 +76,10 @@ exports.searchAct = async req => {
   if (doc.invoice_carrier) {
     queryStr += 'and a.invoice_masterbi_carrier = ? '
     replacements.push(doc.invoice_carrier)
+  }
+  if (doc.invoice_pod) {
+    queryStr += 'and a.invoice_masterbi_destination = ? '
+    replacements.push(doc.invoice_pod)
   }
   let customer = {}
   if(doc.invoice_customer_id) {
