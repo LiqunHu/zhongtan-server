@@ -240,7 +240,7 @@ exports.uploadImportAct = async req => {
           await tb_bl.create({
             invoice_vessel_id: vessel.invoice_vessel_id,
             invoice_masterbi_bl: m['B/L Nr.'],
-            invoice_masterbi_destination: m['DESTINATION'],
+            invoice_masterbi_destination: m['Place of Destination'] ?  m['Place of Destination'].trim() : m['DESTINATION'],
             invoice_masterbi_loading: m['Loading Port'],
             invoice_masterbi_discharge: m['Discharge Port'],
             invoice_masterbi_delivery: m['Delivery'],
@@ -259,7 +259,6 @@ exports.uploadImportAct = async req => {
             invoice_masterbi_gross_volume: measurement,
             invoice_masterbi_gross_volume_unit: measurement_unit,
             invoice_masterbi_freight: freight,
-            invoice_masterbi_do_icd: m['ICD NAME'] || '',
             invoice_masterbi_vessel_type: 'Bulk'
           })
         }
@@ -1166,7 +1165,9 @@ exports.downloadDoAct = async req => {
     uploadfile_name: fileInfo.name,
     uploadfile_url: fileInfo.url,
     uploadfil_release_date: new Date(),
-    uploadfil_release_user_id: user.user_id
+    uploadfil_release_user_id: user.user_id,
+    uploadfile_template_version: 'V1',
+    uploadfile_template_name: 'do.ejs'
   })
 
   if(vessel.invoice_vessel_type && vessel.invoice_vessel_type === 'Bulk') {
@@ -1368,7 +1369,9 @@ exports.downloadDo2Act = async req => {
     uploadfile_name: fileInfo.name,
     uploadfile_url: fileInfo.url,
     uploadfil_release_date: new Date(),
-    uploadfil_release_user_id: user.user_id
+    uploadfil_release_user_id: user.user_id,
+    uploadfile_template_version: 'V1',
+    uploadfile_template_name: 'do2.ejs'
   })
 
   if(vessel.invoice_vessel_type && vessel.invoice_vessel_type === 'Bulk') {
@@ -1716,7 +1719,9 @@ exports.depositDoAct = async req => {
       uploadfile_received_from: customer.user_name,
       uploadfile_customer_id: customer.user_id,
       uploadfile_invoice_no: 'CTS/' + renderData.invoice_masterbi_carrier + '/' + renderData.voyage_number + '/' + renderData.receipt_no,
-      uploadfile_amount_rate: renderData.current_rate
+      uploadfile_amount_rate: renderData.current_rate,
+      uploadfile_template_version: 'V1',
+      uploadfile_template_name: 'deposit.ejs'
     })
     if((doc.invoice_masterbi_deposit_fixed && doc.invoice_masterbi_deposit_fixed === '1' && doc.invoice_masterbi_deposit_fixed_id && !doc.depositEdit) || allSoc) {
       bl.invoice_masterbi_receipt_amount = bl.invoice_masterbi_deposit
@@ -1773,7 +1778,9 @@ exports.depositDoAct = async req => {
         uploadfile_received_from: bl.invoice_masterbi_received_from,
         uploadfile_receipt_no: bl.invoice_masterbi_receipt_no,
         uploadfil_release_date: uploadfil_release_date,
-        uploadfil_release_user_id: uploadfil_release_user_id
+        uploadfil_release_user_id: uploadfil_release_user_id,
+        uploadfile_template_version: 'V1',
+        uploadfile_template_name: 'receipta.ejs'
       })
     }
     await bl.save()
@@ -2005,7 +2012,9 @@ exports.depositDoAct = async req => {
           uploadfile_received_from: customer.user_name,
           uploadfile_customer_id: customer.user_id,
           uploadfile_invoice_no: 'CTS/' + renderDataDeposit.invoice_masterbi_carrier + '/' + renderDataDeposit.voyage_number + '/' + renderDataDeposit.receipt_no,
-          uploadfile_amount_rate: renderDataDeposit.current_rate
+          uploadfile_amount_rate: renderDataDeposit.current_rate,
+          uploadfile_template_version: 'V1',
+          uploadfile_template_name: 'deposit.ejs'
         })
       }
     }
@@ -2246,7 +2255,9 @@ exports.depositDoAct = async req => {
       uploadfile_received_from: customer.user_name,
       uploadfile_customer_id: customer.user_id,
       uploadfile_invoice_no: 'CTS/' + renderData.invoice_masterbi_carrier + '/' + renderData.voyage_number + '/' + renderData.receipt_no,
-      uploadfile_amount_rate: renderData.current_rate
+      uploadfile_amount_rate: renderData.current_rate,
+      uploadfile_template_version: fee_template_version,
+      uploadfile_template_name: fee_template
     })
 
     await tb_invoice_masterbl_fee.create({
@@ -2335,7 +2346,9 @@ exports.depositDoAct = async req => {
       uploadfile_received_from: customer.user_name,
       uploadfile_customer_id: customer.user_id,
       uploadfile_invoice_no: 'CTS/' + renderData.invoice_masterbi_carrier + '/' + renderData.voyage_number + '/' + renderData.receipt_no,
-      uploadfile_amount_rate: renderData.current_rate
+      uploadfile_amount_rate: renderData.current_rate,
+      uploadfile_template_version: 'V1',
+      uploadfile_template_name: 'fee.ejs'
     })
 
     return common.success({ url: fileInfo.url })
@@ -3744,7 +3757,7 @@ exports.changeNominationAct = async req => {
 
 exports.saveBulkFilesAct = async req => {
   let doc = common.docValidate(req),
-    user = req.user, curDate = new Date()
+    user = req.user
   let bl = await tb_bl.findOne({
     where: {
       invoice_masterbi_id: doc.invoice_masterbi_id

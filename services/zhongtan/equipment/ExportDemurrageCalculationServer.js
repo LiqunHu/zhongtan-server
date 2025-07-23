@@ -73,6 +73,14 @@ exports.searchAct = async req => {
       replacements.push(start_date)
       replacements.push(moment(end_date, 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
     }
+
+    if (doc.search_data.empty_gate_out === 1) {
+      queryStr += ` and (a.export_container_edi_depot_gate_out_date IS NULL OR a.export_container_edi_depot_gate_out_date = '') `
+    }
+
+    if (doc.search_data.empty_gate_in === 1) {
+      queryStr += ` and (a.export_container_edi_wharf_gate_in_date IS NULL OR a.export_container_edi_wharf_gate_in_date = '') `
+    }
   }
   queryStr += ' ORDER BY b.export_vessel_id DESC, a.export_container_bl, a.export_container_no'
   let result = await model.queryWithCount(doc, queryStr, replacements)
@@ -787,7 +795,7 @@ exports.calculationDemurrage2Shipment = async (export_vessel_id, export_containe
 
 exports.demurrageExporttAct = async (req, res) => {
   let doc = common.docValidate(req)
-  let queryStr = `SELECT a.*, b.export_vessel_name, b.export_vessel_voyage, b.export_vessel_etd, c.export_masterbl_id, c.export_masterbl_bl_carrier, c.export_masterbl_cargo_type, f.shipment_fee_receipt_no
+  let queryStr = `SELECT a.*, b.export_vessel_name, b.export_vessel_voyage, b.expoPrt_vessel_etd, c.export_masterbl_id, c.export_masterbl_bl_carrier, c.export_masterbl_cargo_type, f.shipment_fee_receipt_no
                   from tbl_zhongtan_export_proforma_container a 
                   LEFT JOIN tbl_zhongtan_export_proforma_vessel b ON a.export_vessel_id = b.export_vessel_id AND b.state = '1' 
                   LEFT JOIN tbl_zhongtan_export_proforma_masterbl c ON a.export_container_bl = c.export_masterbl_bl AND c.state = '1' AND c.export_vessel_id = a.export_vessel_id AND c.bk_cancellation_status = '0'
