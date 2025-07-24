@@ -67,8 +67,8 @@ exports.searchAct = async req => {
       replacements.push(doc.search_data.export_vessel_id)
     }
     if (doc.search_data.etd_date && doc.search_data.etd_date.length > 1 && doc.search_data.etd_date[0] && doc.search_data.etd_date[1]) {
-      let start_date = doc.search_data.loading_date[0]
-      let end_date = doc.search_data.loading_date[1]
+      let start_date = doc.search_data.etd_date[0]
+      let end_date = doc.search_data.etd_date[1]
       queryStr += ` AND STR_TO_DATE(b.export_vessel_etd, "%d/%m/%Y") >= ? AND STR_TO_DATE(b.export_vessel_etd, "%d/%m/%Y") < ? `
       replacements.push(start_date)
       replacements.push(moment(end_date, 'YYYY-MM-DD').add(1, 'days').format('YYYY-MM-DD'))
