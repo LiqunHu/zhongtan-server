@@ -192,7 +192,8 @@ exports.queryReceivableAct = async req => {
                             if(receipt_invoice_fee.invoice_masterbi_others) {
                                 fees.push({'fee_name': 'OTHERS', 'fee_amount': receipt_invoice_fee.invoice_masterbi_others})
                             }
-                            fee_total = receipt_invoice_fee.invoice_masterbi_fee_total
+                            let fee_total_str = String(receipt_invoice_fee.invoice_masterbi_fee_total).replace(/,/g, '')
+                            fee_total = new Decimal(fee_total_str).toNumber()
                             item.receipt_detail = fees
                             if(item.receipt_currency === 'TZS') {
                                 let tzs_amount = new Decimal(fee_total).times(new Decimal(String(item.receipt_amount_rate).replace(/,/g, '')))
