@@ -7,6 +7,7 @@ const Op = model.Op
 const tb_overdue_charge_rule = model.zhongtan_overdue_charge_rule
 const tb_container_size = model.zhongtan_container_size
 const tb_discharge_port = model.zhongtan_discharge_port
+const tb_container = model.zhongtan_invoice_containers
 
 exports.initAct = async () => {
   let returnData = {}
@@ -240,6 +241,62 @@ exports.deleteAct = async req => {
     return common.success()
   } else {
     return common.error('equipment_02')
+  }
+}
+
+
+exports.recalculateAct = async req => {
+  try{
+    let queryStr = `SELECT a.*, b.invoice_vessel_name, b.invoice_vessel_voyage, b.invoice_vessel_ata, b.invoice_vessel_atd, b.invoice_vessel_eta, c.invoice_masterbi_id, c.invoice_masterbi_cargo_type, c.invoice_masterbi_destination, c.invoice_masterbi_carrier, d.user_name AS invoice_masterbi_deposit_party
+    from tbl_zhongtan_invoice_containers a LEFT JOIN tbl_zhongtan_invoice_vessel b ON a.invoice_vessel_id = b.invoice_vessel_id AND b.state = '1' 
+    LEFT JOIN tbl_zhongtan_invoice_masterbl c ON a.invoice_containers_bl = c.invoice_masterbi_bl AND c.state = '1' AND c.invoice_vessel_id = a.invoice_vessel_id 
+    LEFT JOIN tbl_common_user d ON c.invoice_masterbi_customer_id = d.user_id
+    WHERE a.state = '1' AND a.invoice_containers_edi_discharge_date IS NOT NULL 
+    AND a.invoice_containers_actually_return_date IS NOT NULL 
+    AND a.invoice_containers_empty_return_invoice_date IS NULL 
+    AND a.invoice_containers_empty_return_receipt_date IS NULL AND a.invoice_containers_actually_return_overdue_days > 0  `
+    let replacements = []
+    let rows = await model.simpleSelect(queryStr, replacements)
+    for(let d of rows) {
+      let free_days = 0
+      if(d.invoice_containers_empty_return_overdue_free_days) {
+        free_days = d.invoice_containers_empty_return_overdue_free_days
+      } else if(d.invoice_masterbi_cargo_type && d.invoice_masterbi_destination && d.invoice_masterbi_carrier){
+        free_days = await this.queryContainerFreeDays(d.invoice_masterbi_cargo_type, d.invoice_masterbi_destination.substring(0, 2), d.invoice_masterbi_carrier, d.invoice_containers_size, d.invoice_vessel_ata)
+      }
+      if(free_days > 0) {
+        let discharge_date = d.invoice_vessel_ata
+        if(d.invoice_containers_edi_discharge_date) {
+          discharge_date = d.invoice_containers_edi_discharge_date
+        }
+        let return_date = moment().format('DD/MM/YYYY')
+        if(d.invoice_containers_actually_return_date) {
+          return_date = d.invoice_containers_actually_return_date
+        }
+        if(d.invoice_masterbi_cargo_type && d.invoice_masterbi_destination && d.invoice_masterbi_carrier) {
+          let cal_result = await this.demurrageCalculation(free_days, discharge_date, return_date, d.invoice_masterbi_cargo_type, d.invoice_masterbi_destination.substring(0, 2), d.invoice_masterbi_carrier, d.invoice_containers_size, d.invoice_vessel_ata)
+          if(cal_result.diff_days !== -1) {
+            let overdue_con = await tb_container.findOne({'where': {'invoice_containers_id': d.invoice_containers_id}})
+            if(overdue_con) {
+              // 已还箱未开票的判断重新计算后超期费是否一致,不一致则更新
+              if(d.invoice_containers_edi_discharge_date 
+                  && d.invoice_containers_actually_return_date 
+                  && !d.invoice_containers_empty_return_invoice_date
+                  && !d.invoice_containers_empty_return_receipt_date) {
+                    if(String(cal_result.overdue_amount) !== String(overdue_con.invoice_containers_actually_return_overdue_amount)) {
+                      overdue_con.invoice_containers_recalculate_before = overdue_con.invoice_containers_actually_return_overdue_amount
+                      overdue_con.invoice_containers_actually_return_overdue_amount = cal_result.overdue_amount
+                      overdue_con.invoice_containers_empty_return_overdue_amount = cal_result.overdue_amount
+                      await overdue_con.save()
+                    }
+              }
+            }
+          } 
+        }
+      }
+    }
+  } finally {
+    // continue regardless of error
   }
 }
 

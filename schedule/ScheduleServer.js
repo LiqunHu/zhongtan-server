@@ -39,7 +39,7 @@ const calculationCurrentOverdueDays = async () => {
     from tbl_zhongtan_invoice_containers a LEFT JOIN tbl_zhongtan_invoice_vessel b ON a.invoice_vessel_id = b.invoice_vessel_id AND b.state = '1' 
     LEFT JOIN tbl_zhongtan_invoice_masterbl c ON a.invoice_containers_bl = c.invoice_masterbi_bl AND c.state = '1' AND c.invoice_vessel_id = a.invoice_vessel_id 
     LEFT JOIN tbl_common_user d ON c.invoice_masterbi_customer_id = d.user_id
-    WHERE a.state = '1' and (a.invoice_containers_empty_return_invoice_date is null or a.invoice_containers_empty_return_receipt_date is null)`
+    WHERE a.state = '1' and (a.invoice_containers_empty_return_invoice_date is null or a.invoice_containers_empty_return_receipt_date is null) `
     let replacements = []
     let rows = await model.simpleSelect(queryStr, replacements)
     for(let d of rows) {
@@ -60,7 +60,23 @@ const calculationCurrentOverdueDays = async () => {
         }
         let cal_result = await cal_config_srv.demurrageCalculation(free_days, discharge_date, return_date, d.invoice_masterbi_cargo_type, d.invoice_masterbi_destination.substring(0, 2), d.invoice_masterbi_carrier, d.invoice_containers_size, d.invoice_vessel_ata)
         if(cal_result.diff_days !== -1) {
-          await tb_container.update({'invoice_containers_current_overdue_days': cal_result.overdue_days}, {'where': {'invoice_containers_id': d.invoice_containers_id}})
+          // await tb_container.update({'invoice_containers_current_overdue_days': cal_result.overdue_days}, {'where': {'invoice_containers_id': d.invoice_containers_id}})
+          let overdue_con = await tb_container.findOne({'where': {'invoice_containers_id': d.invoice_containers_id}})
+          if(overdue_con) {
+            overdue_con.invoice_containers_current_overdue_days = cal_result.overdue_days
+            // 已还箱未开票的判断重新计算后超期费是否一致,不一致则更新
+            if(d.invoice_containers_edi_discharge_date 
+                && d.invoice_containers_actually_return_date 
+                && !d.invoice_containers_empty_return_invoice_date
+                && !d.invoice_containers_empty_return_receipt_date) {
+                  if(String(cal_result.overdue_amount) !== String(overdue_con.invoice_containers_actually_return_overdue_amount)) {
+                    overdue_con.invoice_containers_recalculate_before = overdue_con.invoice_containers_actually_return_overdue_amount
+                    overdue_con.invoice_containers_actually_return_overdue_amount = cal_result.overdue_amount
+                    overdue_con.invoice_containers_empty_return_overdue_amount = cal_result.overdue_amount
+                  }
+            }
+            await overdue_con.save()
+          }
           await customer_srv.importDemurrageCheck(d.invoice_containers_customer_id)
         } 
       }
