@@ -283,7 +283,7 @@ exports.recalculateAct = async req => {
                   && d.invoice_containers_actually_return_date 
                   && !d.invoice_containers_empty_return_invoice_date
                   && !d.invoice_containers_empty_return_receipt_date) {
-                    if(String(cal_result.overdue_amount) !== String(overdue_con.invoice_containers_actually_return_overdue_amount)) {
+                    if(cal_result.overdue_amount && overdue_con.invoice_containers_actually_return_overdue_amount && String(cal_result.overdue_amount) !== String(overdue_con.invoice_containers_actually_return_overdue_amount)) {
                       overdue_con.invoice_containers_recalculate_before = overdue_con.invoice_containers_actually_return_overdue_amount
                       overdue_con.invoice_containers_actually_return_overdue_amount = cal_result.overdue_amount
                       overdue_con.invoice_containers_empty_return_overdue_amount = cal_result.overdue_amount
