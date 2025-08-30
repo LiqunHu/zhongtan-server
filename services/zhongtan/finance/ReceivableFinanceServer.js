@@ -159,37 +159,37 @@ exports.queryReceivableAct = async req => {
                             }
                         })
                         if(receipt_invoice_fee) {
-                            if(receipt_invoice_fee.invoice_masterbi_do_fee) {
+                            if(receipt_invoice_fee.invoice_masterbi_do_fee && !new Decimal(String(receipt_invoice_fee.invoice_masterbi_do_fee).replace(/,/g, '')).isZero()) {
                                 fees.push({'fee_name': 'DO FEE', 'fee_amount': String(receipt_invoice_fee.invoice_masterbi_do_fee).replace(/,/g, '')})
                             }
-                            if(receipt_invoice_fee.invoice_masterbi_of) {
+                            if(receipt_invoice_fee.invoice_masterbi_of && !new Decimal(String(receipt_invoice_fee.invoice_masterbi_of).replace(/,/g, '')).isZero()) {
                                 fees.push({'fee_name': 'OCEAN FREIGHT', 'fee_amount': String(receipt_invoice_fee.invoice_masterbi_of).replace(/,/g, '')})
                             }
-                            if(receipt_invoice_fee.invoice_masterbi_bl_amendment) {
+                            if(receipt_invoice_fee.invoice_masterbi_bl_amendment && !new Decimal(String(receipt_invoice_fee.invoice_masterbi_bl_amendment).replace(/,/g, '')).isZero()) {
                                 fees.push({'fee_name': 'B/L AMENDMENT', 'fee_amount': String(receipt_invoice_fee.invoice_masterbi_bl_amendment).replace(/,/g, '')})
                             }
-                            if(receipt_invoice_fee.invoice_masterbi_cod_charge) {
+                            if(receipt_invoice_fee.invoice_masterbi_cod_charge && !new Decimal(String(receipt_invoice_fee.invoice_masterbi_cod_charge).replace(/,/g, '')).isZero()) {
                                 fees.push({'fee_name': 'COD CHARGE', 'fee_amount': String(receipt_invoice_fee.invoice_masterbi_cod_charge).replace(/,/g, '')})
                             }
-                            if(receipt_invoice_fee.invoice_masterbi_transfer) {
+                            if(receipt_invoice_fee.invoice_masterbi_transfer && !new Decimal(String(receipt_invoice_fee.invoice_masterbi_transfer).replace(/,/g, '')).isZero()) {
                                 fees.push({'fee_name': 'CONTAINER TRANSFER', 'fee_amount': String(receipt_invoice_fee.invoice_masterbi_transfer).replace(/,/g, '')})
                             }
-                            if(receipt_invoice_fee.invoice_masterbi_lolf) {
+                            if(receipt_invoice_fee.invoice_masterbi_lolf && !new Decimal(String(receipt_invoice_fee.invoice_masterbi_lolf).replace(/,/g, '')).isZero()) {
                                 fees.push({'fee_name': 'LIFT ON LIFT OFF', 'fee_amount': String(receipt_invoice_fee.invoice_masterbi_lolf).replace(/,/g, '')})
                             }
-                            if(receipt_invoice_fee.invoice_masterbi_lcl) {
+                            if(receipt_invoice_fee.invoice_masterbi_lcl && !new Decimal(String(receipt_invoice_fee.invoice_masterbi_lcl).replace(/,/g, '')).isZero()) {
                                 fees.push({'fee_name': 'LCL FEE', 'fee_amount': String(receipt_invoice_fee.invoice_masterbi_lcl).replace(/,/g, '')})
                             }
-                            if(receipt_invoice_fee.invoice_masterbi_amendment) {
+                            if(receipt_invoice_fee.invoice_masterbi_amendment && !new Decimal(String(receipt_invoice_fee.invoice_masterbi_amendment).replace(/,/g, '')).isZero()) {
                                 fees.push({'fee_name': 'AMENDMENT FEE', 'fee_amount': String(receipt_invoice_fee.invoice_masterbi_amendment).replace(/,/g, '')})
                             }
-                            if(receipt_invoice_fee.invoice_masterbi_tasac) {
+                            if(receipt_invoice_fee.invoice_masterbi_tasac && !new Decimal(String(receipt_invoice_fee.invoice_masterbi_tasac).replace(/,/g, '')).isZero()) {
                                 fees.push({'fee_name': 'TASAC FEE', 'fee_amount': String(receipt_invoice_fee.invoice_masterbi_tasac).replace(/,/g, '')})
                             }
-                            if(receipt_invoice_fee.invoice_masterbi_printing) {
+                            if(receipt_invoice_fee.invoice_masterbi_printing && !new Decimal(String(receipt_invoice_fee.invoice_masterbi_printing).replace(/,/g, '')).isZero()) {
                                 fees.push({'fee_name': 'B/L PRINTING FEE', 'fee_amount': String(receipt_invoice_fee.invoice_masterbi_printing).replace(/,/g, '')})
                             }
-                            if(receipt_invoice_fee.invoice_masterbi_others) {
+                            if(receipt_invoice_fee.invoice_masterbi_others && !new Decimal(String(receipt_invoice_fee.invoice_masterbi_others).replace(/,/g, '')).isZero()) {
                                 fees.push({'fee_name': 'OTHERS', 'fee_amount': String(receipt_invoice_fee.invoice_masterbi_others).replace(/,/g, '')})
                             }
                             let fee_total_str = String(receipt_invoice_fee.invoice_masterbi_fee_total).replace(/,/g, '')
