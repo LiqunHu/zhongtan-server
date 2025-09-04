@@ -6,6 +6,8 @@ const model = require('../../../app/model')
 const cal_config_srv = require('./OverdueCalculationConfigServer')
 const opSrv = require('../../common/system/OperationPasswordServer')
 
+const logger = require('../../../app/logger').createLogger(__filename)
+
 const tb_vessel = model.zhongtan_export_proforma_vessel
 const tb_bl = model.zhongtan_export_proforma_masterbl
 const tb_container_size = model.zhongtan_container_size
@@ -739,6 +741,7 @@ exports.checkPasswordAct = async req => {
 
 
 exports.calculationDemurrage2Shipment = async (export_vessel_id, export_container_bl, export_container_no, user_id) => {
+  logger.error('calculationDemurrage2Shipment--params:', export_vessel_id, export_container_bl, export_container_no, user_id)
   let con = await tb_container.findOne({
     where: {
       export_vessel_id: export_vessel_id,
@@ -747,46 +750,49 @@ exports.calculationDemurrage2Shipment = async (export_vessel_id, export_containe
       state: GLBConfig.ENABLE
     }
   })
-  if(!con.export_container_cal_demurrage_amount && con.export_container_edi_depot_gate_out_date) {
-    let vessel = await tb_vessel.findOne({
-      where: {
-        export_vessel_id: export_vessel_id,
-        state: GLBConfig.ENABLE
-      }
-    })
-    let bl = await tb_bl.findOne({
-      where: {
-        export_vessel_id: export_vessel_id,
-        export_masterbl_bl: export_container_bl,
-        state: GLBConfig.ENABLE
-      }
-    })
-    if(vessel && vessel.export_vessel_etd && bl) {
-      let loading_date = vessel.export_vessel_etd
-      // if(bl.export_masterbl_bl_carrier === 'OOCL' && con.export_container_edi_loading_date) {
-        // loading_date = con.export_container_edi_loading_date
-        // if(moment(con.export_container_edi_loading_date, 'DD/MM/YYYY').isBefore(moment('2022-08-20'))) {
-        //   loading_date = con.export_container_edi_loading_date
-        // } else {
-        //   loading_date = con.export_container_edi_wharf_gate_in_date
+  if(con) {
+    logger.error('calculationDemurrage2Shipment--con:' + con.export_container_id, con)
+    if(!con.export_container_cal_demurrage_amount && con.export_container_edi_depot_gate_out_date) {
+      let vessel = await tb_vessel.findOne({
+        where: {
+          export_vessel_id: export_vessel_id,
+          state: GLBConfig.ENABLE
+        }
+      })
+      let bl = await tb_bl.findOne({
+        where: {
+          export_vessel_id: export_vessel_id,
+          export_masterbl_bl: export_container_bl,
+          state: GLBConfig.ENABLE
+        }
+      })
+      if(vessel && vessel.export_vessel_etd && bl) {
+        let loading_date = vessel.export_vessel_etd
+        // if(bl.export_masterbl_bl_carrier === 'OOCL' && con.export_container_edi_loading_date) {
+          // loading_date = con.export_container_edi_loading_date
+          // if(moment(con.export_container_edi_loading_date, 'DD/MM/YYYY').isBefore(moment('2022-08-20'))) {
+          //   loading_date = con.export_container_edi_loading_date
+          // } else {
+          //   loading_date = con.export_container_edi_wharf_gate_in_date
+          // }
         // }
-      // }
-      // if(bl.export_masterbl_bl_carrier === 'COSCO' && con.export_container_edi_wharf_gate_in_date) {
-        loading_date = con.export_container_edi_wharf_gate_in_date
-      // }
-      let cal_result = await cal_config_srv.demurrageCalculation(0, con.export_container_edi_depot_gate_out_date, loading_date, bl.export_masterbl_cargo_type, null, bl.export_masterbl_bl_carrier, con.export_container_size_type, loading_date, 'E')
-      if(cal_result && cal_result.overdue_days >= 0 && con.export_container_cal_demurrage_days !== cal_result.overdue_days) {
-        con.export_container_cal_demurrage_days = cal_result.overdue_days
-        con.export_container_cal_demurrage_amount = cal_result.overdue_amount
-        // if(bl.export_masterbl_bl_carrier === 'OOCL' && !con.export_container_edi_loading_date) {
-          // con.export_container_edi_loading_date = loading_date
+        // if(bl.export_masterbl_bl_carrier === 'COSCO' && con.export_container_edi_wharf_gate_in_date) {
+          loading_date = con.export_container_edi_wharf_gate_in_date
         // }
-        // if(bl.export_masterbl_bl_carrier === 'COSCO' && !con.export_container_edi_wharf_gate_in_date) {
-          con.export_container_edi_wharf_gate_in_date = loading_date
-        // }
-        await con.save()
-        if(cal_result.overdue_days > 0) {
-          await this.mergeDemurrage2Shipment(export_vessel_id, export_container_bl, user_id)
+        let cal_result = await cal_config_srv.demurrageCalculation(0, con.export_container_edi_depot_gate_out_date, loading_date, bl.export_masterbl_cargo_type, null, bl.export_masterbl_bl_carrier, con.export_container_size_type, loading_date, 'E')
+        if(cal_result && cal_result.overdue_days >= 0 && con.export_container_cal_demurrage_days !== cal_result.overdue_days) {
+          con.export_container_cal_demurrage_days = cal_result.overdue_days
+          con.export_container_cal_demurrage_amount = cal_result.overdue_amount
+          // if(bl.export_masterbl_bl_carrier === 'OOCL' && !con.export_container_edi_loading_date) {
+            // con.export_container_edi_loading_date = loading_date
+          // }
+          // if(bl.export_masterbl_bl_carrier === 'COSCO' && !con.export_container_edi_wharf_gate_in_date) {
+            con.export_container_edi_wharf_gate_in_date = loading_date
+          // }
+          await con.save()
+          if(cal_result.overdue_days > 0) {
+            await this.mergeDemurrage2Shipment(export_vessel_id, export_container_bl, user_id)
+          }
         }
       }
     }
