@@ -197,12 +197,39 @@ exports.exportEmptyStockAct = async(req, res) => {
 exports.uploadEmptyStockContainer = async(esc) => {
   if(esc) {
     if(esc.container_no) {
-      let queryStr = ` SELECT * FROM tbl_zhongtan_empty_stock WHERE state = ? AND empty_stock_container_no = ? ORDER BY empty_stock_id DESC LIMIT 1`
-      let replacements = [GLBConfig.ENABLE, esc.container_no]
+      let empty_stock_container_owner = ''
+      if(esc.container_owner) {
+        if(esc.container_owner.indexOf('COS') >= 0 ) {
+          empty_stock_container_owner = 'COSCO'
+        } else {
+          empty_stock_container_owner = 'OOCL'
+        }
+      }
+
+      let queryStr = ` SELECT * FROM tbl_zhongtan_empty_stock WHERE state = ? AND empty_stock_container_no = ? AND empty_stock_container_owner = ? ORDER BY empty_stock_id DESC LIMIT 1`
+      let replacements = [GLBConfig.ENABLE, esc.container_no, empty_stock_container_owner]
       let existEsc = await model.simpleSelect(queryStr, replacements)
       let upload_es = {}
       if(existEsc && existEsc.length > 0) {
-        if(esc.discharge_date || esc.gate_out_terminal_date || esc.gate_in_depot_date) {
+        // 如果更新日期与记录一致,则不更新
+        let isSameRecord = false
+        if(esc.discharge_date && existEsc[0].empty_stock_discharge_date && moment(esc.discharge_date).isSame(moment(existEsc[0].empty_stock_discharge_date))) {
+          isSameRecord = true
+        }
+        if(esc.gate_out_terminal_date && existEsc[0].empty_stock_gate_out_terminal_date && moment(esc.gate_out_terminal_date).isSame(moment(existEsc[0].empty_stock_gate_out_terminal_date))) {
+          isSameRecord = true
+        }
+        if(esc.gate_in_depot_date && existEsc[0].empty_stock_gate_in_depot_date && moment(esc.gate_in_depot_date).isSame(moment(existEsc[0].empty_stock_gate_in_depot_date))) {
+          isSameRecord = true
+        }
+        if(esc.gate_out_depot_date && existEsc[0].empty_stock_gate_out_depot_date && moment(esc.gate_out_depot_date).isSame(moment(existEsc[0].empty_stock_gate_out_depot_date))) {
+          isSameRecord = true
+        }
+        if(isSameRecord) {
+          return
+        }
+
+        if(esc.discharge_date || esc.gate_out_terminal_date || esc.gate_in_depot_date || esc.gate_out_depot_date) {
           // 进口
           if(existEsc[0].empty_stock_container_status === '2') {
             // 最新记录已离场, 新建
@@ -244,13 +271,7 @@ exports.uploadEmptyStockContainer = async(esc) => {
       if(esc.size_type) {
         upload_es.empty_stock_size_type = esc.size_type
       }
-      if(esc.container_owner) {
-        if(esc.container_owner.indexOf('COS') >= 0 ) {
-          upload_es.empty_stock_container_owner = 'COSCO'
-        } else {
-          upload_es.empty_stock_container_owner = 'OOCL'
-        }
-      }
+      upload_es.empty_stock_container_owner = empty_stock_container_owner
       if(esc.discharge_date) {
         upload_es.empty_stock_discharge_date = esc.discharge_date
       }

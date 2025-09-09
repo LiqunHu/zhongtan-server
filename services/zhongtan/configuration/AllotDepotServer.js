@@ -313,207 +313,6 @@ exports.handleAllotVesselDepot = async (vessel_id, reset = '0') => {
               }
             }
           }
-
-        //   let cosco_bl_cons = []
-        //   let oocl_bl_cons = []
-        //   let cosco_total = 0
-        //   let oocl_total = 0
-        //   for(let vb of vessel_bls) {
-        //     if(vb.invoice_masterbi_bl.indexOf('COS') >= 0) {
-        //       cosco_bl_cons.push({
-        //         bl_id: vb.invoice_masterbi_id,
-        //         bl: vb.invoice_masterbi_bl,
-        //         depot: vb.invoice_masterbi_do_return_depot,
-        //         is_special: GLBConfig.DISABLE
-        //       })
-        //     } else if(vb.invoice_masterbi_bl.indexOf('OOLU') >= 0) {
-        //       oocl_bl_cons.push({
-        //         bl_id: vb.invoice_masterbi_id,
-        //         bl: vb.invoice_masterbi_bl,
-        //         depot: vb.invoice_masterbi_do_return_depot,
-        //         is_special: GLBConfig.DISABLE
-        //       })
-        //     }
-        //   }
-        //   for(let vc of vessel_cons) {
-        //     if(vc.invoice_containers_bl.indexOf('COS') >= 0) {
-        //       cosco_total = cosco_total + 1
-        //       for(let cbc of cosco_bl_cons) {
-        //         if(cbc.bl === vc.invoice_containers_bl) {
-        //           if(cbc.con_count) {
-        //             cbc.con_count = cbc.con_count + 1
-        //           } else {
-        //             cbc.con_count = 1
-        //           }
-        //           if(special_cons.indexOf(vc.invoice_containers_size) >= 0) {
-        //             cbc.is_special = GLBConfig.ENABLE
-        //           }
-        //           break
-        //         }
-        //       }
-        //     } else if(vc.invoice_containers_bl.indexOf('OOLU') >= 0) {
-        //       oocl_total = oocl_total + 1
-        //       for(let obc of oocl_bl_cons) {
-        //         if(obc.bl === vc.invoice_containers_bl) {
-        //           if(obc.con_count) {
-        //             obc.con_count = obc.con_count + 1
-        //           } else {
-        //             obc.con_count = 1
-        //           }
-        //           if(special_cons.indexOf(vc.invoice_containers_size) >= 0) {
-        //             obc.is_special = GLBConfig.ENABLE
-        //           }
-        //           break
-        //         }
-        //       }
-        //     }
-        //   }
-        //   let cosco_limit_total = 0
-        //   let oocl_limit_total = 0
-        //   for(let cre of coscoRule) {
-        //     cre.limit_count = cosco_total * cre.depot_percent / 100
-        //     cre.allot_count = 0
-        //     cosco_limit_total = cosco_limit_total + cre.limit_count
-        //   }
-        //   if(cosco_limit_total !== cosco_total) {
-        //     coscoRule[coscoRule.length - 1].limit_count = coscoRule[coscoRule.length - 1].limit_count + (cosco_total - cosco_limit_total)
-        //   }
-        //   for(let ore of ooclRule) {
-        //     ore.limit_count = oocl_total * ore.depot_percent / 100
-        //     ore.allot_count = 0
-        //     oocl_limit_total = oocl_limit_total + ore.limit_count
-        //   }
-        //   if(oocl_limit_total !== oocl_total) {
-        //     ooclRule[ooclRule.length - 1].limit_count = ooclRule[ooclRule.length - 1].limit_count + (oocl_total - oocl_limit_total)
-        //   }
-        //   for(let cbc of cosco_bl_cons) {
-        //     if(cbc.depot) {
-        //       for(let cre of coscoRule) {
-        //         if(cbc.depot === cre.depot_name) {
-        //           cre.allot_count = cre.allot_count + cbc.con_count
-        //           break
-        //         }
-        //       }
-        //     }            
-        //   }
-        //   for(let obc of oocl_bl_cons) {
-        //     if(obc.depot) {
-        //       for(let ore of ooclRule) {
-        //         if(obc.depot === ore.depot_name) {
-        //           ore.allot_count = ore.allot_count + obc.con_count
-        //           break
-        //         }
-        //       }
-        //     }            
-        //   }
-        //   for(let cbc of cosco_bl_cons) {
-        //     if(cbc.is_special === GLBConfig.ENABLE && !cbc.depot && !cbc.allot_depot) {
-        //       for(let cre of coscoRule) {
-        //         if(cre.depot_name !== 'AFICD' && cre.allot_count < cre.limit_count) {
-        //           cbc.allot_depot = cre.depot_name
-        //           cre.allot_count = cre.allot_count + cbc.con_count
-        //           break
-        //         }
-        //       }
-        //     }
-        //   }
-        //   for(let cbc of cosco_bl_cons) {
-        //     if(cbc.is_special === GLBConfig.DISABLE && !cbc.depot && !cbc.allot_depot) {
-        //       for(let cre of coscoRule) {
-        //         if(cre.allot_count < cre.limit_count) {
-        //           cbc.allot_depot = cre.depot_name
-        //           cre.allot_count = cre.allot_count + cbc.con_count
-        //           break
-        //         }
-        //       }
-        //     }
-        //   }
-        //   for(let cbc of cosco_bl_cons) {
-        //     if(!cbc.depot && !cbc.allot_depot) {
-        //       if(cbc.is_special === GLBConfig.ENABLE) {
-        //         for(let cre of coscoRule) {
-        //           if(cre.depot_name !== 'AFICD') {
-        //             cbc.allot_depot = cre.depot_name
-        //             cre.allot_count = cre.allot_count + cbc.con_count
-        //             break
-        //           }
-        //         }
-        //       }else {
-        //         for(let cre of coscoRule) {
-        //           cbc.allot_depot = cre.depot_name
-        //           cre.allot_count = cre.allot_count + cbc.con_count
-        //           break
-        //         }
-        //       }
-        //     }
-        //   }
-        //   for(let obc of oocl_bl_cons) {
-        //     if(obc.is_special === GLBConfig.ENABLE && !obc.depot && !obc.allot_depot) {
-        //       for(let ore of ooclRule) {
-        //         if(ore.depot_name !== 'AFICD' && ore.allot_count < ore.limit_count) {
-        //           obc.allot_depot = ore.depot_name
-        //           ore.allot_count = ore.allot_count + obc.con_count
-        //           break
-        //         }
-        //       }
-        //     }
-        //   }
-        //   for(let obc of oocl_bl_cons) {
-        //     if(obc.is_special === GLBConfig.DISABLE && !obc.depot && !obc.allot_depot) {
-        //       for(let ore of ooclRule) {
-        //         if(ore.allot_count < ore.limit_count) {
-        //           obc.allot_depot = ore.depot_name
-        //           ore.allot_count = ore.allot_count + obc.con_count
-        //           break
-        //         }
-        //       }
-        //     }
-        //   }
-        //   for(let obc of oocl_bl_cons) {
-        //     if(!obc.depot && !obc.allot_depot) {
-        //       if(obc.is_special === GLBConfig.ENABLE) {
-        //         for(let ore of ooclRule) {
-        //           if(ore.depot_name !== 'AFICD') {
-        //             obc.allot_depot = ore.depot_name
-        //             ore.allot_count = ore.allot_count + obc.con_count
-        //             break
-        //           }
-        //         }
-        //       }else {
-        //         for(let ore of ooclRule) {
-        //           obc.allot_depot = ore.depot_name
-        //           ore.allot_count = ore.allot_count + obc.con_count
-        //           break
-        //         }
-        //       }
-        //     }
-        //   }
-        //   for(let cbc of cosco_bl_cons) {
-        //     if(cbc.allot_depot) {
-        //       let bl = await tb_bl.findOne({
-        //         where: {
-        //           invoice_masterbi_id: cbc.bl_id
-        //         }
-        //       })
-        //       if(bl) {
-        //         bl.invoice_masterbi_do_return_depot = cbc.allot_depot
-        //         await bl.save()
-        //       }
-        //     }
-        //   }
-        //   for(let obc of oocl_bl_cons) {
-        //     if(obc.allot_depot) {
-        //       let bl = await tb_bl.findOne({
-        //         where: {
-        //           invoice_masterbi_id: obc.bl_id
-        //         }
-        //       })
-        //       if(bl) {
-        //         bl.invoice_masterbi_do_return_depot = obc.allot_depot
-        //         await bl.save()
-        //       }
-        //     }
-        //   }
         }
       }
     }
@@ -521,10 +320,100 @@ exports.handleAllotVesselDepot = async (vessel_id, reset = '0') => {
 }
 
 exports.handleCarrierAllotDepot = async (bl_cons, depot_rules, total_count, special_cons, multiple_cons) => {
+  let other_allot_depot_bl_cons = []
+  let bans_con_count = 0
+  
   if(bl_cons && bl_cons.length > 0 && depot_rules && depot_rules.length > 0) {
+    // 优先分配存在禁令的箱型
+    let bans_container_types = []
+    for(let cre of depot_rules) {
+      if(cre.bans && cre.bans.length > 0) {
+        for(let b of cre.bans) {
+          if(b && bans_container_types.indexOf(b) < 0) {
+            bans_container_types.push(b)
+          }
+        }
+      }
+    }
+    if(bans_container_types.length > 0) {
+      
+      for(let bc of bl_cons) {
+        if(bans_container_types.indexOf(bc.invoice_containers_size) >= 0) {
+          bans_con_count = bans_con_count + bc.container_size_count
+        } else {
+          other_allot_depot_bl_cons.push(bc)
+        }
+      }
+      let allow_depot_set = []
+      for(let cre of depot_rules) {
+        if(cre.details) {
+          for(let cd of cre.details) {
+            if(cd.con_type && bans_container_types.indexOf(cd.con_type) >= 0) {
+              // 该堆场允许分配存在禁令箱型
+              let allow_depot = {
+                depot_name: cre.depot_name,
+                con_type: cd.con_type,
+                con_name: cd.con_name,
+                limit_count: parseInt(bans_con_count * cd.con_type_percent / 100),
+              }
+              allow_depot_set.push(allow_depot)
+            }
+          }
+        }
+      }
+      if(allow_depot_set && allow_depot_set.length > 0) {
+        let total_allow_count = 0
+        for(let ad of allow_depot_set) {
+          total_allow_count = total_allow_count + ad.limit_count
+        }
+        if(total_allow_count < bans_con_count) {
+          if((bans_con_count - total_allow_count) < allow_depot_set.length) {
+            allow_depot_set[0].limit_count = allow_depot_set[0].limit_count + (bans_con_count - total_allow_count)
+          } else {
+            if((bans_con_count - total_allow_count) % allow_depot_set.length === 0) {
+              for(let ad of allow_depot_set) {
+                ad.limit_count = ad.limit_count + (bans_con_count - total_allow_count) / allow_depot_set.length
+              }
+            } else {
+              let avg_count = parseInt((bans_con_count - total_allow_count) / allow_depot_set.length)
+              let last_count = avg_count + (bans_con_count - total_allow_count) % allow_depot_set.length
+              for(let i = 0; i < allow_depot_set.length; ++i) {
+                if(i === 0) {
+                  allow_depot_set[i].limit_count = allow_depot_set[i].limit_count + last_count
+                } else {
+                  allow_depot_set[i].limit_count = allow_depot_set[i].limit_count + avg_count
+                }
+              }
+            }
+          }
+        }
+
+        for(let ad of allow_depot_set) {
+          let bans_allot_depot_conunt = 0
+          setDepot: for(let c of bl_cons) {
+              if(!c.bl_return_depot && !c.allot_return_depot && (c.invoice_containers_size === ad.con_type || c.invoice_containers_size === ad.con_name)) {
+                c.allot_return_depot = ad.depot_name
+                bans_allot_depot_conunt = bans_allot_depot_conunt + c.container_size_count
+                if(bans_allot_depot_conunt >= ad.limit_count) {
+                  break setDepot
+                }
+              }
+            }
+        }
+
+        // 查漏补缺
+        for(let c of bl_cons) {
+          if(!c.bl_return_depot && !c.allot_return_depot && bans_container_types.indexOf(c.invoice_containers_size) >= 0) {
+            c.allot_return_depot = allow_depot_set[0].depot_name
+          }
+        }
+      }
+    }
+    let other_allot_depot_total_count = total_count - bans_con_count
+    // 处理剩余的箱子
     for(let cre of depot_rules) {
       cre.allot_count = 0
-      let limit_count = parseInt(total_count * cre.depot_percent / 100)
+      let limit_count = parseInt(other_allot_depot_total_count * cre.depot_percent / 100)
       if(cre.details) {
         let final_limit_count = 0
         let total_con_type_percent = 0
@@ -555,8 +444,9 @@ exports.handleCarrierAllotDepot = async (bl_cons, depot_rules, total_count, spec
     }
     for(let cre of depot_rules) {
       let exist_depot_count = 0
-      for(let c of bl_cons) {
-        if((c.bl_return_depot && c.bl_return_depot === cre.depot_name) || (c.allot_return_depot && c.allot_return_depot === cre.depot_name)) {
+      for(let c of other_allot_depot_bl_cons) {
+        if((c.bl_return_depot && c.bl_return_depot === cre.depot_name) 
+          || (c.allot_return_depot && c.allot_return_depot === cre.depot_name)) {
           exist_depot_count = exist_depot_count + c.container_size_count
         }
       }
@@ -568,7 +458,7 @@ exports.handleCarrierAllotDepot = async (bl_cons, depot_rules, total_count, spec
           for(let d of cre.details) {
             detail_con_types.push(d.con_type)
             let detail_diff_limit_count = d.allot_type_count
-            for(let c of bl_cons) {
+            for(let c of other_allot_depot_bl_cons) {
               if(multiple_cons && multiple_cons.length > 0 && multiple_cons.indexOf(c.invoice_containers_bl) >= 0) {
                 continue
               }
@@ -595,7 +485,7 @@ exports.handleCarrierAllotDepot = async (bl_cons, depot_rules, total_count, spec
             diff_limit_count = cre.other_con_type_limit_count
           }
           if(diff_limit_count > 0) {
-            for(let c of bl_cons) {
+            for(let c of other_allot_depot_bl_cons) {
               if(!c.bl_return_depot && !c.allot_return_depot && detail_con_types.indexOf(c.invoice_containers_size) >= 0) {
                 if(special_cons.indexOf(c.invoice_containers_size) >= 0) {
                   // 特殊箱型
@@ -608,7 +498,7 @@ exports.handleCarrierAllotDepot = async (bl_cons, depot_rules, total_count, spec
                   diff_limit_count = diff_limit_count - c.container_size_count
                 }
                 if(multiple_cons.indexOf(c.invoice_containers_bl) >= 0) {
-                  for(let cc of bl_cons) {
+                  for(let cc of other_allot_depot_bl_cons) {
                     if(!cc.bl_return_depot && !cc.allot_return_depot && cc.invoice_containers_bl === c.invoice_containers_bl) {
                       if(special_cons.indexOf(c.invoice_containers_size) >= 0) {
                         // 特殊箱型
@@ -633,7 +523,7 @@ exports.handleCarrierAllotDepot = async (bl_cons, depot_rules, total_count, spec
             }
           }
           if(diff_limit_count > 0) {
-            for(let c of bl_cons) {
+            for(let c of other_allot_depot_bl_cons) {
               if(!c.bl_return_depot && !c.allot_return_depot ) {
                 if(special_cons.indexOf(c.invoice_containers_size) >= 0 && detail_con_types.indexOf(c.invoice_containers_size) < 0){
                   // 特殊箱型
@@ -656,7 +546,7 @@ exports.handleCarrierAllotDepot = async (bl_cons, depot_rules, total_count, spec
           }
         } else {
           // 按顺序提取对应数量箱子，设置堆场
-          for(let c of bl_cons) {
+          for(let c of other_allot_depot_bl_cons) {
             if(!c.bl_return_depot && !c.allot_return_depot) {
               if(special_cons.indexOf(c.invoice_containers_size) >= 0){
                 // 特殊箱型
@@ -676,7 +566,7 @@ exports.handleCarrierAllotDepot = async (bl_cons, depot_rules, total_count, spec
         }
       }
     }
-    for(let c of bl_cons) {
+    for(let c of other_allot_depot_bl_cons) {
       if(!c.bl_return_depot && !c.allot_return_depot) {
         // 还存在没有分配堆场的提单 随机分配
         for(let cre of depot_rules) {

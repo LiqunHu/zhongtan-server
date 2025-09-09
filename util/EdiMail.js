@@ -222,11 +222,17 @@ const parserMailAttachment = async (ediDepots, parserData) => {
               returnDate = dtm[1]
             }
             try {
+              let formate_carrier = carrier
+              if(billNo && billNo.indexOf('COSU') >= 0) {
+                formate_carrier = 'COSCO'
+              } else if(billNo && billNo.indexOf('OOLU') >= 0) {
+                formate_carrier = 'OOCL'
+              }
               let ediData = {
                 depot: edi.edi_depot_name,
                 isWharf: edi.edi_depot_is_wharf,
                 ediType: gate,
-                carrier: carrier,
+                carrier: formate_carrier,
                 billNo: billNo,
                 containerNo: containerNo,
                 ediDate: returnDate,
@@ -339,13 +345,19 @@ const parserMailAttachment = async (ediDepots, parserData) => {
             }
            
             try {
+              let formate_carrier = carrier
+              if(billNo && billNo.indexOf('COSU') >= 0) {
+                formate_carrier = 'COSCO'
+              } else if(billNo && billNo.indexOf('OOLU') >= 0) {
+                formate_carrier = 'OOCL'
+              }
               let ediData = {
                 depot: edi.edi_depot_name,
                 isWharf: edi.edi_depot_is_wharf,
                 ediType: gate,
                 containerNo: containerNo,
                 ediDate: returnDate,
-                carrier: carrier,
+                carrier: formate_carrier,
                 billNo: billNo
               }
               logger.error("EDI邮件解析成功: " + JSON.stringify(ediData))

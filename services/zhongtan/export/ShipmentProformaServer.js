@@ -774,9 +774,42 @@ exports.uploadShipmentAct = async req => {
                 let volumn_unit = c['Volumn Unit'] ? c['Volumn Unit'].toString().trim() : ''
                 let weight = c['Weight'] ? c['Weight'].toString().trim() : ''
                 let weight_unit = c['Weight Unit'] ? c['Weight Unit'].toString().trim() : ''
-                let queryStrStock = `SELECT * FROM tbl_zhongtan_empty_stock WHERE state = 1 AND empty_stock_container_no = ?  ORDER BY empty_stock_id DESC LIMIT 1`
-                let replacementsStock = [container_no] 
+                let queryStrStock = `SELECT * FROM tbl_zhongtan_empty_stock WHERE state = 1 AND empty_stock_container_no = ? AND empty_stock_container_owner = ? ORDER BY empty_stock_id DESC`
+                let replacementsStock = [container_no, bl_carrier] 
                 let stock_cons = await model.simpleSelect(queryStrStock, replacementsStock)
+                if(!stock_cons || stock_cons.length <= 0) { 
+                  let noCarrierQueryStrStock = `SELECT * FROM tbl_zhongtan_empty_stock WHERE state = 1 AND empty_stock_container_no = ? ORDER BY empty_stock_id DESC`
+                  let noCarrierReplacementsStock = [container_no] 
+                  stock_cons = await model.simpleSelect(noCarrierQueryStrStock, noCarrierReplacementsStock)
+                } else if(stock_cons && stock_cons.length > 0) {
+                  for(let i = 1; i < stock_cons.length; i++) {
+                    let stock_con = stock_cons[i]
+                    if(stock_cons[0].empty_stock_discharge_date == stock_con.empty_stock_discharge_date 
+                      || stock_cons[0].empty_stock_gate_out_terminal_date == stock_con.empty_stock_gate_out_terminal_date
+                      || stock_cons[0].empty_stock_gate_in_depot_date == stock_con.empty_stock_gate_in_depot_date 
+                      || stock_cons[0].empty_stock_gate_out_depot_date == stock_con.empty_stock_gate_out_depot_date 
+                      || stock_cons[0].empty_stock_gate_in_terminal_date == stock_con.empty_stock_gate_in_terminal_date
+                      || stock_cons[0].empty_stock_loading_date == stock_con.empty_stock_loading_date) {
+                        if(!stock_cons[0].empty_stock_gate_out_depot_date && stock_con.empty_stock_gate_out_depot_date) {
+                          stock_cons[0].empty_stock_gate_out_depot_date = stock_con.empty_stock_gate_out_depot_date
+                        }
+
+                        if(!stock_cons[0].empty_stock_gate_in_terminal_date && stock_con.empty_stock_gate_in_terminal_date) {
+                          stock_cons[0].empty_stock_gate_in_terminal_date = stock_con.empty_stock_gate_in_terminal_date
+                        }
+
+                        if(!stock_cons[0].empty_stock_loading_date && stock_con.empty_stock_loading_date) {
+                          stock_cons[0].empty_stock_loading_date = stock_con.empty_stock_loading_date
+                        }
+
+                        if(!stock_cons[0].empty_stock_out_depot_name && stock_con.empty_stock_out_depot_name) {
+                          stock_cons[0].empty_stock_out_depot_name = stock_con.empty_stock_out_depot_name
+                        }
+                      }
+                  }
+                }
+                
+                
                 await tb_proforma_container.create({
                   export_vessel_id: ves.export_vessel_id,
                   export_container_bl:  container_bl,
