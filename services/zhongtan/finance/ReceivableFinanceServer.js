@@ -408,7 +408,7 @@ exports.queryReceivableAct = async req => {
                                     state: GLBConfig.ENABLE
                                 }
                             })
-                            if(continer) {
+                            if(continer && !new Decimal(String(ci.overdue_invoice_containers_overdue_invoice_amount).replace(/,/g, '')).isZero()) {
                                 fees.push({'fee_name': 'DEMURRAGE', 'fee_amount': ci.overdue_invoice_containers_overdue_invoice_amount})
                                 fee_total = new Decimal(fee_total).plus(new Decimal(ci.overdue_invoice_containers_overdue_invoice_amount))
                             }
