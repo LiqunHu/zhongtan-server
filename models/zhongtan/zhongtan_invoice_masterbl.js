@@ -80,7 +80,7 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_masterbl', {
   },
   invoice_masterbi_goods_description: {
     // Description of Goods
-    type: db.STRING(2000),
+    type: db.TEXT,
     defaultValue: '',
     allowNull: false
   },
