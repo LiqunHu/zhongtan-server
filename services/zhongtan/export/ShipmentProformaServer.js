@@ -475,6 +475,23 @@ const pdf2jsonParser = async (path) => {
 exports.uploadShipmentAct = async req => {
   let doc = common.docValidate(req), user = req.user
   for (let f of doc.upload_files) {
+    let iu = await tb_uploadfile.findOne({
+      where: {
+        api_name: 'ShipmentProformaServer_temporary',
+        uploadfile_name: f.response.info.name,
+        state: GLBConfig.ENABLE,
+      }
+    });
+    if(iu) {
+      if(iu.uploadfile_state === 'AP') {
+        return common.error('import_16')
+      } else {
+        iu.uploadfile_state = 'AP'
+        await iu.save()
+      }
+    }
+  }
+  for (let f of doc.upload_files) {
     // var parser = new xml2js.Parser();
     let wb = X.readFile(f.response.info.path, {
       cellFormula: true,

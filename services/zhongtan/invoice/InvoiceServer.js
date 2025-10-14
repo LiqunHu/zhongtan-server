@@ -130,6 +130,25 @@ exports.initDOAct = async () => {
 
 exports.uploadImportAct = async req => {
   let doc = common.docValidate(req)
+
+  for (let f of doc.upload_files) {
+    let iu = await tb_uploadfile.findOne({
+      where: {
+        api_name: 'InvoiceServer_temporary',
+        uploadfile_name: f.response.info.name,
+        state: GLBConfig.ENABLE,
+      }
+    });
+    if(iu) {
+      if(iu.uploadfile_state === 'AP') {
+        return common.error('import_16')
+      } else {
+        iu.uploadfile_state = 'AP'
+        await iu.save()
+      }
+    }
+  }
+
   for (let f of doc.upload_files) {
     // var parser = new xml2js.Parser();
     let wb = X.readFile(f.response.info.path, {
@@ -449,12 +468,12 @@ exports.uploadAct = async req => {
   let fileInfo = await common.fileSaveTemp(req)
   let user = req.user
   let iu = await tb_uploadfile.findOne({
-        where: {
-          api_name: 'InvoiceServer_temporary',
-          uploadfile_name: fileInfo.name,
-          state: GLBConfig.ENABLE,
-        }
-      });
+    where: {
+      api_name: 'InvoiceServer_temporary',
+      uploadfile_name: fileInfo.name,
+      state: GLBConfig.ENABLE,
+    }
+  });
   if(iu) {
     return common.error('import_16')
   } else {
