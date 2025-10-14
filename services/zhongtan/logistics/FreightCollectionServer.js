@@ -610,6 +610,25 @@ exports.undoFreightAct = async req => {
 
 exports.uploadAct = async req => {
   let fileInfo = await common.fileSaveTemp(req)
+  let user = req.user
+  let iu = await tb_uploadfile.findOne({
+        where: {
+          api_name: 'FreightCollectionServer_temporary',
+          uploadfile_name: fileInfo.name,
+          state: GLBConfig.ENABLE,
+        }
+      });
+  if(iu) {
+    return common.error('import_16')
+  } else {
+    await tb_uploadfile.create({
+      api_name: 'FreightCollectionServer_temporary',
+      user_id: user.user_id,
+      uploadfile_index1: '0',
+      uploadfile_name: fileInfo.name,
+      uploadfile_url: fileInfo.path
+    })
+  }
   return common.success(fileInfo)
 }
 

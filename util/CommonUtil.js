@@ -233,7 +233,6 @@ async function ejs2Pdf(templateFile, renderData, bucket) {
   let filePath = path.join(process.cwd(), config.fileSys.filesDir, uuid.v4().replace(/-/g, '') + '.pdf')
   await page.pdf({ path: filePath, format: 'A4', landscape: true })
   await page.close()
-  console.log('filePath', filePath)
   let fileInfo = await fileUtil.fileSaveMongoByLocalPath(filePath, bucket, config.fileSys.bucket[bucket].baseUrl)
   return fileInfo
 }

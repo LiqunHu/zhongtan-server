@@ -14,6 +14,7 @@ const tb_proforma_bl = model.zhongtan_export_proforma_masterbl
 const tb_proforma_container = model.zhongtan_export_proforma_container
 const tb_container_size = model.zhongtan_container_size
 const tb_shipment_fee = model.zhongtan_export_shipment_fee
+const tb_uploadfile = model.zhongtan_uploadfile
 
 exports.initAct = async () => {
   let returnData = {}
@@ -325,6 +326,25 @@ exports.exportFreightAct = async (req, res) => {
 
 exports.uploadAct = async req => {
   let fileInfo = await common.fileSaveTemp(req)
+  let user = req.user
+  let iu = await tb_uploadfile.findOne({
+        where: {
+          api_name: 'FreightChargeStatusServer_temporary',
+          uploadfile_name: fileInfo.name,
+          state: GLBConfig.ENABLE,
+        }
+      });
+  if(iu) {
+    return common.error('import_16')
+  } else {
+    await tb_uploadfile.create({
+      api_name: 'FreightChargeStatusServer_temporary',
+      user_id: user.user_id,
+      uploadfile_index1: '0',
+      uploadfile_name: fileInfo.name,
+      uploadfile_url: fileInfo.path
+    })
+  }
   return common.success(fileInfo)
 }
 

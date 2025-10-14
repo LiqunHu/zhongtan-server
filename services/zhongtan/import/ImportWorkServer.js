@@ -18,6 +18,7 @@ const tb_billlading_container = model.zhongtan_import_billlading_container
 const tb_shipinfo = model.zhongtan_import_shipinfo
 const tb_packaging = model.zhongtan_packaging
 const tb_container_size = model.zhongtan_container_size
+const tb_uploadfile = model.zhongtan_uploadfile
 
 exports.initAct = async req => {
   let doc = common.docValidate(req)
@@ -974,6 +975,25 @@ exports.releasedAct = async req => {
 
 exports.uploadAct = async req => {
   let fileInfo = await common.fileSaveTemp(req)
+  let user = req.user
+  let iu = await tb_uploadfile.findOne({
+        where: {
+          api_name: 'ImportWorkServer_temporary',
+          uploadfile_name: fileInfo.name,
+          state: GLBConfig.ENABLE,
+        }
+      });
+  if(iu) {
+    return common.error('import_16')
+  } else {
+    await tb_uploadfile.create({
+      api_name: 'ImportWorkServer_temporary',
+      user_id: user.user_id,
+      uploadfile_index1: '0',
+      uploadfile_name: fileInfo.name,
+      uploadfile_url: fileInfo.path
+    })
+  }
   return common.success(fileInfo)
 }
 

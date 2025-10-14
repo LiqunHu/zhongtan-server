@@ -314,7 +314,9 @@ exports.invoiceAct = async req => {
       uploadfile_currency: theDeposit.deposit_currency,
       uploadfile_state: 'PB',
       uploadfile_invoice_no: 'CTS/' + renderData.fixed_deposit_carrier + '/' + renderData.fixed_deposit_number + '/' + renderData.fixed_deposit_invoice_no,
-      uploadfile_amount_rate: renderData.current_rate
+      uploadfile_amount_rate: renderData.current_rate,
+      uploadfile_template_version: 'V1',
+      uploadfile_template_name: 'fixedInvoice.ejs'
     })
     return common.success()
   } catch(e) {
@@ -379,6 +381,25 @@ exports.searchCustomerAct = async req => {
 
 exports.uploadAct = async req => {
   let fileInfo = await common.fileSaveTemp(req)
+  let user = req.user
+  let iu = await tb_uploadfile.findOne({
+        where: {
+          api_name: 'CustomerFixedDepositServer_temporary',
+          uploadfile_name: fileInfo.name,
+          state: GLBConfig.ENABLE,
+        }
+      });
+  if(iu) {
+    return common.error('import_16')
+  } else {
+    await tb_uploadfile.create({
+      api_name: 'CustomerFixedDepositServer_temporary',
+      user_id: user.user_id,
+      uploadfile_index1: '0',
+      uploadfile_name: fileInfo.name,
+      uploadfile_url: fileInfo.path
+    })
+  }
   return common.success(fileInfo)
 }
 

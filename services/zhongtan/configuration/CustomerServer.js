@@ -14,6 +14,7 @@ const tb_usergroup = model.common_usergroup
 const tb_user = model.common_user
 const tb_user_groups = model.common_user_groups
 const tb_vessel = model.zhongtan_invoice_vessel
+const tb_uploadfile = model.zhongtan_uploadfile
 
 exports.initAct = async () => {
   let returnData = {
@@ -535,6 +536,25 @@ exports.importDemurrageCheck = async user_id => {
 
 exports.uploadAct = async req => {
   let fileInfo = await common.fileSaveTemp(req)
+  let user = req.user
+  let iu = await tb_uploadfile.findOne({
+        where: {
+          api_name: 'CustomerServer_temporary',
+          uploadfile_name: fileInfo.name,
+          state: GLBConfig.ENABLE,
+        }
+      });
+  if(iu) {
+    return common.error('import_16')
+  } else {
+    await tb_uploadfile.create({
+      api_name: 'CustomerServer_temporary',
+      user_id: user.user_id,
+      uploadfile_index1: '0',
+      uploadfile_name: fileInfo.name,
+      uploadfile_url: fileInfo.path
+    })
+  }
   return common.success(fileInfo)
 }
 
