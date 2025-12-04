@@ -407,7 +407,8 @@ module.exports = {
   ],
   ICD_EDI_TYPE: [
     { id: 'EMAIL', text: 'EMAIL', color: 'success' },
-    { id: 'FILE', text: 'FILE', color: 'primary'}
+    { id: 'FILE', text: 'FILE', color: 'primary'},
+    { id: 'SFTP', text: 'SFTP', color: 'warning'}
   ],
   RELEASE_STATE: [
     { id: 'PM', text: 'Pending at Commercial' },

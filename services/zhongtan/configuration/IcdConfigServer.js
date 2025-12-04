@@ -29,7 +29,16 @@ exports.searchAct = async req => {
   let result = await model.queryWithCount(doc, queryStr, replacements)
 
   returnData.total = result.count
-  returnData.rows = result.data
+  let rows = []
+  if(result.data && result.data.length > 0) {
+    for (let r of result.data) {
+      if(r.icd_edi_type == 'SFTP') {
+        r.icd_sftp_info = r.icd_server_name + ':' + r.icd_server_port + '/' + r.icd_server_path + ' (' + r.icd_server_username + ':' + r.icd_server_password + ')'
+      }
+      rows.push(r)
+    }
+  }
+  returnData.rows = rows
 
   return common.success(returnData)
 }
@@ -46,16 +55,30 @@ exports.addAct = async req => {
   if (addIcd) {
     return common.error('icd_02')
   }
-
-  let icd = await tb_icd.create({
-    icd_name: doc.icd_name,
-    icd_code: doc.icd_code,
-    icd_email: doc.icd_email,
-    icd_tel: doc.icd_tel,
-    icd_edi_type: doc.icd_edi_type
-  })
-
-  return common.success(icd)
+  if(doc.icd_edi_type === 'SFTP') {
+    let icd = await tb_icd.create({
+      icd_name: doc.icd_name,
+      icd_code: doc.icd_code,
+      icd_email: doc.icd_email,
+      icd_tel: doc.icd_tel,
+      icd_edi_type: doc.icd_edi_type,
+      icd_server_name: doc.icd_server_name,
+      icd_server_port: doc.icd_server_port,
+      icd_server_username: doc.icd_server_username,
+      icd_server_password: doc.icd_server_password,
+      icd_server_path: doc.icd_server_path
+    })
+    return common.success(icd)
+  } else {
+    let icd = await tb_icd.create({
+      icd_name: doc.icd_name,
+      icd_code: doc.icd_code,
+      icd_email: doc.icd_email,
+      icd_tel: doc.icd_tel,
+      icd_edi_type: doc.icd_edi_type
+    })
+    return common.success(icd)
+  }
 }
 
 exports.modifyAct = async req => {
@@ -93,9 +116,24 @@ exports.modifyAct = async req => {
     }
     icd.icd_name = doc.new.icd_name
     icd.icd_code = doc.new.icd_code
-    icd.icd_email = doc.new.icd_email
+    
     icd.icd_tel = doc.new.icd_tel
     icd.icd_edi_type = doc.new.icd_edi_type
+    if(doc.new.icd_edi_type === 'SFTP') {
+      icd.icd_email = doc.new.icd_email
+      icd.icd_server_name = doc.new.icd_server_name
+      icd.icd_server_port = doc.new.icd_server_port
+      icd.icd_server_username = doc.new.icd_server_username
+      icd.icd_server_password = doc.new.icd_server_password
+      icd.icd_server_path = doc.new.icd_server_path
+    } else {
+      icd.icd_email = doc.new.icd_email
+      icd.icd_server_name = ''
+      icd.icd_server_port = ''
+      icd.icd_server_username = ''
+      icd.icd_server_password = ''
+      icd.icd_server_path = ''
+    }
     await icd.save()
     return common.success(icd)
   } else {

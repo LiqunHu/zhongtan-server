@@ -43,6 +43,8 @@ module.exports = async (req, res) => {
       ret = await srv.doReplaceEdiAct(req)
     } else if (method === 'doCancelEdi') {
       ret = await srv.doCancelEdiAct(req)
+    } else if (method === 'doSftpTest') {
+      ret = await srv.doSftpTestAct(req)
     } else if (method === 'searchFixedDeposit') {
       ret = await srv.searchFixedDepositAct(req)
     } else if (method === 'checkPassword') {

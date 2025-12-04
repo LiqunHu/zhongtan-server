@@ -7,6 +7,7 @@ const common = require('../../../util/CommonUtil')
 const model = require('../../../app/model')
 const seq = require('../../../util/Sequence')
 const mailer = require('../../../util/Mail')
+const sftp = require('../../../util/SFTPClient')
 const cal_config_srv = require('../equipment/OverdueCalculationConfigServer')
 const opSrv = require('../../common/system/OperationPasswordServer')
 const adsSrv = require('../configuration/AllotDepotServer')
@@ -2773,7 +2774,7 @@ exports.doCreateEdiAct = async req => {
     })
     let customer = await tb_user.findOne({
       where: {
-        user_name: bl.invoice_masterbi_delivery_to,
+        [Op.or]: [{ user_username: bl.invoice_masterbi_delivery_to }, { user_name: bl.invoice_masterbi_delivery_to }],
         state: GLBConfig.ENABLE,
         user_type: GLBConfig.TYPE_CUSTOMER
       }
@@ -2830,9 +2831,12 @@ exports.doCreateEdiAct = async req => {
           } else {
             return common.error('do_05')
           }
+        } else if(icd.icd_edi_type === 'SFTP') {
+          // await this.uploadEdo2SFTP(commonUser, bl, customer, vessel, continers, icd, '9')
+          await this.createEditFile(commonUser, bl, customer, vessel, continers, '9')
         } else {
           // 发送edi文件
-          this.createEditFile(commonUser, bl, customer, vessel, continers, '9')
+          await this.createEditFile(commonUser, bl, customer, vessel, continers, '9')
         }
         bl.invoice_masterbi_do_edi_state = '9' // GLBConfig.EDI_MESSAGE_FUNCTION
         bl.invoice_masterbi_do_edi_create_time = new Date()
@@ -2864,7 +2868,7 @@ exports.doReplaceEdiAct = async req => {
 
     let customer = await tb_user.findOne({
       where: {
-        user_name: bl.invoice_masterbi_delivery_to,
+        [Op.or]: [{ user_username: bl.invoice_masterbi_delivery_to }, { user_name: bl.invoice_masterbi_delivery_to }],
         state: GLBConfig.ENABLE,
         user_type: GLBConfig.TYPE_CUSTOMER
       }
@@ -2917,8 +2921,11 @@ exports.doReplaceEdiAct = async req => {
           } else {
             return common.error('do_05')
           }
+        } else if(icd.icd_edi_type === 'SFTP') {
+          // await this.uploadEdo2SFTP(commonUser, bl, customer, vessel, continers, icd, '5')
+          await this.createEditFile(commonUser, bl, customer, vessel, continers, '5')
         } else {
-          this.createEditFile(commonUser, bl, customer, vessel, continers, '5')
+          await this.createEditFile(commonUser, bl, customer, vessel, continers, '5')
         }
         bl.invoice_masterbi_do_edi_state = '5' // GLBConfig.EDI_MESSAGE_FUNCTION
         bl.invoice_masterbi_do_edi_cancel_time = new Date()
@@ -2955,7 +2962,7 @@ exports.doCancelEdiAct = async req => {
 
       let customer = await tb_user.findOne({
         where: {
-          user_name: bl.invoice_masterbi_delivery_to,
+          [Op.or]: [{ user_username: bl.invoice_masterbi_delivery_to }, { user_name: bl.invoice_masterbi_delivery_to }],
           state: GLBConfig.ENABLE,
           user_type: GLBConfig.TYPE_CUSTOMER
         }
@@ -2980,11 +2987,77 @@ exports.doCancelEdiAct = async req => {
             user_id: user.user_id
           }
         })
-        this.createEditFile(commonUser, bl, customer, vessel, continers, '1')
+        if(icd.icd_edi_type === 'SFTP') {
+          // await this.uploadEdo2SFTP(commonUser, bl, customer, vessel, continers, icd, '1')
+          await this.createEditFile(commonUser, bl, customer, vessel, continers, '1')
+        } else {
+          await this.createEditFile(commonUser, bl, customer, vessel, continers, '1')
+        }
       } else {
         return common.error('do_02')
       }
     }
+  }
+}
+
+exports.doSftpTestAct = async req => {
+  let doc = common.docValidate(req), user = req.user
+  let bl = await tb_bl.findOne({
+    where: {
+      invoice_masterbi_id: doc.invoice_masterbi_id
+    }
+  })
+
+  let icd = await tb_icd.findOne({
+    where: {
+      state : GLBConfig.ENABLE,
+      [Op.or]: [{ icd_name: 'WTTZDL008' }, { icd_code: 'WTTZDL008' }]
+    }
+  })
+  let customer = await tb_user.findOne({
+    where: {
+      [Op.or]: [{ user_username: bl.invoice_masterbi_delivery_to }, { user_name: bl.invoice_masterbi_delivery_to }],
+      state: GLBConfig.ENABLE,
+      user_type: GLBConfig.TYPE_CUSTOMER
+    }
+  })
+
+  let vessel = await tb_vessel.findOne({
+    where: {
+      invoice_vessel_id: bl.invoice_vessel_id
+    }
+  })
+
+  let continers = await tb_container.findAll({
+    where: {
+      invoice_vessel_id: bl.invoice_vessel_id,
+      invoice_containers_bl: bl.invoice_masterbi_bl
+    }
+  })
+
+  let commonUser = await tb_user.findOne({
+    where: {
+      user_id: user.user_id
+    }
+  })
+
+  if(customer) {
+    if(icd) {
+      if(!bl.invoice_masterbi_do_delivery_order_no) {
+        let delivery_order_no = ('000000000000000' + bl.invoice_masterbi_id).slice(-8)
+        bl.invoice_masterbi_do_delivery_order_no = delivery_order_no
+      }
+      let uploadRes = await this.uploadEdo2SFTP(commonUser, bl, customer, vessel, continers, icd, '9')
+      if(uploadRes) {
+        return common.success()
+      } else {
+        return common.error('do_08')
+      }
+    } else {
+      return common.error('do_04')
+    }
+  } else {
+    return common.error('do_02')
   }
 }
 
@@ -3048,6 +3121,67 @@ exports.createEditFile = async (commonUser, bl, customer, vessel, continers, edi
     path: fileInfo
   }]
   await mailer.sendEdiMail(GLBConfig.EDI_EMAIL_SENDER, GLBConfig.EDI_EMAIL_RECEIVER.split(';'), GLBConfig.EDI_EMAIL_CARBON_COPY, '', mailSubject, mailContent, mailHtml, attachments)
+}
+
+exports.uploadEdo2SFTP = async (commonUser, bl, customer, vessel, continers, icd, ediStatus) =>{
+  let ediData = {}
+  let curMoment = moment()
+  ediData.senderID = 'COS'
+  if(bl.invoice_masterbi_carrier === 'OOCL') {
+    ediData.senderID = 'OOCL'
+  }
+  ediData.interchangeTime = curMoment.format('YYMMDD:HHmm')
+  ediData.interchangeID = await seq.genEdiInterchangeID()
+  ediData.messageID = await seq.genEdiMessageIDSeq()
+  ediData.ediName = ediData.interchangeID + '.edi'
+  ediData.messageFunction = ediStatus // GLBConfig.EDI_MESSAGE_FUNCTION
+  ediData.documentDateTime = curMoment.format('YYYYMMDDHHMM')
+  ediData.deliveryOrderNumber = bl.invoice_masterbi_do_delivery_order_no
+  ediData.billOfLadingNo = bl.invoice_masterbi_bl
+  ediData.expiryDate = moment(bl.invoice_masterbi_valid_to).format('YYYYMMDD')
+  ediData.effectiveDate = curMoment.format('YYYYMMDD')
+  ediData.voyageNo = vessel.invoice_vessel_voyage
+  ediData.carrierID = bl.invoice_masterbi_carrier
+  ediData.vesselCallsign = vessel.invoice_vessel_call_sign
+  ediData.vesselName = vessel.invoice_vessel_name
+  ediData.deliveryPlace = bl.invoice_masterbi_delivery
+  ediData.portFinalDestination = bl.invoice_masterbi_destination
+  ediData.portOfLoading = bl.invoice_masterbi_loading
+  ediData.eta = moment(vessel.invoice_vessel_eta).format('YYYYMMDD')
+  ediData.messageSender = 'COSCO'
+  let consignee_name = bl.invoice_masterbi_consignee_name
+  if(consignee_name) {
+    consignee_name = common.fileterLNB(consignee_name)
+    consignee_name = consignee_name.trim()
+    consignee_name = common.fileterB(consignee_name)
+    if(consignee_name.length > 35) {
+      ediData.consignee = consignee_name.substring(1, 36)
+    } else {
+      ediData.consignee = consignee_name
+    }
+  }
+  ediData.tin = customer.user_tin
+  var ediCs = []
+  for(let c of continers) {
+    let cc = {
+      containerNumber: c.invoice_containers_no,
+      containerTypeISOcode: c.invoice_containers_size,
+      equipmentStatus: '3'
+    }
+    ediCs.push(cc)
+  }
+  ediData.containers = ediCs
+  // create edi file
+  let fileInfo = await common.fs2Edi(ediData)
+  let sftpParam = {
+    local_file: fileInfo,
+    host: icd.icd_server_name,
+    port: icd.icd_server_port,
+    username: icd.icd_server_username,
+    password: icd.icd_server_password,
+    path: icd.icd_server_path
+  }
+  return await sftp.upload2SFTP(sftpParam)
 }
 
 exports.searchFixedDepositAct = async req => {

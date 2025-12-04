@@ -92,6 +92,7 @@ module.exports = {
   do_05: 'D/O ICD EMAIL do not exist',
   do_06: 'Return depot has locked',
   do_07: 'Delivery to receipt deposit do not exist',
+  do_08: 'SFTP upload failed',
   container_size_01: 'Edit contaienr size do not exist',
   container_size_02: 'Contaienr size name or code already exists',
   container_type_01: 'Edit contaienr type do not exist',
