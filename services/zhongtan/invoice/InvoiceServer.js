@@ -2805,6 +2805,7 @@ exports.doCreateEdiAct = async req => {
           let delivery_order_no = ('000000000000000' + bl.invoice_masterbi_id).slice(-8)
           bl.invoice_masterbi_do_delivery_order_no = delivery_order_no
         }
+        let uploadRes = false
         if(icd.icd_edi_type === 'EMAIL') {
           // 发送放货确认至堆场
           if(icd.icd_email) {
@@ -2828,19 +2829,25 @@ exports.doCreateEdiAct = async req => {
             let mailHtml = html
             let attachments = []
             await mailer.sendEdiMail(GLBConfig.ICD_EDI_EMAIL_SENDER, icd.icd_email.split(';'), GLBConfig.ICD_EDI_EMAIL_SENDER, GLBConfig.STORING_ORDER_BLIND_CARBON_COPY, mailSubject, mailContent, mailHtml, attachments)
+            uploadRes = true
           } else {
             return common.error('do_05')
           }
         } else if(icd.icd_edi_type === 'SFTP') {
-          // await this.uploadEdo2SFTP(commonUser, bl, customer, vessel, continers, icd, '9')
-          await this.createEditFile(commonUser, bl, customer, vessel, continers, '9')
+          uploadRes = await this.uploadEdo2SFTP(commonUser, bl, customer, vessel, continers, icd, '9')
+          // await this.createEditFile(commonUser, bl, customer, vessel, continers, '9')
         } else {
           // 发送edi文件
           await this.createEditFile(commonUser, bl, customer, vessel, continers, '9')
+          uploadRes = true
         }
         bl.invoice_masterbi_do_edi_state = '9' // GLBConfig.EDI_MESSAGE_FUNCTION
         bl.invoice_masterbi_do_edi_create_time = new Date()
-        await bl.save()
+        if(uploadRes) {
+          await bl.save()
+        } else {
+          return common.error('do_09')
+        }
       } else {
         return common.error('do_04')
       }
@@ -2895,6 +2902,7 @@ exports.doReplaceEdiAct = async req => {
     })
     if(customer) {
       if(icd) {
+        let uploadRes = false
         if(icd.icd_edi_type === 'EMAIL') {
           // 发送放货确认至堆场
           if(icd.icd_email) {
@@ -2918,18 +2926,24 @@ exports.doReplaceEdiAct = async req => {
             let mailHtml = html
             let attachments = []
             await mailer.sendEdiMail(GLBConfig.ICD_EDI_EMAIL_SENDER, icd.icd_email.split(';'), GLBConfig.ICD_EDI_EMAIL_SENDER, GLBConfig.STORING_ORDER_BLIND_CARBON_COPY, mailSubject, mailContent, mailHtml, attachments)
+            uploadRes = true
           } else {
             return common.error('do_05')
           }
         } else if(icd.icd_edi_type === 'SFTP') {
-          // await this.uploadEdo2SFTP(commonUser, bl, customer, vessel, continers, icd, '5')
-          await this.createEditFile(commonUser, bl, customer, vessel, continers, '5')
+          uploadRes = await this.uploadEdo2SFTP(commonUser, bl, customer, vessel, continers, icd, '5')
+          // await this.createEditFile(commonUser, bl, customer, vessel, continers, '5')
         } else {
           await this.createEditFile(commonUser, bl, customer, vessel, continers, '5')
+          uploadRes = true
         }
         bl.invoice_masterbi_do_edi_state = '5' // GLBConfig.EDI_MESSAGE_FUNCTION
         bl.invoice_masterbi_do_edi_cancel_time = new Date()
-        await bl.save()
+        if(uploadRes) {
+          await bl.save()
+        } else {
+          return common.error('do_09')
+        }
       } else {
         return common.error('do_04')
       }
@@ -2958,8 +2972,7 @@ exports.doCancelEdiAct = async req => {
     if(icd && icd.icd_edi_type !== 'EMAIL') {
       bl.invoice_masterbi_do_edi_state = '1' // GLBConfig.EDI_MESSAGE_FUNCTION
       bl.invoice_masterbi_do_edi_cancel_time = new Date()
-      await bl.save()
-
+      
       let customer = await tb_user.findOne({
         where: {
           [Op.or]: [{ user_username: bl.invoice_masterbi_delivery_to }, { user_name: bl.invoice_masterbi_delivery_to }],
@@ -2987,11 +3000,19 @@ exports.doCancelEdiAct = async req => {
             user_id: user.user_id
           }
         })
+        let uploadRes = false
         if(icd.icd_edi_type === 'SFTP') {
-          // await this.uploadEdo2SFTP(commonUser, bl, customer, vessel, continers, icd, '1')
-          await this.createEditFile(commonUser, bl, customer, vessel, continers, '1')
+          uploadRes = await this.uploadEdo2SFTP(commonUser, bl, customer, vessel, continers, icd, '1')
+          // await this.createEditFile(commonUser, bl, customer, vessel, continers, '1')
         } else {
           await this.createEditFile(commonUser, bl, customer, vessel, continers, '1')
+          uploadRes = true
+        }
+        if(uploadRes) {
+          await bl.save()
+          return common.success()
+        } else {
+          return common.error('do_09')
         }
       } else {
         return common.error('do_02')
