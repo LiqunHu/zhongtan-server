@@ -3148,8 +3148,10 @@ exports.uploadEdo2SFTP = async (commonUser, bl, customer, vessel, continers, icd
   let ediData = {}
   let curMoment = moment()
   ediData.senderID = 'COS'
+  ediData.carrierID = 'COS'
   if(bl.invoice_masterbi_carrier === 'OOCL') {
     ediData.senderID = 'OOCL'
+    ediData.carrierID = 'OOC'
   }
   ediData.interchangeTime = curMoment.format('YYMMDD:HHmm')
   ediData.interchangeID = await seq.genEdiInterchangeID()
@@ -3162,7 +3164,7 @@ exports.uploadEdo2SFTP = async (commonUser, bl, customer, vessel, continers, icd
   ediData.expiryDate = moment(bl.invoice_masterbi_valid_to).format('YYYYMMDD')
   ediData.effectiveDate = curMoment.format('YYYYMMDD')
   ediData.voyageNo = vessel.invoice_vessel_voyage
-  ediData.carrierID = bl.invoice_masterbi_carrier
+  // ediData.carrierID = bl.invoice_masterbi_carrier
   ediData.vesselCallsign = vessel.invoice_vessel_call_sign
   ediData.vesselName = vessel.invoice_vessel_name
   ediData.deliveryPlace = bl.invoice_masterbi_delivery
@@ -3201,6 +3203,20 @@ exports.uploadEdo2SFTP = async (commonUser, bl, customer, vessel, continers, icd
     username: icd.icd_server_username,
     password: icd.icd_server_password,
     path: icd.icd_server_path
+  }
+
+  try {
+    // 上传FTP的同时,通过邮件抄送EDI
+    let mailSubject = 'EDI ' + bl.invoice_masterbi_bl
+    let mailContent = 'Dear Team,\
+    Pls find attached EDO for operation.Thanks.'
+    let mailHtml = ''
+    let attachments = [{
+      filename : ediData.ediName,
+      path: fileInfo
+    }]
+    await mailer.sendEdiMail(GLBConfig.EDI_EMAIL_SENDER, GLBConfig.EDI_EMAIL_BLIND_CARBON_COPY, GLBConfig.EDI_EMAIL_CARBON_COPY, '', mailSubject, mailContent, mailHtml, attachments)
+  } catch(error) {
   }
   return await sftp.upload2SFTP(sftpParam)
 }
