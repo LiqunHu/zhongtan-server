@@ -1336,6 +1336,18 @@ exports.downloadDo2Act = async req => {
   renderData.fcl = bl.invoice_masterbi_do_fcl
   renderData.depot = bl.invoice_masterbi_do_return_depot
 
+  if(bl.invoice_masterbi_delivery) {
+      let icd = await tb_icd.findOne({
+        where: {
+          state : GLBConfig.ENABLE,
+          [Op.or]: [{ icd_name: bl.invoice_masterbi_delivery }, { icd_code: bl.invoice_masterbi_delivery }]
+        }
+      })
+      if(icd) {
+        renderData.delivery_to = icd.icd_name
+      }
+    }
+
   if(!bl.invoice_masterbi_discharge) {
     renderData.invoice_masterbi_discharge = 'TZDAR'
   }
@@ -3216,8 +3228,7 @@ exports.uploadEdo2SFTP = async (commonUser, bl, customer, vessel, continers, icd
       path: fileInfo
     }]
     await mailer.sendEdiMail(GLBConfig.EDI_EMAIL_SENDER, GLBConfig.EDI_EMAIL_BLIND_CARBON_COPY, GLBConfig.EDI_EMAIL_CARBON_COPY, '', mailSubject, mailContent, mailHtml, attachments)
-  } catch(error) {
-  }
+  } catch(error) {}
   return await sftp.upload2SFTP(sftpParam)
 }
 
