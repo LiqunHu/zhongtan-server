@@ -701,7 +701,8 @@ const updateContainerEmptyStock = async (ediData) => {
     container_no: ediData.containerNo,
     container_owner: ediData.carrier,
     depot_name: ediData.depot,
-    bill_no: ediData.billNo
+    bill_no: ediData.billNo,
+    is_wharf: ediData.isWharf
   }
   if(isWharf && isWharf === GLBConfig.ENABLE) {
     // 34: 进场, 36: 出场, 44: 卸船, 46：装船

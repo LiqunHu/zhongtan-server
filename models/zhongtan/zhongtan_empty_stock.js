@@ -87,5 +87,15 @@ module.exports = db.defineModel('tbl_zhongtan_empty_stock', {
     // 堆存天数(堆场出场 - 堆场进场)
     type: db.STRING(20),
     allowNull: true
-  }
+  },
+  empty_stock_in_terminal_name: {
+    // 进箱码头
+    type: db.STRING(20),
+    allowNull: true
+  },
+  empty_stock_out_terminal_name: {
+    // 出箱码头
+    type: db.STRING(20),
+    allowNull: true
+  },
 })

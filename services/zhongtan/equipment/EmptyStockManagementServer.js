@@ -321,6 +321,16 @@ exports.uploadEmptyStockContainer = async(esc) => {
       if(esc.loading_date && esc.discharge_date) {
         upload_es.empty_stock_detention_days = moment(esc.loading_date).diff(moment(esc.discharge_date), 'days') + 1
       }
+      // 码头EDI 保存码头名称
+      if(esc.is_wharf && esc.is_wharf === GLBConfig.ENABLE) {
+        // 进口 保存 进箱码头 出口 保存出箱码头
+        if(esc.discharge_date || esc.gate_out_terminal_date || esc.gate_in_depot_date || esc.gate_out_depot_date) {
+          // 进口
+          upload_es.empty_stock_in_terminal_name = esc.depot_name
+        } else {
+          upload_es.empty_stock_out_terminal_name = esc.depot_name
+        }
+      }
       await upload_es.save()
     }
   }
