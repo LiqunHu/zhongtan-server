@@ -29,6 +29,8 @@ module.exports = async (req, res) => {
       ret = await srv.checkPasswordAct(req)
     } else if (method === 'changeReceiptCurrency') {
       ret = await srv.changeReceiptCurrencyAct(req)
+    } else if (method === 'doRefundDeposit') {
+      ret = await srv.doRefundDepositAct(req)
     }
     common.sendData(res, ret)
   } catch (error) {

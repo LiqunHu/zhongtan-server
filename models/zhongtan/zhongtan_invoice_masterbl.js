@@ -535,5 +535,26 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_masterbl', {
     // Fee bank info
     type: db.STRING(10),
     allowNull: true
+  },
+  invoice_masterbi_refund_deposit: {
+    // 退押金
+    type: db.STRING(5),
+    defaultValue: '0',
+    allowNull: false
+  },
+  invoice_masterbi_refund_deposit_user: {
+    // 退押金用户
+    type: db.STRING(20),
+    allowNull: true
+  },
+  invoice_masterbi_refund_deposit_time: {
+    // 退押金时间
+    type: db.STRING(30),
+    allowNull: true
+  },
+  invoice_masterbi_refund_deposit_remark: {
+    // 退押金备注
+    type: db.STRING(50),
+    allowNull: true
   }
 })

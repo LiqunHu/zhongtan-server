@@ -306,8 +306,9 @@ exports.getMasterbiDataAct = async req => {
 
 exports.getMasterbiFiles = async d => {
   d.files = []
-  let queryStr = `SELECT a.*, b.user_name FROM tbl_zhongtan_uploadfile a
+  let queryStr = `SELECT a.*, b.user_name, c.user_name as refund_deposit_user_name FROM tbl_zhongtan_uploadfile a
       left join tbl_common_user b on a.uploadfil_release_user_id = b.user_id
+      left join tbl_common_user c on a.uploadfile_refund_deposit_user = c.user_id
       WHERE a.state = '1' and a.uploadfile_index1 = ? order by created_at`
   let replacements = [d.invoice_masterbi_id]
   let files = await model.simpleSelect(queryStr, replacements)
@@ -431,7 +432,12 @@ exports.getMasterbiFiles = async d => {
         url: f.uploadfile_url,
         state: f.uploadfile_state,
         release_date: f.uploadfil_release_date ? moment(f.uploadfil_release_date).format('DD/MM/YYYY HH:mm') : '',
-        release_user: f.user_name
+        release_user: f.user_name,
+        receipt_no: f.uploadfile_receipt_no,
+        refund_deposit: f.uploadfile_refund_deposit,
+        refund_deposit_user: f.refund_deposit_user_name,
+        refund_deposit_time: f.uploadfile_refund_deposit_time,
+        refund_deposit_remark: f.uploadfile_refund_deposit_remark
       })
       // if(f.uploadfile_acttype === 'deposit') {
       //   let rcount = await tb_uploadfile.count({
@@ -613,7 +619,9 @@ exports.downloadReceiptAct = async req => {
       uploadfil_release_date: curDate,
       uploadfil_release_user_id: user.user_id,
       uploadfile_bank_reference_no: doc.invoice_masterbi_bank_reference_no,
-      uploadfile_bank_info: doc.receipt_bank_info
+      uploadfile_bank_info: doc.receipt_bank_info,
+      uploadfile_template_version: 'V1',
+      uploadfile_template_name: 'receipta.ejs'
     })
     if(invoiceFee) {
       invoiceFee.invoice_masterbi_receipt_id = receiptFile.uploadfile_id
@@ -686,6 +694,14 @@ exports.downloadCollectAct = async (req, res) => {
   }
   queryStr = queryStr + ` order by v.invoice_vessel_id desc, a.invoice_masterbi_bl`
   let result = await model.simpleSelect(queryStr, replacements)
+  
+  let users = await tb_user.findAll({
+    where: {
+      state: GLBConfig.ENABLE
+    }
+  })
+        
+
   let renderData = []
   for (let r of result) {
     let row = {}
@@ -727,6 +743,15 @@ exports.downloadCollectAct = async (req, res) => {
     row.invoice_masterbi_do_fee = ''
     if (r.uploadfile_acttype === 'deposit') {
       row.invoice_masterbi_deposit = r.invoice_masterbi_deposit
+      if(r.uploadfile_refund_deposit && r.uploadfile_refund_deposit === '1') {
+        row.refund_deposit = 'Y'
+        let refundUser = users.find(item => item.user_id === r.uploadfile_refund_deposit_user)
+        if(refundUser) {
+          row.refund_deposit_user = refundUser.user_name
+        }
+        row.refund_deposit_time = r.uploadfile_refund_deposit_time
+        row.refund_deposit_remark = r.uploadfile_refund_deposit_remark
+      }
     }
     if (r.uploadfile_acttype === 'fee') {
       row.invoice_masterbi_of = r.invoice_masterbi_of
@@ -986,4 +1011,37 @@ exports.changeReceiptCurrencyAct = async req => {
     return common.error('receipt_01')
   }
   
+}
+
+exports.doRefundDepositAct = async req => {
+  let doc = common.docValidate(req), user = req.user
+  
+  let refundDepositFee = await tb_uploadfile.findOne({
+    where: {
+      state: GLBConfig.ENABLE,
+      uploadfile_id: doc.file_id
+    }
+  })
+  if(refundDepositFee) {
+    refundDepositFee.uploadfile_refund_deposit = '1'
+    refundDepositFee.uploadfile_refund_deposit_user = user.user_id
+    refundDepositFee.uploadfile_refund_deposit_time = moment().format('YYYY-MM-DD HH:mm:ss')
+    refundDepositFee.uploadfile_refund_deposit_remark = doc.refund_deposit_remark
+    await refundDepositFee.save()
+  }
+
+   let bl = await tb_bl.findOne({
+    where: {
+      state: GLBConfig.ENABLE,
+      invoice_masterbi_id: doc.invoice_masterbi_id
+    }
+  })
+  if(bl) {
+    bl.invoice_masterbi_refund_deposit = '1'
+    bl.invoice_masterbi_refund_deposit_user = user.user_id
+    bl.invoice_masterbi_refund_deposit_time = moment().format('YYYY-MM-DD HH:mm:ss')
+    bl.invoice_masterbi_refund_deposit_remark = doc.refund_deposit_remark
+    await bl.save()
+  }
+  return common.success()
 }
