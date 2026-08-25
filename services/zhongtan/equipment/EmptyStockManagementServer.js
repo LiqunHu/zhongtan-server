@@ -22,6 +22,14 @@ exports.initAct = async () => {
     },
     order: [['edi_depot_name', 'ASC']]
   })
+  returnData['TERMINAL'] = await tb_depot.findAll({
+    attributes: ['edi_depot_name'],
+    where: {
+      edi_depot_is_wharf: GLBConfig.ENABLE, 
+      state : GLBConfig.ENABLE
+    },
+    order: [['edi_depot_name', 'ASC']]
+  })
   return common.success(returnData)
 }
 
@@ -85,8 +93,14 @@ exports.searchAct = async req => {
       replacements.push(doc.search_data.size_type)
     }
     if (doc.search_data.depot) {
-      queryStr += ' and empty_stock_in_depot_name = ? '
+      queryStr += ' and (empty_stock_in_depot_name = ? or empty_stock_out_depot_name = ?) '
       replacements.push(doc.search_data.depot)
+      replacements.push(doc.search_data.depot)
+    }
+    if (doc.search_data.terminal) {
+      queryStr += ' and (empty_stock_in_terminal_name = ? or empty_stock_out_terminal_name = ?) '
+      replacements.push(doc.search_data.terminal)
+      replacements.push(doc.search_data.terminal)
     }
   }
   queryStr += ' ORDER BY empty_stock_id DESC'
