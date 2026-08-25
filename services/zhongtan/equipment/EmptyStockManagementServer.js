@@ -191,8 +191,14 @@ exports.exportEmptyStockAct = async(req, res) => {
       replacements.push(doc.search_data.size_type)
     }
     if (doc.search_data.depot) {
-      queryStr += ' and empty_stock_in_depot_name = ? '
+      queryStr += ' and (empty_stock_in_depot_name = ? or empty_stock_out_depot_name = ?) '
       replacements.push(doc.search_data.depot)
+      replacements.push(doc.search_data.depot)
+    }
+    if (doc.search_data.terminal) {
+      queryStr += ' and (empty_stock_in_terminal_name = ? or empty_stock_out_terminal_name = ?) '
+      replacements.push(doc.search_data.terminal)
+      replacements.push(doc.search_data.terminal)
     }
   }
   queryStr += ' ORDER BY empty_stock_id DESC'
@@ -201,7 +207,20 @@ exports.exportEmptyStockAct = async(req, res) => {
   for (let r of result) {
     let row = {}
     row = JSON.parse(JSON.stringify(r))
-    row.empty_stock_depot_name = row.empty_stock_in_depot_name ? row.empty_stock_in_depot_name : row.empty_stock_out_depot_name
+    if(row.empty_stock_in_depot_name && row.empty_stock_out_depot_name && row.empty_stock_in_depot_name === row.empty_stock_out_depot_name) {
+      row.empty_stock_depot_name = row.empty_stock_in_depot_name
+    } else if(row.empty_stock_in_depot_name) {
+      row.empty_stock_depot_name = "I:" + row.empty_stock_in_depot_name
+    } else if(row.empty_stock_out_depot_name) {
+      row.empty_stock_depot_name = "E:" + row.empty_stock_out_depot_name
+    }
+    if(row.empty_stock_in_terminal_name && row.empty_stock_out_terminal_name && row.empty_stock_in_terminal_name === row.empty_stock_out_terminal_name) {
+      row.empty_stock_terminal_name = row.empty_stock_in_terminal_name
+    } else if(row.empty_stock_in_terminal_name) {
+      row.empty_stock_terminal_name = "I:" + row.empty_stock_in_terminal_name
+    } else if(row.empty_stock_out_terminal_name) {
+      row.empty_stock_terminal_name = "E:" + row.empty_stock_out_terminal_name
+    }
     renderData.push(row)
   }
   let filepath = await common.ejs2xlsx('EmptyStock.xlsx', renderData)
