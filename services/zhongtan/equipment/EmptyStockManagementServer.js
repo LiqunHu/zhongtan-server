@@ -98,8 +98,7 @@ exports.searchAct = async req => {
       replacements.push(doc.search_data.depot)
     }
     if (doc.search_data.terminal) {
-      queryStr += ' and (empty_stock_in_terminal_name = ? or empty_stock_out_terminal_name = ?) '
-      replacements.push(doc.search_data.terminal)
+      queryStr += ' and empty_stock_out_terminal_name = ?'
       replacements.push(doc.search_data.terminal)
     }
   }
@@ -196,8 +195,7 @@ exports.exportEmptyStockAct = async(req, res) => {
       replacements.push(doc.search_data.depot)
     }
     if (doc.search_data.terminal) {
-      queryStr += ' and (empty_stock_in_terminal_name = ? or empty_stock_out_terminal_name = ?) '
-      replacements.push(doc.search_data.terminal)
+      queryStr += ' and empty_stock_out_terminal_name = ? '
       replacements.push(doc.search_data.terminal)
     }
   }
@@ -214,13 +212,7 @@ exports.exportEmptyStockAct = async(req, res) => {
     } else if(row.empty_stock_out_depot_name) {
       row.empty_stock_depot_name = "E:" + row.empty_stock_out_depot_name
     }
-    if(row.empty_stock_in_terminal_name && row.empty_stock_out_terminal_name && row.empty_stock_in_terminal_name === row.empty_stock_out_terminal_name) {
-      row.empty_stock_terminal_name = row.empty_stock_in_terminal_name
-    } else if(row.empty_stock_in_terminal_name) {
-      row.empty_stock_terminal_name = "I:" + row.empty_stock_in_terminal_name
-    } else if(row.empty_stock_out_terminal_name) {
-      row.empty_stock_terminal_name = "E:" + row.empty_stock_out_terminal_name
-    }
+   row.empty_stock_terminal_name = row.empty_stock_out_terminal_name
     renderData.push(row)
   }
   let filepath = await common.ejs2xlsx('EmptyStock.xlsx', renderData)
