@@ -5,6 +5,7 @@ const GLBConfig = require('../../../util/GLBConfig')
 const common = require('../../../util/CommonUtil')
 const model = require('../../../app/model')
 const seq = require('../../../util/Sequence')
+const rateSrv = require('../configuration/ExchangeRateConfigServer')
 
 const tb_user = model.common_user
 const tb_bl = model.zhongtan_export_proforma_masterbl
@@ -17,6 +18,7 @@ exports.initAct = async () => {
   let returnData = {}
   returnData.CASH_BANK_INFO = GLBConfig.CASH_BANK_INFO
   returnData.RECEIPT_TYPE_INFO= GLBConfig.RECEIPT_TYPE_INFO
+  returnData.RECEIPT_CURRENCY = GLBConfig.RECEIPT_CURRENCY
   let queryStr = `SELECT user_id, TRIM(user_name) AS user_name FROM tbl_common_user WHERE state = '1' AND user_type = ? ORDER BY user_name`
   let replacements = [GLBConfig.TYPE_CUSTOMER]
   let customers = await model.simpleSelect(queryStr, replacements)
@@ -174,6 +176,12 @@ exports.searchContainerAct = async req => {
   return returnData
 }
 
+exports.changeReceiptCurrencyAct = async req => {
+  let doc = common.docValidate(req)
+  let result = await rateSrv.getCurrentExchangeRateTZS(doc.usd_amount)
+  return common.success(result.amount)
+}
+
 exports.shipmentReceiptAct = async req => {
   let doc = common.docValidate(req), user = req.user, curDate = new Date()
   let file_id = doc.file_id
@@ -207,7 +215,7 @@ exports.shipmentReceiptAct = async req => {
   renderData.shipment_receipt_no = receipt_no
   renderData.shipment_receipt_date = moment().format('MMM DD, YYYY')
   renderData.shipment_receipt_party = customer.user_name
-  renderData.shipment_receipt_currency = invoice.uploadfile_currency
+  renderData.shipment_receipt_currency = doc.shipment_receipt_currency || invoice.uploadfile_currency
   renderData.shipment_receipt_bl = bl.export_masterbl_bl
   if (doc.shipment_receipt_check_cash === 'CASH') {
     renderData.check_cash = 'Cash'
@@ -216,7 +224,7 @@ exports.shipmentReceiptAct = async req => {
   } else {
     renderData.check_cash = 'Cheque/ ' + doc.shipment_receipt_check_no
   }
-  renderData.shipment_receipt_sum_fee = parseFloat(invoice.uploadfile_amount.replace(/,/g, '') || 0)
+  renderData.shipment_receipt_sum_fee = parseFloat((doc.shipment_receipt_amount || invoice.uploadfile_amount).replace(/,/g, '') || 0)
   if(renderData.shipment_receipt_sum_fee >= 0) {
     renderData.shipment_receipt_sum_fee_str = numberToText(renderData.shipment_receipt_sum_fee, 'english')
   } else {
@@ -228,6 +236,8 @@ exports.shipmentReceiptAct = async req => {
   renderData.user_email = commonUser.user_email
   try {
     let fileInfo = await common.ejs2Pdf('shipmentReceipt.ejs', renderData, 'zhongtan')
+    let rate_info = await rateSrv.getCurrentExchangeRateTZS(doc.shipment_receipt_amount || invoice.uploadfile_amount)
+    let amount_rate = rate_info.rate
     let ruf = await tb_uploadfile.create({
       api_name: 'SHIPMENT-RECEIPT',
       user_id: user.user_id,
@@ -236,8 +246,9 @@ exports.shipmentReceiptAct = async req => {
       uploadfile_name: fileInfo.name,
       uploadfile_url: fileInfo.url,
       uploadfile_acttype: 'shipment',
-      uploadfile_amount: invoice.uploadfile_amount,
-      uploadfile_currency: invoice.uploadfile_currency,
+      uploadfile_amount: doc.shipment_receipt_amount || invoice.uploadfile_amount,
+      uploadfile_amount_rate: amount_rate,
+      uploadfile_currency: doc.shipment_receipt_currency || invoice.uploadfile_currency,
       uploadfile_check_cash: doc.shipment_receipt_check_cash,
       uploadfile_check_no: doc.shipment_receipt_check_no,
       uploadfile_received_from: customer.user_name,
@@ -246,7 +257,9 @@ exports.shipmentReceiptAct = async req => {
       uploadfil_release_date: curDate,
       uploadfil_release_user_id: user.user_id,
       uploadfile_bank_reference_no: doc.shipment_receipt_bank_reference_no,
-      uploadfile_bank_info: doc.shipment_receipt_bank_info
+      uploadfile_bank_info: doc.shipment_receipt_bank_info,
+      uploadfile_template_version: 'V1',
+      uploadfile_template_name: 'shipmentReceipt.ejs',
     })
     invoice.uploadfile_index3 = ruf.uploadfile_id
     invoice.uploadfile_receipt_no = receipt_no
