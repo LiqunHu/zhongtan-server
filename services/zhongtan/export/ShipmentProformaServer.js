@@ -21,6 +21,29 @@ const tb_shipment_fee = model.zhongtan_export_shipment_fee
 const tb_fee_data = model.zhongtan_export_fee_data
 const tb_uploadfile = model.zhongtan_uploadfile
 const tb_export_verification = model.zhongtan_export_verification
+const logger = require('../../../app/logger').createLogger(__filename)
+
+// 修正 sheet 的 !ref 取数范围。
+// 部分工具导出的 xlsx 内部 <dimension> 声明会比实际数据小（例如声明 A1:L9 但实际有 79 行），
+// 而 xlsx(SheetJS) 的 sheet_to_json 默认按 !ref 取范围，超出声明的行会被静默丢弃。
+// 这里按实际存在的单元格重算范围，声明偏小时记 warn 日志。
+const fixSheetRange = (ws, sheetName) => {
+  if (!ws || !ws['!ref']) return ws
+  let declared = X.utils.decode_range(ws['!ref'])
+  let maxR = declared.e.r
+  let maxC = declared.e.c
+  for (let k in ws) {
+    if (k[0] === '!') continue
+    let cell = X.utils.decode_cell(k)
+    if (cell.r > maxR) maxR = cell.r
+    if (cell.c > maxC) maxC = cell.c
+  }
+  if (maxR > declared.e.r || maxC > declared.e.c) {
+    logger.warn(`[ShipmentProforma] sheet[${sheetName}] 范围声明偏小: ${ws['!ref']} -> 实际 ${maxR + 1} 行 / ${maxC + 1} 列，已按实际范围重算`)
+    ws['!ref'] = X.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: maxR, c: maxC } })
+  }
+  return ws
+}
 
 exports.initAct = async () => {
   let returnData = {}
@@ -474,6 +497,7 @@ const pdf2jsonParser = async (path) => {
 
 exports.uploadShipmentAct = async req => {
   let doc = common.docValidate(req), user = req.user
+  let import_warnings = []
   for (let f of doc.upload_files) {
     let iu = await tb_uploadfile.findOne({
       where: {
@@ -508,13 +532,49 @@ exports.uploadShipmentAct = async req => {
     if(!vesselInfo || !masterBI || !containers) {
       return common.error('import_03')
     }
-   
+
+    // 防止 xlsx 内部 dimension 声明偏小导致只读到部分行（静默漏箱）
+    fixSheetRange(vesselInfo, 'VesselInformation')
+    fixSheetRange(masterBI, 'MasterBl')
+    fixSheetRange(containers, 'Containers')
+
     let vesslInfoJSTemp = X.utils.sheet_to_json(vesselInfo, {})
     let masterBIJSTemp = X.utils.sheet_to_json(masterBI, {})
     let containersJSTemp = X.utils.sheet_to_json(containers, {})
     let vesslInfoJS = await common.jsonTrim(vesslInfoJSTemp)
     let masterBIJS = await common.jsonTrim(masterBIJSTemp)
     let containersJS = await common.jsonTrim(containersJSTemp)
+
+    // 箱数校验：MasterBl 声明的箱数 vs Containers 页实际行数
+    // 原先不一致时会静默少建箱（例如声明 9 箱、Containers 只有 8 行，接口仍返回成功）
+    let con_row_count = {}
+    for (let c of containersJS) {
+      let cb = c['#M B/L No'] ? c['#M B/L No'].toString().trim() : ''
+      if (cb) {
+        con_row_count[cb] = (con_row_count[cb] || 0) + 1
+      }
+    }
+    for (let mb of masterBIJS) {
+      let mb_bl = mb['#M B/L No'] ? mb['#M B/L No'].toString().trim() : ''
+      if (!mb_bl) continue
+      let declared_qty = mb['Number of Containers'] ? String(mb['Number of Containers']).trim() : ''
+      let actual_qty = con_row_count[mb_bl] || 0
+      if (declared_qty === '' || Number(declared_qty) !== actual_qty) {
+        let msg = `提单 ${mb_bl} 箱数不一致：MasterBl 声明 ${declared_qty === '' ? '空' : declared_qty} 箱，Containers 页实际 ${actual_qty} 行` + (actual_qty === 0 ? '（该票不会建箱）' : '')
+        logger.warn('[ShipmentProforma] ' + msg)
+        import_warnings.push(msg)
+      }
+    }
+    // Containers 页里存在 MasterBl 中没有的提单，这些行会被静默忽略
+    let master_bls = masterBIJS.map(x => x['#M B/L No'] ? x['#M B/L No'].toString().trim() : '')
+    for (let cb in con_row_count) {
+      if (master_bls.indexOf(cb) < 0) {
+        let msg = `提单 ${cb} 出现在 Containers 页但不在 MasterBl 页，${con_row_count[cb]} 行箱数据会被忽略`
+        logger.warn('[ShipmentProforma] ' + msg)
+        import_warnings.push(msg)
+      }
+    }
+
     if (!(vesslInfoJS[0]['VESSEL NAME'] && vesslInfoJS[0]['VOYAGE NUM'])) {
       return common.error('import_03')
     }
@@ -1034,6 +1094,9 @@ exports.uploadShipmentAct = async req => {
       }
     }
   }
+  if (import_warnings.length > 0) {
+    return { warnings: import_warnings }
+  }
 }
 
 exports.uploadAct = async req => {
@@ -1075,6 +1138,7 @@ exports.importFreightAct = async req => {
     })
     if(wb.SheetNames && wb.SheetNames.length > 0) {
       let wc = wb.Sheets[wb.SheetNames[0]]
+      fixSheetRange(wc, wb.SheetNames[0])
       let wcTemp= X.utils.sheet_to_json(wc, {})
       let wcJS = await common.jsonTrim(wcTemp)
       if(wcJS && wcJS.length > 0) {
