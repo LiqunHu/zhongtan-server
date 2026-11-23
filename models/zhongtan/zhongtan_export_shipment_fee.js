@@ -7,8 +7,11 @@ module.exports = db.defineModel('tbl_zhongtan_export_shipment_fee', {
     autoIncrement: true,
     primaryKey: true
   },
+  // 与主表 tbl_zhongtan_export_proforma_masterbl.export_masterbl_id 保持同一类型。
+  // 库里已由 VARCHAR(20) 改为 BIGINT，模型必须同步，否则非 production 环境跑
+  // initscript/init-db.js 时 sync({alter: true}) 会按旧的 STRING(20) 把列改回去。
   export_masterbl_id: {
-    type: db.STRING(20),
+    type: db.IDNO,
     allowNull: false
   },
   fee_data_code: {
@@ -138,11 +141,11 @@ module.exports = db.defineModel('tbl_zhongtan_export_shipment_fee', {
   }
 })
 
-// 本表 export_masterbl_id 在库里是 VARCHAR(20)，而主表 tbl_zhongtan_export_proforma_masterbl
-// 的同名字段是 BIGINT。业务代码大量用数字作为条件，Sequelize 4 会原样拼成 `= 17545`，
-// MySQL 就会把字符串列隐式转换成数字再比较，导致 index1(export_masterbl_id) 失效，
-// 每次查询退化成 15 万行全表扫描（实测约 100ms/次，30 条提单的页面累计 3 秒以上）。
-// 这里统一把 where 里的数字转成字符串，生成 `= '17545'`，保证能走索引。
+// 历史问题：本表 export_masterbl_id 原为 VARCHAR(20)，主表同名字段为 BIGINT，业务用数字
+// 作条件时生成 `= 17545`，MySQL 把字符串列隐式转数字比较，index1 失效退化成 15 万行全表扫。
+// 现已把列类型统一为 BIGINT（模型也同步为 db.IDNO），本钩子保留作为兼容层：
+// 生成 `= '17545'` 时 MySQL 会把常量转成数字，索引照走，不影响性能。
+// 待线上稳定运行一段时间后，可与各处显式 String() 一并清理。
 module.exports.addHook('beforeFind', options => {
   if (!options || !options.where || typeof options.where !== 'object') {
     return

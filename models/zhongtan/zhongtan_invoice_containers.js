@@ -297,4 +297,15 @@ module.exports = db.defineModel('tbl_zhongtan_invoice_containers', {
     defaultValue: '0',
     allowNull: false
   },
+  invoice_containers_normal_return: {
+    // 已还箱并且没有超期费
+    type: db.STRING(5),
+    defaultValue: '0',
+    allowNull: false
+  },
+  invoice_containers_recalculate_before: {
+    // 系统重算前超期费
+    type: db.STRING(20),
+    allowNull: true
+  },
 })
