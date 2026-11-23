@@ -81,7 +81,7 @@ exports.searchAct = async req => {
       if(cons) {
         queryStr = `SELECT shipment_fee_status, shipment_fee_party, u.user_name, shipment_fee_receipt_no, SUM(shipment_fee_amount) AS total_amount FROM tbl_zhongtan_export_shipment_fee f LEFT JOIN tbl_common_user u ON f.shipment_fee_party = u.user_id WHERE f.state = '1' AND shipment_fee_type = 'R' AND export_masterbl_id = ? GROUP BY shipment_fee_status, shipment_fee_party, shipment_fee_receipt_no
         `
-        replacements = [d.export_masterbl_id]
+        replacements = [String(d.export_masterbl_id)]
         let fees = await model.simpleSelect(queryStr, replacements)
         d.receivable_detail = fees
         for(let c of cons) {

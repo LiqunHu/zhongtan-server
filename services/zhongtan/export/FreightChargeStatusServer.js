@@ -117,7 +117,9 @@ exports.searchAct = async req => {
       // 查询是否有退仓费的相同提单
       queryStr = `SELECT shipment_fee_status, shipment_fee_party, u.user_name, u.user_blacklist, shipment_fee_invoice_no, shipment_fee_receipt_no, SUM(shipment_fee_amount) AS total_amount FROM tbl_zhongtan_export_shipment_fee f LEFT JOIN tbl_common_user u ON f.shipment_fee_party = u.user_id WHERE f.state = '1' AND shipment_fee_type = 'R' AND export_masterbl_id = ? GROUP BY shipment_fee_status, shipment_fee_party, shipment_fee_receipt_no
           `
-      replacements = [d.export_masterbl_id]
+      // export_masterbl_id 在费用表里是 VARCHAR(20)，这里必须按字符串传参，
+      // 否则 Sequelize 会拼成 `= 17545`，MySQL 会把字符串列转成数字比较，index1 失效 → 全表扫描
+      replacements = [String(d.export_masterbl_id)]
       let fees = await model.simpleSelect(queryStr, replacements)
       d.receivable_detail = fees
       let blacklist = GLBConfig.DISABLE
@@ -277,7 +279,7 @@ exports.exportFreightAct = async (req, res) => {
       }
       queryStr = `SELECT shipment_fee_status, shipment_fee_party, u.user_name, shipment_fee_receipt_no, SUM(shipment_fee_amount) AS total_amount FROM tbl_zhongtan_export_shipment_fee f LEFT JOIN tbl_common_user u ON f.shipment_fee_party = u.user_id WHERE f.state = '1' AND shipment_fee_type = 'R' AND export_masterbl_id = ? GROUP BY shipment_fee_status, shipment_fee_party, shipment_fee_receipt_no
         `
-      replacements = [r.export_masterbl_id]
+      replacements = [String(r.export_masterbl_id)]
       let fees = await model.simpleSelect(queryStr, replacements)
       if(fees && fees.length > 0) {
         for(let f of fees) {

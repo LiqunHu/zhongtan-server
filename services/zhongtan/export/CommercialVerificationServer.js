@@ -348,7 +348,7 @@ exports.verificationDetailAct = async req => {
                     LEFT JOIN tbl_common_user ud ON fl.shipment_fee_decline_by = ud.user_id 
                   WHERE
                     fl.shipment_relation_id <> ? AND f.export_masterbl_id = ? AND fl.state = ? AND f.state = ? AND f.shipment_fee_status IN (?)`
-        replacements = [ver.export_verification_id, ver.export_masterbl_id, GLBConfig.ENABLE, GLBConfig.ENABLE, ['SU', 'AP', 'IN', 'RE']]
+        replacements = [ver.export_verification_id, String(ver.export_masterbl_id), GLBConfig.ENABLE, GLBConfig.ENABLE, ['SU', 'AP', 'IN', 'RE']]
         let other_ver_shipment = await model.simpleSelect(queryStr, replacements)
         for(let s of other_ver_shipment) {
           s.this_submit_fee = GLBConfig.DISABLE

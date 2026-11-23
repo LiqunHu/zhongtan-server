@@ -453,7 +453,7 @@ exports.mergeDemurrage2Shipment = async (export_vessel_id, export_container_bl, 
       }
     })
     queryStr = `SELECT * FROM tbl_zhongtan_export_shipment_fee WHERE state = '1' AND fee_data_code = 'DND' AND shipment_fee_type = 'R' AND export_masterbl_id = ? `
-    replacements = [bl.export_masterbl_id]
+    replacements = [String(bl.export_masterbl_id)]
     let sf = await model.simpleSelect(queryStr, replacements)
     if(sf && sf.length > 0) {
       let receipt_amount = 0
@@ -594,7 +594,7 @@ exports.mergeDemurrage2Shipment = async (export_vessel_id, export_container_bl, 
     }
 
     queryStr = `SELECT * FROM tbl_zhongtan_export_shipment_fee WHERE state = '1' AND fee_data_code = 'DND' AND shipment_fee_type = 'P' AND export_masterbl_id = ? `
-    replacements = [bl.export_masterbl_id]
+    replacements = [String(bl.export_masterbl_id)]
     let pf = await model.simpleSelect(queryStr, replacements)
     if(pf && pf.length > 0) {
       let approve_amount = 0

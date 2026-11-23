@@ -324,7 +324,7 @@ exports.getBookingShipmentAct = async req => {
                 LEFT JOIN tbl_zhongtan_uploadfile u ON f.shipment_fee_invoice_id = u.uploadfile_id AND u.state = ? AND u.api_name = ? 
                 LEFT JOIN tbl_common_user c ON f.shipment_fee_submit_by = c.user_id
                 WHERE f.state = ? AND f.shipment_fee_type = ? AND f.export_masterbl_id = ? ORDER BY IFNULL(shipment_fee_invoice_no, FIELD(f.shipment_fee_status, 'NE', 'DE', 'UN', 'SA', 'SU', 'IN', 'RE', 'BA'))`
-    replacements = [GLBConfig.ENABLE, 'SHIPMENT-INVOICE', GLBConfig.ENABLE, 'R', doc.export_masterbl_id]
+    replacements = [GLBConfig.ENABLE, 'SHIPMENT-INVOICE', GLBConfig.ENABLE, 'R', String(doc.export_masterbl_id)]
     let shipment_receivable = await model.simpleSelect(queryStr, replacements)
     if(shipment_receivable && shipment_receivable.length > 0) {
       for(let fr of fixed_receivable_fee) {
@@ -390,7 +390,7 @@ exports.getBookingShipmentAct = async req => {
     queryStr = `SELECT f.*, c.user_name AS shipment_fee_submit_by_user FROM tbl_zhongtan_export_shipment_fee f
                 LEFT JOIN tbl_common_user c ON f.shipment_fee_submit_by = c.user_id
                 WHERE f.state = ? AND f.shipment_fee_type = ? AND f.export_masterbl_id = ? ORDER BY FIELD(f.shipment_fee_status, 'NE', 'DE', 'UN', 'SA', 'SU', 'IN', 'RE', 'BA')`
-    replacements = [GLBConfig.ENABLE, 'P', doc.export_masterbl_id]
+    replacements = [GLBConfig.ENABLE, 'P', String(doc.export_masterbl_id)]
     let shipment_payable = await model.simpleSelect(queryStr, replacements)
     if(shipment_payable && shipment_payable.length > 0) {
       for(let fp of fixed_payable_fee) {
@@ -1019,7 +1019,7 @@ exports.invoiceShipmentAct = async req => {
     // 合并冲账
     queryStr = `SELECT shipment_fee_party, fee_data_code FROM tbl_zhongtan_export_shipment_fee WHERE state = ? AND export_masterbl_id = ? AND shipment_fee_type = 'R' AND shipment_fee_status IN (?) 
                 GROUP BY shipment_fee_party, fee_data_code HAVING SUM(CAST(shipment_fee_amount as DECIMAL)) = 0`
-    replacements = [GLBConfig.ENABLE, doc.export_masterbl_id, invoiceStatus]
+    replacements = [GLBConfig.ENABLE, String(doc.export_masterbl_id), invoiceStatus]
     let balance_shipment = await model.simpleSelect(queryStr, replacements)
     if(balance_shipment && balance_shipment.length > 0) {
       for(let bs of balance_shipment) {
@@ -1046,7 +1046,7 @@ exports.invoiceShipmentAct = async req => {
     queryStr = `SELECT f.*, u.user_name, u.user_address, u.user_tin FROM 
                 tbl_zhongtan_export_shipment_fee f LEFT JOIN tbl_common_user u ON f.shipment_fee_party = u.user_id 
                 WHERE f.state = ? AND f.export_masterbl_id = ? AND f.shipment_fee_type = 'R' AND f.shipment_fee_status IN (?) ORDER BY u.user_name, f.fee_data_fixed DESC, f.shipment_fee_fixed_amount DESC;`
-    replacements = [GLBConfig.ENABLE, doc.export_masterbl_id, invoiceStatus]
+    replacements = [GLBConfig.ENABLE, String(doc.export_masterbl_id), invoiceStatus]
     let invoice_shipment = await model.simpleSelect(queryStr, replacements) 
     if(invoice_shipment && invoice_shipment.length > 0) {
       let renderParty = {}

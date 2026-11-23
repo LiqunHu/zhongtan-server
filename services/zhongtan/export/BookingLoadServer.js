@@ -1450,7 +1450,8 @@ exports.emptyReleaseAct = async req => {
     return common.error('export_03')
   }
 
-  let queryStr = `SELECT * FROM tbl_zhongtan_export_shipment_fee WHERE state = 1 AND shipment_fee_status != 'RE' AND fee_data_code IN ('BGF', 'EDF') AND export_masterbl_id = (SELECT export_masterbl_id FROM tbl_zhongtan_export_proforma_masterbl WHERE state = '1' AND relation_export_masterbl_id = ? AND bk_cancellation_status = '1')`
+  // 费用表 export_masterbl_id 是 VARCHAR(20)，主表是 BIGINT；子查询结果需 CAST 成字符串比较，否则索引失效
+  let queryStr = `SELECT * FROM tbl_zhongtan_export_shipment_fee WHERE state = 1 AND shipment_fee_status != 'RE' AND fee_data_code IN ('BGF', 'EDF') AND export_masterbl_id = CAST((SELECT export_masterbl_id FROM tbl_zhongtan_export_proforma_masterbl WHERE state = '1' AND relation_export_masterbl_id = ? AND bk_cancellation_status = '1') AS CHAR(20))`
   let replacements = [doc.export_masterbl_id]
   let exportFees = await model.simpleSelect(queryStr, replacements)
   if(exportFees && exportFees.length > 0) {

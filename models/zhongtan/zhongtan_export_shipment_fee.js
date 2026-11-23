@@ -137,3 +137,18 @@ module.exports = db.defineModel('tbl_zhongtan_export_shipment_fee', {
     allowNull: false
   }
 })
+
+// 本表 export_masterbl_id 在库里是 VARCHAR(20)，而主表 tbl_zhongtan_export_proforma_masterbl
+// 的同名字段是 BIGINT。业务代码大量用数字作为条件，Sequelize 4 会原样拼成 `= 17545`，
+// MySQL 就会把字符串列隐式转换成数字再比较，导致 index1(export_masterbl_id) 失效，
+// 每次查询退化成 15 万行全表扫描（实测约 100ms/次，30 条提单的页面累计 3 秒以上）。
+// 这里统一把 where 里的数字转成字符串，生成 `= '17545'`，保证能走索引。
+module.exports.addHook('beforeFind', options => {
+  if (!options || !options.where || typeof options.where !== 'object') {
+    return
+  }
+  const val = options.where.export_masterbl_id
+  if (typeof val === 'number') {
+    options.where.export_masterbl_id = String(val)
+  }
+})

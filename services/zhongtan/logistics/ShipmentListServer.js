@@ -225,11 +225,11 @@ exports.searchShipmentListAct = async req => {
       r._checked = false
       // 查询已开收据费用信息
       let receivableQueryStr = 'SELECT SUM(shipment_fee_amount) AS total_fee_amount FROM tbl_zhongtan_export_shipment_fee WHERE state = 1 AND export_masterbl_id = ? AND shipment_fee_type = ? AND shipment_fee_status = ?'
-      let receivableReplacements = [d.export_masterbl_id, 'R', 'RE']
+      let receivableReplacements = [String(d.export_masterbl_id), 'R', 'RE']
       let ret_receivable = await model.simpleSelect(receivableQueryStr, receivableReplacements)
 
       let payableQueryStr = 'SELECT SUM(shipment_fee_amount) AS total_fee_amount FROM tbl_zhongtan_export_shipment_fee WHERE state = 1 AND export_masterbl_id = ? AND shipment_fee_type = ? AND shipment_fee_status = ?'
-      let payableReplacements = [d.export_masterbl_id, 'P', 'AP']
+      let payableReplacements = [String(d.export_masterbl_id), 'P', 'AP']
       let ret_payable = await model.simpleSelect(payableQueryStr, payableReplacements)
       if(ret_receivable && ret_receivable.length > 0 && ret_receivable[0].total_fee_amount 
         && ret_payable && ret_payable.length > 0 && ret_payable[0].total_fee_amount) {

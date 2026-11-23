@@ -855,7 +855,7 @@ exports.uploadShipmentAct = async req => {
           if(bl) {
             let queryStrReFee = `SELECT SUM(shipment_fee_amount) as sumReFee FROM tbl_zhongtan_export_shipment_fee WHERE export_masterbl_id = ? AND fee_data_code = ? AND shipment_fee_type = ? AND shipment_fee_status = 'RE' AND state = '1'`
             if(oft && parseFloat(oft) > 0) {
-              let replacementsReFee = [bl.export_masterbl_id, 'OFT', 'R']
+              let replacementsReFee = [String(bl.export_masterbl_id), 'OFT', 'R']
               let reFee = await model.simpleSelect(queryStrReFee, replacementsReFee)
               if(reFee && reFee[0].sumReFee) {
                 let diffFee = new Decimal(oft).sub(new Decimal(reFee[0].sumReFee)).toNumber()
@@ -1255,7 +1255,7 @@ exports.searchBlAct = async req => {
   if(bls.data && bls.data.length > 0) {
     for(let d of bls.data) {
       queryStr =  `select * from tbl_zhongtan_export_shipment_fee WHERE shipment_list_import = ? AND export_masterbl_id = ? AND shipment_fee_status != ? AND state = ?`
-      replacements = [GLBConfig.ENABLE, d.export_masterbl_id, 'NE', GLBConfig.ENABLE]
+      replacements = [GLBConfig.ENABLE, String(d.export_masterbl_id), 'NE', GLBConfig.ENABLE]
       let fees = await model.simpleSelect(queryStr, replacements)
       if(fees && fees.length > 0) {
         d.shipment_fee = true
@@ -1315,7 +1315,7 @@ exports.modifyVesselAct = async req => {
             })
             for(let b of bls) {
               let queryStr = `SELECT shipment_fee_id FROM tbl_zhongtan_export_shipment_fee WHERE state = '1' AND shipment_fee_type = 'R' AND fee_data_code = 'LPF' AND export_masterbl_id = ?`
-              let replacements = [b.export_masterbl_id]
+              let replacements = [String(b.export_masterbl_id)]
               let lpf_rows = await model.simpleSelect(queryStr, replacements)
               if(!lpf_rows || lpf_rows.length <= 0) {
                 await tb_shipment_fee.create({
